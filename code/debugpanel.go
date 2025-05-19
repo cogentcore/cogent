@@ -20,7 +20,8 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/tree"
 )
 
@@ -64,7 +65,7 @@ var (
 )
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := cdebug.Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Code Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
@@ -104,7 +105,7 @@ type DebugPanel struct {
 	BBreaks []*cdebug.Break `set:"-" json:"-" xml:"-"`
 
 	// output from the debugger
-	OutputBuffer *texteditor.Buffer `set:"-" json:"-" xml:"-"`
+	OutputBuffer *lines.Lines `set:"-" json:"-" xml:"-"`
 
 	// parent code project
 	Code *Code `set:"-" json:"-" xml:"-"`
@@ -138,15 +139,16 @@ func (dv *DebugPanel) InitTabs() {
 		return
 	}
 	dtab, _ := w.NewTab(DebugTabConsole)
-	ctv := texteditor.NewEditor(dtab)
+	ctv := textcore.NewEditor(dtab)
 	ctv.SetName("dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
-	dv.OutputBuffer = texteditor.NewBuffer()
-	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
+	dv.OutputBuffer = lines.NewLines()
+	dv.OutputBuffer.SetFilename("debug-outbuf")
+	dv.OutputBuffer.SetReadOnly(true)
 	dv.State.Breaks = nil // get rid of dummy
-	dv.OutputBuffer.Options.LineNumbers = false
-	ctv.SetBuffer(dv.OutputBuffer)
+	dv.OutputBuffer.Settings.LineNumbers = false
+	ctv.SetLines(dv.OutputBuffer)
 
 	bv, _ := w.NewTab(DebugTabBreaks)
 	tree.AddChild(bv, func(w *core.Table) {
@@ -542,10 +544,12 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 	if !dv.panelIsValid() {
 		return
 	}
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
-		tb.Update()
+		if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+			ed.NeedsRender()
+		}
 	}
 }
 
@@ -565,10 +569,12 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 	if !dv.panelIsValid() {
 		return
 	}
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.SetLineColor(line-1, DebugBreakColors[stat])
-		tb.Update()
+		if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+			ed.NeedsRender()
+		}
 	}
 }
 
@@ -687,8 +693,10 @@ func (dv *DebugPanel) SetThreadIndex(thridx int) {
 }
 
 // FindFrames finds the frames where given file and line are active
-// Selects the one that is closest and shows the others in Find Tab
-func (dv *DebugPanel) FindFrames(fpath string, line int) {
+// Selects the one that is closest and shows the others in Find Tab.
+// The fpath can be just the path or any string fragment contained
+// within the target filename.
+func (dv *DebugPanel) FindFrames(fpath string, line int) { //types:add
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -729,11 +737,13 @@ func (dv *DebugPanel) ShowFile(fpath string, line int) {
 // SetCurPCInBuf sets the current PC location in given file
 // line is 1-based line number
 func (dv *DebugPanel) SetCurPCInBuf(fpath string, line int) {
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
-		if !tb.HasLineColor(line - 1) {
+		if _, has := tb.LineColor(line - 1); !has {
 			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
-			tb.Update()
+			if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+				ed.NeedsRender()
+			}
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line
 		}
@@ -746,10 +756,12 @@ func (dv *DebugPanel) DeleteCurPCInBuf() {
 	fpath := dv.CurFileLoc.FPath
 	line := dv.CurFileLoc.Line
 	if fpath != "" && line > 0 {
-		tb := dv.Code.TextBufForFile(fpath, false)
+		tb := dv.Code.GetOpenFile(fpath)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
-			tb.Update()
+			if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+				ed.NeedsRender()
+			}
 		}
 	}
 	dv.CurFileLoc.FPath = ""
@@ -857,9 +869,9 @@ func (dv *DebugPanel) UpdateTab(tab string) {
 }
 
 // ConsoleText returns the console TextEditor
-func (dv *DebugPanel) ConsoleText() *texteditor.Editor {
+func (dv *DebugPanel) ConsoleText() *textcore.Editor {
 	tv := dv.Tabs()
-	cv := tv.TabByName(DebugTabConsole).Child(0).(*texteditor.Editor)
+	cv := tv.TabByName(DebugTabConsole).Child(0).(*textcore.Editor)
 	return cv
 }
 
@@ -922,6 +934,11 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(dv.ListGlobalVars).SetText("Global vars").SetIcon(icons.Search)
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
+	})
+
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.FindFrames).SetText("Find frames").SetIcon(icons.Search)
 		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 

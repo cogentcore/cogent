@@ -7,7 +7,7 @@ import (
 )
 
 // draw renders the graph.
-func (gr *Graph) draw(pc *paint.Context) {
+func (gr *Graph) draw(pc *paint.Painter) {
 	TheGraph.EvalMu.Lock()
 	defer TheGraph.EvalMu.Unlock()
 	gr.updateCoords()
@@ -35,23 +35,23 @@ func (gr *Graph) canvasCoord(v math32.Vector2) math32.Vector2 {
 	return res
 }
 
-func (gr *Graph) drawAxes(pc *paint.Context) {
-	pc.StrokeStyle.Color = colors.Scheme.OutlineVariant
+func (gr *Graph) drawAxes(pc *paint.Painter) {
+	pc.Stroke.Color = colors.Scheme.OutlineVariant
 
 	start := gr.canvasCoord(math32.Vec2(gr.Vectors.Min.X, 0))
 	end := gr.canvasCoord(math32.Vec2(gr.Vectors.Max.X, 0))
 	pc.MoveTo(start.X, start.Y)
 	pc.LineTo(end.X, end.Y)
-	pc.Stroke()
+	pc.Draw()
 
 	start = gr.canvasCoord(math32.Vec2(0, gr.Vectors.Min.Y))
 	end = gr.canvasCoord(math32.Vec2(0, gr.Vectors.Max.Y))
 	pc.MoveTo(start.X, start.Y)
 	pc.LineTo(end.X, end.Y)
-	pc.Stroke()
+	pc.Draw()
 }
 
-func (gr *Graph) drawTrackingLines(pc *paint.Context) {
+func (gr *Graph) drawTrackingLines(pc *paint.Painter) {
 	for _, m := range gr.Marbles {
 		if !m.TrackingInfo.Track {
 			continue
@@ -64,12 +64,12 @@ func (gr *Graph) drawTrackingLines(pc *paint.Context) {
 				pc.LineTo(cpos.X, cpos.Y)
 			}
 		}
-		pc.StrokeStyle.Color = colors.Uniform(m.Color)
-		pc.Stroke()
+		pc.Stroke.Color = colors.Uniform(m.Color)
+		pc.Draw()
 	}
 }
 
-func (gr *Graph) drawLines(pc *paint.Context) {
+func (gr *Graph) drawLines(pc *paint.Painter) {
 	for _, ln := range gr.Lines {
 		// TODO: this logic doesn't work
 		// If the line doesn't change over time then we don't need to keep graphing it while running marbles
@@ -80,7 +80,7 @@ func (gr *Graph) drawLines(pc *paint.Context) {
 	}
 }
 
-func (ln *Line) draw(gr *Graph, pc *paint.Context) {
+func (ln *Line) draw(gr *Graph, pc *paint.Painter) {
 	start := true
 	skipped := false
 	for x := TheGraph.Vectors.Min.X; x < TheGraph.Vectors.Max.X; x += TheGraph.Vectors.Inc.X {
@@ -102,22 +102,24 @@ func (ln *Line) draw(gr *Graph, pc *paint.Context) {
 			skipped = true
 		}
 	}
-	pc.StrokeStyle.Color = colors.Uniform(ln.Colors.Color)
-	pc.StrokeStyle.Width.Dp(4)
+	pc.Fill.Color = nil
+	pc.Stroke.Color = colors.Uniform(ln.Colors.Color)
+	pc.Stroke.Width.Dp(1)
 	pc.ToDots()
-	pc.Stroke()
+	pc.Draw()
 }
 
-func (gr *Graph) drawMarbles(pc *paint.Context) {
+func (gr *Graph) drawMarbles(pc *paint.Painter) {
+	pc.Stroke.Color = nil
 	for i, m := range gr.Marbles {
 		pos := gr.canvasCoord(m.Pos)
 		if i == gr.State.SelectedMarble {
-			pc.DrawCircle(pos.X, pos.Y, 0.02)
-			pc.FillStyle.Color = colors.Scheme.Warn.Container
-			pc.Fill()
+			pc.Fill.Color = colors.Scheme.Warn.Container
+			pc.Circle(pos.X, pos.Y, 0.02)
+			pc.Draw()
 		}
-		pc.DrawCircle(pos.X, pos.Y, 0.005)
-		pc.FillStyle.Color = colors.Uniform(m.Color)
-		pc.Fill()
+		pc.Fill.Color = colors.Uniform(m.Color)
+		pc.Circle(pos.X, pos.Y, 0.005)
+		pc.Draw()
 	}
 }

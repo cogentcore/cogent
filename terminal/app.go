@@ -26,11 +26,12 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/lab/goal/interpreter"
 	"github.com/cogentcore/yaegi/interp"
-	"github.com/robert-nix/ansihtml"
 )
 
 // App is a GUI view of a terminal command.
@@ -78,16 +79,16 @@ func (a *App) Init() {
 			tree.AddChildAt(w, "dir", func(w *core.Text) {
 				w.SetText(a.Dir)
 			})
-			tree.AddChild(w, func(w *texteditor.Editor) {
-				w.Buffer.SetLanguage(fileinfo.Go)
-				w.Buffer.Options.LineNumbers = false
+			tree.AddChild(w, func(w *textcore.Editor) {
+				w.Lines.SetLanguage(fileinfo.Go)
+				w.Lines.Settings.LineNumbers = false
 
 				w.OnKeyChord(func(e events.Event) {
 					kf := keymap.Of(e.KeyChord())
 					if kf == keymap.Enter && e.Modifiers() == 0 {
 						e.SetHandled()
-						txt := w.Buffer.String()
-						w.Buffer.SetString("")
+						txt := w.Lines.String()
+						w.Lines.SetString("")
 						cmds := a.FindPath("splits/commands").(*core.Frame)
 						dir := a.FindPath("splits/editor-frame/dir").(*core.Text)
 						errors.Log(a.RunCmd(txt, cmds, dir))
@@ -141,7 +142,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
 	core.NewText(tr).SetType(core.TextTitleLarge).SetText(cmd).Styler(func(s *styles.Style) {
-		s.SetMono(true)
+		s.Font.Family = rich.Monospace
 		s.Grow.Set(1, 0)
 	})
 	core.NewButton(tr).SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
@@ -154,11 +155,11 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	ir, iw := io.Pipe()
 	var ib []byte
 
-	buf := texteditor.NewBuffer()
-	buf.Options.LineNumbers = false
+	buf := lines.NewLines()
+	buf.Settings.LineNumbers = false
 	buf.SetText(nil)
 
-	ed := texteditor.NewEditor(cfr).SetBuffer(buf)
+	ed := textcore.NewEditor(cfr).SetLines(buf)
 	ed.Styler(func(s *styles.Style) {
 		s.Min.Set(units.Em(30), units.Em(10))
 		s.Background = cfr.Styles.Background
@@ -184,10 +185,12 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	})
 
-	ob := &texteditor.OutputBuffer{}
-	ob.SetOutput(or).SetBuffer(buf).SetMarkupFunc(func(line []byte) []byte {
-		return ansihtml.ConvertToHTML(line)
-	})
+	ob := &textcore.OutputBuffer{}
+	ob.SetOutput(or).SetLines(buf)
+	// todo:
+	// ob.SetMarkupFunc(func(line []byte) []byte {
+	// 	return ansihtml.ConvertToHTML(line)
+	// })
 	go func() {
 		ob.MonitorOutput()
 	}()

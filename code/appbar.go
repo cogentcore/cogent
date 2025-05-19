@@ -313,7 +313,7 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 				Text: nmpath,
 				Icon: fn.Info.Ic,
 				Func: func() {
-					cv.NextViewFileNode(fn)
+					cv.NextViewFile(string(fn.Filepath))
 				},
 			})
 		}
@@ -322,11 +322,15 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 }
 
 func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
-	tv := cv.ActiveTextEditor()
-	if tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
+	tv := cv.ActiveEditor()
+	if tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.ParseState.Done()
+	_, ps := tv.Lines.ParseState()
+	if ps == nil {
+		return
+	}
+	pfs := ps.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
 		return
 	}

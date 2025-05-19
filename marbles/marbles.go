@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"math"
 	"slices"
-	"time"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
@@ -45,15 +44,9 @@ func (gr *Graph) GraphMarblesInit() {
 
 // Init makes a marble
 func (m *Marble) Init(n int) {
-	if TheGraph.Params.MarbleStartX.Compile() != nil {
-		return
-	}
 	TheGraph.Params.MarbleStartX.Params["n"] = n
 	xPos := TheGraph.Params.MarbleStartX.Eval(0, 0, 0)
 
-	if TheGraph.Params.MarbleStartY.Compile() != nil {
-		return
-	}
 	TheGraph.Params.MarbleStartY.Params["n"] = n
 	yPos := TheGraph.Params.MarbleStartY.Eval(xPos, 0, 0)
 
@@ -85,9 +78,9 @@ func (gr *Graph) ResetMarbles() {
 }
 
 // UpdateMarbles updates the marbles graph and marbles data
-func (gr *Graph) UpdateMarbles() bool {
+func (gr *Graph) UpdateMarbles(dt float32) bool {
 	gr.Objects.Graph.NeedsRender()
-	gr.UpdateMarblesData()
+	gr.UpdateMarblesData(dt)
 	return false
 }
 
@@ -110,7 +103,7 @@ func (m *Marble) UpdateTracking() {
 }
 
 // UpdateMarblesData updates marbles data
-func (gr *Graph) UpdateMarblesData() {
+func (gr *Graph) UpdateMarblesData(dt float32) {
 	gr.EvalMu.Lock()
 	defer gr.EvalMu.Unlock()
 
@@ -118,7 +111,7 @@ func (gr *Graph) UpdateMarblesData() {
 
 		m.Velocity.Y += float32(gr.Params.YForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
 		m.Velocity.X += float32(gr.Params.XForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
-		updtrate := float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))
+		updtrate := dt * float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))
 		npos := m.Pos.Add(m.Velocity.MulScalar(updtrate))
 		ppos := m.Pos
 		setColor := colors.White
@@ -218,46 +211,33 @@ func (gr *Graph) InBounds(pos math32.Vector2) bool {
 	return false
 }
 
-// RunMarbles runs the marbles for NSteps
-func (gr *Graph) RunMarbles() {
-	if gr.State.Running {
+// RunTick does one tick of the marbles running.
+func (gr *Graph) RunTick(dt float32) {
+	// startFrames := 0
+	// start := time.Now()
+	// ticker := time.NewTicker(time.Second / 60)
+	// for range ticker.C {
+	if !gr.State.Running {
 		return
 	}
-	gr.State.Running = true
-	gr.State.Step = 0
-	startFrames := 0
-	start := time.Now()
-	ticker := time.NewTicker(time.Second / 60)
-	for range ticker.C {
-		if !gr.State.Running {
-			ticker.Stop()
-			return
-		}
-		gr.State.Step++
-		if gr.State.Error != nil {
-			gr.State.Running = false
-		}
-		for j := 0; j < TheSettings.NFramesPer-1; j++ {
-			gr.UpdateMarblesData()
-			gr.State.PrevTime = gr.State.Time
-			gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
-		}
-		gr.Objects.Graph.AsyncLock()
-		ok := gr.UpdateMarbles()
-		gr.Objects.Graph.AsyncUnlock()
-		if ok {
-			gr.State.Step--
-			continue
-		}
-		if time.Since(start).Milliseconds() >= 3000 {
-			_ = startFrames
-			// fpsText.SetText(fmt.Sprintf("FPS: %v", (gr.State.Step-startFrames)/3))
-			start = time.Now()
-			startFrames = gr.State.Step
-		}
-		gr.State.PrevTime = gr.State.Time
-		gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
+	gr.State.Step++
+	if gr.State.Error != nil {
+		gr.State.Running = false
 	}
+	ok := gr.UpdateMarbles(dt)
+	if ok {
+		gr.State.Step--
+		return
+	}
+	// if time.Since(start).Milliseconds() >= 3000 {
+	// 	_ = startFrames
+	// 	// fpsText.SetText(fmt.Sprintf("FPS: %v", (gr.State.Step-startFrames)/3))
+	// 	start = time.Now()
+	// 	startFrames = gr.State.Step
+	// }
+	gr.State.PrevTime = gr.State.Time
+	gr.State.Time += float64(dt) * gr.Params.TimeStep.Eval(0, 0)
+	// }
 }
 
 // ToggleTrack toogles tracking setting for a certain marble

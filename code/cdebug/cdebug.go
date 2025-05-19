@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	IsRunningErr = errors.New("debugger is currently running and cannot return info")
 
 	// Debuggers is the list of supported debuggers
-	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *Params) (GiDebug, error){}
+	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *lines.Lines, pars *Params) (GiDebug, error){}
 )
 
 // GiDebug is the interface for all supported debuggers.
@@ -36,7 +36,7 @@ type GiDebug interface {
 	// root path (for trimming file names), and sets output of debugger
 	// session to given text which is used to monitor output.
 	// params must have relevant settings in place (StatFunc, Mode, etc).
-	Start(path, rootPath string, outbuf *texteditor.Buffer, pars *Params) error
+	Start(path, rootPath string, outbuf *lines.Lines, pars *Params) error
 
 	// SetParams sets the current parameters to control how info is returned
 	SetParams(params *Params)

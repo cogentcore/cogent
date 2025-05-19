@@ -5,10 +5,8 @@
 package code
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
-	"strings"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -28,7 +26,7 @@ func (fn *FileNode) Init() {
 	fn.AddContextMenu(fn.ContextMenu)
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
-		ge, ok := ParentCode(fn.This)
+		cv, ok := ParentCode(fn.This)
 		if !ok {
 			return
 		}
@@ -42,7 +40,7 @@ func (fn *FileNode) Init() {
 						sn.ToggleClose()
 					}
 				} else {
-					ge.FileNodeOpened(sn)
+					cv.FileNodeOpened(sn)
 				}
 				done = true
 			}
@@ -56,9 +54,9 @@ func (fn *FileNode) EditFile() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.NextViewFileNode(&fn.Node)
+		cv.NextViewFile(string(fn.Filepath))
 	}
 }
 
@@ -68,175 +66,47 @@ func (fn *FileNode) SetRunExec() {
 		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.Settings.RunExec = fn.Filepath
-		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
+		cv.Settings.RunExec = fn.Filepath
+		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
 	}
 }
 
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //types:add
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.ExecCmdFileNode(&fn.Node)
-	} else {
-		fmt.Println("no code!")
+		cv.ExecCmdFileNode(&fn.Node)
 	}
-
 }
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm))
+		cv.ExecCmdNameFile(string(fn.Node.Filepath), CmdName(cmdNm))
 	}
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
-	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
-		s.SetState(!fn.HasSelection(), states.Disabled)
-	})
+	cv, ok := ParentCode(fn.This)
+	if ok {
+		core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+			SetMenu(cv.CommandMenuFileNode(&fn.Node)).Styler(func(s *styles.Style) {
+			s.SetState(!fn.HasSelection(), states.Disabled)
+		})
+	}
 	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	core.NewFuncButton(m).SetFunc(fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+	core.NewFuncButton(m).SetFunc(fn.SetRunExecs).SetText("Set Run Exec").
+		SetIcon(icons.PlayArrow).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
-}
-
-/////////////////////////////////////////////////////////////////////
-//   OpenNodes
-
-// OpenNodes is a list of file nodes that have been opened for editing -- it
-// is maintained in recency order -- most recent on top -- call Add every time
-// a node is opened / visited for editing
-type OpenNodes []*filetree.Node
-
-// Add adds given node to list of open nodes -- if already on the list it is
-// moved to the top -- returns true if actually added.
-// Connects to fn.TextBuf signal and auto-closes when buffer closes.
-func (on *OpenNodes) Add(fn *filetree.Node) bool {
-	added := on.AddImpl(fn)
-	if !added {
-		return added
-	}
-	if fn.Buffer != nil {
-		// fn.Buf.TextBufSig.Connect(fn.This, func(recv, send tree.Node, sig int64, data any) {
-		// 	if sig == int64(texteditor.BufClosed) {
-		// 		fno, _ := recv.Embed(core.KiT_FileNode).(*filetree.Node)
-		// 		on.Delete(fno)
-		// 	}
-		// })
-	}
-	return added
-}
-
-// AddImpl adds given node to list of open nodes -- if already on the list it is
-// moved to the top -- returns true if actually added.
-func (on *OpenNodes) AddImpl(fn *filetree.Node) bool {
-	sz := len(*on)
-
-	for i, f := range *on {
-		if f == fn {
-			if i == 0 {
-				return false
-			}
-			copy((*on)[1:i+1], (*on)[0:i])
-			(*on)[0] = fn
-			return false
-		}
-	}
-
-	*on = append(*on, nil)
-	if sz > 0 {
-		copy((*on)[1:], (*on)[0:sz])
-	}
-	(*on)[0] = fn
-	return true
-}
-
-// Delete deletes given node in list of open nodes, returning true if found and deleted
-func (on *OpenNodes) Delete(fn *filetree.Node) bool {
-	for i, f := range *on {
-		if f == fn {
-			on.DeleteIndex(i)
-			return true
-		}
-	}
-	return false
-}
-
-// DeleteIndex deletes at given index
-func (on *OpenNodes) DeleteIndex(idx int) {
-	*on = append((*on)[:idx], (*on)[idx+1:]...)
-}
-
-// DeleteDeleted deletes deleted nodes on list
-func (on *OpenNodes) DeleteDeleted() {
-	sz := len(*on)
-	for i := sz - 1; i >= 0; i-- {
-		fn := (*on)[i]
-		if fn.This == nil || fn.FileRoot() == nil {
-			on.DeleteIndex(i)
-		}
-	}
-}
-
-// Strings returns a string list of nodes, with paths relative to proj root
-func (on *OpenNodes) Strings() []string {
-	on.DeleteDeleted()
-	sl := make([]string, len(*on))
-	for i, fn := range *on {
-		rp := fn.FileRoot().RelativePathFrom(fn.Filepath)
-		rp = strings.TrimSuffix(rp, fn.Name)
-		if rp != "" {
-			sl[i] = fn.Name + " - " + rp
-		} else {
-			sl[i] = fn.Name
-		}
-		if fn.IsNotSaved() {
-			sl[i] += " *"
-		}
-	}
-	return sl
-}
-
-// ByStringName returns the open node with given strings name
-func (on *OpenNodes) ByStringName(name string) *filetree.Node {
-	sl := on.Strings()
-	for i, ns := range sl {
-		if ns == name {
-			return (*on)[i]
-		}
-	}
-	return nil
-}
-
-// NChanged returns number of changed open files
-func (on *OpenNodes) NChanged() int {
-	cnt := 0
-	for _, fn := range *on {
-		if fn.IsNotSaved() {
-			cnt++
-		}
-	}
-	return cnt
-}
-
-// FindPath finds node for given path, nil if not found
-func (on *OpenNodes) FindPath(path string) *filetree.Node {
-	for _, f := range *on {
-		if f.Filepath == core.Filename(path) {
-			return f
-		}
-	}
-	return nil
 }
 
 // EditFiles calls EditFile on selected files
@@ -255,22 +125,32 @@ func (fn *FileNode) SetRunExecs() { //types:add
 
 // RenameFiles calls RenameFile on any selected nodes
 func (fn *FileNode) RenameFiles() {
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if !ok {
 		return
 	}
-	ge.SaveAllCheck(true, func() {
-		var nodes []*FileNode
-		sels := fn.GetSelectedNodes()
-		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].(*FileNode)
-			nodes = append(nodes, sn)
-		}
-		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
-		for _, sn := range nodes {
-			fb := core.NewSoloFuncButton(sn).SetFunc(sn.RenameFile)
-			fb.Args[0].SetValue(sn.Name)
-			fb.CallFunc()
-		}
+	cv.SaveAllCheck(true, func() {
+		paths := fn.SelectedPaths()
+		cv.CloseOpenFiles(paths) // close before rename because we are async after this
+		fn.Node.RenameFiles()
 	})
+}
+
+// DeleteFiles calls DeleteFile on any selected nodes, after prompting.
+func (fn *FileNode) DeleteFiles() {
+	cv, ok := ParentCode(fn.This)
+	if !ok {
+		return
+	}
+	d := core.NewBody("Delete Files?")
+	core.NewText(d).SetType(core.TextSupporting).SetText("OK to delete file(s)?  This is not undoable and files are not moving to trash / recycle bin. If any selections are directories all files and subdirectories will also be deleted.")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Delete Files").OnClick(func(e events.Event) {
+			paths := fn.SelectedPaths()
+			cv.CloseOpenFiles(paths) // close before rename because we are async after this
+			fn.DeleteFilesNoPrompts()
+		})
+	})
+	d.RunDialog(fn)
 }

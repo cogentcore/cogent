@@ -81,6 +81,9 @@ func (gr *Graph) MakeBasicElements(b *core.Body) {
 	})
 
 	gr.Objects.Graph = core.NewCanvas(sp).SetDraw(gr.draw)
+	gr.Objects.Graph.Animate(func(a *core.Animation) {
+		gr.RunTick(a.Dt)
+	})
 
 	gr.Vectors.Min = math32.Vector2{X: -GraphViewBoxSize, Y: -GraphViewBoxSize}
 	gr.Vectors.Max = math32.Vector2{X: GraphViewBoxSize, Y: GraphViewBoxSize}

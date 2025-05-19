@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/spell"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
 
 	"cogentcore.org/core/core"
@@ -80,17 +80,13 @@ func (sv *SpellPanel) Init() {
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
 					})
-					fv.OnDoubleClick(func(e events.Event) {
-						cur = fv.SelectedFile()
-						d.Close()
-					})
 					d.AddBottomBar(func(bar *core.Frame) {
 						d.AddCancel(bar)
 						d.AddOK(bar).OnClick(func(e events.Event) {
 							spell.Spell.AddWord(cur)
 						})
 					})
-					d.RunFullDialog(sv)
+					d.RunWindowDialog(sv)
 				})
 		})
 	})
@@ -136,13 +132,13 @@ func (sv *SpellPanel) Init() {
 			w.SetText("Change All").SetTooltip("change all instances of the unknown word in this document").
 				OnClick(func(e events.Event) {
 					tv := sv.Text
-					if tv == nil || tv.Buffer == nil {
+					if tv == nil || tv.Lines == nil {
 						return
 					}
 					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Text(), false)
 					tv.QReplaceReplaceAll(0)
 					sv.LastAction = w
-					sv.Errs = tv.Buffer.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
+					sv.Errs = tv.Lines.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
 					sv.CheckNext()
 				})
 		})
@@ -199,7 +195,7 @@ func (sv *SpellPanel) SuggestView() *core.List {
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
 func (sv *SpellPanel) CheckNext() {
 	tv := sv.Text
-	if tv == nil || tv.Buffer == nil {
+	if tv == nil || tv.Lines == nil {
 		return
 	}
 	if sv.CurLn == 0 && sv.Errs == nil {
@@ -209,7 +205,7 @@ func (sv *SpellPanel) CheckNext() {
 	for {
 		if sv.CurIndex < len(sv.Errs) {
 			lx := sv.Errs[sv.CurIndex]
-			word := string(lx.Src(tv.Buffer.Line(sv.CurLn)))
+			word := string(lx.Src(tv.Lines.Line(sv.CurLn)))
 			_, known := spell.Spell.CheckWord(word) // could have been fixed by now..
 			if known {
 				sv.CurIndex++
@@ -218,22 +214,22 @@ func (sv *SpellPanel) CheckNext() {
 			break
 		} else {
 			sv.CurLn++
-			if sv.CurLn >= tv.NumLines {
+			if sv.CurLn >= tv.NumLines() {
 				done = true
 				break
 			}
 			sv.CurIndex = 0
-			sv.Errs = tv.Buffer.SpellCheckLineErrors(sv.CurLn)
+			sv.Errs = tv.SpellCheckLineErrors(sv.CurLn)
 		}
 	}
 	if done {
-		tv.ClearHighlights()
+		tv.HighlightsReset()
 		core.MessageSnackbar(sv, "End of file, spelling check complete")
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIndex]
 	sv.CurIndex++
-	sv.UnkWord = string(sv.UnkLex.Src(tv.Buffer.Line(sv.CurLn)))
+	sv.UnkWord = string(sv.UnkLex.Src(tv.Lines.Line(sv.CurLn)))
 	sv.Suggest, _ = spell.Spell.CheckWord(sv.UnkWord)
 
 	uf := sv.UnknownText()
@@ -255,7 +251,7 @@ func (sv *SpellPanel) CheckNext() {
 
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorTarget(st)
-	hr := text.Region{Start: st, End: en}
+	hr := textpos.Region{Start: st, End: en}
 	hr.TimeNow()
 	tv.Highlights = append(tv.Highlights, hr)
 	if sv.LastAction == nil {
@@ -267,28 +263,28 @@ func (sv *SpellPanel) CheckNext() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellPanel) UnkStartPos() lexer.Pos {
-	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
+func (sv *SpellPanel) UnkStartPos() textpos.Pos {
+	pos := textpos.Pos{Line: sv.CurLn, Char: sv.UnkLex.Start}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellPanel) UnkEndPos() lexer.Pos {
-	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
+func (sv *SpellPanel) UnkEndPos() textpos.Pos {
+	pos := textpos.Pos{Line: sv.CurLn, Char: sv.UnkLex.End}
 	return pos
 }
 
 func (sv *SpellPanel) Change() {
 	tv := sv.Text
-	if tv == nil || tv.Buffer == nil {
+	if tv == nil || tv.Lines == nil {
 		return
 	}
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
-	tv.Buffer.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
-	nwrs := tv.Buffer.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
-	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 {   // Adjust got rid of changed one..
+	tv.Lines.ReplaceText(st, en, st, ct.Text(), lines.ReplaceNoMatchCase)
+	nwrs := tv.Lines.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
+	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 {  // Adjust got rid of changed one..
 		sv.CurIndex--
 	}
 	sv.Errs = nwrs
@@ -304,8 +300,8 @@ func (sv *SpellPanel) AcceptSuggestion(s string) {
 
 func (sv *SpellPanel) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buffer == nil || tv.This == nil {
+	if tv == nil || tv.Lines == nil || tv.This == nil {
 		return
 	}
-	tv.ClearHighlights()
+	tv.HighlightsReset()
 }

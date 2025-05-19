@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -173,8 +174,7 @@ func (se *SettingsData) EditRegisters() { //types:add
 	RegistersView(&AvailableRegisters)
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Project Settings
+////////   Project Settings
 
 // ProjectSettings are the settings for saving for a project. This IS the project file
 type ProjectSettings struct { //types:add
@@ -183,7 +183,7 @@ type ProjectSettings struct { //types:add
 	Files FileSettings
 
 	// editor settings
-	Editor core.EditorSettings `display:"inline"`
+	Editor text.EditorSettings `display:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
@@ -276,8 +276,7 @@ func (se *ProjectSettings) RunExecIsExec() bool {
 	return fi.IsExec()
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Saved Projects / Paths
+////////   Saved Projects / Paths
 
 var (
 	// RecentPaths is a slice of recent file paths
@@ -301,8 +300,7 @@ func OpenPaths() {
 	RecentPaths.Open(pnm)
 }
 
-////////////////////////////////////////////////
-// Code
+//////// Code
 
 // Defaults sets new project defaults based on overall settings
 func (cv *Code) Defaults() {
@@ -334,15 +332,13 @@ func (cv *Code) ApplySettings() {
 	}
 	if len(cv.Children) > 0 {
 		for i := 0; i < NTextEditors; i++ {
-			tv := cv.TextEditorByIndex(i)
-			if tv.Buffer != nil {
-				cv.ConfigTextBuffer(tv.Buffer)
+			tv := cv.EditorByIndex(i)
+			if tv.Lines != nil {
+				cv.ConfigLines(tv.Lines)
 			}
 		}
-		for _, ond := range cv.OpenNodes {
-			if ond.Buffer != nil {
-				cv.ConfigTextBuffer(ond.Buffer)
-			}
+		for _, ln := range cv.OpenFiles.Values {
+			cv.ConfigLines(ln)
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
@@ -391,8 +387,8 @@ func (cv *Code) SplitsSetView(split SplitName) { //types:add
 		cv.Settings.TabsUnder = sp.TabsUnder
 		cv.Settings.SplitName = split
 		cv.ApplySplitsSettings(sv)
-		if !cv.PanelIsOpen(cv.ActiveTextEditorIndex + TextEditor1Index) {
-			cv.SetActiveTextEditorIndex((cv.ActiveTextEditorIndex + 1) % 2)
+		if !cv.PanelIsOpen(cv.ActiveEditorIndex + TextEditor1Index) {
+			cv.SetActiveEditorIndex((cv.ActiveEditorIndex + 1) % 2)
 		}
 	}
 }

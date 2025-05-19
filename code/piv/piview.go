@@ -29,9 +29,9 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/ki"
-	"cogentcore.org/core/parse/lex"
-	"cogentcore.org/core/parse/parse"
-	"cogentcore.org/core/parse"
+	"cogentcore.org/core/text/parse/lex"
+	"cogentcore.org/core/text/parse/parse"
+	"cogentcore.org/core/text/parse"
 )
 
 // These are then the fixed indices of the different elements in the splitview
@@ -227,7 +227,7 @@ func (pv *PiView) SetStatus(msg string) {
 	ln := 0
 	ch := 0
 	if tv, ok := pv.TestTextEditor(); ok {
-		ln = tv.CursorPos.Ln + 1
+		ln = tv.CursorPos.Line + 1
 		ch = tv.CursorPos.Ch
 		if tv.ISearch.On {
 			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), msg)
@@ -625,19 +625,19 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) core.
 }
 
 // ConfigTextEditor configures text view
-func (pv *PiView) ConfigTextEditor(ly *core.Frame, out bool) *texteditor.Editor {
+func (pv *PiView) ConfigTextEditor(ly *core.Frame, out bool) *textcore.Editor {
 	ly.Lay = core.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-	var tv *texteditor.Editor
+	var tv *textcore.Editor
 	update := false
 	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(core.KiT_TextEditor).(*texteditor.Editor)
+		tv = ly.Child(0).Embed(core.KiT_TextEditor).(*textcore.Editor)
 	} else {
 		update = ly.UpdateStart()
-		tv = ly.NewChild(core.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
+		tv = ly.NewChild(core.KiT_TextEditor, ly.Nm).(*textcore.Editor)
 	}
 
 	if core.Settings.Editor.WordWrap {
@@ -658,24 +658,24 @@ func (pv *PiView) ConfigTextEditor(ly *core.Frame, out bool) *texteditor.Editor 
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextEditor in it.  if sel, then select it.
 // returns widget
-func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *texteditor.Editor {
+func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *textcore.Editor {
 	ly := pv.RecycleMainTab(label, core.FrameType, sel).Embed(core.FrameType).(*core.Frame)
 	tv := pv.ConfigTextEditor(ly, out)
 	return tv
 }
 
 // MainTabTextEditorByName returns the texteditor for given main tab, if it exists
-func (pv *PiView) MainTabTextEditorByName(tabnm string) (*texteditor.Editor, bool) {
+func (pv *PiView) MainTabTextEditorByName(tabnm string) (*textcore.Editor, bool) {
 	lyk, err := pv.MainTabByNameTry(tabnm)
 	if err != nil {
 		return nil, false
 	}
-	ctv := lyk.Child(0).Embed(core.KiT_TextEditor).(*texteditor.Editor)
+	ctv := lyk.Child(0).Embed(core.KiT_TextEditor).(*textcore.Editor)
 	return ctv, true
 }
 
 // TextTextEditor returns the texteditor for TestBuf TextEditor
-func (pv *PiView) TestTextEditor() (*texteditor.Editor, bool) {
+func (pv *PiView) TestTextEditor() (*textcore.Editor, bool) {
 	return pv.MainTabTextEditorByName("TestText")
 }
 

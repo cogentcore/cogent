@@ -7,46 +7,20 @@ package canvas
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
 // TextStyle is text styling info -- using Form to do text editor
 type TextStyle struct {
-
 	// current text to edit
 	Text string
 
-	// font family
-	Font core.FontName `xml:"font-family"`
+	// FontStyle styling properties.
+	FontStyle styles.Font `new-window:"+"`
 
-	// font size
-	Size units.Value `xml:"font-size"`
-
-	// prop: font-style = style -- normal, italic, etc
-	Style styles.FontStyles `xml:"font-style" inherit:"true"`
-
-	// prop: font-weight = weight: normal, bold, etc
-	Weight styles.FontWeights `xml:"font-weight" inherit:"true"`
-
-	// prop: font-stretch = font stretch / condense options
-	Stretch styles.FontStretch `xml:"font-stretch" inherit:"true"`
-
-	// prop: font-variant = normal or small caps
-	Variant styles.FontVariants `xml:"font-variant" inherit:"true"`
-
-	// prop: text-decoration = underline, line-through, etc -- not inherited
-	Deco styles.TextDecorations `xml:"text-decoration"`
-
-	// prop: baseline-shift = super / sub script -- not inherited
-	Shift styles.BaselineShifts `xml:"baseline-shift"`
-
-	// prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*.
-	Align styles.Aligns `xml:"text-align" inherit:"true"`
-
-	// font value view for font toolbar
-	FontButton core.FontButton `display:"-"`
+	// TextStyle styling properties.
+	TextStyle styles.Text `new-window:"+"`
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
@@ -55,35 +29,18 @@ type TextStyle struct {
 func (ts *TextStyle) Update() {
 	// this is called automatically when edited (TODO: not anymore)
 	if ts.Canvas != nil {
-		ts.Canvas.SetTextProperties(ts.TextProperties())
+		// ts.Canvas.SetTextProperties(ts.TextProperties())
 		ts.Canvas.SetText(ts.Text)
 	}
 }
 
 func (ts *TextStyle) Defaults() {
 	ts.Text = ""
-	ts.Font = "Arial"
-	ts.Size.Dp(16)
-	ts.Style = 0
-	ts.Weight = 0
-	ts.Stretch = 0
-	ts.Variant = 0
-	ts.Deco = 0
-	ts.Shift = 0
-	ts.Align = 0
-
-	// ts.SetFromFontStyle(&Settings.TextStyle.FontStyle)
 }
 
 // SetFromFontStyle sets from standard styles.Font style
 func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
-	ts.Font = core.FontName(fs.Family)
-	ts.Size = fs.Size
-	ts.Weight = fs.Weight
-	ts.Stretch = fs.Stretch
-	ts.Variant = fs.Variant
-	ts.Deco = fs.Decoration
-	ts.Shift = fs.Shift
+	ts.FontStyle = *fs
 }
 
 // SetFromNode sets text style info from given svg.Text node
@@ -94,7 +51,7 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 		ts.Text = tspan.Text
 	}
 	// ts.SetFromFontStyle(&txt.Paint.FontStyle)
-	ts.Align = txt.Paint.TextStyle.Align
+	// ts.Align = txt.Paint.TextStyle.Align
 }
 
 // SetTextPropertiesNode sets the text properties of given Text node
@@ -133,38 +90,38 @@ func (gv *Canvas) SetTextProperties(tps map[string]string) {
 }
 
 // TextProperties returns non-default text properties to set
-func (ts *TextStyle) TextProperties() map[string]string {
-	tps := make(map[string]string)
-	tps["font-family"] = string(ts.Font)
-	tps["font-size"] = ts.Size.String()
-	if int(ts.Weight) != 0 {
-		tps["font-weight"] = ts.Weight.String()
-	} else {
-		tps["font-weight"] = ""
-	}
-	if int(ts.Stretch) != 0 {
-		tps["font-stretch"] = ts.Stretch.String()
-	} else {
-		tps["font-stretch"] = ""
-	}
-	if int(ts.Variant) != 0 {
-		tps["font-variant"] = ts.Variant.String()
-	} else {
-		tps["font-variant"] = ""
-	}
-	if int(ts.Deco) != 0 {
-		tps["text-decoration"] = ts.Deco.String()
-	} else {
-		tps["text-decoration"] = ""
-	}
-	if int(ts.Shift) != 0 {
-		tps["baseline-shift"] = ts.Shift.String()
-	} else {
-		tps["baseline-shift"] = ""
-	}
-	tps["text-align"] = ts.Align.String()
-	return tps
-}
+// func (ts *TextStyle) TextProperties() map[string]string {
+// tps := make(map[string]string)
+// // tps["font-family"] = string(ts.Font)
+// tps["font-size"] = ts.Size.String()
+// if int(ts.Weight) != 0 {
+// 	tps["font-weight"] = ts.Weight.String()
+// } else {
+// 	tps["font-weight"] = ""
+// }
+// if int(ts.Stretch) != 0 {
+// 	tps["font-stretch"] = ts.Stretch.String()
+// } else {
+// 	tps["font-stretch"] = ""
+// }
+// if int(ts.Variant) != 0 {
+// 	tps["font-variant"] = ts.Variant.String()
+// } else {
+// 	tps["font-variant"] = ""
+// }
+// if int(ts.Deco) != 0 {
+// 	tps["text-decoration"] = ts.Deco.String()
+// } else {
+// 	tps["text-decoration"] = ""
+// }
+// if int(ts.Shift) != 0 {
+// 	tps["baseline-shift"] = ts.Shift.String()
+// } else {
+// 	tps["baseline-shift"] = ""
+// }
+// tps["text-align"] = ts.Align.String()
+// return tps
+// }
 
 // SetTextNode sets the text of given Text node
 func (gv *Canvas) SetTextNode(sii svg.Node, txt string) bool {

@@ -5,27 +5,47 @@
 package code
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
-	"html"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/core/base/metadata"
 	"cogentcore.org/core/base/stringsx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/paint"
-	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/runes"
+	"cogentcore.org/core/text/search"
+	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
+)
+
+// Locations are different locations to search in
+type Locations int32 //enums:enum
+
+const (
+	// Open searches in all open directories in a filetree.
+	Open Locations = iota
+
+	// All searches in all directories under the root path.
+	All
+
+	// Dir searches in the current active directory.
+	Dir
+
+	// File searches in the current active file.
+	File
 )
 
 // FindParams are parameters for find / replace
@@ -44,7 +64,7 @@ type FindParams struct {
 	Regexp bool
 
 	// locations to search in
-	Loc filetree.FindLocation
+	Loc Locations
 
 	// languages for files to search
 	Languages []fileinfo.Known
@@ -86,9 +106,12 @@ func (fv *FindPanel) Init() {
 		core.ToolbarStyles(w)
 		w.Maker(fv.makeReplToolbar)
 	})
-	tree.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
+	tree.AddChildAt(fv, "findtext", func(w *textcore.Editor) {
 		ConfigOutputTextEditor(w)
-		w.LinkHandler = func(tl *paint.TextLink) {
+		w.Styler(func(s *styles.Style) {
+			w.AutoscrollOnInput = false
+		})
+		w.LinkHandler = func(tl *rich.Hyperlink) {
 			fv.OpenFindURL(tl.URL, w)
 		}
 	})
@@ -104,49 +127,101 @@ func (fv *FindPanel) Params() *FindParams {
 	return &fv.Code.Settings.Find
 }
 
-// ShowResults shows the results in the buffer
-func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
-	ftv := fv.TextEditor()
-	fbuf := ftv.Buffer
-	fbuf.Options.LineNumbers = false
-	outlns := make([][]byte, 0, 100)
-	outmus := make([][]byte, 0, 100) // markups
-	for _, fs := range res {
-		fp := fs.Node.Info.Path
-		fn := fs.Node.RelativePath()
-		fbStLn := len(outlns) // find buf start ln
-		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
-		outlns = append(outlns, []byte(lstr))
-		mstr := fmt.Sprintf(`<b>%v</b>`, lstr)
-		outmus = append(outmus, []byte(mstr))
-		for _, mt := range fs.Matches {
-			txt := bytes.TrimSpace(mt.Text)
-			txt = append([]byte{'\t'}, txt...)
-			ln := mt.Reg.Start.Ln + 1
-			ch := mt.Reg.Start.Ch + 1
-			ech := mt.Reg.End.Ch + 1
-			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
-			nomu := bytes.Replace(txt, []byte("<mark>"), nil, -1)
-			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
-			nomus := html.EscapeString(string(nomu))
-			lstr = fmt.Sprintf(`%v: %s`, fnstr, nomus) // note: has tab embedded at start of lstr
+func findURL(path string, resultIndex, matchIndex, line, startChar, endChar int) string {
+	return fmt.Sprintf("find:///%s#R%d-%dL%dC%d-L%dC%d", path, resultIndex, matchIndex, line, startChar, line, endChar)
+}
 
-			outlns = append(outlns, []byte(lstr))
-			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, txt)
-			outmus = append(outmus, []byte(mstr))
-		}
-		outlns = append(outlns, []byte(""))
-		outmus = append(outmus, []byte(""))
+// parseFindURL parses and opens given find:/// url from Find, return text
+// region encoded in url, and starting line of results in find buffer, and
+// number of results returned -- for parsing all the find results
+func parseFindURL(ur string) (fpath string, reg textpos.Region, resultIndex, matchIndex int, err error) {
+	up, err := url.Parse(ur)
+	if err != nil {
+		return
 	}
-	ltxt := bytes.Join(outlns, []byte("\n"))
-	mtxt := bytes.Join(outmus, []byte("\n"))
-	fbuf.SetReadOnly(true)
-	fbuf.AppendTextMarkup(ltxt, mtxt, texteditor.EditSignal)
-	ftv.CursorStartDoc()
+	fpath = up.Path[1:] // has double //
+	pos := up.Fragment
+	if pos == "" {
+		err = errors.New("No position fragment")
+		return
+	}
+	lidx := strings.Index(pos, "L")
+	if lidx > 0 {
+		reg.FromStringURL(pos[lidx:])
+		pos = pos[:lidx]
+	} else {
+		err = errors.New("No Line element")
+		return
+	}
+	fmt.Sscanf(pos, "R%d-%d", &resultIndex, &matchIndex)
+	return
+}
 
+// parseFindURL parses and opens given find:/// url from Find, return text
+// region encoded in url, and starting line of results in find buffer, and
+// number of results returned -- for parsing all the find results
+func (fv *FindPanel) parseFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg textpos.Region, resultIndex, matchIndex int, ok bool) {
+	cv := fv.Code
+	var fpath string
+	fpath, reg, resultIndex, matchIndex, err := parseFindURL(ur)
+	if err != nil {
+		core.ErrorSnackbar(fv, err)
+		return
+	}
+	tv, _, ok = cv.LinkViewFile(fpath)
+	if !ok {
+		core.MessageSnackbar(fv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+		return
+	}
+	return
+}
+
+// ShowResults shows the results in the buffer
+func (fv *FindPanel) ShowResults(res []search.Results) {
+	cv := fv.Code
+	ftv := fv.TextEditor()
+	fbuf := ftv.Lines
+	metadata.Set(fbuf, "SearchResults", res) // avail for direct access
+	sty := fbuf.FontStyle()
+	bold := sty.Clone().SetWeight(rich.Bold)
+	matchBg := sty.Clone().SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
+	link := sty.Clone().SetLinkStyle()
+	nsp := 1
+	fbuf.Settings.LineNumbers = false
+	outlns := make([][]rune, 0, 100)
+	outmus := make([]rich.Text, 0, 100) // markups
+	for ri, rs := range res {
+		fp := rs.Filepath
+		fn := cv.Files.RelativePathFrom(fsx.Filename(fp))
+		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, rs.Count))
+		outlns = append(outlns, []rune{})
+		outmus = append(outmus, rich.NewText(sty, []rune{}))
+		outlns = append(outlns, lstr)
+		outmus = append(outmus, rich.NewText(bold, lstr))
+		for mi, mt := range rs.Matches {
+			txt := runes.ReplaceAll(mt.Text, []rune("\t"), []rune(" "))
+			txt = append([]rune("\t"), txt...)
+			ln := mt.Region.Start.Line
+			ch := mt.Region.Start.Char
+			ech := mt.Region.End.Char
+			url := findURL(fp, ri, mi, ln, ch, ech)
+			fnstr := []rune(fmt.Sprintf("%v:%d:%d: ", fn, ln, ch))
+			outlns = append(outlns, append(fnstr, txt...))
+			mu := rich.Text{}
+			ep := min(mt.TextMatch.End+nsp, len(txt))
+			mu.AddLink(link, url, string(fnstr)).
+				AddSpan(sty, txt[:mt.TextMatch.Start+nsp]).
+				AddSpan(matchBg, txt[mt.TextMatch.Start+nsp:ep])
+			if mt.TextMatch.End+nsp < len(txt) {
+				mu.AddSpan(sty, txt[mt.TextMatch.End+nsp:])
+			}
+			outmus = append(outmus, mu)
+		}
+	}
+	fbuf.SetReadOnly(true)
+	fbuf.AppendTextMarkup(outlns, outmus)
+	ftv.CursorStartDoc()
 	fv.Update()
-	ftv.SetCursorShow(lexer.Pos{Ln: 0})
-	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
@@ -174,65 +249,65 @@ func (fv *FindPanel) CheckValidRegexp() bool {
 	return true
 }
 
-// ReplaceAction performs the replace -- if using regexp mode, regexp must be compiled in advance
+// ReplaceAction performs the replace. if using regexp mode,
+// regexp must be compiled in advance.
 func (fv *FindPanel) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
 	fp := fv.Params()
 	ftv := fv.TextEditor()
-	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
-	if !ok {
-		ok = ftv.CursorNextLink(false) // no wrap
+	tl, _ := ftv.OpenLinkAt(ftv.CursorPos)
+	if tl == nil {
+		ok := ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
 		}
-		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
-		if !ok {
+		tl, _ = ftv.OpenLinkAt(ftv.CursorPos)
+		if tl == nil {
 			return false
 		}
 	}
-	ge := fv.Code
-	tv, reg, _, _, ok := ge.ParseOpenFindURL(tl.URL, ftv)
+	tv, reg, _, _, ok := fv.parseFindURL(tl.URL, ftv)
 	if !ok {
 		return false
 	}
 	if reg.IsNil() {
-		ok = ftv.CursorNextLink(false) // no wrap
+		ok := ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
 		}
-		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
-		if !ok {
+		tl, _ = ftv.OpenLinkAt(ftv.CursorPos)
+		if tl == nil {
 			return false
 		}
-		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
+		tv, reg, _, _, ok = fv.parseFindURL(tl.URL, ftv)
 		if !ok || reg.IsNil() {
 			return false
 		}
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustRegion(reg)
+	reg = tv.Lines.AdjustRegion(reg)
 	if !reg.IsNil() {
 		if fp.Regexp {
-			rg := tv.Buffer.Region(reg.Start, reg.End)
+			rg := tv.Lines.Region(reg.Start, reg.End)
 			b := rg.ToBytes()
 			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
-			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), texteditor.EditSignal, false)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), false)
 		} else {
 			// MatchCase only if doing IgnoreCase
-			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, texteditor.EditSignal, fp.IgnoreCase)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, fp.IgnoreCase)
 		}
 
 		// delete the link for the just done replace
-		ftvln := ftv.CursorPos.Ln
-		st := lexer.Pos{Ln: ftvln, Ch: 0}
-		len := ftv.Buffer.LineLen(ftvln)
-		en := lexer.Pos{Ln: ftvln, Ch: len}
-		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
+		ftvln := ftv.CursorPos.Line
+		st := textpos.Pos{Line: ftvln, Char: 0}
+		len := ftv.Lines.LineLen(ftvln)
+		en := textpos.Pos{Line: ftvln, Char: len}
+		ftv.Lines.DeleteText(st, en)
 	}
 
-	tv.ClearHighlights()
+	tv.HighlightsReset()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -284,7 +359,6 @@ func (fv *FindPanel) ReplaceAll() {
 			sc := fv.Code.AsWidget().Scene
 			sc.AsyncLock()
 			ok := fv.ReplaceAction()
-			sc.NeedsLayout()
 			sc.AsyncUnlock()
 			if !ok {
 				break
@@ -316,65 +390,43 @@ func (fv *FindPanel) PrevFind() {
 }
 
 // OpenFindURL opens given find:/// url from Find
-func (fv *FindPanel) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	ge := fv.Code
-	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
+func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
+	tv, reg, resultIndex, _, ok := fv.parseFindURL(ur, ftv)
 	if !ok {
 		return false
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustRegion(reg)
+	reg = tv.Lines.AdjustRegion(reg)
 	find := fv.Params().Find
-	texteditor.PrevISearchString = find
-	tve := texteditor.AsEditor(tv)
-	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
+	textcore.PrevISearchString = find
+	tve := textcore.AsEditor(tv)
+	res, _ := metadata.Get[[]search.Results](ftv.Lines, "SearchResults")
+	tres := &res[resultIndex]
+	fv.HighlightFinds(tve, ftv, tres, find)
 	tv.SetCursorTarget(reg.Start)
-	tv.NeedsLayout()
+	fv.NeedsRender()
 	return true
 }
 
 // HighlightFinds highlights all the find results in ftv buffer
-func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount int, find string) {
-	lnka := []byte(`<a href="`)
-	lnkasz := len(lnka)
-
-	fb := ftv.Buffer
-
-	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]text.Region, fCount)
-		for i := 0; i < fCount; i++ {
-			fln := fbStLn + 1 + i
-			if fln >= len(fb.Markup) {
-				continue
-			}
-			ltxt := fb.Markup[fln]
-			fpi := bytes.Index(ltxt, lnka)
-			if fpi < 0 {
-				continue
-			}
-			fpi += lnkasz
-			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
-			lnk := string(ltxt[fpi:epi])
-			iup, err := url.Parse(lnk)
-			if err != nil {
-				continue
-			}
-			ireg := text.Region{}
-			lidx := strings.Index(iup.Fragment, "L")
-			ireg.FromString(iup.Fragment[lidx:])
-			ireg.Time.SetTime(fv.Time)
-			hi[i] = ireg
-		}
-		tv.Highlights = hi
+func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, res *search.Results, find string) {
+	if len(tv.Highlights) == len(res.Matches) {
+		return
+	}
+	tv.HighlightsReset()
+	for _, mt := range res.Matches {
+		reg := mt.Region
+		reg.Time.SetTime(fv.Time)
+		reg = tv.Lines.AdjustRegion(reg)
+		tv.HighlightRegion(reg)
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//    GUI config
+////////    GUI config
 
 // TextEditorLay returns the find results TextEditor
-func (fv *FindPanel) TextEditor() *texteditor.Editor {
-	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
+func (fv *FindPanel) TextEditor() *textcore.Editor {
+	return textcore.AsEditor(fv.ChildByName("findtext", 1))
 }
 
 // makeFindToolbar
@@ -396,13 +448,13 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 			find := w.CurrentItem.Value.(string)
 			fv.Params().Find = find
 			if find == "" {
-				tv := fv.Code.ActiveTextEditor()
+				tv := fv.Code.ActiveEditor()
 				if tv != nil {
-					tv.ClearHighlights()
+					tv.HighlightsReset()
 				}
 				fvtv := fv.TextEditor()
 				if fvtv != nil {
-					fvtv.Buffer.SetText(nil)
+					fvtv.Lines.SetText(nil)
 				}
 			} else {
 				stringsx.InsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)
@@ -444,7 +496,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 		w.SetTooltip(ttxt)
 		w.SetEnum(fv.Params().Loc)
 		w.OnChange(func(e events.Event) {
-			if eval, ok := w.CurrentItem.Value.(filetree.FindLocation); ok {
+			if eval, ok := w.CurrentItem.Value.(Locations); ok {
 				fv.Params().Loc = eval
 			}
 		})
@@ -507,4 +559,94 @@ func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
 		w.SetSlice(&fv.Params().Languages)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})
+}
+
+////////  Code api
+
+func (cv *Code) CallFind(ctx core.Widget) {
+	cv.ConfigFindButton(core.NewSoloFuncButton(ctx).SetFunc(cv.Find)).CallFunc()
+}
+
+// Find does Find / Replace in files, using given options and filters -- opens up a
+// main tab with the results and further controls.
+func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc Locations, langs []fileinfo.Known) { //types:add
+	if find == "" {
+		return
+	}
+	cv.Settings.Find.IgnoreCase = ignoreCase
+	cv.Settings.Find.Regexp = regExp
+	cv.Settings.Find.Languages = langs
+	cv.Settings.Find.Loc = loc
+	cv.Settings.Find.Find = find
+	cv.Settings.Find.Replace = repl
+
+	tv := cv.Tabs()
+	if tv == nil {
+		return
+	}
+	var err error
+
+	var re *regexp.Regexp
+	if regExp {
+		re, err = regexp.Compile(find)
+		if err != nil {
+			core.ErrorSnackbar(cv, err)
+			return
+		}
+	}
+
+	fbuf, _ := cv.RecycleCmdBuf("Find")
+	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
+	fv.Time = time.Now()
+	fv.UpdateTree()
+	ftv := fv.TextEditor()
+	ftv.SetLines(fbuf)
+
+	root := string(cv.Files.Filepath)
+	atv := cv.ActiveEditor()
+	adir := ""
+	if atv.Lines != nil {
+		adir = filepath.Dir(atv.Lines.Filename())
+	}
+
+	excludeOpen := cv.OpenFiles.Paths()
+
+	var res []search.Results
+	var openFilesPaths []string
+	switch loc {
+	case Open:
+		openFilesPaths = cv.Files.OpenPaths()
+		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
+	case All:
+		res, err = search.All(root, find, ignoreCase, regExp, langs, excludeOpen...)
+	case Dir:
+		openFilesPaths = []string{adir}
+		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
+	case File:
+		if atv.Lines == nil {
+			core.MessageSnackbar(cv, "No buffer for active editor")
+			return
+		}
+		if regExp {
+			cnt, matches := atv.Lines.SearchRegexp(re)
+			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+		} else {
+			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
+			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+		}
+	}
+	if loc != File {
+		if regExp {
+			ores := cv.OpenFiles.SearchRegexpInPaths(openFilesPaths, re, langs)
+			res = append(ores, res...)
+		} else {
+			ores := cv.OpenFiles.SearchInPaths(openFilesPaths, find, ignoreCase, langs)
+			res = append(ores, res...)
+		}
+	}
+	if err != nil {
+		core.ErrorSnackbar(cv, err)
+	}
+	fv.ShowResults(res)
+	cv.FocusOnPanel(TabsIndex)
 }

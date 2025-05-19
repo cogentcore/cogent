@@ -25,11 +25,12 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/highlighting"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/spell"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -71,13 +72,13 @@ type Code struct {
 	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently active texteditor -- new files will be viewed in other views if available
-	ActiveTextEditorIndex int `set:"-" json:"-"`
+	ActiveEditorIndex int `set:"-" json:"-"`
 
-	// list of open nodes, most recent first
-	OpenNodes OpenNodes `json:"-"`
+	// list of open files, most recent first
+	OpenFiles OpenFiles `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*texteditor.Buffer `set:"-" json:"-"`
+	CmdBufs map[string]*lines.Lines `set:"-" json:"-"`
 
 	// history of commands executed in this session
 	CmdHistory CmdNames `set:"-" json:"-"`
@@ -124,7 +125,14 @@ func (cv *Code) Init() {
 	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
-		// cv.UpdateFiles()
+		cv.UpdateFiles()
+	})
+	cv.Updater(func() {
+		if cv.NeedsRebuild() {
+			highlighting.UpdateFromTheme()
+			cv.OpenFiles.ReMarkup()
+			cv.CmdBuffsReMarkup()
+		}
 	})
 
 	tree.AddChildAt(cv, "splits", func(w *core.Splits) {
@@ -176,7 +184,7 @@ func (cv *Code) Init() {
 		tree.AddChildAt(w, "sb-text", func(w *core.Text) {
 			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
 			w.Styler(func(s *styles.Style) {
-				s.Min.X.Ch(100)
+				s.Min.X.Ch(200) // todo: should use Pw(100) -- need that to work
 				s.Min.Y.Em(1.0)
 				s.Text.TabSize = 4
 			})
@@ -187,7 +195,7 @@ func (cv *Code) Init() {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
 	// if data == "Find" {
-	// 	ge.ActiveTextEditor().ClearHighlights()
+	// 	ge.ActiveEditor().HighlightsReset()
 	// }
 	// })
 }
@@ -208,10 +216,10 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Grow.Set(1, 0)
 			})
 			w.Menu = func(m *core.Scene) {
-				cv.TextEditorButtonMenu(i, m)
+				cv.EditorButtonMenu(i, m)
 			}
 			w.OnClick(func(e events.Event) {
-				cv.SetActiveTextEditorIndex(i)
+				cv.SetActiveEditorIndex(i)
 			})
 			// todo: update
 			// ge.UpdateTextButtons()
@@ -222,17 +230,21 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
-				s.SetAbilities(true, abilities.ScrollableUnfocused)
-				if w.Buffer != nil {
-					w.SetReadOnly(w.Buffer.Info.Generated)
+				s.SetAbilities(true, abilities.ScrollableUnattended)
+				if w.Lines != nil {
+					w.SetReadOnly(w.Lines.FileInfo().Generated)
 				}
 			})
 			w.OnFocus(func(e events.Event) {
-				cv.ActiveTextEditorIndex = i
+				cv.ActiveEditorIndex = i
 				cv.updatePreviewPanel()
+				if w.Complete != nil {
+					w.Complete.LookupFunc = cv.LookupFun
+				}
 			})
 			// get updates on cursor movement and qreplace
 			w.OnInput(func(e events.Event) {
+				cv.UpdateTextButtons()
 				cv.UpdateStatusText()
 			})
 			w.OnChange(func(e events.Event) {
@@ -274,13 +286,13 @@ func (cv *Code) Splits() *core.Splits {
 	return cv.ChildByName("splits", 2).(*core.Splits)
 }
 
-// TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
-func (cv *Code) TextEditorButtonByIndex(idx int) *core.Button {
+// EditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
+func (cv *Code) EditorButtonByIndex(idx int) *core.Button {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(0).(*core.Button)
 }
 
-// TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (cv *Code) TextEditorByIndex(idx int) *TextEditor {
+// EditorByIndex returns the TextEditor by index (0 or 1), nil if not found
+func (cv *Code) EditorByIndex(idx int) *TextEditor {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
 }
 
@@ -339,11 +351,15 @@ func (cv *Code) IsEmpty() bool {
 
 // OpenRecent opens a recently used file
 func (cv *Code) OpenRecent(filename core.Filename) { //types:add
+	empty := cv.IsEmpty()
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
-		cv.OpenProject(filename)
+		cv.openProject(filename)
 	} else {
-		cv.OpenPath(filename)
+		cv.openPath(filename)
+	}
+	if empty {
+		cv.UpdateFiles()
 	}
 }
 
@@ -375,7 +391,7 @@ func (cv *Code) OpenFile(fnm string) { //types:add
 		}
 	}
 	// fmt.Printf("open path: %s\n", ge.ProjectRoot)
-	cv.OpenPath(core.Filename(abfn))
+	cv.openPath(core.Filename(abfn))
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
@@ -388,8 +404,20 @@ func (cv *Code) SetWindowNameTitle() {
 // specific file or a folder containing multiple files of interest -- opens in
 // current Code object if it is empty, or otherwise opens a new window.
 func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
+	empty := cv.IsEmpty()
+	ncv := cv.openPath(path)
+	if empty {
+		cv.UpdateFiles()
+	}
+	return ncv
+}
+
+// openPath creates a new project by opening given path, which can either be a
+// specific file or a folder containing multiple files of interest -- opens in
+// current Code object if it is empty, or otherwise opens a new window.
+func (cv *Code) openPath(path core.Filename) *Code { //types:add
 	if gproj, has := CheckForProjectAtPath(string(path)); has {
-		return cv.OpenProject(core.Filename(gproj))
+		return cv.openProject(core.Filename(gproj))
 	}
 	if !cv.IsEmpty() {
 		return NewCodeProjectPath(string(path))
@@ -407,12 +435,12 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 		cv.ProjectFilename = cv.Settings.ProjectFilename
 		cv.Settings.ProjectRoot = cv.ProjectRoot
 		cv.SetWindowNameTitle()
-		cv.UpdateFiles()
+		// cv.UpdateFiles()
 		cv.GuessMainLang()
 		cv.LangDefaults()
 		cv.SplitsSetView(SplitName(AvailableSplitNames[0]))
 		if fnm != "" {
-			cv.NextViewFile(core.Filename(fnm))
+			cv.NextViewFile(fnm)
 		}
 	}
 	return cv
@@ -421,6 +449,17 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 // OpenProject opens .code project file and its settings from given filename,
 // in a standard toml-formatted file.
 func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
+	empty := cv.IsEmpty()
+	ncv := cv.openProject(filename)
+	if empty {
+		cv.UpdateFiles()
+	}
+	return ncv
+}
+
+// openProject opens .code project file and its settings from given filename,
+// in a standard toml-formatted file.
+func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
 	}
@@ -440,7 +479,7 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 		cv.SetName(pnm)
 		cv.Scene.SetName(pnm)
 		cv.ApplySettings()
-		cv.UpdateFiles()
+		// cv.UpdateFiles()
 		if cv.Settings.MainLang == fileinfo.Unknown {
 			cv.GuessMainLang()
 			cv.LangDefaults()
@@ -461,7 +500,7 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 		core.MessageDialog(cv, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
 		return nil
 	}
-	nge := cv.OpenPath(core.Filename(np))
+	nge := cv.openPath(core.Filename(np))
 	nge.Settings.MainLang = mainLang
 	nge.Settings.VersionControl = versionControl
 	return nge
@@ -555,7 +594,7 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		})
 		core.NewButton(bar).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
-			cv.SaveAllOpenNodes()
+			cv.SaveAllOpenFiles()
 			if fun != nil {
 				fun()
 			}
@@ -614,7 +653,7 @@ func CheckForProjectAtPath(path string) (string, bool) {
 
 // NChangedFiles returns number of opened files with unsaved changes
 func (cv *Code) NChangedFiles() int {
-	return cv.OpenNodes.NChanged()
+	return cv.OpenFiles.NChanged()
 }
 
 // AddCloseDialog adds the close dialog that automatically saves the project
@@ -634,7 +673,7 @@ func (cv *Code) AddCloseDialog() {
 				cv.Scene.Close()
 			})
 			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
-				cv.SaveAllOpenNodes()
+				cv.SaveAllOpenFiles()
 				cv.Scene.Close()
 			})
 		})
@@ -690,9 +729,9 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	cv.Update() // get first pass so settings stick
 
 	if doPath {
-		cv.OpenPath(core.Filename(path))
+		cv.openPath(core.Filename(path))
 	} else {
-		cv.OpenProject(core.Filename(path))
+		cv.openProject(core.Filename(path))
 	}
 
 	b.RunWindow()

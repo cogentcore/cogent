@@ -9,16 +9,16 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBind(t *testing.T) {
-	tv := texteditor.Editor{}
-	tv.CursorPos = lexer.Pos{22, 44}
-	tv.SelectRegion.Start = lexer.Pos{11, 14}
-	tv.SelectRegion.End = lexer.Pos{55, 0}
+	tv := textcore.Editor{}
+	tv.CursorPos = textpos.Pos{22, 44}
+	tv.SelectRegion.Start = textpos.Pos{11, 14}
+	tv.SelectRegion.End = textpos.Pos{55, 0}
 
 	fpath := "/Users/oreilly/go/src/cogentcore.org/cogent/code/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/cogentcore.org"

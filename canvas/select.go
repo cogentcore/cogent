@@ -210,7 +210,6 @@ func (sv *SVG) SetSelSpritePos() {
 			sprites.InactivateSprite(spnm)
 		}
 	}
-	sprites.Modified = true
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites

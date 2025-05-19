@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
 )
 
 // GiDebug is the interface for all supported debuggers.
@@ -22,7 +22,7 @@ func (st *Stub) HasTasks() bool {
 	return true
 }
 
-func (st *Stub) Start(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) error {
+func (st *Stub) Start(path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) error {
 	return nil
 }
 

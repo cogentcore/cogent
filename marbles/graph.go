@@ -15,7 +15,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/parse/complete"
+	"cogentcore.org/core/text/parse/complete"
 )
 
 // Graph contains the lines and parameters of a graph
@@ -75,7 +75,7 @@ type Line struct {
 type Params struct { //types:add
 
 	// Number of marbles
-	NMarbles int `min:"1" max:"10000" step:"10" label:"Number of marbles"`
+	NMarbles int `min:"1" max:"100000" step:"10" label:"Number of marbles"`
 
 	// Marble horizontal start position
 	MarbleStartX Expr
@@ -92,7 +92,7 @@ type Params struct { //types:add
 	// how fast to move along velocity vector -- lower = smoother, more slow-mo
 	UpdateRate Param `display:"inline"`
 
-	// how fast time increases
+	// how much "t" increases per millisecond
 	TimeStep Param `display:"inline"`
 
 	// how fast it accelerates down
@@ -207,10 +207,14 @@ func (gr *Graph) graphAndUpdate() {
 	gr.Objects.Body.Scene.Update()
 }
 
-// Run runs the marbles for NSteps
+// Run runs the marbles.
 func (gr *Graph) Run() { //types:add
 	gr.AutoSave()
-	go gr.RunMarbles()
+	if gr.State.Running {
+		return
+	}
+	gr.State.Running = true
+	gr.State.Step = 0
 }
 
 // Stop stops the marbles
@@ -223,8 +227,9 @@ func (gr *Graph) Step() { //types:add
 	if gr.State.Running {
 		return
 	}
-	gr.UpdateMarbles()
-	gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
+	dt := 16.66666667 // equal to one frame in 60 FPS
+	gr.UpdateMarbles(float32(dt))
+	gr.State.Time += dt * gr.Params.TimeStep.Eval(0, 0)
 }
 
 // StopSelecting stops selecting current marble
@@ -303,6 +308,8 @@ func (gr *Graph) CompileExprs() {
 
 // CompileParams compiles all of the graph parameter expressions
 func (gr *Graph) CompileParams() {
+	gr.Params.MarbleStartX.Compile()
+	gr.Params.MarbleStartY.Compile()
 	gr.Params.StartVelocityY.Compile()
 	gr.Params.StartVelocityX.Compile()
 	gr.Params.UpdateRate.Compile()
@@ -421,7 +428,7 @@ func (pr *Params) BasicDefaults() {
 	pr.StartVelocityY.Expr.Expr = "0"
 	pr.StartVelocityX.Expr.Expr = "0"
 	pr.UpdateRate.Expr.Expr = ".02"
-	pr.TimeStep.Expr.Expr = "0.01"
+	pr.TimeStep.Expr.Expr = "0.001"
 	pr.YForce.Expr.Expr = "-0.1"
 	pr.XForce.Expr.Expr = "0"
 	pr.CenterX.Expr.Expr = "0"

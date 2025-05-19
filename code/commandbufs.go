@@ -5,7 +5,6 @@
 package code
 
 import (
-	"fmt"
 	"strings"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -13,42 +12,56 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
 // existing. Returns true if new buffer created.
-func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
+func (cv *Code) RecycleCmdBuf(cmdName string) (*lines.Lines, bool) {
 	if cv.CmdBufs == nil {
-		cv.CmdBufs = make(map[string]*texteditor.Buffer, 20)
+		cv.CmdBufs = make(map[string]*lines.Lines, 20)
 	}
 	if buf, has := cv.CmdBufs[cmdName]; has {
 		buf.SetText(nil)
 		return buf, false
 	}
-	buf := texteditor.NewBuffer()
-	buf.SetText(nil)
+	buf := lines.NewLines()
 	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
+	buf.SetReadOnly(true)
+	buf.SetHighlighting(core.AppearanceSettings.Highlighting)
 	// note: critical to NOT set this, otherwise overwrites our native markup
 	// buf.SetLanguage(fileinfo.Bash)
 	return buf, true
 }
 
+// todo: Markup colors are baked in when output is generated -- no remarkup possible!
+
+// CmdBuffsReMarkup runs ReMarkup on all command bufs.
+func (cv *Code) CmdBuffsReMarkup() {
+	for _, ln := range cv.CmdBufs {
+		ln.SetHighlighting(core.AppearanceSettings.Highlighting)
+		ln.ReMarkup()
+	}
+}
+
 // RecycleCmdTab creates the tab to show command output, including making a
 // buffer object to save output from the command. Returns true if a new buffer
 // was created, false if one already existed.
-func (cv *Code) RecycleCmdTab(cmdName string) (*texteditor.Buffer, *texteditor.Editor, bool) {
+func (cv *Code) RecycleCmdTab(cmdName string) (*lines.Lines, *textcore.Editor, bool) {
 	buf, nw := cv.RecycleCmdBuf(cmdName)
 	ctv := cv.RecycleTabTextEditor(cmdName, buf)
 	if ctv == nil {
 		return nil, nil, false
 	}
+	ctv.AutoscrollOnInput = true
 	ctv.SetReadOnly(true)
-	ctv.SetBuffer(buf)
-	ctv.LinkHandler = func(tl *paint.TextLink) {
+	ctv.SetLines(buf)
+	ctv.HighlightsReset()
+	ctv.LinkHandler = func(tl *rich.Hyperlink) {
 		cv.OpenFileURL(tl.URL, ctv)
 	}
 	return buf, ctv, nw
@@ -71,31 +84,20 @@ func (cv *Code) ExecCmdName(cmdName CmdName) {
 	cmd.Run(cv, cbuf)
 }
 
-// ExecCmdNameFileNode executes command of given name on given node
-func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName) {
-	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
-	if !ok || fn == nil || fn.This == nil {
-		return
-	}
-	cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
-	cmd.Run(cv, cbuf)
-}
-
-// ExecCmdNameFilename executes command of given name on given file name
-func (cv *Code) ExecCmdNameFilename(fn string, cmdNm CmdName) {
+// ExecCmdNameFile executes command of given name on given file name
+func (cv *Code) ExecCmdNameFile(fname string, cmdNm CmdName) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
-	cv.ArgVals.Set(fn, &cv.Settings, nil)
+	cv.ArgVals.Set(fname, &cv.Settings, nil)
 	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 	cmd.Run(cv, cbuf)
 }
 
 // ExecCmds gets list of available commands for current active file
 func ExecCmds(cv *Code) [][]string {
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv == nil {
 		return nil
 	}
@@ -112,7 +114,7 @@ func ExecCmds(cv *Code) [][]string {
 
 // ExecCmdNameActive calls given command on current active texteditor
 func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv == nil {
 		return
 	}
@@ -121,38 +123,33 @@ func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
 	})
 }
 
-// CommandFromMenu pops up a menu of commands for given language, with given last command
-// selected by default, and runs selected command.
-func (cv *Code) CommandFromMenu(fn *filetree.Node) {
-	tv := cv.ActiveTextEditor()
-	core.NewMenu(CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
-}
-
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
 func (cv *Code) ExecCmd() { //types:add
-	fn := cv.ActiveFileNode()
-	if fn == nil {
-		fmt.Printf("no Active File for ExecCmd\n")
+	tv := cv.ActiveEditor()
+	ln := tv.Lines
+	if ln == nil {
+		cv.SetStatus("ExecCmd: No Active File")
 		return
 	}
-	cv.CommandFromMenu(fn)
+	core.NewMenu(cv.CommandMenuLines(ln), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
 func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
-	cv.CommandFromMenu(fn)
+	tv := cv.ActiveEditor()
+	core.NewMenu(cv.CommandMenuFileNode(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // SetArgVarVals sets the ArgVar values for commands, from Code values
 func (cv *Code) SetArgVarVals() {
-	tv := cv.ActiveTextEditor()
-	tve := texteditor.AsEditor(tv)
-	if tv == nil || tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	tve := textcore.AsEditor(tv)
+	if tv == nil || tv.Lines == nil {
 		cv.ArgVals.Set("", &cv.Settings, tve)
 	} else {
-		cv.ArgVals.Set(string(tv.Buffer.Filename), &cv.Settings, tve)
+		cv.ArgVals.Set(tv.Lines.Filename(), &cv.Settings, tve)
 	}
 }
 
@@ -163,10 +160,10 @@ func (cv *Code) ExecCmds(cmdNms CmdNames) {
 	}
 }
 
-// ExecCmdsFileNode executes a sequence of commands on file node
-func (cv *Code) ExecCmdsFileNode(fn *filetree.Node, cmdNames CmdNames) {
+// ExecCmdsFile executes a sequence of commands on file node
+func (cv *Code) ExecCmdsFile(fname string, cmdNames CmdNames) {
 	for _, cmdNm := range cmdNames {
-		cv.ExecCmdNameFileNode(fn, cmdNm)
+		cv.ExecCmdNameFile(fname, cmdNm)
 	}
 }
 

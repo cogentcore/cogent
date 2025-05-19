@@ -12,32 +12,32 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/strcase"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/paint"
-	"cogentcore.org/core/parse"
-	"cogentcore.org/core/parse/complete"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/parser"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/parse"
+	"cogentcore.org/core/text/parse/complete"
+	"cogentcore.org/core/text/parse/parser"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/text/textpos"
 )
 
 // CursorToHistPrev moves back to the previous history item.
 func (cv *Code) CursorToHistPrev() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	return tv.CursorToHistoryPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
 func (cv *Code) CursorToHistNext() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	return tv.CursorToHistoryNext()
 }
 
@@ -62,9 +62,9 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GUIActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, txt, lexer.Pos{posLine, posChar})
+	ld = lp.Lang.Lookup(sfs, txt, textpos.Pos{posLine, posChar})
 	if len(ld.Text) > 0 {
-		texteditor.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
+		textcore.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
 		return ld
 	}
 	if ld.Filename == "" {
@@ -75,14 +75,14 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 		return
 	}
 
-	tx, err := text.FileBytes(ld.Filename)
+	tx, err := lines.FileBytes(ld.Filename)
 	if err != nil {
 		return ld
 	}
 	if ld.StLine > 0 {
 		lns := bytes.Split(tx, []byte("\n"))
-		comLn, comSt, comEd := text.KnownComments(ld.Filename)
-		ld.StLine = text.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
+		comLn, comSt, comEd := lines.KnownComments(ld.Filename)
+		ld.StLine = lines.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
 	}
 
 	prmpt := ""
@@ -93,19 +93,19 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	}
 	title := "Lookup: " + txt
 
-	tb := texteditor.NewBuffer().SetText(tx).SetFilename(ld.Filename)
+	tb := lines.NewLines().SetText(tx).SetFilename(ld.Filename)
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
-	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
+	tb.Settings.LineNumbers = cv.Settings.Editor.LineNumbers
 
 	d := core.NewBody(title).SetData(&ld)
 	core.NewText(d).SetType(core.TextSupporting).SetText(prmpt)
-	tv := texteditor.NewEditor(d).SetBuffer(tb)
+	tv := textcore.NewEditor(d).SetLines(tb)
 	tv.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
 	tv.SetReadOnly(true)
 
-	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
+	tv.SetCursorTarget(textpos.Pos{Line: ld.StLine})
 	d.AddBottomBar(func(bar *core.Frame) {
 		core.NewButton(bar).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			cv.ViewFile(core.Filename(ld.Filename))
@@ -116,14 +116,14 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 				d.Clipboard().Write(mimedata.NewTextBytes(tx))
 			})
 	})
-	d.RunWindowDialog(cv.ActiveTextEditor())
+	d.RunWindowDialog(cv.ActiveEditor())
 	tb.StartDelayedReMarkup() // update markup
 	return
 }
 
 // ReplaceInActive does query-replace in active file only
 func (cv *Code) ReplaceInActive() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	tv.QReplacePrompt()
 }
 
@@ -132,8 +132,8 @@ func (cv *Code) ReplaceInActive() { //types:add
 
 // CutRect cuts rectangle in active text view
 func (cv *Code) CutRect() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	tv.CutRect()
@@ -141,8 +141,8 @@ func (cv *Code) CutRect() { //types:add
 
 // CopyRect copies rectangle in active text view
 func (cv *Code) CopyRect() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	tv.CopyRect(true)
@@ -150,8 +150,8 @@ func (cv *Code) CopyRect() { //types:add
 
 // PasteRect cuts rectangle in active text view
 func (cv *Code) PasteRect() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	tv.PasteRect()
@@ -164,8 +164,8 @@ func (cv *Code) RegisterCopy(regNm RegisterName) { //types:add
 	if ic > 0 && ic < 4 {
 		regNm = regNm[:ic]
 	}
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	sel := tv.Selection()
@@ -189,8 +189,8 @@ func (cv *Code) RegisterPaste(ctx core.Widget) { //types:add
 		if !ok {
 			return
 		}
-		tv := cv.ActiveTextEditor()
-		if tv.Buffer == nil {
+		tv := cv.ActiveEditor()
+		if tv.Lines == nil {
 			return
 		}
 		tv.InsertAtCursor([]byte(str))
@@ -202,43 +202,43 @@ func (cv *Code) RegisterPaste(ctx core.Widget) { //types:add
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
 func (cv *Code) CommentOut() bool { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return false
 	}
 	sel := tv.Selection()
 	var stl, etl int
 	if sel == nil {
-		stl = tv.CursorPos.Ln
+		stl = tv.CursorPos.Line
 		etl = stl + 1
 	} else {
-		stl = sel.Reg.Start.Ln
-		etl = sel.Reg.End.Ln
+		stl = sel.Region.Start.Line
+		etl = sel.Region.End.Line
 	}
-	tv.Buffer.CommentRegion(stl, etl)
+	tv.Lines.CommentRegion(stl, etl)
 	tv.SelectReset()
 	return true
 }
 
 // Indent indents selected lines in active view
 func (cv *Code) Indent() bool { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return false
 	}
 	sel := tv.Selection()
 	if sel == nil {
 		return false
 	}
-	tv.Buffer.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln)
+	tv.Lines.AutoIndentRegion(sel.Region.Start.Line, sel.Region.End.Line)
 	tv.SelectReset()
 	return true
 }
 
 // ReCase replaces currently selected text in current active view with given case
 func (cv *Code) ReCase(c strcase.Cases) string { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return ""
 	}
 	return tv.ReCaseSelection(c)
@@ -248,42 +248,42 @@ func (cv *Code) ReCase(c strcase.Cases) string { //types:add
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
 func (cv *Code) JoinParaLines() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.JoinParaLines(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Lines.JoinParaLines(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
-		tv.Buffer.JoinParaLines(0, tv.NumLines-1)
+		tv.Lines.JoinParaLines(0, tv.NumLines()-1)
 	}
 }
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
 func (cv *Code) TabsToSpaces() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.TabsToSpaces(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Lines.TabsToSpaces(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
-		tv.Buffer.TabsToSpaces(0, tv.NumLines-1)
+		tv.Lines.TabsToSpaces(0, tv.NumLines()-1)
 	}
 }
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
 func (cv *Code) SpacesToTabs() { //types:add
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
+	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.SpacesToTabs(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Lines.SpacesToTabs(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
-		tv.Buffer.SpacesToTabs(0, tv.NumLines-1)
+		tv.Lines.SpacesToTabs(0, tv.NumLines()-1)
 	}
 }
 
@@ -291,82 +291,67 @@ func (cv *Code) SpacesToTabs() { //types:add
 // in side-by-side DiffEditor and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
 func (cv *Code) DiffFiles(fnmA, fnmB core.Filename) { //types:add
-	fna := cv.FileNodeForFile(string(fnmA), true)
-	if fna == nil {
+	lna, _ := cv.RecycleFile(string(fnmA))
+	if lna == nil {
 		return
 	}
-	if fna.Buffer == nil {
-		cv.OpenFileNode(fna)
-	}
-	if fna.Buffer == nil {
-		return
-	}
-	cv.DiffFileNode(fna, fnmB)
+	cv.DiffFileLines(lna, string(fnmB))
 }
 
-// DiffFileNode shows the differences between given file node as the A file,
+// DiffFileLines shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffEditor and in the console as a context diff.
-func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
-	fnb := cv.FileNodeForFile(string(fnmB), true)
-	if fnb == nil {
+func (cv *Code) DiffFileLines(lna *lines.Lines, fnmB string) { //types:add
+	lnb := lines.NewLines()
+	err := lnb.Open(fnmB)
+	if errors.Log(err) != nil {
 		return
 	}
-	if fnb.Buffer == nil {
-		cv.OpenFileNode(fnb)
-	}
-	if fnb.Buffer == nil {
-		return
-	}
-	dif := fna.Buffer.DiffBuffersUnified(fnb.Buffer, 3)
+	dif := lna.DiffsUnified(lnb, 3)
 	cbuf, _, _ := cv.RecycleCmdTab("Diffs")
 	cbuf.SetText(dif)
-	cbuf.AutoScrollEditors()
 
-	astr := fna.Buffer.Strings(false)
-	bstr := fnb.Buffer.Strings(false)
-	_, _ = astr, bstr
-
-	texteditor.DiffEditorDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
+	astr := lna.Strings(false)
+	bstr := lnb.Strings(false)
+	textcore.DiffEditorDialog(cv, "Diff File View:", astr, bstr, lna.Filename(), lnb.Filename(), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
 func (cv *Code) CountWords() string { //types:add
-	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NumLines() <= 0 {
+	av := cv.ActiveEditor()
+	if av.Lines == nil || av.Lines.NumLines() <= 0 {
 		return "empty"
 	}
-	ll := av.Buffer.NumLines() - 1
-	reg := text.NewRegion(0, 0, ll, av.Buffer.NumLines())
-	words, lines := av.Buffer.CountWordsLinesRegion(reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
+	ll := av.Lines.NumLines() - 1
+	reg := textpos.NewRegion(0, 0, ll, av.Lines.NumLines())
+	words, lines := av.Lines.CountWordsLinesRegion(reg)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(av.Lines.Filename()), words, lines)
 }
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
 func (cv *Code) CountWordsRegion() string { //types:add
-	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NumLines() <= 0 {
+	av := cv.ActiveEditor()
+	if av.Lines == nil || av.Lines.NumLines() <= 0 {
 		return "empty"
 	}
 	if !av.HasSelection() {
 		return cv.CountWords()
 	}
 	sel := av.Selection()
-	words, lines := av.Buffer.CountWordsLinesRegion(sel.Reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
+	words, lines := av.Lines.CountWordsLinesRegion(sel.Region)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(av.Lines.Filename()), words, lines)
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Links
+////////   Links
 
 // TextLinkHandler is the Code handler for text links -- preferred one b/c
 // directly connects to correct Code project
-func TextLinkHandler(tl paint.TextLink) bool {
+func TextLinkHandler(tl rich.Hyperlink) bool {
 	// todo:
-	// tve := texteditor.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*texteditor.Editor)
+	// tve := textcore.AsEditor(tl.Widget)
+	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*textcore.Editor)
 	// gek := tl.Widget.ParentByType(KiT_Code, true)
 	// if gek != nil {
 	// 	ge := gek.Embed(KiT_Code).(*Code)
@@ -392,7 +377,7 @@ func TextLinkHandler(tl paint.TextLink) bool {
 // }
 
 // OpenFileURL opens given file:/// url
-func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
+func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("Code OpenFileURL parse err: %v\n", err)
@@ -400,12 +385,12 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	}
 	fpath := up.Path[1:] // has double //
 	cdpath := ""
-	if ftv != nil && ftv.Buffer != nil { // get cd path for non-pathed fnames
-		cdln := ftv.Buffer.LineBytes(0)
-		if bytes.HasPrefix(cdln, []byte("cd ")) {
-			fmidx := bytes.Index(cdln, []byte(" (from: "))
+	if ftv != nil && ftv.Lines != nil { // get cd path for non-pathed fnames
+		cdln := ftv.Lines.String()
+		if strings.HasPrefix(cdln, "cd ") {
+			fmidx := strings.Index(cdln, " (from: ")
 			if fmidx > 0 {
-				cdpath = string(cdln[3:fmidx])
+				cdpath = cdln[3:fmidx]
 				dr, _ := filepath.Split(fpath)
 				if dr == "" || !filepath.IsAbs(dr) {
 					fpath = filepath.Join(cdpath, fpath)
@@ -415,10 +400,10 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	}
 	pos := up.Fragment
 
-	tv, _, ok := cv.LinkViewFile(core.Filename(fpath))
+	tv, _, ok := cv.LinkViewFile(fpath)
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = cv.LinkViewFile(core.Filename(fnm))
+		tv, _, ok = cv.LinkViewFile(fnm)
 		if !ok {
 			core.MessageSnackbar(cv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false
@@ -428,12 +413,13 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := lexer.Pos{}
+	txpos := textpos.Pos{}
 	if txpos.FromString(pos) {
-		reg := text.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := textpos.Region{Start: txpos, End: textpos.Pos{Line: txpos.Line, Char: txpos.Char + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
+		tv.HighlightsReset()
 		tv.HighlightRegion(reg)
 		tv.SetCursorTarget(txpos)
 		tv.NeedsLayout()

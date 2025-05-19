@@ -35,21 +35,21 @@ func (pp *PreviewPanel) Init() {
 	})
 
 	pp.Updater(func() {
-		if pp.code == nil {
+		if pp.code == nil || !pp.IsVisible() {
 			return
 		}
-		ed := pp.code.ActiveTextEditor()
-		if ed == nil || ed.Buffer == nil {
+		ed := pp.code.ActiveEditor()
+		if ed == nil || ed.Lines == nil {
 			return
 		}
-		current := ed.Buffer.Bytes()
+		current := ed.Lines.Text()
 		if bytes.Equal(current, pp.lastRendered) {
 			return
 		}
 		pp.lastRendered = current
 		pp.DeleteChildren()
 
-		switch ed.Buffer.Info.Known {
+		switch ed.Lines.FileInfo().Known {
 		case fileinfo.Markdown:
 			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
 		case fileinfo.Html:

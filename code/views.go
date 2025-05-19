@@ -7,18 +7,15 @@ package code
 import (
 	"errors"
 	"fmt"
-	"log"
 	"path/filepath"
-	"regexp"
-	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/spell"
+	"cogentcore.org/core/text/spell"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
@@ -34,72 +31,10 @@ func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	return fb
 }
 
-func (cv *Code) CallFind(ctx core.Widget) {
-	cv.ConfigFindButton(core.NewSoloFuncButton(ctx).SetFunc(cv.Find)).CallFunc()
-}
-
-// Find does Find / Replace in files, using given options and filters -- opens up a
-// main tab with the results and further controls.
-func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLocation, langs []fileinfo.Known) { //types:add
-	if find == "" {
-		return
-	}
-	cv.Settings.Find.IgnoreCase = ignoreCase
-	cv.Settings.Find.Regexp = regExp
-	cv.Settings.Find.Languages = langs
-	cv.Settings.Find.Loc = loc
-	cv.Settings.Find.Find = find
-	cv.Settings.Find.Replace = repl
-
-	tv := cv.Tabs()
-	if tv == nil {
-		return
-	}
-
-	fbuf, _ := cv.RecycleCmdBuf("Find")
-	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
-	fv.Time = time.Now()
-	fv.UpdateTree()
-	ftv := fv.TextEditor()
-	ftv.SetBuffer(fbuf)
-
-	root := filetree.AsNode(cv.Files)
-	atv := cv.ActiveTextEditor()
-	ond, _, got := cv.OpenNodeForTextEditor(atv)
-	adir := ""
-	if got {
-		adir, _ = filepath.Split(string(ond.Filepath))
-	}
-
-	var res []filetree.SearchResults
-	if loc == filetree.FindLocationFile {
-		if got {
-			if regExp {
-				re, err := regexp.Compile(find)
-				if err != nil {
-					log.Println(err)
-				} else {
-					cnt, matches := atv.Buffer.SearchRegexp(re)
-					res = append(res, filetree.SearchResults{ond, cnt, matches})
-				}
-			} else {
-				cnt, matches := atv.Buffer.Search([]byte(find), ignoreCase, false)
-				res = append(res, filetree.SearchResults{ond, cnt, matches})
-			}
-		}
-	} else {
-		res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
-			return cv.OpenNodes.FindPath(path)
-		})
-	}
-	fv.ShowResults(res)
-	cv.FocusOnPanel(TabsIndex)
-}
-
 // Spell checks spelling in active text view
 func (cv *Code) Spell() { //types:add
-	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	txv := cv.ActiveEditor()
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	spell.Spell.OpenUserCheck() // make sure latest file opened
@@ -116,8 +51,8 @@ func (cv *Code) Spell() { //types:add
 
 // Symbols displays the Symbols of a file or package
 func (cv *Code) Symbols() { //types:add
-	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	txv := cv.ActiveEditor()
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	tv := cv.Tabs()
@@ -153,8 +88,8 @@ func (cv *Code) Debug() { //types:add
 // testName specifies which test(s) to run according to the standard go test -run
 // specification.
 func (cv *Code) DebugTest(testName string) { //types:add
-	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	txv := cv.ActiveEditor()
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	tv := cv.Tabs()
@@ -164,7 +99,7 @@ func (cv *Code) DebugTest(testName string) { //types:add
 
 	cv.Settings.Debug.Mode = cdebug.Test
 	cv.Settings.Debug.TestName = testName
-	tstPath := string(txv.Buffer.Filename)
+	tstPath := txv.Lines.Filename()
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+dir)
 	dv.Config(cv, fileinfo.Go, tstPath)
@@ -216,9 +151,9 @@ func (cv *Code) VCSUpdateAll() { //types:add
 // compared and diffs browsed.
 func (cv *Code) VCSLog() (vcs.Log, error) { //types:add
 	since := ""
-	atv := cv.ActiveTextEditor()
-	ond, _, got := cv.OpenNodeForTextEditor(atv)
-	if !got {
+	atv := cv.ActiveEditor()
+	ond := cv.FileNodeForFile(atv.Lines.Filename())
+	if ond == nil {
 		if cv.Files.DirRepo != nil {
 			return cv.Files.LogVCS(true, since)
 		}
@@ -235,8 +170,8 @@ func (cv *Code) OpenConsoleTab() { //types:add
 		return
 	}
 	ctv.SetReadOnly(true)
-	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buffer {
-		ctv.SetBuffer(TheConsole.Buffer)
+	if ctv.Lines == nil || ctv.Lines != TheConsole.Lines {
+		ctv.SetLines(TheConsole.Lines)
 		ctv.OnChange(func(e events.Event) {
 			cv.SelectTabByName("Console")
 		})
@@ -248,10 +183,18 @@ func (cv *Code) updatePreviewPanel() {
 	ts := cv.Tabs()
 	_, ptab := ts.CurrentTab()
 	pp := core.RecycleTabWidget[PreviewPanel](ts, "Preview")
+	curIsPreview := false
 	if ptab >= 0 {
+		_, ctab := ts.CurrentTab()
+		curIsPreview = ctab == ptab
 		ts.SelectTabIndex(ptab) // we stay at the previous tab
+	} else {
+		curIsPreview = true
 	}
 	pp.code = cv
+	if !curIsPreview { // not visible don't update
+		return
+	}
 	pp.Update()
 }
 
@@ -272,6 +215,7 @@ func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 // SetStatus sets the current status update message for the StatusBar next time it renders
 func (cv *Code) SetStatus(msg string) {
 	cv.StatusMessage = msg
+	cv.UpdateStatusText()
 	cv.UpdateTextButtons()
 }
 
@@ -285,18 +229,18 @@ func (cv *Code) UpdateStatusText() {
 	fnm := ""
 	ln := 0
 	ch := 0
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	msg := ""
 	if tv != nil {
-		ln = tv.CursorPos.Ln + 1
-		ch = tv.CursorPos.Ch
-		if tv.Buffer != nil {
-			fnm = cv.Files.RelativePathFrom(tv.Buffer.Filename)
-			if tv.Buffer.IsNotSaved() {
+		ln = tv.CursorPos.Line + 1
+		ch = tv.CursorPos.Char
+		if tv.Lines != nil {
+			fnm = cv.Files.RelativePathFrom(fsx.Filename(tv.Lines.Filename()))
+			if tv.Lines.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buffer.Info.Known != fileinfo.Unknown {
-				fnm += " (" + tv.Buffer.Info.Known.String() + ")"
+			if tv.Lines.FileInfo().Known != fileinfo.Unknown {
+				fnm += " (" + tv.Lines.FileInfo().Known.String() + ")"
 			}
 		}
 		if tv.ISearch.On {
