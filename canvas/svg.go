@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"image"
 	"strings"
-	"sync"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/reflectx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -21,7 +21,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/svg"
@@ -44,30 +43,6 @@ type SVG struct {
 
 	// effective grid spacing given Scale level
 	GridEff float32 `edit:"-" set:"-"`
-
-	// pixelMu is a mutex protecting the updating of curPixels
-	// from svg render
-	pixelMu sync.Mutex
-
-	// currentPixels are the current rendered pixels, with the SVG
-	// on top of the background pixel grid.  updated in separate
-	// goroutine, protected by pixelMu, to ensure fluid interaction
-	currentPixels *image.RGBA
-
-	// background pixels, includes page outline and grid
-	backgroundPixels *image.RGBA
-
-	// background paint rendering context
-	backgroundPaint paint.Painter
-
-	// in svg Rendering
-	inRender bool
-
-	// size of bg image rendered
-	backgroundSize image.Point
-
-	// bg rendered transform
-	backgroundTransform math32.Matrix2
 
 	// bg rendered grid
 	backgroundGridEff float32
@@ -241,7 +216,6 @@ func (sv *SVG) Init() {
 func (sv *SVG) SizeFinal() {
 	sv.WidgetBase.SizeFinal()
 	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
-	sv.ResizeBg(sv.Geom.Size.Actual.Content.ToPoint())
 }
 
 func (sv *SVG) Render() {
@@ -249,19 +223,10 @@ func (sv *SVG) Render() {
 	if sv.SVG == nil {
 		return
 	}
+	sv.RenderGrid()
 	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
 	sv.SVG.Geom.Pos = sv.Geom.Pos.Content.ToPointCeil()
 	sv.SVG.Render(&sv.Scene.Painter)
-	// sv.pixelMu.Lock()
-	// if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {
-	// 	sv.pixelMu.Unlock()
-	// 	sv.RenderSVG()
-	// 	sv.pixelMu.Lock()
-	// }
-	// r := sv.Geom.ContentBBox
-	// sp := sv.Geom.ScrollOffset()
-	// draw.Draw(sv.Scene.Pixels, r, sv.currentPixels, sp, draw.Over)
-	// sv.pixelMu.Unlock()
 }
 
 // Root returns the root [svg.Root].
@@ -584,10 +549,14 @@ func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 
 	core.NewSeparator(m)
 
-	core.NewFuncButton(m).SetFunc(sv.Canvas.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.DuplicateSelected).
+		SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.CopySelected).
+		SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.CutSelected).
+		SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
+		SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
@@ -601,8 +570,7 @@ func (sv *SVG) NodeContextMenuPos(pos image.Point) image.Point {
 	return pos
 }
 
-///////////////////////////////////////////////////////////////////////////
-// Undo
+//////// Undo
 
 // UndoSave save current state for potential undo
 func (sv *SVG) UndoSave(action, data string) {
@@ -662,8 +630,7 @@ func (sv *SVG) Redo() string {
 	return act
 }
 
-///////////////////////////////////////////////////////////////////
-// selection processing
+//////// selection processing
 
 // ShowAlignMatches draws the align matches as given
 // between BBox Min - Max.  typs are corresponding bounding box sources.
@@ -691,8 +658,7 @@ func (sv *SVG) DepthMap() map[tree.Node]int {
 	return m
 }
 
-///////////////////////////////////////////////////////////////////////
-// New objects
+//////// New objects
 
 // SetSVGName sets the name of the element to standard type + id name
 func (sv *SVG) SetSVGName(el svg.Node) {
@@ -812,8 +778,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	return n
 }
 
-///////////////////////////////////////////////////////////////////////
-// Gradients
+/////// Gradients
 
 // Gradients returns the currently defined gradients with stops
 // that are shared among obj-specific ones
@@ -863,22 +828,7 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 	// sv.UpdateAllGradientStops()
 }
 
-///////////////////////////////////////////////////////////////////////
-//  Bg render
-
-func (sv *SVG) BackgroundNeedsUpdate() bool {
-	root := sv.Root()
-	if root == nil {
-		return false
-	}
-	return sv.backgroundPixels == nil || sv.backgroundPixels.Bounds().Size() != sv.backgroundSize || sv.backgroundTransform != root.Paint.Transform || sv.GridEff != sv.backgroundGridEff || sv.NeedsRebuild()
-}
-
-func (sv *SVG) ResizeBg(sz image.Point) {
-	if sv.backgroundPaint.State == nil {
-		sv.backgroundPaint = *paint.NewPainter(math32.FromPoint(sz))
-	}
-}
+////////  Bg render
 
 // UpdateGridEff updates the GirdEff value based on current scale
 func (sv *SVG) UpdateGridEff() {
@@ -890,49 +840,37 @@ func (sv *SVG) UpdateGridEff() {
 	}
 }
 
-// RenderBackground renders our background grid image
-func (sv *SVG) RenderBackground() {
+// RenderGrid renders the background grid
+func (sv *SVG) RenderGrid() {
 	root := sv.Root()
 	if root == nil {
 		return
 	}
-	// sv.UpdateGridEff()
-	// bb := sv.backgroundPixels.Bounds()
-	// draw.Draw(sv.backgroundPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
-	//
-	// pc := &sv.backgroundPaint
-	// pc.PushBounds(bb)
-	// pc.PushTransform(root.Paint.Transform)
-	//
-	// pc.StrokeStyle.Color = colors.Scheme.Outline
-	//
-	// sc := sv.SVG.Scale
-	//
-	// wd := 1 / sc
-	// pc.StrokeStyle.Width.Dots = wd
-	// pos := math32.Vec2(0, 0)
-	// sz := root.ViewBox.Size
-	// pc.FillStyle.Color = nil
-	//
-	// pc.DrawRectangle(pos.X, pos.Y, sz.X, sz.Y)
-	// pc.FillStrokeClear()
-	//
-	// if Settings.GridDisp {
-	// 	gsz := float32(sv.GridEff)
-	// 	pc.StrokeStyle.Color = colors.Scheme.OutlineVariant
-	// 	for x := gsz; x < sz.X; x += gsz {
-	// 		pc.DrawLine(x, 0, x, sz.Y)
-	// 	}
-	// 	for y := gsz; y < sz.Y; y += gsz {
-	// 		pc.DrawLine(0, y, sz.X, y)
-	// 	}
-	// 	pc.FillStrokeClear()
-	// }
-	//
-	// sv.backgroundTransform = root.Paint.Transform
-	// sv.backgroundGridEff = sv.GridEff
-	// sv.backgroundSize = bb.Size()
-	//
-	// pc.PopTransform()
-	// pc.PopBounds()
+	sv.UpdateGridEff()
+
+	pc := &sv.Scene.Painter
+	pc.PushContext(&root.Paint, nil)
+	pc.Stroke.Color = colors.Scheme.Outline
+	pc.Fill.Color = nil
+
+	sc := sv.SVG.Scale
+
+	wd := 1 / sc
+	pc.Stroke.Width.Dots = wd
+	pos := math32.Vec2(0, 0)
+	sz := root.ViewBox.Size
+
+	pc.Rectangle(pos.X, pos.Y, sz.X, sz.Y)
+	if Settings.GridDisp {
+		gsz := float32(sv.GridEff)
+		pc.Stroke.Color = colors.Scheme.OutlineVariant
+		for x := gsz; x < sz.X; x += gsz {
+			pc.Line(x, 0, x, sz.Y)
+		}
+		for y := gsz; y < sz.Y; y += gsz {
+			pc.Line(0, y, sz.X, y)
+		}
+	}
+	pc.Draw()
+	pc.PopContext()
 }
