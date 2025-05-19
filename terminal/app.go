@@ -186,9 +186,9 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	})
 
 	ob := &textcore.OutputBuffer{}
-	_ = or
+	ob.SetOutput(or).SetLines(buf)
 	// todo:
-	// ob.SetOutput(or).SetLines(buf).SetMarkupFunc(func(line []byte) []byte {
+	// ob.SetMarkupFunc(func(line []byte) []byte {
 	// 	return ansihtml.ConvertToHTML(line)
 	// })
 	go func() {

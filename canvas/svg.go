@@ -283,6 +283,7 @@ func (sv *SVG) Render() {
 	}
 	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
 	sv.SVG.Geom.Pos = sv.Geom.Pos.Content.ToPointCeil()
+	fmt.Println(sv.SVG.Geom.Pos)
 	sv.SVG.Render(&sv.Scene.Painter)
 	// sv.pixelMu.Lock()
 	// if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {

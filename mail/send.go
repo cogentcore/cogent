@@ -17,7 +17,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-smtp"
@@ -54,7 +53,6 @@ func (a *App) compose(title string) {
 	ed.Lines.SetLanguage(fileinfo.Markdown)
 	ed.Lines.Settings.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
-		s.Font.Family = rich.Monospace
 		s.Grow.Set(1, 1)
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
