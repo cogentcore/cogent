@@ -236,7 +236,7 @@ func (gr *Graph) RunTick(dt float32) {
 	// 	startFrames = gr.State.Step
 	// }
 	gr.State.PrevTime = gr.State.Time
-	gr.State.Time += float64(dt) * gr.Params.TimeStep.Eval(0, 0)
+	gr.State.Time += float64(dt) * gr.Params.UpdateRate.Eval(0, 0) / 1000
 	// }
 }
 
