@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.23.4
 
 require (
-	cogentcore.org/core v0.3.10-0.20250424173140-98b1f1ea8624
-	cogentcore.org/lab v0.1.1-0.20250417215607-52af09a8ee8f
+	cogentcore.org/core v0.3.11
+	cogentcore.org/lab v0.1.1-0.20250519004841-97491648d9ad
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
@@ -27,7 +27,7 @@ require (
 )
 
 require (
-	github.com/Bios-Marcel/wastebasket/v2 v2.0.2 // indirect
+	github.com/Bios-Marcel/wastebasket/v2 v2.0.3 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/adrg/strutil v0.3.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
@@ -40,12 +40,11 @@ require (
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cogentcore/readline v0.1.3 // indirect
-	github.com/cogentcore/webgpu v0.0.0-20250118183535-3dd1436165cf // indirect
+	github.com/cogentcore/webgpu v0.23.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -73,24 +72,20 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tam7t/hpkp v0.0.0-20160821193359-2b70b4024ed5 // indirect
-	github.com/tdewolff/minify/v2 v2.21.3 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/image v0.25.0 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/knuth v0.5.4 // indirect
-	modernc.org/token v1.1.0 // indirect
-	star-tex.org/x/tex v0.6.0 // indirect
 )
