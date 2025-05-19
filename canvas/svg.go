@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/draw"
 	"strings"
 	"sync"
 
@@ -259,23 +258,22 @@ func (sv *SVG) RenderSVG() {
 	sv.inRender = true
 	defer func() { sv.inRender = false }()
 
-	if sv.BackgroundNeedsUpdate() {
-		sv.RenderBackground()
-	}
+	// if sv.BackgroundNeedsUpdate() {
+	// 	sv.RenderBackground()
+	// }
 	// need to make the image again to prevent it from
 	// rendering over itself
-	sv.SVG.Background = nil
+	// sv.SVG.Background = nil
 	// sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
 	// sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
 	// sv.SVG.Render()
-	sv.pixelMu.Lock()
-
-	bgsz := sv.backgroundPixels.Bounds()
-	sv.currentPixels = image.NewRGBA(bgsz)
-	draw.Draw(sv.currentPixels, bgsz, sv.backgroundPixels, image.ZP, draw.Src)
-	// draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
-	sv.NeedsRender()
-	sv.pixelMu.Unlock()
+	// sv.pixelMu.Lock()
+	// bgsz := sv.backgroundPixels.Bounds()
+	// sv.currentPixels = image.NewRGBA(bgsz)
+	// draw.Draw(sv.currentPixels, bgsz, sv.backgroundPixels, image.ZP, draw.Src)
+	// // draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
+	// sv.NeedsRender()
+	// sv.pixelMu.Unlock()
 }
 
 func (sv *SVG) Render() {
@@ -283,16 +281,19 @@ func (sv *SVG) Render() {
 	if sv.SVG == nil {
 		return
 	}
-	sv.pixelMu.Lock()
-	if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {
-		sv.pixelMu.Unlock()
-		sv.RenderSVG()
-		sv.pixelMu.Lock()
-	}
+	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
+	sv.SVG.Geom.Pos = sv.Geom.Pos.Content.ToPointCeil()
+	sv.SVG.Render(&sv.Scene.Painter)
+	// sv.pixelMu.Lock()
+	// if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {
+	// 	sv.pixelMu.Unlock()
+	// 	sv.RenderSVG()
+	// 	sv.pixelMu.Lock()
+	// }
 	// r := sv.Geom.ContentBBox
 	// sp := sv.Geom.ScrollOffset()
 	// draw.Draw(sv.Scene.Pixels, r, sv.currentPixels, sp, draw.Over)
-	sv.pixelMu.Unlock()
+	// sv.pixelMu.Unlock()
 }
 
 // Root returns the root [svg.Root].
@@ -311,7 +312,8 @@ func (sv *SVG) EditState() *EditState {
 // UpdateView updates the view, optionally with a full re-render
 func (sv *SVG) UpdateView(full bool) { // TODO(config)
 	sv.UpdateSelSprites()
-	go sv.RenderSVG()
+	sv.NeedsRender()
+	// go sv.RenderSVG()
 }
 
 /*

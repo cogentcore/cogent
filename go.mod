@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	cogentcore.org/core v0.3.11
-	cogentcore.org/lab v0.1.1-0.20250519004841-97491648d9ad
+	cogentcore.org/lab v0.1.1
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
