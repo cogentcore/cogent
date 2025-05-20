@@ -100,6 +100,7 @@ func (pv *PaintSetter) Init() {
 			core.Bind(&pv.PaintStyle.Stroke.Width.Value, w)
 			w.SetMin(0).SetStep(0.05)
 			w.OnChange(func(e events.Event) {
+				pv.PaintStyle.ToDots()
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp())
 				}
@@ -214,9 +215,14 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
 			core.Bind(&pv.PaintStyle.Stroke.Color, w)
+			w.OnInput(func(e events.Event) {
+				if pv.StrokeType == PaintSolid {
+					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not final
+				}
+			})
 			w.OnChange(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
-					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not manip
+					pv.Canvas.SetStrokeColor(pv.StrokeProp(), true) // final
 				}
 			})
 		})
@@ -279,9 +285,14 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
 			core.Bind(&pv.PaintStyle.Fill.Color, w)
+			w.OnInput(func(e events.Event) {
+				if pv.FillType == PaintSolid {
+					pv.Canvas.SetFillColor(pv.FillProp(), false) // not final
+				}
+			})
 			w.OnChange(func(e events.Event) {
 				if pv.FillType == PaintSolid {
-					pv.Canvas.SetFillColor(pv.FillProp(), false) // not manip
+					pv.Canvas.SetFillColor(pv.FillProp(), true) // final
 				}
 			})
 		})
@@ -319,74 +330,67 @@ func (pv *PaintSetter) Init() {
 	})
 }
 
-////////  Actions
+////////  setPaintProp
 
-// PaintSet manages all the updating etc associated with setting paint
-// parameters.
-func (cv *Canvas) PaintSet(act Actions, data string, manip bool, fun func(nd svg.Node)) {
+// setPaintPropNode sets a paint property on given node,
+// using given setter function.
+func setPaintPropNode(nd svg.Node, fun func(g svg.Node)) {
+	if gp, isgp := nd.(*svg.Group); isgp {
+		for _, kid := range gp.Children {
+			setPaintPropNode(kid.(svg.Node), fun)
+		}
+		return
+	}
+	fun(nd)
+}
+
+// setPaintPropInput sets paint property from a slider-based input that
+// sends continuous [events.Input] events, followed by a final [events.Change]
+// event, which should have the final = true flag set. This uses the
+// [Action] framework to manage the undo saving dynamics involved.
+func (cv *Canvas) setPaintPropInput(act Actions, data string, final bool, fun func(nd svg.Node)) {
 	es := &cv.EditState
 	sv := cv.SVG
-	// update := false
 	actStart := false
 	finalAct := false
-	if !manip && es.InAction() {
+	if final && es.InAction() {
 		finalAct = true
 	}
-	if manip && !es.InAction() {
-		manip = false
+	if !final && !es.InAction() {
+		final = true
 		actStart = true
 		es.ActStart(act, data)
 		es.ActUnlock()
 	}
-	if !manip {
-		if !finalAct {
+	if final {
+		if !finalAct { // was already saved earlier otherwise
 			sv.UndoSave(act.String(), data)
 		}
 	}
-	for itm := range es.Selected {
-		cv.PaintSetFun(itm, fun)
+	for nd := range es.Selected {
+		setPaintPropNode(nd, fun)
 	}
-	if !manip {
+	if final {
 		if !actStart {
 			es.ActDone()
 			cv.ChangeMade()
+			sv.NeedsRender()
 		}
 	} else {
 		sv.NeedsRender()
 	}
 }
 
-func (cv *Canvas) PaintSetFun(nd svg.Node, fun func(itm svg.Node)) {
-	if gp, isgp := nd.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			cv.PaintSetFun(kid.(svg.Node), fun)
-		}
-		return
-	}
-	fun(nd)
-}
-
-// SetPaintPropNode sets paint property on given node,
+// setPaintProp sets paint property on selected nodes,
 // using given setter function.
-func SetPaintPropNode(nd svg.Node, fun func(g svg.Node)) {
-	if gp, isgp := nd.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			SetPaintPropNode(kid.(svg.Node), fun)
-		}
-		return
-	}
-	fun(nd)
-}
-
-// SetPaintProp sets paint property selected nodes,
-// using given setter function.
-func (cv *Canvas) SetPaintProp(actName, val string, fun func(g svg.Node)) {
+func (cv *Canvas) setPaintProp(actName, val string, fun func(g svg.Node)) {
 	es := &cv.EditState
 	cv.SVG.UndoSave(actName, val)
 	for itm := range es.Selected {
-		SetPaintPropNode(itm, fun)
+		setPaintPropNode(itm, fun)
 	}
 	cv.ChangeMade()
+	cv.SVG.NeedsRender()
 }
 
 // SetColorNode sets the color properties of Node
@@ -417,15 +421,16 @@ func (cv *Canvas) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp
 // SetStroke sets the stroke properties of selected items
 // based on previous and current PaintType
 func (cv *Canvas) SetStroke(prev, pt PaintTypes, sp string) {
-	cv.SetPaintProp("SetStroke", sp, func(nd svg.Node) {
+	cv.setPaintProp("SetStroke", sp, func(nd svg.Node) {
 		cv.SetColorNode(nd, "stroke", prev, pt, sp)
 	})
 }
 
 // SetStrokeColor sets the stroke color for selected items.
-// manip means currently being manipulated -- don't save undo.
-func (cv *Canvas) SetStrokeColor(sp string, manip bool) {
-	cv.PaintSet(SetStrokeColor, sp, manip,
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetStrokeColor(sp string, final bool) {
+	cv.setPaintPropInput(SetStrokeColor, sp, final,
 		func(itm svg.Node) {
 			p := itm.AsTree().Properties["stroke"]
 			if p != nil {
@@ -436,7 +441,7 @@ func (cv *Canvas) SetStrokeColor(sp string, manip bool) {
 }
 
 func (cv *Canvas) SetStrokeWidth(wp string) {
-	cv.SetPaintProp("SetStrokeWidth", wp, func(nd svg.Node) {
+	cv.setPaintProp("SetStrokeWidth", wp, func(nd svg.Node) {
 		g := nd.AsNodeBase()
 		if g.Paint.Stroke.Color != nil {
 			g.SetProperty("stroke-width", wp)
@@ -447,7 +452,7 @@ func (cv *Canvas) SetStrokeWidth(wp string) {
 // SetMarkerProperties sets the marker properties
 func (cv *Canvas) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
 	sv := cv.SVG.SVG
-	cv.SetPaintProp("SetMarkerProperties", start+" "+mid+" "+end, func(nd svg.Node) {
+	cv.setPaintProp("SetMarkerProperties", start+" "+mid+" "+end, func(nd svg.Node) {
 		MarkerSetProp(sv, nd, "marker-start", start, sc)
 		MarkerSetProp(sv, nd, "marker-mid", mid, mc)
 		MarkerSetProp(sv, nd, "marker-end", end, ec)
@@ -513,15 +518,15 @@ func (cv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
 	cv.ChangeMade()
 }
 
-// SetFillColor sets the fill color for selected items
-// manip means currently being manipulated -- don't save undo.
-func (cv *Canvas) SetFillColor(fp string, manip bool) {
-	cv.PaintSet(SetFillColor, fp, manip,
+// SetFillColor sets the fill color for selected items,
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetFillColor(fp string, final bool) {
+	cv.setPaintPropInput(SetFillColor, fp, final,
 		func(itm svg.Node) {
 			p := itm.AsTree().Properties["fill"]
 			if p != nil {
 				itm.AsNodeBase().SetColorProperties("fill", fp)
-				cv.UpdateMarkerColors(itm)
 			}
 		})
 }
@@ -548,8 +553,8 @@ func (cv *Canvas) UpdateGradients() {
 
 ////////  PaintSetter
 
-// Update updates the current settings based on the values in the given Paint and
-// properties from node (node can be nil)
+// UpdateFromNode updates the current settings based on the values in the given Paint
+// Style and properties from node (node can be nil)
 func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.StrokeType, pv.StrokeStops = pv.GetPaintType(nd, ps.Stroke.Color, "stroke")
 	pv.FillType, pv.FillStops = pv.GetPaintType(nd, ps.Fill.Color, "fill")
