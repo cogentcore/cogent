@@ -254,6 +254,7 @@ func (sv *SVG) EditState() *EditState {
 
 // UpdateView updates the view, optionally with a full re-render
 func (sv *SVG) UpdateView(full bool) { // TODO(config)
+	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
 	sv.NeedsRender()
 }
@@ -319,7 +320,6 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 func (sv *SVG) ResetZoom() {
 	sv.SVG.Translate.Set(0, 0)
 	sv.SVG.Scale = 1
-	sv.NeedsRender()
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
@@ -338,7 +338,6 @@ func (sv *SVG) ZoomToContents(width bool) {
 	} else {
 		sv.SVG.Scale = math32.Min(sc.X, sc.Y)
 	}
-	sv.NeedsRender()
 }
 
 // ResizeToContents resizes the drawing to just fit the current contents,
@@ -660,7 +659,6 @@ func (sv *SVG) RenderGrid() {
 		return
 	}
 	sv.UpdateGridEff()
-	sv.SVG.UpdateBBoxes() // needs this to be updated
 
 	pc := &sv.Scene.Painter
 	pc.PushContext(&root.Paint, nil)

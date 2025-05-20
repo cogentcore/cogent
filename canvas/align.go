@@ -131,12 +131,11 @@ func (sv *SVG) alignAnchorBBox(aa AlignAnchors) (math32.Box2, svg.Node) {
 }
 
 // alignImpl does alignment
-func (sv *SVG) alignImpl(apos math32.Vector2, an svg.Node, dim math32.Dims, act string) {
+func (sv *SVG) alignImpl(apos math32.Vector2, an svg.Node, useMax bool, dim math32.Dims, act string) {
 	es := sv.EditState()
 	if !es.HasSelected() {
 		return
 	}
-	// svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
@@ -145,8 +144,13 @@ func (sv *SVG) alignImpl(apos math32.Vector2, an svg.Node, dim math32.Dims, act 
 			continue
 		}
 		sng := sn.AsNodeBase()
-		bb := sng.BBox // .Sub(svoff)
-		del := apos.Sub(bb.Min)
+		bb := sng.BBox
+		var del math32.Vector2
+		if useMax {
+			del = apos.Sub(bb.Max)
+		} else {
+			del = apos.Sub(bb.Min)
+		}
 		del.SetDim(odim, 0)
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, bb.Min)
 	}
@@ -158,7 +162,7 @@ func (sv *SVG) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 		return
 	}
 	abb, an := sv.alignAnchorBBox(aa)
-	sv.alignImpl(abb.Min, an, dim, act)
+	sv.alignImpl(abb.Min, an, false, dim, act)
 }
 
 func (sv *SVG) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
@@ -166,7 +170,7 @@ func (sv *SVG) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 		return
 	}
 	abb, an := sv.alignAnchorBBox(aa)
-	sv.alignImpl(abb.Max, an, dim, act)
+	sv.alignImpl(abb.Max, an, false, dim, act)
 }
 
 func (sv *SVG) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
@@ -174,7 +178,7 @@ func (sv *SVG) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 		return
 	}
 	abb, an := sv.alignAnchorBBox(aa)
-	sv.alignImpl(abb.Max, an, dim, act)
+	sv.alignImpl(abb.Max, an, true, dim, act)
 }
 
 func (sv *SVG) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
@@ -182,7 +186,7 @@ func (sv *SVG) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 		return
 	}
 	abb, an := sv.alignAnchorBBox(aa)
-	sv.alignImpl(abb.Min, an, dim, act)
+	sv.alignImpl(abb.Min, an, true, dim, act)
 }
 
 func (sv *SVG) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {

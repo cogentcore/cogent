@@ -490,7 +490,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
 			sv.ResetZoom()
-			sv.UpdateView(true)
+			sv.UpdateView(false)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
@@ -499,6 +499,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
 			sv.ZoomToContents(false)
+			sv.UpdateView(false)
 		})
 	})
 }
