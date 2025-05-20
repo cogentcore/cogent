@@ -33,8 +33,8 @@ func ToolDoesBasicSelect(tl Tools) bool {
 }
 
 // SetTool sets the current active tool
-func (vc *Canvas) SetTool(tl Tools) {
-	es := &vc.EditState
+func (cv *Canvas) SetTool(tl Tools) {
+	es := &cv.EditState
 	if es.Tool == tl {
 		return
 	}
@@ -53,74 +53,73 @@ func (vc *Canvas) SetTool(tl Tools) {
 		}
 	}
 	es.ResetSelected()
-	vc.EditState.Tool = tl
-	vc.SetDefaultStyle()
-	vc.ModalToolbar().Update()
-	vc.SetStatus("Tool")
-	vc.Restyle()
-	sv := vc.SVG()
-	sv.UpdateSelect()
+	cv.EditState.Tool = tl
+	cv.SetDefaultStyle()
+	cv.modalTools.Update()
+	cv.SetStatus("Tool")
+	cv.Restyle()
+	cv.SVG.UpdateSelect()
 }
 
-func (vc *Canvas) MakeTools(p *tree.Plan) {
+func (cv *Canvas) MakeTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.ArrowSelectorTool).SetShortcut("S")
 		w.SetTooltip("Select, move, and resize objects")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(SelectTool)
+			cv.SetTool(SelectTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == SelectTool, states.Selected)
+			s.SetState(cv.EditState.Tool == SelectTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(cicons.ToolNode).SetShortcut("N")
 		w.SetTooltip("Select and move node points within paths")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(NodeTool)
+			cv.SetTool(NodeTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == NodeTool, states.Selected)
+			s.SetState(cv.EditState.Tool == NodeTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Rectangle).SetShortcut("R")
 		w.SetTooltip("Create rectangles and squares")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(RectTool)
+			cv.SetTool(RectTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == RectTool, states.Selected)
+			s.SetState(cv.EditState.Tool == RectTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Circle).SetShortcut("E")
 		w.SetTooltip("Create circles, ellipses, and arcs")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(EllipseTool)
+			cv.SetTool(EllipseTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == EllipseTool, states.Selected)
+			s.SetState(cv.EditState.Tool == EllipseTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.LineCurve).SetShortcut("B")
 		w.SetTooltip("Create bezier curves (straight lines and curves with control points)")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(BezierTool)
+			cv.SetTool(BezierTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == BezierTool, states.Selected)
+			s.SetState(cv.EditState.Tool == BezierTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(cicons.ToolText).SetShortcut("T")
 		w.SetTooltip("Add and edit text")
 		w.OnClick(func(e events.Event) {
-			vc.SetTool(TextTool)
+			cv.SetTool(TextTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.SetState(vc.EditState.Tool == TextTool, states.Selected)
+			s.SetState(cv.EditState.Tool == TextTool, states.Selected)
 		})
 	})
 }

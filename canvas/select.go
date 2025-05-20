@@ -199,11 +199,10 @@ func (sv *SVG) setSelSpritePos() {
 		sl := es.SelectedList(false)
 		for si, sii := range sl {
 			sn := sii.AsNodeBase()
-			if sn.BBox.Size() == image.ZP {
+			if sn.BBox.Size() == (math32.Vector2{}) {
 				continue
 			}
-			bb := math32.Box2{}
-			bb.SetFromRect(sn.BBox)
+			bb := sn.BBox
 			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
 			nbox++
 		}
@@ -322,7 +321,7 @@ func (gv *Canvas) SelectGroup() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("Group", es.SelectedNamesString())
 
 	sl := es.SelectedListDepth(sv, false) // ascending depth order
@@ -352,7 +351,7 @@ func (gv *Canvas) SelectUnGroup() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("UnGroup", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -383,7 +382,7 @@ func (gv *Canvas) SelectRotate(deg float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
 	del := math32.Vector2{}
@@ -391,9 +390,8 @@ func (gv *Canvas) SelectRotate(deg float32) {
 	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.FromPoint(sng.BBox.Size())
-		mn := math32.FromPoint(sng.BBox.Min)
-		ctr := mn.Add(sz.MulScalar(.5))
+		sz := sng.BBox.Size()
+		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
@@ -405,17 +403,15 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
-	svoff := image.Point{} // sv.Geom.ContentBBox.Min
 	del := math32.Vector2{}
 	sc := math32.Vec2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.FromPoint(sng.BBox.Size())
-		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
-		ctr := mn.Add(sz.MulScalar(.5))
+		sz := sng.BBox.Size()
+		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
 	}
 	sv.UpdateView(true)
@@ -448,7 +444,7 @@ func (gv *Canvas) SelectRaiseTop() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("RaiseTop", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -471,7 +467,7 @@ func (gv *Canvas) SelectRaise() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("Raise", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -496,7 +492,7 @@ func (gv *Canvas) SelectLowerBottom() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("LowerBottom", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -519,7 +515,7 @@ func (gv *Canvas) SelectLower() { //types:add
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("Lower", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -543,7 +539,7 @@ func (gv *Canvas) SelectSetXPos(xp float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("MoveToX", fmt.Sprintf("%g", xp))
 	// todo
 	gv.ChangeMade()
@@ -554,7 +550,7 @@ func (gv *Canvas) SelectSetYPos(yp float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("MoveToY", fmt.Sprintf("%g", yp))
 	// todo
 	gv.ChangeMade()
@@ -565,7 +561,7 @@ func (gv *Canvas) SelectSetWidth(wd float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("SetWidth", fmt.Sprintf("%g", wd))
 	// todo
 	gv.ChangeMade()
@@ -576,7 +572,7 @@ func (gv *Canvas) SelectSetHeight(ht float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("SetHeight", fmt.Sprintf("%g", ht))
 	// todo
 	gv.ChangeMade()
@@ -586,7 +582,7 @@ func (gv *Canvas) SelectSetHeight(ht float32) {
 
 // SelectWithinBBox returns a list of all nodes whose BBox is fully contained
 // within the given BBox. SVG version excludes layer groups.
-func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
+func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
 	var curlay tree.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
@@ -615,7 +611,7 @@ func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Nod
 				return tree.Break
 			}
 		}
-		if nb.BBox.In(bbox) {
+		if bbox.ContainsBox(nb.BBox) {
 			rval = append(rval, n)
 			if curlay == nil && nl != nil {
 				curlay = nl
@@ -634,6 +630,7 @@ func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Nod
 // if excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
+	ptv := math32.FromPoint(pt)
 	es := sv.EditState()
 	var curlay tree.Node
 	fn := es.FirstSelectedNode()
@@ -675,7 +672,7 @@ func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) 
 				return tree.Break
 			}
 		}
-		if pt.In(nb.BBox) {
+		if nb.BBox.ContainsPoint(ptv) {
 			rval = n
 			return tree.Break
 		}

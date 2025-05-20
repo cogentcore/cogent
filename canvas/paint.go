@@ -320,7 +320,7 @@ func (pv *PaintView) Init() {
 // runs given function to actually do the update.
 func (vv *Canvas) ManipAction(act Actions, data string, manip bool, fun func(sii svg.Node)) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	// update := false
 	actStart := false
 	finalAct := false
@@ -392,7 +392,7 @@ func (vv *Canvas) SetColorNode(sii svg.Node, prop string, prev, pt PaintTypes, s
 // based on previous and current PaintType
 func (vv *Canvas) SetStroke(prev, pt PaintTypes, sp string) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("SetStroke", sp)
 	for itm := range es.Selected {
 		vv.SetColorNode(itm, "stroke", prev, pt, sp)
@@ -418,7 +418,7 @@ func (vv *Canvas) SetStrokeWidthNode(sii svg.Node, wp string) {
 // manip means currently being manipulated -- don't save undo.
 func (vv *Canvas) SetStrokeWidth(wp string, manip bool) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	if !manip {
 		sv.UndoSave("SetStrokeWidth", wp)
 	}
@@ -453,7 +453,7 @@ func (vv *Canvas) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc, ec
 		}
 		return
 	}
-	sv := vv.SVG()
+	sv := vv.SVG
 	MarkerSetProp(sv.SVG, sii, "marker-start", start, sc)
 	MarkerSetProp(sv.SVG, sii, "marker-mid", mid, mc)
 	MarkerSetProp(sv.SVG, sii, "marker-end", end, ec)
@@ -462,7 +462,7 @@ func (vv *Canvas) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc, ec
 // SetMarkerProperties sets the marker properties
 func (vv *Canvas) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("SetMarkerProperties", start+" "+mid+" "+end)
 	for itm := range es.Selected {
 		vv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
@@ -475,7 +475,7 @@ func (vv *Canvas) UpdateMarkerColors(sii svg.Node) {
 	if sii == nil {
 		return
 	}
-	sv := vv.SVG()
+	sv := vv.SVG
 	MarkerUpdateColorProp(sv.SVG, sii, "marker-start")
 	MarkerUpdateColorProp(sv.SVG, sii, "marker-mid")
 	MarkerUpdateColorProp(sv.SVG, sii, "marker-end")
@@ -503,7 +503,7 @@ func (vv *Canvas) SetDashNode(sii svg.Node, dary []float64) {
 // SetDashProperties sets the dash properties
 func (vv *Canvas) SetDashProperties(dary []float64) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("SetDashProperties", "")
 	// update := sv.UpdateStart()
 	// sv.SetFullReRender()
@@ -518,7 +518,7 @@ func (vv *Canvas) SetDashProperties(dary []float64) {
 // based on previous and current PaintType
 func (vv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("SetFill", fp)
 	// update := sv.UpdateStart()
 	// sv.SetFullReRender()
@@ -545,7 +545,7 @@ func (vv *Canvas) SetFillColor(fp string, manip bool) {
 // DefaultGradient returns the default gradient to use for setting stops
 func (vv *Canvas) DefaultGradient() string {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	if len(vv.EditState.Gradients) == 0 {
 		es.ConfigDefaultGradient()
 		sv.UpdateGradients(es.Gradients)
@@ -556,7 +556,7 @@ func (vv *Canvas) DefaultGradient() string {
 // UpdateGradients updates gradients from EditState
 func (vv *Canvas) UpdateGradients() {
 	es := &vv.EditState
-	sv := vv.SVG()
+	sv := vv.SVG
 	// update := sv.UpdateStart()
 	sv.UpdateGradients(es.Gradients)
 	// sv.UpdateEnd(update)

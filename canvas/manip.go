@@ -32,10 +32,9 @@ func (sv *SVG) ManipDone() {
 	es := sv.EditState()
 	switch {
 	case es.Action == BoxSelect:
-		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+		bbox := math32.Box2{Min: math32.FromPoint(es.DragStartPos), Max: math32.FromPoint(es.DragCurPos)}
 		bbox = bbox.Canon()
 		InactivateSprites(sprites, SpRubberBand)
-		fmt.Println(bbox)
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod

@@ -76,7 +76,7 @@ func (vv *Canvas) NodeSetXPos(xp float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("NodeToX", fmt.Sprintf("%g", xp))
 	// todo
 	vv.ChangeMade()
@@ -87,7 +87,7 @@ func (vv *Canvas) NodeSetYPos(yp float32) {
 	if !es.HasSelected() {
 		return
 	}
-	sv := vv.SVG()
+	sv := vv.SVG
 	sv.UndoSave("NodeToY", fmt.Sprintf("%g", yp))
 	// todo
 	vv.ChangeMade()

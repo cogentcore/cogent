@@ -399,8 +399,7 @@ func (es *EditState) UpdateSelectBBox() {
 	bbox.SetEmpty()
 	for itm := range es.Selected {
 		g := itm.AsNodeBase()
-		bb := math32.Box2{}
-		bb.SetFromRect(g.BBox)
+		bb := g.BBox
 		bbox.ExpandByBox(bb)
 	}
 	es.SelectBBox = bbox

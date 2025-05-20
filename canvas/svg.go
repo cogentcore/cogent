@@ -53,7 +53,7 @@ func (sv *SVG) Init() {
 	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
 	sv.Styler(func(s *styles.Style) {
-		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable)
+		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended)
 		s.ObjectFit = styles.FitNone
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
 		s.Cursor = cursors.Arrow // todo: modulate based on tool etc
@@ -150,9 +150,12 @@ func (sv *SVG) Init() {
 		es.DragStartPos = e.StartPos() // this is the operative start
 		// fmt.Println("sm drag start:", es.DragStartPos)
 		if e.HasAnyModifier(key.Shift) {
-			del := e.PrevDelta()
-			sv.SVG.Translate.X += float32(del.X)
-			sv.SVG.Translate.Y += float32(del.Y)
+			del := math32.FromPoint(e.PrevDelta())
+			if sv.SVG.Scale > 0 {
+				del.SetDivScalar(min(1, sv.SVG.Scale))
+			}
+			sv.SVG.Translate.SetAdd(del)
+			sv.UpdateSelSprites()
 			sv.NeedsRender()
 			return
 		}
@@ -210,7 +213,13 @@ func (sv *SVG) Init() {
 		e.SetHandled()
 		se := e.(*events.MouseScroll)
 		svoff := sv.Geom.ContentBBox.Min
-		sv.ZoomAt(se.Pos().Sub(svoff), se.Delta.Y/100)
+		del := se.Delta.Y / 100
+		if sv.SVG.Scale > 0 {
+			del /= min(1, sv.SVG.Scale)
+		}
+		// fmt.Println(sv.SVG.Scale, del)
+		sv.ZoomAt(se.Pos().Sub(svoff), del)
+		sv.UpdateSelSprites()
 		sv.NeedsRender()
 	})
 }
@@ -278,44 +287,6 @@ func (sv *SVG) MouseHover() {
 }
 */
 
-// ContentsBBox returns the object-level box of the entire contents
-func (sv *SVG) ContentsBBox() math32.Box2 {
-	bbox := math32.Box2{}
-	bbox.SetEmpty()
-	sv.WalkDown(func(n tree.Node) bool {
-		if n == sv.This {
-			return tree.Continue
-		}
-		if n == sv.SVG.Defs {
-			return tree.Break
-		}
-		sni, issv := n.(svg.Node)
-		if !issv {
-			return tree.Break
-		}
-		if NodeIsLayer(n) {
-			return tree.Continue
-		}
-		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
-			if txt.Text != "" {
-				return tree.Break
-			}
-		}
-		sn := sni.AsNodeBase()
-		bb := math32.Box2{}
-		bb.SetFromRect(sn.BBox)
-		bbox.ExpandByBox(bb)
-		if _, isgp := sni.(*svg.Group); isgp { // subsumes all
-			return tree.Break
-		}
-		return tree.Continue
-	})
-	if bbox.IsEmpty() {
-		bbox = math32.Box2{}
-	}
-	return bbox
-}
-
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
@@ -346,33 +317,20 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 	})
 }
 
-// ZoomToPage sets the scale to fit the current viewbox
-func (sv *SVG) ZoomToPage(width bool) {
-	vb := math32.FromPoint(sv.Root().BBox.Size())
-	if vb == (math32.Vector2{}) {
-		return
-	}
-	bsz := sv.Root().ViewBox.Size
-	if bsz.X <= 0 || bsz.Y <= 0 {
-		return
-	}
-	sc := vb.Div(bsz)
+func (sv *SVG) ResetZoom() {
 	sv.SVG.Translate.Set(0, 0)
-	if width {
-		sv.SVG.Scale = sc.X
-	} else {
-		sv.SVG.Scale = math32.Min(sc.X, sc.Y)
-	}
+	sv.SVG.Scale = 1
+	sv.NeedsRender()
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVG) ZoomToContents(width bool) {
-	vb := math32.FromPoint(sv.Root().BBox.Size())
+	vb := sv.Root().BBox.Size()
 	if vb == (math32.Vector2{}) {
 		return
 	}
-	sv.ZoomToPage(width)
-	bb := sv.ContentsBBox()
+	sv.ResetZoom()
+	bb := sv.SVG.ContentBounds()
 	bsz := bb.Size()
 	if bsz.X <= 0 || bsz.Y <= 0 {
 		return
@@ -393,8 +351,8 @@ func (sv *SVG) ZoomToContents(width bool) {
 // is preserved -- recommended.
 func (sv *SVG) ResizeToContents(grid_off bool) {
 	sv.UndoSave("ResizeToContents", "")
-	sv.ZoomToPage(false)
-	bb := sv.ContentsBBox()
+	sv.ResetZoom()
+	bb := sv.SVG.ContentBounds()
 	bsz := bb.Size()
 	if bsz.X <= 0 || bsz.Y <= 0 {
 		return
@@ -405,18 +363,17 @@ func (sv *SVG) ResizeToContents(grid_off bool) {
 	if grid_off {
 		treff.X = math32.Floor(trans.X/incr) * incr
 		treff.Y = math32.Floor(trans.Y/incr) * incr
+		bsz.SetAdd(trans.Sub(treff))
+		bsz.X = math32.Ceil(bsz.X/incr) * incr
+		bsz.Y = math32.Ceil(bsz.Y/incr) * incr
 	}
-	bsz.SetAdd(trans.Sub(treff))
-	treff = treff.Negate()
-
-	bsz = bsz.DivScalar(sv.SVG.Scale)
-
-	sv.TransformAllLeaves(treff, math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
-	sv.Root().ViewBox.Size = bsz
-	sv.SVG.PhysicalWidth.Value = bsz.X
-	sv.SVG.PhysicalHeight.Value = bsz.Y
-	sv.ZoomToPage(false)
+	root := sv.SVG.Root
+	root.ViewBox.Min = treff
+	root.ViewBox.Size = bsz
+	// sv.SVG.PhysicalWidth.Value = bsz.X
+	// sv.SVG.PhysicalHeight.Value = bsz.Y
 	sv.Canvas.ChangeMade()
+	sv.NeedsRender()
 }
 
 // ZoomAt updates the scale and translate parameters at given point
@@ -573,17 +530,6 @@ func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 		SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
-// ContextMenuPos returns position to use for context menu, based on input position
-func (sv *SVG) NodeContextMenuPos(pos image.Point) image.Point {
-	if pos != image.ZP {
-		return pos
-	}
-	bbox := sv.Root().BBox
-	pos.X = (bbox.Min.X + bbox.Max.X) / 2
-	pos.Y = (bbox.Min.Y + bbox.Max.Y) / 2
-	return pos
-}
-
 //////// Undo
 
 // UndoSave save current state for potential undo
@@ -713,28 +659,28 @@ func (sv *SVG) RenderGrid() {
 		return
 	}
 	sv.UpdateGridEff()
+	sv.SVG.UpdateBBoxes() // needs this to be updated
 
 	pc := &sv.Scene.Painter
 	pc.PushContext(&root.Paint, nil)
-	pc.Stroke.Color = colors.Scheme.Outline
+	pc.Stroke.Color = colors.Scheme.OutlineVariant
 	pc.Fill.Color = nil
 
 	sc := sv.SVG.Scale
 
 	wd := 1 / sc
 	pc.Stroke.Width.Dots = wd
-	pos := math32.Vec2(0, 0)
+	pos := root.ViewBox.Min
 	sz := root.ViewBox.Size
 
 	pc.Rectangle(pos.X, pos.Y, sz.X, sz.Y)
 	if Settings.GridDisp {
 		gsz := float32(sv.GridEff)
-		pc.Stroke.Color = colors.Scheme.OutlineVariant
 		for x := gsz; x < sz.X; x += gsz {
-			pc.Line(x, 0, x, sz.Y)
+			pc.Line(pos.X+x, pos.Y, pos.X+x, pos.Y+sz.Y)
 		}
 		for y := gsz; y < sz.Y; y += gsz {
-			pc.Line(0, y, sz.X, y)
+			pc.Line(pos.X, pos.Y+y, pos.X+sz.X, pos.Y+y)
 		}
 	}
 	pc.Draw()

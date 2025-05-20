@@ -77,8 +77,8 @@ func (ly *Layers) LayerIndexByName(nm string) int {
 }
 
 // FirstLayerIndex returns index of first layer group in svg
-func (vv *Canvas) FirstLayerIndex() int {
-	sv := vv.SVG()
+func (cv *Canvas) FirstLayerIndex() int {
+	sv := cv.SVG
 	for i, kc := range sv.Root().Children {
 		if NodeIsLayer(kc) {
 			return i
@@ -87,9 +87,9 @@ func (vv *Canvas) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (vv *Canvas) LayerViewSigs(lyv *core.Table) {
+func (cv *Canvas) LayerViewSigs(lyv *core.Table) {
 	// es := &gv.EditState
-	// sv := gv.SVG()
+	// sv := gv.SVG
 	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
 	// 	update := sv.UpdateStart()
@@ -127,16 +127,16 @@ func (vv *Canvas) LayerViewSigs(lyv *core.Table) {
 	// })
 }
 
-func (vv *Canvas) SyncLayers() {
-	sv := vv.SVG()
-	vv.EditState.Layers.SyncLayers(sv)
+func (cv *Canvas) SyncLayers() {
+	sv := cv.SVG
+	cv.EditState.Layers.SyncLayers(sv)
 }
 
-func (vv *Canvas) UpdateLayerView() {
-	vv.SyncLayers()
-	es := &vv.EditState
+func (cv *Canvas) UpdateLayerView() {
+	cv.SyncLayers()
+	es := &cv.EditState
 	lys := &es.Layers
-	lyv := vv.LayerView()
+	lyv := cv.layers
 	lyv.SetSlice(lys)
 	nl := len(*lys)
 	if nl == 0 {
@@ -153,11 +153,11 @@ func (vv *Canvas) UpdateLayerView() {
 }
 
 // AddLayer adds a new layer
-func (vv *Canvas) AddLayer() { //types:add
-	sv := vv.SVG()
+func (cv *Canvas) AddLayer() { //types:add
+	sv := cv.SVG
 	svr := sv.Root()
 
-	lys := &vv.EditState.Layers
+	lys := &cv.EditState.Layers
 	lys.SyncLayers(sv)
 	nl := len(*lys)
 	si := 1 // starting index -- assuming namedview
@@ -175,15 +175,15 @@ func (vv *Canvas) AddLayer() { //types:add
 			kc := svr.Child(i)
 			tree.MoveToParent(kc, l1)
 		}
-		vv.SetCurLayer(l1.AsTree().Name)
+		cv.SetCurLayer(l1.AsTree().Name)
 	} else {
 		l1 := svg.NewGroup()
 		svr.InsertChild(l1, si+nl)
 		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
 		l1.AsTree().SetProperty("groupmode", "layer")
-		vv.SetCurLayer(l1.AsTree().Name)
+		cv.SetCurLayer(l1.AsTree().Name)
 	}
-	vv.UpdateLayerView()
+	cv.UpdateLayerView()
 }
 
 /////////////////////////////////////////////////////////////////
@@ -222,21 +222,21 @@ func NodeParentLayer(n tree.Node) tree.Node {
 
 // IsCurLayer returns true if given layer is the current layer
 // for creating items
-func (vv *Canvas) IsCurLayer(lay string) bool {
-	return vv.EditState.CurLayer == lay
+func (cv *Canvas) IsCurLayer(lay string) bool {
+	return cv.EditState.CurLayer == lay
 }
 
 // SetCurLayer sets the current layer for creating items to given one
-func (vv *Canvas) SetCurLayer(lay string) {
-	vv.EditState.CurLayer = lay
-	vv.SetStatus("set current layer to: " + lay)
+func (cv *Canvas) SetCurLayer(lay string) {
+	cv.EditState.CurLayer = lay
+	cv.SetStatus("set current layer to: " + lay)
 }
 
 // ClearCurLayer clears the current layer for creating items if it
 // was set to the given layer name
-func (vv *Canvas) ClearCurLayer(lay string) {
-	if vv.EditState.CurLayer == lay {
-		vv.EditState.CurLayer = ""
-		vv.SetStatus("clear current layer from: " + lay)
+func (cv *Canvas) ClearCurLayer(lay string) {
+	if cv.EditState.CurLayer == lay {
+		cv.EditState.CurLayer = ""
+		cv.SetStatus("clear current layer from: " + lay)
 	}
 }

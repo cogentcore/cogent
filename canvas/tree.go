@@ -25,8 +25,8 @@ type Tree struct {
 }
 
 // SelectNodeInTree selects given node in Tree
-func (gv *Canvas) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
-	tv := gv.Tree()
+func (cv *Canvas) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
+	tv := cv.tree
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
 		tvn.OpenParents()
@@ -35,13 +35,13 @@ func (gv *Canvas) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 }
 
 // SelectedAsTrees returns the currently selected items from SVG as Tree nodes
-func (gv *Canvas) SelectedAsTrees() []core.Treer {
-	es := &gv.EditState
+func (cv *Canvas) SelectedAsTrees() []core.Treer {
+	es := &cv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
-	tv := gv.Tree()
+	tv := cv.tree
 	var tvl []core.Treer
 	for _, si := range sl {
 		tvn := tv.FindSyncNode(si.AsTree().This)
@@ -53,70 +53,70 @@ func (gv *Canvas) SelectedAsTrees() []core.Treer {
 }
 
 // DuplicateSelected duplicates selected items in SVG view, using Tree methods
-func (gv *Canvas) DuplicateSelected() { //types:add
-	tvl := gv.SelectedAsTrees()
+func (cv *Canvas) DuplicateSelected() { //types:add
+	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
-		gv.SetStatus("Duplicate: no tree items found")
+		cv.SetStatus("Duplicate: no tree items found")
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("DuplicateSelected", "")
 	// sv.SetFullReRender()
-	tv := gv.Tree()
+	tv := cv.tree
 	// tv.SetFullReRender()
 	for _, tr := range tvl {
 		tr.AsCoreTree().Duplicate()
 	}
-	gv.SetStatus("Duplicated selected items")
+	cv.SetStatus("Duplicated selected items")
 	tv.Resync() // todo: should not be needed
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 // CopySelected copies selected items in SVG view, using Tree methods
-func (gv *Canvas) CopySelected() { //types:add
-	tvl := gv.SelectedAsTrees()
+func (cv *Canvas) CopySelected() { //types:add
+	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
-		gv.SetStatus("Copy: no tree items found")
+		cv.SetStatus("Copy: no tree items found")
 		return
 	}
-	tv := gv.Tree()
+	tv := cv.tree
 	tv.SetSelectedNodes(tvl)
 	tvl[0].Copy() // operates on first element in selection
-	gv.SetStatus("Copied selected items")
+	cv.SetStatus("Copied selected items")
 }
 
 // CutSelected cuts selected items in SVG view, using Tree methods
-func (gv *Canvas) CutSelected() { //types:add
-	tvl := gv.SelectedAsTrees()
+func (cv *Canvas) CutSelected() { //types:add
+	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
-		gv.SetStatus("Cut: no tree items found")
+		cv.SetStatus("Cut: no tree items found")
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("CutSelected", "")
 	// sv.SetFullReRender()
 	sv.EditState().ResetSelected()
-	tv := gv.Tree()
+	tv := cv.tree
 	// tv.SetFullReRender()
 	tv.SetSelectedNodes(tvl)
 	tvl[0].Cut() // operates on first element in selection
-	gv.SetStatus("Cut selected items")
+	cv.SetStatus("Cut selected items")
 	tv.Resync() // todo: should not be needed
 	sv.UpdateSelSprites()
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 // PasteClip pastes clipboard, using cur layer etc
-func (gv *Canvas) PasteClip() { //types:add
-	md := gv.Clipboard().Read([]string{fileinfo.DataJson})
+func (cv *Canvas) PasteClip() { //types:add
+	md := cv.Clipboard().Read([]string{fileinfo.DataJson})
 	if md == nil {
 		return
 	}
 	// es := &gv.EditState
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Paste", "")
 	// sv.SetFullReRender()
-	tv := gv.Tree()
+	tv := cv.tree
 	// tv.SetFullReRender()
 	// parent := tv
 	// if es.CurLayer != "" {
@@ -126,31 +126,31 @@ func (gv *Canvas) PasteClip() { //types:add
 	// 	}
 	// }
 	// par.PasteChildren(md, dnd.DropCopy)
-	gv.SetStatus("Pasted items from clipboard")
+	cv.SetStatus("Pasted items from clipboard")
 	tv.Resync() // todo: should not be needed
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 // DeleteSelected deletes selected items in SVG view, using Tree methods
-func (gv *Canvas) DeleteSelected() {
-	tvl := gv.SelectedAsTrees()
+func (cv *Canvas) DeleteSelected() {
+	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
-		gv.SetStatus("Delete: no tree items found")
+		cv.SetStatus("Delete: no tree items found")
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("DeleteSelected", "")
 	sv.EditState().ResetSelected()
 	// sv.SetFullReRender()
-	tv := gv.Tree()
+	tv := cv.tree
 	// tv.SetFullReRender()
 	// for _, tvi := range tvl {
 	// 	tvi.SrcDelete()
 	// }
-	gv.SetStatus("Deleted selected items")
+	cv.SetStatus("Deleted selected items")
 	tv.Resync() // todo: should not be needed
 	sv.UpdateSelSprites()
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 ///////////////////////////////////////////////
@@ -215,17 +215,17 @@ func (tv *Tree) Init() {
 
 // SelectSVG
 func (tv *Tree) SelectSVG() {
-	gv := tv.Canvas
-	if gv != nil {
-		gv.SelectNodeInSVG(tv.SyncNode, events.SelectOne)
+	cv := tv.Canvas
+	if cv != nil {
+		cv.SelectNodeInSVG(tv.SyncNode, events.SelectOne)
 	}
 }
 
 // LayerIsCurrent returns true if layer is the current active one for creating
 func (tv *Tree) LayerIsCurrent() bool {
-	gv := tv.Canvas
-	if gv != nil {
-		return gv.IsCurLayer(tv.SyncNode.AsTree().Name)
+	cv := tv.Canvas
+	if cv != nil {
+		return cv.IsCurLayer(tv.SyncNode.AsTree().Name)
 	}
 	return false
 }
@@ -233,9 +233,9 @@ func (tv *Tree) LayerIsCurrent() bool {
 // LayerSetCurrent sets this layer as the current layer name
 func (tv *Tree) LayerSetCurrent() {
 	sn := tv.SyncNode
-	gv := tv.Canvas
-	if gv != nil {
-		cur := gv.EditState.CurLayer
+	cv := tv.Canvas
+	if cv != nil {
+		cur := cv.EditState.CurLayer
 		if cur != "" {
 			cli := tv.Parent.AsTree().ChildByName("tv_"+cur, 0)
 			if cli != nil {
@@ -249,7 +249,7 @@ func (tv *Tree) LayerSetCurrent() {
 		if !LayerIsVisible(sn) {
 			tv.LayerToggleVis()
 		}
-		gv.SetCurLayer(sn.AsTree().Name)
+		cv.SetCurLayer(sn.AsTree().Name)
 		// tv.SetFullReRender() // needed for icon updating
 		// tv.UpdateSig()
 	}
@@ -257,9 +257,9 @@ func (tv *Tree) LayerSetCurrent() {
 
 // LayerClearCurrent clears this layer as the current layer if it was set as such.
 func (tv *Tree) LayerClearCurrent() {
-	gv := tv.Canvas
-	if gv != nil {
-		gv.ClearCurLayer(tv.SyncNode.AsTree().Name)
+	cv := tv.Canvas
+	if cv != nil {
+		cv.ClearCurLayer(tv.SyncNode.AsTree().Name)
 		// tv.SetFullReRender() // needed for icon updating
 		// tv.UpdateSig()
 	}

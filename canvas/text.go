@@ -79,7 +79,7 @@ func (gv *Canvas) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 // SetTextProperties sets the text properties of selected Text nodes
 func (gv *Canvas) SetTextProperties(tps map[string]string) {
 	es := &gv.EditState
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("SetTextProperties", "")
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -147,7 +147,7 @@ func (gv *Canvas) SetText(txt string) {
 	if len(es.Selected) != 1 { // only if exactly one selected
 		return
 	}
-	sv := gv.SVG()
+	sv := gv.SVG
 	sv.UndoSave("SetText", "")
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
