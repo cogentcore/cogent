@@ -17,10 +17,10 @@ type TextStyle struct {
 	Text string
 
 	// FontStyle styling properties.
-	FontStyle styles.Font `new-window:"+"`
+	FontStyle styles.Font `display:"add-fields"`
 
 	// TextStyle styling properties.
-	TextStyle styles.Text `new-window:"+"`
+	TextStyle styles.Text `display:"add-fields"`
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`

@@ -141,7 +141,7 @@ func (cv *Canvas) Init() {
 				cv.tabs = w
 				w.SetType(core.FunctionalTabs)
 				pt, _ := w.NewTab("Paint")
-				NewPaintView(pt).SetCanvas(cv)
+				NewPaintSetter(pt).SetCanvas(cv)
 				at, _ := w.NewTab("Align")
 				NewAlignView(at).SetCanvas(cv)
 				cv.EditState.Text.Defaults()
@@ -216,7 +216,7 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
-	sv.ResetZoom()
+	sv.SVG.ZoomReset()
 	sv.ReadMetaData()
 	return err
 }
@@ -273,7 +273,7 @@ func (cv *Canvas) SetPhysSize(sz *PhysSize) {
 	sv := cv.SVG
 	sz.SetToSVG(sv)
 	sv.SetMetaData()
-	sv.ResetZoom()
+	sv.SVG.ZoomReset()
 }
 
 // SaveDrawing saves .svg drawing to current filename
@@ -489,7 +489,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.SetTooltip("Zoom to see the entire page size for drawing")
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
-			sv.ResetZoom()
+			sv.SVG.ZoomReset()
 			sv.UpdateView(false)
 		})
 	})
@@ -498,7 +498,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.SetTooltip("Zoom to see all elements")
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
-			sv.ZoomToContents(false)
+			sv.SVG.ZoomToContents(sv.Geom.Size.Actual.Content)
 			sv.UpdateView(false)
 		})
 	})
@@ -583,8 +583,8 @@ func (gv *Canvas) Tab(name string) *core.Frame {
 	return gv.tabs.TabByName(name)
 }
 
-func (cv *Canvas) PaintView() *PaintView {
-	return cv.Tab("Paint").Child(0).(*PaintView)
+func (cv *Canvas) PaintSetter() *PaintSetter {
+	return cv.Tab("Paint").Child(0).(*PaintSetter)
 }
 
 // UpdateAll updates the display
@@ -605,7 +605,7 @@ func (cv *Canvas) UpdateTree() {
 }
 
 func (cv *Canvas) SetDefaultStyle() {
-	// pv := vv.PaintView()
+	// pv := vv.PaintSetter()
 	// es := &vv.EditState
 	// switch es.Tool {
 	// case TextTool:
@@ -618,24 +618,25 @@ func (cv *Canvas) SetDefaultStyle() {
 }
 
 func (cv *Canvas) UpdateTabs() {
-	// es := &vv.EditState
-	// fsel := es.FirstSelectedNode()
-	// if fsel != nil {
-	// 	sel := fsel.AsNodeBase()
-	// 	pv := vv.PaintView()
-	// 	pv.Update(&sel.Paint, sel.This)
-	// 	txt, istxt := fsel.(*svg.Text)
-	// 	if istxt {
-	// 		es.Text.SetFromNode(txt)
-	// 		txv := vv.Tab("Text").(*core.Form)
-	// 		txv.UpdateFields()
-	// 		// todo: only show text toolbar on double-click
-	// 		// gv.SetModalText()
-	// 		// gv.UpdateTextToolbar()
-	// 	} else {
-	// 		vv.SetModalToolbar()
-	// 	}
-	// }
+	es := &cv.EditState
+	fsel := es.FirstSelectedNode()
+	if fsel == nil {
+		return
+	}
+	sel := fsel.AsNodeBase()
+	pv := cv.PaintSetter()
+	pv.UpdateFromNode(&sel.Paint, sel)
+	txt, istxt := fsel.(*svg.Text)
+	if istxt {
+		es.Text.SetFromNode(txt)
+		txv := cv.Tab("Text")
+		txv.Update()
+		// todo: only show text toolbar on double-click
+		// gv.SetModalText()
+		// gv.UpdateTextToolbar()
+	} else {
+		// cv.SetModalToolbar()
+	}
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing

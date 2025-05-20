@@ -7,7 +7,6 @@ package canvas
 import (
 	"bytes"
 	"fmt"
-	"image"
 	"strings"
 
 	"cogentcore.org/core/base/errors"
@@ -216,8 +215,7 @@ func (sv *SVG) Init() {
 		if sv.SVG.Scale > 0 {
 			del /= min(1, sv.SVG.Scale)
 		}
-		// fmt.Println(sv.SVG.Scale, del)
-		sv.ZoomAt(se.Pos(), del)
+		sv.SVG.ZoomAt(se.Pos(), del)
 		sv.UpdateSelSprites()
 		sv.NeedsRender()
 	})
@@ -317,85 +315,19 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 	})
 }
 
-func (sv *SVG) ResetZoom() {
-	sv.SVG.Translate.Set(0, 0)
-	sv.SVG.Scale = 1
-}
-
-// ZoomToContents sets the scale to fit the current contents into view
-func (sv *SVG) ZoomToContents(width bool) {
-	sv.ResetZoom()
-	bb := sv.SVG.ContentBounds()
-	bsz := bb.Size()
-	if bsz == (math32.Vector2{}) {
-		return
-	}
-	vsz := sv.Geom.Size.Actual.Content
-	sc := vsz.Div(bsz)
-	sv.SVG.Translate = bb.Min.Negate()
-	if width {
-		sv.SVG.Scale = sc.X
-	} else {
-		sv.SVG.Scale = math32.Min(sc.X, sc.Y)
-	}
-}
-
 // ResizeToContents resizes the drawing to just fit the current contents,
 // including moving everything to start at upper-left corner,
-// optionally preserving the current grid offset, so grid snapping
-// is preserved -- recommended.
-func (sv *SVG) ResizeToContents(grid_off bool) {
+// optionally preserving the current grid sizing, so grid snapping
+// is preserved, which is recommended.
+func (sv *SVG) ResizeToContents(gridIncr bool) {
 	sv.UndoSave("ResizeToContents", "")
-	sv.ResetZoom()
-	bb := sv.SVG.ContentBounds()
-	bsz := bb.Size()
-	if bsz.X <= 0 || bsz.Y <= 0 {
-		return
+	grid := float32(1)
+	if gridIncr {
+		grid = sv.Grid
 	}
-	trans := bb.Min
-	incr := sv.Grid * sv.SVG.Scale // our zoom factor
-	treff := trans
-	if grid_off {
-		treff.X = math32.Floor(trans.X/incr) * incr
-		treff.Y = math32.Floor(trans.Y/incr) * incr
-		bsz.SetAdd(trans.Sub(treff))
-		bsz.X = math32.Ceil(bsz.X/incr) * incr
-		bsz.Y = math32.Ceil(bsz.Y/incr) * incr
-	}
-	root := sv.SVG.Root
-	root.ViewBox.Min = treff
-	root.ViewBox.Size = bsz
-	// sv.SVG.PhysicalWidth.Value = bsz.X
-	// sv.SVG.PhysicalHeight.Value = bsz.Y
+	sv.SVG.ResizeToContents(grid)
 	sv.Canvas.ChangeMade()
 	sv.NeedsRender()
-}
-
-// ZoomAt updates the scale and translate parameters at given point
-// by given delta: + means zoom in, - means zoom out,
-// delta should always be < 1)
-func (sv *SVG) ZoomAt(pt image.Point, delta float32) {
-	sc := float32(1)
-	if delta > 1 {
-		sc += delta
-	} else {
-		sc *= (1 - math32.Min(-delta, .5))
-	}
-
-	osc := sv.SVG.Scale
-	nsc := osc * sc
-
-	root := sv.SVG.Root
-	rxf := root.Paint.Transform
-	xf := rxf.Inverse()
-
-	mpt := math32.FromPoint(pt)
-	xpt := xf.MulVector2AsPoint(mpt)
-	xpt.SetSub(root.ViewBox.Min)
-	dt := xpt.DivScalar(nsc).Sub(xpt.DivScalar(osc))
-
-	sv.SVG.Translate.SetAdd(dt)
-	sv.SVG.Scale = nsc
 }
 
 // MetaData returns the overall metadata and grid if present.

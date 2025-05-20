@@ -36,7 +36,7 @@ func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
 	n := tree.New[T](parent)
 	sn := any(n).(svg.Node)
 	sv.SetSVGName(sn)
-	sv.Canvas.PaintView().SetProperties(sn)
+	sv.Canvas.PaintSetter().SetProperties(sn)
 	sv.Canvas.UpdateTree()
 	return n
 }
