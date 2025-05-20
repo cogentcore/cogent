@@ -212,13 +212,12 @@ func (sv *SVG) Init() {
 	sv.On(events.Scroll, func(e events.Event) {
 		e.SetHandled()
 		se := e.(*events.MouseScroll)
-		svoff := sv.Geom.ContentBBox.Min
 		del := se.Delta.Y / 100
 		if sv.SVG.Scale > 0 {
 			del /= min(1, sv.SVG.Scale)
 		}
 		// fmt.Println(sv.SVG.Scale, del)
-		sv.ZoomAt(se.Pos().Sub(svoff), del)
+		sv.ZoomAt(se.Pos(), del)
 		sv.UpdateSelSprites()
 		sv.NeedsRender()
 	})
@@ -325,24 +324,21 @@ func (sv *SVG) ResetZoom() {
 
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVG) ZoomToContents(width bool) {
-	vb := sv.Root().BBox.Size()
-	if vb == (math32.Vector2{}) {
-		return
-	}
 	sv.ResetZoom()
 	bb := sv.SVG.ContentBounds()
 	bsz := bb.Size()
-	if bsz.X <= 0 || bsz.Y <= 0 {
+	if bsz == (math32.Vector2{}) {
 		return
 	}
-	sc := vb.Div(bsz)
-	sv.SVG.Translate = bb.Min.DivScalar(sv.SVG.Scale).Negate()
+	vsz := sv.Geom.Size.Actual.Content
+	sc := vsz.Div(bsz)
+	sv.SVG.Translate = bb.Min.Negate()
 	if width {
-		sv.SVG.Scale *= sc.X
+		sv.SVG.Scale = sc.X
 	} else {
-		sv.SVG.Scale *= math32.Min(sc.X, sc.Y)
+		sv.SVG.Scale = math32.Min(sc.X, sc.Y)
 	}
-	sv.UpdateView(true)
+	sv.NeedsRender()
 }
 
 // ResizeToContents resizes the drawing to just fit the current contents,
@@ -387,14 +383,19 @@ func (sv *SVG) ZoomAt(pt image.Point, delta float32) {
 		sc *= (1 - math32.Min(-delta, .5))
 	}
 
-	nsc := sv.SVG.Scale * sc
+	osc := sv.SVG.Scale
+	nsc := osc * sc
+
+	root := sv.SVG.Root
+	rxf := root.Paint.Transform
+	xf := rxf.Inverse()
 
 	mpt := math32.FromPoint(pt)
-	lpt := mpt.DivScalar(sv.SVG.Scale).Sub(sv.SVG.Translate) // point in drawing coords
+	xpt := xf.MulVector2AsPoint(mpt)
+	xpt.SetSub(root.ViewBox.Min)
+	dt := xpt.DivScalar(nsc).Sub(xpt.DivScalar(osc))
 
-	dt := lpt.Add(sv.SVG.Translate).MulScalar((nsc - sv.SVG.Scale) / nsc) // delta from zooming
-	sv.SVG.Translate.SetSub(dt)
-
+	sv.SVG.Translate.SetAdd(dt)
 	sv.SVG.Scale = nsc
 }
 
