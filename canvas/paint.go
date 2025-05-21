@@ -50,6 +50,8 @@ type PaintSetter struct {
 
 	markerStart, markerMid, markerEnd                *core.Chooser
 	markerStartColor, markerMidColor, markerEndColor *core.Chooser
+
+	dashes *core.Chooser
 }
 
 func (pv *PaintSetter) Init() {
@@ -125,8 +127,8 @@ func (pv *PaintSetter) Init() {
 		// })
 
 		tree.AddChild(w, func(w *core.Chooser) {
-			// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
-			// dshcb.SetProp("width", units.NewCh(15))
+			pv.dashes = w
+			w.SetItems(AllDashItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetDashProperties(pv.StrokeDashProp())
@@ -141,10 +143,7 @@ func (pv *PaintSetter) Init() {
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
 			pv.markerStart = w
-			w.Styler(func(s *styles.Style) {
-				s.Min.X.Ch(20)
-			})
-			w.SetItems(AllMarkerIcons...)
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -154,7 +153,6 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Chooser) { // start-color
 			pv.markerStartColor = w
 			w.SetEnum(MarkerColorsN)
-			// mscc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -166,7 +164,7 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // mid
 			pv.markerMid = w
-			w.SetItems(AllMarkerIcons...)
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -176,7 +174,6 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Chooser) { // mid-color
 			pv.markerMidColor = w
 			w.SetEnum(MarkerColorsN)
-			// mmcc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -188,8 +185,7 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // end
 			pv.markerEnd = w
-			// mscb.SetProp("width", units.NewCh(20))
-			w.SetItems(AllMarkerIcons...)
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -483,35 +479,17 @@ func (cv *Canvas) UpdateMarkerColors(nd svg.Node) {
 
 // SetDashNode sets the stroke-dasharray property of Node.
 // multiplies dash values by the line width in dots.
-func (cv *Canvas) SetDashNode(nd svg.Node, dary []float64) {
-	if gp, isgp := nd.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			cv.SetDashNode(kid.(svg.Node), dary)
-		}
-		return
-	}
-	if len(dary) == 0 {
-		delete(nd.AsTree().Properties, "stroke-dasharray")
-		return
-	}
-	g := nd.AsNodeBase()
-	mary := DashMulWidth(float64(g.Paint.Stroke.Width.Dots), dary)
-	ds := DashString(mary)
-	nd.AsTree().Properties["stroke-dasharray"] = ds
-}
-
-// SetDashProperties sets the dash properties
 func (cv *Canvas) SetDashProperties(dary []float64) {
-	es := &cv.EditState
-	sv := cv.SVG
-	sv.UndoSave("SetDashProperties", "")
-	// update := sv.UpdateStart()
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		cv.SetDashNode(itm, dary)
-	}
-	// sv.UpdateEnd(update)
-	cv.ChangeMade()
+	cv.setPaintProp("SetDashProperties", "", func(nd svg.Node) {
+		g := nd.AsNodeBase()
+		if len(dary) == 0 {
+			delete(g.Properties, "stroke-dasharray")
+			return
+		}
+		mary := DashMulWidth(float64(g.Paint.Stroke.Width.Dots), dary)
+		ds := DashString(mary)
+		g.Properties["stroke-dasharray"] = ds
+	})
 }
 
 // SetFill sets the fill properties of selected items
@@ -520,12 +498,9 @@ func (cv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
 	es := &cv.EditState
 	sv := cv.SVG
 	sv.UndoSave("SetFill", fp)
-	// update := sv.UpdateStart()
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		cv.SetColorNode(itm, "fill", prev, pt, fp)
+	for nd := range es.Selected {
+		cv.SetColorNode(nd, "fill", prev, pt, fp)
 	}
-	// sv.UpdateEnd(update)
 	cv.ChangeMade()
 }
 
@@ -534,10 +509,10 @@ func (cv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
 // followed by a final [events.Change] event (final = true)
 func (cv *Canvas) SetFillColor(fp string, final bool) {
 	cv.setPaintPropInput(SetFillColor, fp, final,
-		func(itm svg.Node) {
-			p := itm.AsTree().Properties["fill"]
+		func(nd svg.Node) {
+			p := nd.AsTree().Properties["fill"]
 			if p != nil {
-				itm.AsNodeBase().SetColorProperties("fill", fp)
+				nd.AsNodeBase().SetColorProperties("fill", fp)
 			}
 		})
 }
@@ -749,22 +724,15 @@ func (pv *PaintSetter) StrokeWidthProp() string {
 // StrokeDashProp returns stroke-dasharray property as an array (nil = none)
 // these values need to be multiplied by line widths for each item.
 func (pv *PaintSetter) StrokeDashProp() []float64 {
-	// todo: need type for dashes
-	// wr := pv.ChildByName("stroke-width", 2)
-	// dshcb := wr.AsTree().ChildByName("dashes", 3).(*core.Chooser)
-	// if dshcb.CurrentIndex == 0 {
-	// 	return nil
-	// }
-	// dnm := reflectx.ToString(dshcb.CurrentItem.Value)
-	// if dnm == "" {
-	// 	return nil
-	// }
-	// dary, ok := AllDashesMap[dnm]
-	// if !ok {
-	// 	return nil
-	// }
-	// return dary
-	return nil
+	if pv.dashes.CurrentIndex == 0 {
+		return nil
+	}
+	dnm := pv.dashes.CurrentItem.Value.(string)
+	dary, ok := AllDashesMap[dnm]
+	if !ok {
+		return nil
+	}
+	return dary
 }
 
 // IsFillOn returns true if Fill is active

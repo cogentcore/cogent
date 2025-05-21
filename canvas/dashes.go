@@ -11,7 +11,10 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/svg"
 )
 
 // DashMulWidth returns the dash array multiplied by the line width -- what is actually set
@@ -122,7 +125,7 @@ var StandardDashNames = []string{
 
 // StandardDashesMap are standard dash patterns
 var StandardDashesMap = map[string][]float64{
-	"dash-solid":     {},
+	"dash-solid":     nil,
 	"dash-1-1":       {1, 1},
 	"dash-1-2":       {1, 2},
 	"dash-1-3":       {1, 3},
@@ -161,46 +164,52 @@ var StandardDashesMap = map[string][]float64{
 	"dash-0110-0110": {0.1, 0.1},
 }
 
-// AllDashesMap contains all of the available Dashes.
-// it is initialized from StdDashesMap
-var AllDashesMap map[string][]float64
+var (
+	// AllDashesMap contains all of the available Dashes.
+	// it is initialized from StdDashesMap
+	AllDashesMap map[string][]float64
 
-// AllDashNames contains all of the available dash names.
-// it is initialized from StdDashNames.
-var AllDashNames []string
+	// AllDashNames contains all of the available dash names.
+	// it is initialized from StdDashNames.
+	AllDashNames []string
 
-// AllDashIcons contains all of the available dash names as
-// Icons -- for chooser.
-var AllDashIcons []icons.Icon
+	// AllDashItems contains all of the available dash names for chooser.
+	AllDashItems []core.ChooserItem
 
-// DashIconsInited records whether the dashes have been initialized into
-// Icons for use in selectors: see DashIconsInit()
-var DashIconsInited = false
+	// dashIconsInited records whether the dashes have been initialized into
+	// Icons for use in selectors: see DashIconsInit()
+	dashIconsInited = false
+)
 
 // DashIconsInit ensures that the dashes have been turned into icons
 // for selectors, with same name (dash- prefix).  Call this after
 // startup, when configuring a gui element that needs it.
 func DashIconsInit() {
-	if DashIconsInited {
+	if dashIconsInited {
 		return
 	}
 
-	AllDashIcons = make([]icons.Icon, len(AllDashNames))
-	for i, v := range AllDashNames {
-		AllDashIcons[i] = icons.Icon(v)
-	}
+	for _, nm := range AllDashNames {
+		df := AllDashesMap[nm]
+		sv := svg.NewSVG(math32.Vec2(128, 128))
+		sv.Root.ViewBox.Size = math32.Vec2(32, 32)
+		p := svg.NewPath(sv.Root)
+		p.SetData("M 1 16 L 31 16")
+		p.SetProperty("stroke-width", "2dp")
+		p.SetProperty("stroke", "#000000")
+		p.SetProperty("stroke-dasharray", DashString(df))
 
-	// for k, v := range AllDashesMap {
-	// 	ic := &core.SVG{}
-	// 	ic.InitName(ic, k)
-	// 	ic.SetProp("width", units.Ch(20))
-	// 	ic.SVG.Root.ViewBox.Size = math32.Vec2(1, 1)
-	// 	p := svg.NewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
-	// 	p.SetProp("stroke-width", units.Pw(2))
-	// 	p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))
-	// 	// svg.CurIconSet[ic.Nm] = ic
-	// }
-	DashIconsInited = true
+		icstr := icons.Icon(sv.XMLString())
+		chi := core.ChooserItem{Value: nm, Icon: icstr}
+		AllDashItems = append(AllDashItems, chi)
+
+		// debugging:
+		// os.MkdirAll("dashes_svg", 0777)
+		// os.MkdirAll("dashes_png", 0777)
+		// sv.SaveXML(filepath.Join("dashes_svg", nm+".svg"))
+		// sv.SaveImage(filepath.Join("dashes_png", nm+".png"))
+	}
+	dashIconsInited = true
 }
 
 func init() {

@@ -224,22 +224,28 @@ const (
 
 ////////  AllMarkers Collection
 
-// AllMarkersXMLMap contains all of the available Markers as XML
-// source.  It is initialized from StdMarkersMap
-var AllMarkersXMLMap map[string]string
+var (
+	// AllMarkersXMLMap contains all of the available Markers as XML
+	// source.  It is initialized from StdMarkersMap
+	AllMarkersXMLMap map[string]string
 
-// AllMarkersSVGMap contains all of the available Markers
-// as *svg.Marker elements that have been converted from
-// the XML source.
-var AllMarkersSVGMap map[string]*svg.Marker
+	// AllMarkersSVGMap contains all of the available Markers
+	// as *svg.Marker elements that have been converted from
+	// the XML source.
+	AllMarkersSVGMap map[string]*svg.Marker
 
-// AllMarkerNames contains all of the available marker names.
-// it is initialized from StdMarkerNames.
-var AllMarkerNames []string
+	// AllMarkerNames contains all of the available marker names.
+	// it is initialized from StdMarkerNames.
+	AllMarkerNames []string
 
-// AllMarkerIcons contains all of the available marker names for chooser.
-// All names have marker- prefix in addition to regular marker names.
-var AllMarkerIcons []core.ChooserItem
+	// AllMarkerItems contains all of the available marker names for chooser.
+	// All names have marker- prefix in addition to regular marker names.
+	AllMarkerItems []core.ChooserItem
+
+	// markerIconsInited records whether the dashes have been initialized into
+	// Icons for use in selectors: see MarkerIconsInit()
+	markerIconsInited = false
+)
 
 func init() {
 	AllMarkersXMLMap = make(map[string]string, len(StandardMarkersMap))
@@ -259,16 +265,12 @@ func MarkerNameToIcon(nm string) icons.Icon {
 	return icons.Icon("marker-" + nm)
 }
 
-// MarkerIconsInited records whether the dashes have been initialized into
-// Icons for use in selectors: see MarkerIconsInit()
-var MarkerIconsInited = false
-
 // MarkerIconsInit ensures that the markers have been turned into icons
 // for selectors, with marker- preix.  Call this after startup,
 // when configuring a gui element that needs it.
 // It also initializes the AllMarkersSVGMap.
 func MarkerIconsInit() {
-	if MarkerIconsInited {
+	if markerIconsInited {
 		return
 	}
 
@@ -286,7 +288,6 @@ func MarkerIconsInit() {
 			AllMarkersSVGMap[nm] = mk
 		}
 		sv := svg.NewSVG(math32.Vec2(128, 128))
-		sv.Root.ViewBox.Min = math32.Vec2(0, 0)
 		sv.Root.ViewBox.Size = math32.Vec2(12, 12)
 		var p *svg.Path
 		lnm := strings.ToLower(nm)
@@ -308,9 +309,6 @@ func MarkerIconsInit() {
 		}
 		p.SetProperty("stroke-width", "1dp")
 		p.SetProperty("stroke", "#000000")
-		p.SetProperty("stroke-opacity", "1")
-		p.SetProperty("fill", "#888888")
-		p.SetProperty("fill-opacity", "1")
 		if !empty {
 			mk := NewMarker(sv, nm, 0)
 			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
@@ -321,16 +319,17 @@ func MarkerIconsInit() {
 			}
 		}
 		icstr := icons.Icon(sv.XMLString())
+		chi := core.ChooserItem{Value: nm, Icon: icstr}
+		AllMarkerItems = append(AllMarkerItems, chi)
+
+		// debugging:
 		// os.MkdirAll("markers_svg", 0777)
 		// os.MkdirAll("markers_png", 0777)
 		// sv.SaveXML(filepath.Join("markers_svg", nm+".svg"))
 		// sv.SaveImage(filepath.Join("markers_png", nm+".png"))
-
-		chi := core.ChooserItem{Value: nm, Icon: icstr}
-		AllMarkerIcons = append(AllMarkerIcons, chi)
 	}
 
-	MarkerIconsInited = true
+	markerIconsInited = true
 }
 
 //////////////////////////////////////////////////
