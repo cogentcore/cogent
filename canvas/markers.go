@@ -6,13 +6,9 @@ package canvas
 
 import (
 	"bytes"
-	"cmp"
 	"io"
 	"log"
 	"maps"
-	"os"
-	"path/filepath"
-	"slices"
 	"strings"
 
 	"cogentcore.org/core/base/reflectx"
@@ -278,65 +274,61 @@ func MarkerIconsInit() {
 
 	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
 
-	for k, v := range AllMarkersXMLMap {
+	for _, nm := range StandardMarkerNames {
+		src := AllMarkersXMLMap[nm]
 		empty := true
-		if v != "" {
-			mk := NewMarkerFromXML(k, v)
+		if src != "" {
+			mk := NewMarkerFromXML(nm, src)
 			if mk == nil { // badness
 				continue
 			}
 			empty = false
-			AllMarkersSVGMap[k] = mk
+			AllMarkersSVGMap[nm] = mk
 		}
-		sv := svg.NewSVG(math32.Vec2(10, 10))
-		sv.Root.ViewBox.Min = math32.Vec2(-3, -3)
-		sv.Root.ViewBox.Size = math32.Vec2(7, 7)
-		if vbb, has := StandardMarkersBoxes[k]; has {
-			sv.Root.ViewBox.Min = vbb.Min
-			sv.Root.ViewBox.Size = vbb.Max
-		}
+		sv := svg.NewSVG(math32.Vec2(128, 128))
+		sv.Root.ViewBox.Min = math32.Vec2(0, 0)
+		sv.Root.ViewBox.Size = math32.Vec2(12, 12)
 		var p *svg.Path
-		lk := strings.ToLower(k)
+		lnm := strings.ToLower(nm)
 		start := true
 		switch {
 		case empty:
 			p = svg.NewPath(sv.Root)
-			p.SetData("M 0.1 0.5 0.9 0.5 Z")
-		case strings.Contains(lk, "end"):
+			p.SetData("M 3 6 L 9 6")
+		case strings.Contains(lnm, "end"):
 			start = false
 			p = svg.NewPath(sv.Root)
-			p.SetData("M 0.8 0.5 0.9 0.5 Z")
-		case strings.Contains(lk, "start"):
+			p.SetData("M 1 6 L 11 6")
+		case strings.Contains(lnm, "start"):
 			p = svg.NewPath(sv.Root)
-			p.SetData("M 0.1 0.5 0.2 0.5 Z")
+			p.SetData("M 1 6 L 11 6")
 		default:
 			p = svg.NewPath(sv.Root)
-			p.SetData("M 0.4 0.5 0.5 0.5 Z")
+			p.SetData("M 6 6 L 7 6")
 		}
-		p.SetProperty("stroke-width", "2dp")
-		p.SetProperty("stroke-color", "#000000")
+		p.SetProperty("stroke-width", "1dp")
+		p.SetProperty("stroke", "#000000")
 		p.SetProperty("stroke-opacity", "1")
+		p.SetProperty("fill", "#888888")
+		p.SetProperty("fill-opacity", "1")
 		if !empty {
-			mk := NewMarker(sv, k, 0)
+			mk := NewMarker(sv, nm, 0)
 			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
 			if start {
-				p.SetProperty("marker-start", svg.NameToURL(k))
+				p.SetProperty("marker-start", svg.NameToURL(nm))
 			} else {
-				p.SetProperty("marker-end", svg.NameToURL(k))
+				p.SetProperty("marker-end", svg.NameToURL(nm))
 			}
 		}
 		icstr := icons.Icon(sv.XMLString())
-		os.MkdirAll("markers", 0777)
-		mfn := filepath.Join("markers", k+".svg")
-		sv.SaveXML(mfn)
+		// os.MkdirAll("markers_svg", 0777)
+		// os.MkdirAll("markers_png", 0777)
+		// sv.SaveXML(filepath.Join("markers_svg", nm+".svg"))
+		// sv.SaveImage(filepath.Join("markers_png", nm+".png"))
 
-		chi := core.ChooserItem{Value: k, Icon: icstr}
+		chi := core.ChooserItem{Value: nm, Icon: icstr}
 		AllMarkerIcons = append(AllMarkerIcons, chi)
 	}
-
-	slices.SortFunc(AllMarkerIcons, func(a, b core.ChooserItem) int {
-		return cmp.Compare(a.Value.(string), b.Value.(string))
-	})
 
 	MarkerIconsInited = true
 }
@@ -700,26 +692,4 @@ var StandardMarkersMap = map[string]string{
         <circle cx="10" cy="0" r="0.8"/>
       </g>
     </marker>`,
-}
-
-// StandardMarkersBoxes is a map of the Viewbox for standard markers
-var StandardMarkersBoxes = map[string]math32.Box2{
-	"Arrow1Sstart": math32.B2(-1, -1, 3, 3),
-	"Arrow2Sstart": math32.B2(-1, -1, 3, 3),
-	"Arrow1Send":   math32.B2(-1, -1, 3, 3),
-	"Arrow2Send":   math32.B2(-1, -1, 3, 3),
-
-	"Arrow1Mstart": math32.B2(-1, -2, 5, 5),
-	"Arrow2Mstart": math32.B2(-1, -2, 5, 5),
-	"Arrow1Mend":   math32.B2(-3, -2, 5, 5),
-	"Arrow2Mend":   math32.B2(-3, -2, 5, 5),
-
-	"Arrow1Lstart": math32.B2(0, -4, 9, 9), // -2
-	"Arrow2Lstart": math32.B2(-2, -4, 9, 9),
-	"Arrow1Lend":   math32.B2(-8, -4, 9, 9),
-	"Arrow2Lend":   math32.B2(-7, -4, 9, 9),
-
-	"Club":     math32.B2(-4, -3, 7, 7),
-	"DiamondL": math32.B2(-3, -3, 7, 7),
-	"SquareL":  math32.B2(-3, -3, 7, 7),
 }

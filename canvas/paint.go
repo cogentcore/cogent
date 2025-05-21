@@ -47,6 +47,9 @@ type PaintSetter struct {
 
 	strokeStack *core.Frame
 	fillStack   *core.Frame
+
+	markerStart, markerMid, markerEnd                *core.Chooser
+	markerStartColor, markerMidColor, markerEndColor *core.Chooser
 }
 
 func (pv *PaintSetter) Init() {
@@ -137,11 +140,11 @@ func (pv *PaintSetter) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
+			pv.markerStart = w
 			w.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(20)
 			})
 			w.SetItems(AllMarkerIcons...)
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -149,6 +152,7 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start-color
+			pv.markerStartColor = w
 			w.SetEnum(MarkerColorsN)
 			// mscc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
@@ -161,8 +165,8 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Separator) {})
 
 		tree.AddChild(w, func(w *core.Chooser) { // mid
-			// mscb.SetProp("width", units.NewCh(20))
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			pv.markerMid = w
+			w.SetItems(AllMarkerIcons...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -170,6 +174,7 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // mid-color
+			pv.markerMidColor = w
 			w.SetEnum(MarkerColorsN)
 			// mmcc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
@@ -182,8 +187,9 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Separator) {})
 
 		tree.AddChild(w, func(w *core.Chooser) { // end
+			pv.markerEnd = w
 			// mscb.SetProp("width", units.NewCh(20))
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			w.SetItems(AllMarkerIcons...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -191,8 +197,8 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // end-color
+			pv.markerEndColor = w
 			w.SetEnum(MarkerColorsN)
-			// mscc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -583,36 +589,21 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.PaintStyle.Stroke.Width = ps.Stroke.Width
 	pv.PaintStyle.Stroke.Dashes = ps.Stroke.Dashes
 
-	// ms, _, mc := MarkerFromNodeProp(nd, "marker-start")
-	// mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
-	// mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
-	// if ms != "" {
-	// 	mscb.SetCurVal(MarkerNameToIcon(ms))
-	// 	mscc.SetCurrentIndex(int(mc))
-	// } else {
-	// 	mscb.SetCurrentIndex(0)
-	// 	mscc.SetCurrentIndex(0)
-	// }
-	// ms, _, mc = MarkerFromNodeProp(nd, "marker-mid")
-	// mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
-	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
-	// if ms != "" {
-	// 	mmcb.SetCurVal(MarkerNameToIcon(ms))
-	// 	mmcc.SetCurrentIndex(int(mc))
-	// } else {
-	// 	mmcb.SetCurrentIndex(0)
-	// 	mmcc.SetCurrentIndex(0)
-	// }
-	// ms, _, mc = MarkerFromNodeProp(nd, "marker-end")
-	// mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
-	// mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
-	// if ms != "" {
-	// 	mecb.SetCurVal(MarkerNameToIcon(ms))
-	// 	mecc.SetCurrentIndex(int(mc))
-	// } else {
-	// 	mecb.SetCurrentIndex(0)
-	// 	mecc.SetCurrentIndex(0)
-	// }
+	setMarker := func(ic, cc *core.Chooser, ms string, mc MarkerColors) {
+		if ms != "" {
+			ic.SetCurrentValue(ms)
+		} else {
+			ic.SetCurrentIndex(0)
+		}
+		cc.SetCurrentValue(mc)
+	}
+
+	ms, _, mc := MarkerFromNodeProp(nd, "marker-start")
+	setMarker(pv.markerStart, pv.markerStartColor, ms, mc)
+	ms, _, mc = MarkerFromNodeProp(nd, "marker-mid")
+	setMarker(pv.markerMid, pv.markerMidColor, ms, mc)
+	ms, _, mc = MarkerFromNodeProp(nd, "marker-end")
+	setMarker(pv.markerEnd, pv.markerEndColor, ms, mc)
 
 	switch pv.FillType {
 	case PaintSolid:
@@ -735,23 +726,12 @@ func (pv *PaintSetter) StrokeProp() string {
 // MarkerProp returns the marker property string according to current settings
 // along with color type to set.
 func (pv *PaintSetter) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
-	// mkr := pv.ChildByName("stroke-markers", 3)
-	//
-	// mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
-	// mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
-	// start = IconToMarkerName(mscb.CurVal)
-	// sc = MarkerColors(mscc.CurrentIndex)
-	//
-	// mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
-	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
-	// mid = IconToMarkerName(mmcb.CurVal)
-	// mc = MarkerColors(mmcc.CurrentIndex)
-	//
-	// mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
-	// mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
-	// end = IconToMarkerName(mecb.CurVal)
-	// ec = MarkerColors(mecc.CurrentIndex)
-
+	start = pv.markerStart.CurrentItem.Value.(string)
+	sc = pv.markerStartColor.CurrentItem.Value.(MarkerColors)
+	mid = pv.markerMid.CurrentItem.Value.(string)
+	mc = pv.markerMidColor.CurrentItem.Value.(MarkerColors)
+	end = pv.markerEnd.CurrentItem.Value.(string)
+	ec = pv.markerEndColor.CurrentItem.Value.(MarkerColors)
 	return
 }
 
