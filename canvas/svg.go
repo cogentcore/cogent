@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint/ppath"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/svg"
@@ -597,10 +598,11 @@ func (sv *SVG) RenderGrid() {
 	pc.Stroke.Color = colors.Scheme.OutlineVariant
 	pc.Fill.Color = nil
 
-	sc := sv.SVG.Scale
-
-	wd := 1 / sc
-	pc.Stroke.Width.Dots = wd
+	// sc := sv.SVG.Scale
+	// wd := 1 / sc
+	pc.VectorEffect = ppath.VectorEffectNonScalingStroke
+	pc.Stroke.Width.Dp(2)
+	pc.Stroke.Width.Dots = 2
 	pos := root.ViewBox.Min
 	sz := root.ViewBox.Size
 

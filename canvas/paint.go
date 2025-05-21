@@ -137,7 +137,10 @@ func (pv *PaintSetter) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
-			// mscb.SetProp("width", units.NewCh(20))
+			w.Styler(func(s *styles.Style) {
+				s.Min.X.Ch(20)
+			})
+			w.SetItems(AllMarkerIcons...)
 			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -215,6 +218,7 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
 			core.Bind(&pv.PaintStyle.Stroke.Color, w)
+			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
 					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not final
@@ -285,6 +289,7 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
 			core.Bind(&pv.PaintStyle.Fill.Color, w)
+			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.FillType == PaintSolid {
 					pv.Canvas.SetFillColor(pv.FillProp(), false) // not final

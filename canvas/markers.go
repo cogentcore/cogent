@@ -6,12 +6,17 @@ package canvas
 
 import (
 	"bytes"
+	"cmp"
 	"io"
 	"log"
 	"maps"
+	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"cogentcore.org/core/base/reflectx"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
@@ -221,8 +226,7 @@ const (
 	MarkerCust
 )
 
-//////////////////////////////////////////////////////////////////////////
-//  AllMarkers Collection
+////////  AllMarkers Collection
 
 // AllMarkersXMLMap contains all of the available Markers as XML
 // source.  It is initialized from StdMarkersMap
@@ -237,10 +241,9 @@ var AllMarkersSVGMap map[string]*svg.Marker
 // it is initialized from StdMarkerNames.
 var AllMarkerNames []string
 
-// AllMarkerIcons contains all of the available marker names as
-// Icons -- for chooser.  All names have marker- prefix in addition
-// to regular marker names.
-var AllMarkerIcons []icons.Icon
+// AllMarkerIcons contains all of the available marker names for chooser.
+// All names have marker- prefix in addition to regular marker names.
+var AllMarkerIcons []core.ChooserItem
 
 func init() {
 	AllMarkersXMLMap = make(map[string]string, len(StandardMarkersMap))
@@ -273,54 +276,68 @@ func MarkerIconsInit() {
 		return
 	}
 
-	AllMarkerIcons = make([]icons.Icon, len(AllMarkerNames))
-	for i, v := range AllMarkerNames {
-		AllMarkerIcons[i] = icons.Icon("marker-" + v)
-	}
-
 	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
 
-	// for k, v := range AllMarkersXMLMap {
-	// 	empty := true
-	// 	if v != "" {
-	// 		mk := NewMarkerFromXML(k, v)
-	// 		if mk == nil { // badness
-	// 			continue
-	// 		}
-	// 		empty = false
-	// 		AllMarkersSVGMap[k] = mk
-	// 	}
-	// 	ic := &core.Icon{}
-	// 	ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
-	// 	ic.Styles.Min.X.Ch(6)
-	// 	ic.Styles.Min.Y.Em(2)
-	// 	ic.SVG.Root.ViewBox.Size = math32.Vec2(1, 1)
-	// 	var p *svg.Path
-	// 	lk := strings.ToLower(k)
-	// 	start := true
-	// 	switch {
-	// 	case empty:
-	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
-	// 	case strings.Contains(lk, "end"):
-	// 		start = false
-	// 		p = svg.NewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
-	// 	case strings.Contains(lk, "start"):
-	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
-	// 	default:
-	// 		p = svg.NewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
-	// 	}
-	// 	p.SetProp("stroke-width", units.Pw(5))
-	// 	if !empty {
-	// 		mk := NewMarker(&ic.SVG, k, 0)
-	// 		MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
-	// 		if start {
-	// 			p.SetProp("marker-start", svg.NameToURL(k))
-	// 		} else {
-	// 			p.SetProp("marker-end", svg.NameToURL(k))
-	// 		}
-	// 	}
-	// 	// svg.CurIconSet[ic.Nm] = ic
-	// }
+	for k, v := range AllMarkersXMLMap {
+		empty := true
+		if v != "" {
+			mk := NewMarkerFromXML(k, v)
+			if mk == nil { // badness
+				continue
+			}
+			empty = false
+			AllMarkersSVGMap[k] = mk
+		}
+		sv := svg.NewSVG(math32.Vec2(10, 10))
+		sv.Root.ViewBox.Min = math32.Vec2(-3, -3)
+		sv.Root.ViewBox.Size = math32.Vec2(7, 7)
+		if vbb, has := StandardMarkersBoxes[k]; has {
+			sv.Root.ViewBox.Min = vbb.Min
+			sv.Root.ViewBox.Size = vbb.Max
+		}
+		var p *svg.Path
+		lk := strings.ToLower(k)
+		start := true
+		switch {
+		case empty:
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 0.1 0.5 0.9 0.5 Z")
+		case strings.Contains(lk, "end"):
+			start = false
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 0.8 0.5 0.9 0.5 Z")
+		case strings.Contains(lk, "start"):
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 0.1 0.5 0.2 0.5 Z")
+		default:
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 0.4 0.5 0.5 0.5 Z")
+		}
+		p.SetProperty("stroke-width", "2dp")
+		p.SetProperty("stroke-color", "#000000")
+		p.SetProperty("stroke-opacity", "1")
+		if !empty {
+			mk := NewMarker(sv, k, 0)
+			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
+			if start {
+				p.SetProperty("marker-start", svg.NameToURL(k))
+			} else {
+				p.SetProperty("marker-end", svg.NameToURL(k))
+			}
+		}
+		icstr := icons.Icon(sv.XMLString())
+		os.MkdirAll("markers", 0777)
+		mfn := filepath.Join("markers", k+".svg")
+		sv.SaveXML(mfn)
+
+		chi := core.ChooserItem{Value: k, Icon: icstr}
+		AllMarkerIcons = append(AllMarkerIcons, chi)
+	}
+
+	slices.SortFunc(AllMarkerIcons, func(a, b core.ChooserItem) int {
+		return cmp.Compare(a.Value.(string), b.Value.(string))
+	})
+
 	MarkerIconsInited = true
 }
 
@@ -683,4 +700,26 @@ var StandardMarkersMap = map[string]string{
         <circle cx="10" cy="0" r="0.8"/>
       </g>
     </marker>`,
+}
+
+// StandardMarkersBoxes is a map of the Viewbox for standard markers
+var StandardMarkersBoxes = map[string]math32.Box2{
+	"Arrow1Sstart": math32.B2(-1, -1, 3, 3),
+	"Arrow2Sstart": math32.B2(-1, -1, 3, 3),
+	"Arrow1Send":   math32.B2(-1, -1, 3, 3),
+	"Arrow2Send":   math32.B2(-1, -1, 3, 3),
+
+	"Arrow1Mstart": math32.B2(-1, -2, 5, 5),
+	"Arrow2Mstart": math32.B2(-1, -2, 5, 5),
+	"Arrow1Mend":   math32.B2(-3, -2, 5, 5),
+	"Arrow2Mend":   math32.B2(-3, -2, 5, 5),
+
+	"Arrow1Lstart": math32.B2(0, -4, 9, 9), // -2
+	"Arrow2Lstart": math32.B2(-2, -4, 9, 9),
+	"Arrow1Lend":   math32.B2(-8, -4, 9, 9),
+	"Arrow2Lend":   math32.B2(-7, -4, 9, 9),
+
+	"Club":     math32.B2(-4, -3, 7, 7),
+	"DiamondL": math32.B2(-3, -3, 7, 7),
+	"SquareL":  math32.B2(-3, -3, 7, 7),
 }
