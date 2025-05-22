@@ -150,7 +150,7 @@ func (sv *SVG) Init() {
 		es.DragStartPos = e.StartPos() // this is the operative start
 		// fmt.Println("sm drag start:", es.DragStartPos)
 		if e.HasAnyModifier(key.Shift) {
-			del := math32.FromPoint(e.PrevDelta())
+			del := math32.FromPoint(e.PrevDelta()).MulScalar(max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01))
 			if sv.SVG.Scale > 0 {
 				del.SetDivScalar(min(1, sv.SVG.Scale))
 			}
@@ -212,7 +212,7 @@ func (sv *SVG) Init() {
 	sv.On(events.Scroll, func(e events.Event) {
 		e.SetHandled()
 		se := e.(*events.MouseScroll)
-		del := se.Delta.Y / 100
+		del := 0.01 * se.Delta.Y * max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01)
 		if sv.SVG.Scale > 0 {
 			del /= min(1, sv.SVG.Scale)
 		}
