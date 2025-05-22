@@ -42,13 +42,15 @@ func (tv *Tree) Init() {
 	tree.AddChildInit(tv.Parts, "text", func(w *core.Text) {
 		w.Styler(func(s *styles.Style) {
 			sn := tv.SyncNode
-			switch {
-			case NodeIsLayer(sn):
-				s.Font.Weight = rich.Bold
-			case LayerIsLocked(sn):
+			if !NodeIsLayer(sn) {
+				return
+			}
+			s.Font.Weight = rich.Bold
+			if LayerIsLocked(sn) {
 				s.Color = colors.Scheme.Error.Base
-			case !LayerIsVisible(sn):
-				s.Font.Slant = rich.Italic
+			}
+			if !LayerIsVisible(sn) {
+				s.Opacity = 0.5
 			}
 		})
 	})
@@ -61,8 +63,6 @@ func (tv *Tree) Init() {
 				tv.Icon = icons.Check
 			case LayerIsLocked(sn):
 				tv.Icon = icons.Lock
-			case !LayerIsVisible(sn):
-				tv.Icon = icons.Close
 			}
 		} else {
 			switch sn.(type) {
