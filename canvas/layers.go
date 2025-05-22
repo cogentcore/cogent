@@ -21,13 +21,13 @@ type Layer struct {
 	Vis bool
 
 	// lock toggle
-	Lck bool
+	Lock bool
 }
 
 // FromNode copies state / prop values from given node
 func (l *Layer) FromNode(k tree.Node) {
 	l.Vis = LayerIsVisible(k)
-	l.Lck = LayerIsLocked(k)
+	l.Lock = LayerIsLocked(k)
 }
 
 // ToNode copies state / prop values to given node
@@ -40,7 +40,7 @@ func (l *Layer) ToNode(n tree.Node) {
 		nb.Properties["style"] = "display:none"
 		nb.Properties["display"] = "none"
 	}
-	nb.Properties["insensitive"] = l.Lck
+	nb.Properties["insensitive"] = l.Lock
 }
 
 // Layers is the list of all layers

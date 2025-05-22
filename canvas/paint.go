@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -133,11 +132,14 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) {
 			pv.dashes = w
-			tree.AddChildInit(w, "icon", func(w *core.Icon) {
-				w.Styler(func(s *styles.Style) {
-					s.Min.X.Em(3)
-				})
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.X.Em(3)
 			})
+			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
+			// 	w.Styler(func(s *styles.Style) {
+			// 		s.Min.X.Em(3)
+			// 	})
+			// })
 			w.SetItems(AllDashItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -153,11 +155,15 @@ func (pv *PaintSetter) Init() {
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
 			pv.markerStart = w
-			tree.AddChildInit(w, "icon", func(w *core.Icon) {
-				w.Styler(func(s *styles.Style) {
-					s.Min.Set(units.Em(2))
-				})
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.X.Em(3)
+				s.IconSize.Y.Em(2)
 			})
+			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
+			// 	w.Styler(func(s *styles.Style) {
+			// 		s.Min.Set(units.Em(2))
+			// 	})
+			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -179,11 +185,15 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // mid
 			pv.markerMid = w
-			tree.AddChildInit(w, "icon", func(w *core.Icon) {
-				w.Styler(func(s *styles.Style) {
-					s.Min.Set(units.Em(2))
-				})
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.X.Em(3)
+				s.IconSize.Y.Em(2)
 			})
+			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
+			// 	w.Styler(func(s *styles.Style) {
+			// 		s.Min.Set(units.Em(2))
+			// 	})
+			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -205,11 +215,15 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // end
 			pv.markerEnd = w
-			tree.AddChildInit(w, "icon", func(w *core.Icon) {
-				w.Styler(func(s *styles.Style) {
-					s.Min.Set(units.Em(2))
-				})
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.X.Em(3)
+				s.IconSize.Y.Em(2)
 			})
+			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
+			// 	w.Styler(func(s *styles.Style) {
+			// 		s.Min.Set(units.Em(2))
+			// 	})
+			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -237,9 +251,6 @@ func (pv *PaintSetter) Init() {
 			s.Display = styles.Stacked
 			s.Grow.Set(0, 1)
 		})
-		// w.Updater(func() {
-		// 	w.StackTop = int(pv.StrokeType)
-		// })
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
@@ -259,25 +270,19 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Table) {
 			pv.strokeGrads = w
-			// w.Styler(func(s *styles.Style) {
-			// 	s.Grow.Set(0, 1)
-			// })
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
 			w.OnSelect(func(e events.Event) {
 				pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-				// this handles updating gradients etc to use stops
 				pv.Canvas.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
 			})
-			// todo: bindselect
-			// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	if sig == int64(core.WidgetSelected) {
-			// 		svv, _ := send.(*core.Table)
-			// 		if svv.SelectedIndex >= 0 {
-			// 			pv.StrokeStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-			// 			pv.Vector.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
-			// 		}
-			// 	}
-			// })
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.UpdateGradients()
+				if w.SelectedIndex >= 0 {
+					pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+					pv.Canvas.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+				}
+				w.Update()
+			})
 		})
 	})
 
@@ -334,28 +339,19 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Table) {
 			pv.fillGrads = w
-			// w.Styler(func(s *styles.Style) {
-			// 	s.Grow.Set(0, 1)
-			// })
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
 			w.OnSelect(func(e events.Event) {
 				pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-				// this handles updating gradients etc to use stops
 				pv.Canvas.SetFill(pv.FillType, pv.FillType, pv.FillStops)
 			})
-			// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-			// 	// svv, _ := send.(*core.Table)
-			// 	if sig == int64(core.ListDeleted) { // not clear what we can do here
-			// 	} else {
-			// 		pv.Vector.UpdateGradients()
-			// 	}
-			// })
-			// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-			// 	// svv, _ := send.(*core.Table)
-			// 	pv.Vector.UpdateGradients()
-			// })
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.UpdateGradients()
+				if w.SelectedIndex >= 0 {
+					pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+					pv.Canvas.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+				}
+				w.Update()
+			})
 		})
 
 		tree.AddChild(w, func(w *core.Stretch) {})

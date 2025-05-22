@@ -65,19 +65,19 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 
 // Gradient represents a single gradient that defines stops
 // (referenced in StopName of other gradients).
-type Gradient struct {
+type Gradient struct { //types:add
 
-	// icon of gradient -- generated to display each gradient
-	Ic icons.Icon `edit:"-" table:"no-header" width:"5"`
+	// Icon of gradient, auto generated to display each gradient.
+	Icon icons.Icon `edit:"-" table:"no-header" icon-width:"4"`
 
-	// name of gradient (id)
+	// Id is the name of gradient.
 	Id string `edit:"-" width:"6"`
 
-	// full name of gradient as SVG element
+	// Name is the full name of gradient as SVG element.
 	Name string `display:"-"`
 
-	// gradient stops
-	Stops []gradient.Stop
+	// Stops are the gradient stops.
+	Stops []gradient.Stop `new-window:"+"`
 }
 
 func (gr *Gradient) Validate() {
@@ -118,7 +118,6 @@ func (gr *Gradient) UpdateToGrad(g *svg.Gradient) {
 	_, id := svg.SplitNameIDDig(g.Name) // we always need to sync to id & name though
 	gr.Id = fmt.Sprintf("%d", id)
 	gr.Name = g.Name
-	// gr.Ic = "stop" // todo manage separate list of gradient icons -- update
 	if g.Grad == nil {
 		if strings.HasPrefix(gr.Name, "radial") {
 			g.Grad = gradient.NewRadial()
@@ -163,5 +162,5 @@ func (gr *Gradient) UpdateIcon() {
 		bx.SetProperty("stroke", "none")
 		bx.SetProperty("fill", colors.AsHex(gr.Stops[i].Color))
 	}
-	gr.Ic = icons.Icon(sv.XMLString())
+	gr.Icon = icons.Icon(sv.XMLString())
 }
