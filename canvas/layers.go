@@ -69,17 +69,9 @@ func (ly *Layers) SyncLayersToSVG(sv *SVG) {
 		li := ly.LayerIndexByName(n.AsTree().Name)
 		if li < 0 {
 			root.DeleteChildAt(i)
+			continue
 		}
-	}
-}
-
-func (ly *Layers) LayersUpdated(sv *SVG) {
-	si := 1 // starting index -- assuming namedview
-	for i, l := range *ly {
-		kc := sv.Root().ChildByName(l.Name, si+i)
-		if kc != nil {
-			l.ToNode(kc)
-		}
+		(*ly)[li].ToNode(n)
 	}
 }
 
