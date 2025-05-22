@@ -52,6 +52,7 @@ func (sv *SVG) Init() {
 	sv.SVG = svg.NewSVG(math32.Vec2(10, 10))
 	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
+	sv.AddContextMenu(sv.contextMenu)
 	sv.Styler(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended)
 		s.ObjectFit = styles.FitNone
@@ -442,13 +443,20 @@ func (sv *SVG) EditNode(n tree.Node) { //types:add
 	d.RunWindowDialog(sv)
 }
 
-// MakeNodeContextMenu makes the menu of options for context right click
-func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
+func (sv *SVG) contextMenu(m *core.Scene) {
+	sl := sv.EditState().SelectedList(false)
+	if len(sl) == 0 {
+		return
+	}
+	sv.contextMenuNode(m, sl[0])
+}
+
+func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
 	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
-		sv.EditNode(kn)
+		sv.EditNode(nd)
 	})
 	core.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
-		sv.Canvas.SelectNodeInTree(kn, events.SelectOne)
+		sv.Canvas.SelectNodeInTree(nd, events.SelectOne)
 	})
 
 	core.NewSeparator(m)
