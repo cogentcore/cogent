@@ -43,6 +43,7 @@ type Canvas struct {
 	modalTools *core.Toolbar
 	tools      *core.Toolbar
 	tree       *Tree
+	defs       *Tree
 	layerTree  *core.Frame
 	layers     *core.Table
 	statusBar  *core.Frame
@@ -111,11 +112,32 @@ func (cv *Canvas) Init() {
 					w.SetFunc(cv.AddLayer)
 				})
 				tree.AddChildAt(w, "layers", func(w *core.Table) {
+					w.ShowIndexes = true
 					cv.layers = w
 					w.Styler(func(s *styles.Style) {
 						s.Max.Y.Em(10)
 					})
 					w.SetSlice(&cv.EditState.Layers)
+					w.OnSelect(func(e events.Event) {
+						cv.EditState.CurLayer = cv.EditState.Layers[w.SelectedIndex].Name
+						cv.tree.Resync()
+					})
+					w.OnChange(func(e events.Event) {
+						cv.SyncLayersToSVG()
+						cv.UpdateTree()
+					})
+				})
+				tree.AddChildAt(w, "tree-defs", func(w *core.Frame) {
+					w.Styler(func(s *styles.Style) {
+						s.Direction = styles.Column
+						s.Grow.Set(0, 1)
+					})
+					tree.AddChildAt(w, "tree", func(w *Tree) {
+						cv.defs = w
+						w.Canvas = cv
+						w.OpenDepth = 4
+						w.SyncTree(cv.SVG.SVG.Defs)
+					})
 				})
 				tree.AddChildAt(w, "tree-frame", func(w *core.Frame) {
 					w.Styler(func(s *styles.Style) {
@@ -135,7 +157,7 @@ func (cv *Canvas) Init() {
 				w.Canvas = cv
 				w.UpdateGradients(cv.EditState.Gradients)
 				cv.SetPhysSize(&Settings.Size)
-				cv.SyncLayers()
+				cv.SyncLayersFromSVG()
 			})
 			tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				cv.tabs = w
@@ -212,7 +234,7 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	fdir, _ := filepath.Split(path)
 	errors.Log(os.Chdir(fdir))
 	cv.EditState.Init(cv)
-	cv.UpdateLayerView()
+	cv.UpdateLayers()
 
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
@@ -590,18 +612,18 @@ func (cv *Canvas) PaintSetter() *PaintSetter {
 // UpdateAll updates the display
 func (cv *Canvas) UpdateAll() { //types:add
 	cv.UpdateTabs()
+	cv.UpdateLayers()
 	cv.UpdateTree()
 	cv.UpdateDisp()
 }
 
 func (cv *Canvas) UpdateDisp() {
-	sv := cv.SVG
-	sv.UpdateView(true)
+	cv.SVG.UpdateView(true)
 }
 
 func (cv *Canvas) UpdateTree() {
-	tv := cv.tree
-	tv.Resync()
+	cv.defs.Resync()
+	cv.tree.Resync()
 }
 
 func (cv *Canvas) SetDefaultStyle() {

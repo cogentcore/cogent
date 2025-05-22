@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/base/reflectx"
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -46,13 +45,30 @@ func (l *Layer) ToNode(n tree.Node) {
 // Layers is the list of all layers
 type Layers []*Layer
 
-func (ly *Layers) SyncLayers(sv *SVG) {
+func (ly *Layers) SyncLayersFromSVG(sv *SVG) {
 	*ly = make(Layers, 0)
 	for _, n := range sv.Root().Children {
-		if NodeIsLayer(n) {
-			l := &Layer{Name: n.AsTree().Name}
-			l.FromNode(n)
-			*ly = append(*ly, l)
+		if !NodeIsLayer(n) {
+			continue
+		}
+		l := &Layer{Name: n.AsTree().Name}
+		l.FromNode(n)
+		*ly = append(*ly, l)
+	}
+}
+
+// SyncLayersToSVG deletes any layers in SVG that are not in our layers list.
+func (ly *Layers) SyncLayersToSVG(sv *SVG) {
+	root := sv.Root()
+	nc := len(root.Children)
+	for i := nc - 1; i >= 0; i-- {
+		n := root.Child(i)
+		if !NodeIsLayer(n) {
+			continue
+		}
+		li := ly.LayerIndexByName(n.AsTree().Name)
+		if li < 0 {
+			root.DeleteChildAt(i)
 		}
 	}
 }
@@ -76,6 +92,8 @@ func (ly *Layers) LayerIndexByName(nm string) int {
 	return -1
 }
 
+///////// Canvas methods
+
 // FirstLayerIndex returns index of first layer group in svg
 func (cv *Canvas) FirstLayerIndex() int {
 	sv := cv.SVG
@@ -87,53 +105,18 @@ func (cv *Canvas) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (cv *Canvas) LayerViewSigs(lyv *core.Table) {
-	// es := &gv.EditState
-	// sv := gv.SVG
-	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
-	// 	update := sv.UpdateStart()
-	// 	es.Layers.LayersUpdated(sv)
-	// 	sv.UpdateEnd(update)
-	// 	gv.UpdateLayerView()
-	// })
-
-	// lyv.ListSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	svs := core.ListSignals(sig)
-	// 	idx := data.(int)
-	// 	fmt.Printf("tv listsig: %v  data: %v\n", svs.String(), idx)
-	// 	switch svs {
-	// 	case core.ListInserted:
-	// 		si := gv.FirstLayerIndex()
-	// 		li := si + idx
-	// 		l := es.Layers[idx]
-	// 		l.Name = fmt.Sprintf("Layer%d", li)
-	// 		l.Vis = true
-	// 		sl := sv.InsertNewChild(svg.KiT_Group, li, l.Name)
-	// 		sl.SetProp("groupmode"] = "layer"
-	// 		// todo: move selected into this new group
-	// 		gv.UpdateLayerView()
-	// 	case core.ListDeleted:
-	// 	}
-	// })
-
-	// lyv.WidgetSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	fmt.Printf("tv widgetsig: %v  data: %v\n", core.WidgetSignals(sig).String(), data)
-	// 	if sig == int64(core.WidgetSelected) {
-	// 		idx := data.(int)
-	// 		ly := es.Layers[idx]
-	// 		gv.SetCurLayer(ly.Name)
-	// 	}
-	// })
-}
-
-func (cv *Canvas) SyncLayers() {
+func (cv *Canvas) SyncLayersFromSVG() {
 	sv := cv.SVG
-	cv.EditState.Layers.SyncLayers(sv)
+	cv.EditState.Layers.SyncLayersFromSVG(sv)
 }
 
-func (cv *Canvas) UpdateLayerView() {
-	cv.SyncLayers()
+func (cv *Canvas) SyncLayersToSVG() {
+	sv := cv.SVG
+	cv.EditState.Layers.SyncLayersToSVG(sv)
+}
+
+func (cv *Canvas) UpdateLayers() {
+	cv.SyncLayersFromSVG()
 	es := &cv.EditState
 	lys := &es.Layers
 	lyv := cv.layers
@@ -150,6 +133,7 @@ func (cv *Canvas) UpdateLayerView() {
 	// lyv.ClearSelected() // todo
 	lyv.SelectIndex(ci)
 	lyv.Update()
+	cv.tree.Resync()
 }
 
 // AddLayer adds a new layer
@@ -158,7 +142,7 @@ func (cv *Canvas) AddLayer() { //types:add
 	svr := sv.Root()
 
 	lys := &cv.EditState.Layers
-	lys.SyncLayers(sv)
+	lys.SyncLayersFromSVG(sv)
 	nl := len(*lys)
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
@@ -183,7 +167,8 @@ func (cv *Canvas) AddLayer() { //types:add
 		l1.AsTree().SetProperty("groupmode", "layer")
 		cv.SetCurLayer(l1.AsTree().Name)
 	}
-	cv.UpdateLayerView()
+	cv.UpdateLayers()
+	cv.tree.Update()
 }
 
 /////////////////////////////////////////////////////////////////

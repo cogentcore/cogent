@@ -781,7 +781,7 @@ func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	cv := pv.Canvas
 	cv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		nd.AsTree().Properties["stroke-width"] = pv.StrokeWidthProp()
+		nd.AsTree().SetProperty("stroke-width", pv.StrokeWidthProp())
 		cv.SetMarkerProperties(pv.MarkerProperties())
 	}
 	cv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())

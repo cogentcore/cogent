@@ -25,10 +25,17 @@ func (sv *SVG) SetSVGName(el svg.Node) {
 // NewSVGElement makes a new SVG element of the given type.
 // It uses the current active layer if it is set.
 func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
+	cv := sv.Canvas
 	es := sv.EditState()
 	parent := tree.Node(sv.Root())
-	if es.CurLayer != "" {
-		ly := sv.ChildByName(es.CurLayer, 1)
+	sl := cv.AnySelectedNodes()
+	if len(sl) == 1 {
+		if gp, isgp := sl[0].(*svg.Group); isgp {
+			parent = gp
+		}
+	}
+	if parent == tree.Node(sv.Root()) && es.CurLayer != "" {
+		ly := sv.Root().ChildByName(es.CurLayer, 1)
 		if ly != nil {
 			parent = ly
 		}
@@ -36,7 +43,9 @@ func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
 	n := tree.New[T](parent)
 	sn := any(n).(svg.Node)
 	sv.SetSVGName(sn)
-	sv.Canvas.PaintSetter().SetProperties(sn)
+	if _, isgp := sn.(*svg.Group); !isgp {
+		sv.Canvas.PaintSetter().SetProperties(sn)
+	}
 	sv.Canvas.UpdateTree()
 	return n
 }
