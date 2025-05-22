@@ -200,7 +200,7 @@ func DashIconsInit() {
 		p.SetProperty("stroke-dasharray", DashString(df))
 
 		icstr := icons.Icon(sv.XMLString())
-		chi := core.ChooserItem{Value: nm, Icon: icstr}
+		chi := core.ChooserItem{Value: nm, Icon: icstr, Text: " "}
 		AllDashItems = append(AllDashItems, chi)
 
 		// debugging:

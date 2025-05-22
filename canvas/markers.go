@@ -319,7 +319,7 @@ func MarkerIconsInit() {
 			}
 		}
 		icstr := icons.Icon(sv.XMLString())
-		chi := core.ChooserItem{Value: nm, Icon: icstr}
+		chi := core.ChooserItem{Value: nm, Icon: icstr, Text: " "}
 		AllMarkerItems = append(AllMarkerItems, chi)
 
 		// debugging:

@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -128,6 +129,11 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) {
 			pv.dashes = w
+			tree.AddChildInit(w, "icon", func(w *core.Icon) {
+				w.Styler(func(s *styles.Style) {
+					s.Min.X.Em(3)
+				})
+			})
 			w.SetItems(AllDashItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -143,6 +149,11 @@ func (pv *PaintSetter) Init() {
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
 			pv.markerStart = w
+			tree.AddChildInit(w, "icon", func(w *core.Icon) {
+				w.Styler(func(s *styles.Style) {
+					s.Min.Set(units.Em(2))
+				})
+			})
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -164,6 +175,11 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // mid
 			pv.markerMid = w
+			tree.AddChildInit(w, "icon", func(w *core.Icon) {
+				w.Styler(func(s *styles.Style) {
+					s.Min.Set(units.Em(2))
+				})
+			})
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -185,6 +201,11 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Chooser) { // end
 			pv.markerEnd = w
+			tree.AddChildInit(w, "icon", func(w *core.Icon) {
+				w.Styler(func(s *styles.Style) {
+					s.Min.Set(units.Em(2))
+				})
+			})
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
