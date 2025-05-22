@@ -523,56 +523,6 @@ func (sv *SVG) Redo() string {
 	return act
 }
 
-/////// Gradients
-
-// Gradients returns the currently defined gradients with stops
-// that are shared among obj-specific ones
-func (sv *SVG) Gradients() []*Gradient {
-	gl := make([]*Gradient, 0)
-	for _, gii := range sv.SVG.Defs.Children {
-		g, ok := gii.(*svg.Gradient)
-		if !ok {
-			continue
-		}
-		if g.StopsName != "" {
-			continue
-		}
-		gr := &Gradient{}
-		// gr.UpdateFromGrad(g)
-		gl = append(gl, gr)
-	}
-	return gl
-}
-
-// UpdateGradients update SVG gradients from given gradient list
-func (sv *SVG) UpdateGradients(gl []*Gradient) {
-	nms := make(map[string]bool)
-	for _, gr := range gl {
-		if _, has := nms[gr.Name]; has {
-			id := sv.SVG.NewUniqueID()
-			gr.Name = fmt.Sprintf("%d", id)
-		}
-		nms[gr.Name] = true
-	}
-
-	// for _, gr := range gl {
-	// 	radial := false
-	// 	if strings.HasPrefix(gr.Name, "radial") {
-	// 		radial = true
-	// 	}
-	// 	var g *svg.Gradient
-	// 	gg := sv.SVG.FindDefByName(gr.Name)
-	// 	if gg == nil {
-	// 		g, _ = svg.NewGradient(radial)
-	// 	} else {
-	// 		g = gg.(*svg.Gradient)
-	// 	}
-
-	// 	gr.UpdateGrad(g)
-	// }
-	// sv.UpdateAllGradientStops()
-}
-
 ////////  Bg render
 
 // UpdateGridEff updates the GirdEff value based on current scale

@@ -53,6 +53,8 @@ type PaintSetter struct {
 	markerStartColor, markerMidColor, markerEndColor *core.Chooser
 
 	dashes *core.Chooser
+
+	strokeGrads, fillGrads *core.Table
 }
 
 func (pv *PaintSetter) Init() {
@@ -68,6 +70,7 @@ func (pv *PaintSetter) Init() {
 
 	pv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(0, 1)
 	})
 
 	tree.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
@@ -80,6 +83,7 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.StrokeType, w)
 			w.OnChange(func(e events.Event) {
+				pv.SetStrokeStack(pv.StrokeType)
 				if pv.StrokeType == PaintLinear || pv.StrokeType == PaintRadial {
 					if pv.StrokeStops == "" {
 						pv.StrokeStops = pv.Canvas.DefaultGradient()
@@ -229,14 +233,13 @@ func (pv *PaintSetter) Init() {
 	tree.AddChildAt(pv, "stroke-stack", func(w *core.Frame) {
 		pv.strokeStack = w
 		w.StackTop = 1
-		// ss.StackTopOnly = true
 		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Stacked
+			s.Grow.Set(0, 1)
 		})
-		// ss.StackTopOnly = true
-		w.Updater(func() {
-			w.StackTop = int(pv.StrokeType)
-		})
+		// w.Updater(func() {
+		// 	w.StackTop = int(pv.StrokeType)
+		// })
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
@@ -254,11 +257,17 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 
-		tree.AddChild(w, func(w *core.Table) { // "stroke-grad"
-			// sg.SetProp("index", true)
-			// sg.SetProp("toolbar", true)
-			// sg.SelectedIndex = -1
+		tree.AddChild(w, func(w *core.Table) {
+			pv.strokeGrads = w
+			// w.Styler(func(s *styles.Style) {
+			// 	s.Grow.Set(0, 1)
+			// })
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
+			w.OnSelect(func(e events.Event) {
+				pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+				// this handles updating gradients etc to use stops
+				pv.Canvas.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+			})
 			// todo: bindselect
 			// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	if sig == int64(core.WidgetSelected) {
@@ -284,6 +293,7 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.FillType, w)
 			w.OnChange(func(e events.Event) {
+				pv.SetFillStack(pv.FillType)
 				if pv.FillType == PaintLinear || pv.FillType == PaintRadial {
 					if pv.FillStops == "" {
 						pv.FillStops = pv.Canvas.DefaultGradient()
@@ -300,15 +310,12 @@ func (pv *PaintSetter) Init() {
 	tree.AddChildAt(pv, "fill-stack", func(w *core.Frame) {
 		pv.fillStack = w
 		w.StackTop = 1
-		// fs.StackTopOnly = true
 		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Stacked
-		})
-		w.Updater(func() {
-			w.StackTop = int(pv.FillType)
+			s.Grow.Set(0, 1)
 		})
 
-		tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
+		tree.AddChild(w, func(w *core.Frame) {})
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
 			core.Bind(&pv.PaintStyle.Fill.Color, w)
@@ -325,20 +332,17 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 
-		tree.AddChild(w, func(w *core.Table) { // "fill-grad"
-			// sg.SetProp("index", true)
-			// sg.SetProp("toolbar", true)
-			// sg.SelectedIndex = -1
-			w.SetSlice(&pv.Canvas.EditState.Gradients)
-			// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	if sig == int64(core.WidgetSelected) {
-			// 		svv, _ := send.(*core.Table)
-			// 		if svv.SelectedIndex >= 0 {
-			// 			pv.FillStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-			// 			pv.Vector.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
-			// 		}
-			// 	}
+		tree.AddChild(w, func(w *core.Table) {
+			pv.fillGrads = w
+			// w.Styler(func(s *styles.Style) {
+			// 	s.Grow.Set(0, 1)
 			// })
+			w.SetSlice(&pv.Canvas.EditState.Gradients)
+			w.OnSelect(func(e events.Event) {
+				pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+				// this handles updating gradients etc to use stops
+				pv.Canvas.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+			})
 			// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	// fmt.Printf("svs: %v   %v\n", sig, data)
 			// 	// svv, _ := send.(*core.Table)
@@ -421,6 +425,25 @@ func (cv *Canvas) setPaintProp(actName, val string, fun func(g svg.Node)) {
 	cv.SVG.NeedsRender()
 }
 
+func (pv *PaintSetter) PaintTypeStack(pt PaintTypes) int {
+	st := 0
+	switch pt {
+	case PaintSolid:
+		st = 1
+	case PaintLinear, PaintRadial:
+		st = 2
+	}
+	return st
+}
+
+func (pv *PaintSetter) SetStrokeStack(pt PaintTypes) {
+	pv.strokeStack.StackTop = pv.PaintTypeStack(pt)
+}
+
+func (pv *PaintSetter) SetFillStack(pt PaintTypes) {
+	pv.fillStack.StackTop = pv.PaintTypeStack(pt)
+}
+
 // SetColorNode sets the color properties of Node
 // based on previous and current PaintType
 func (cv *Canvas) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp string) {
@@ -430,11 +453,12 @@ func (cv *Canvas) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp
 		}
 		return
 	}
+	sv := cv.SSVG()
 	switch pt {
-	// case PaintLinear:
-	// 	svg.UpdateNodeGradientProp(nd, prop, false, sp)
-	// case PaintRadial:
-	// 	svg.UpdateNodeGradientProp(nd, prop, true, sp)
+	case PaintLinear:
+		sv.GradientUpdateNodeProp(nd, prop, false, sp)
+	case PaintRadial:
+		sv.GradientUpdateNodeProp(nd, prop, true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
 			pstr := reflectx.ToString(nd.AsTree().Properties[prop])
@@ -516,13 +540,9 @@ func (cv *Canvas) SetDashProperties(dary []float64) {
 // SetFill sets the fill properties of selected items
 // based on previous and current PaintType
 func (cv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
-	es := &cv.EditState
-	sv := cv.SVG
-	sv.UndoSave("SetFill", fp)
-	for nd := range es.Selected {
+	cv.setPaintProp("SetFill", fp, func(nd svg.Node) {
 		cv.SetColorNode(nd, "fill", prev, pt, fp)
-	}
-	cv.ChangeMade()
+	})
 }
 
 // SetFillColor sets the fill color for selected items,
@@ -553,9 +573,7 @@ func (cv *Canvas) DefaultGradient() string {
 func (cv *Canvas) UpdateGradients() {
 	es := &cv.EditState
 	sv := cv.SVG
-	// update := sv.UpdateStart()
 	sv.UpdateGradients(es.Gradients)
-	// sv.UpdateEnd(update)
 }
 
 ////////  PaintSetter
@@ -569,17 +587,13 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	// es := &pv.Canvas.EditState
 	// grl := &es.Gradients
 
+	pv.SetStrokeStack(pv.StrokeType)
 	switch pv.StrokeType {
 	case PaintSolid:
-		pv.strokeStack.StackTop = 1
 		pv.PaintStyle.Stroke.Color = ps.Stroke.Color
 	case PaintLinear, PaintRadial:
-		pv.strokeStack.StackTop = 2
-		// sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
 		// sg.SetSlice(grl)
-		// pv.SelectStrokeGrad()
-	default:
-		pv.strokeStack.StackTop = 0
+		pv.SelectStrokeGrad()
 	}
 
 	pv.PaintStyle.Stroke.Width = ps.Stroke.Width
@@ -601,20 +615,12 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	ms, _, mc = MarkerFromNodeProp(nd, "marker-end")
 	setMarker(pv.markerEnd, pv.markerEndColor, ms, mc)
 
+	pv.SetFillStack(pv.FillType)
 	switch pv.FillType {
 	case PaintSolid:
-		pv.fillStack.StackTop = 1
 		pv.PaintStyle.Fill.Color = ps.Fill.Color
 	case PaintLinear, PaintRadial:
-		pv.fillStack.StackTop = 2
-		// fg := fs.ChildByName("fill-grad", 1).(*core.Table)
-		// if fg.Slice != grl {
-		// 	pv.SetFullReRender()
-		// }
-		// fg.SetSlice(grl)
-		// pv.SelectFillGrad()
-	default:
-		pv.fillStack.StackTop = 0
+		pv.SelectFillGrad()
 	}
 	pv.Update()
 }
@@ -672,33 +678,29 @@ func (pv *PaintSetter) GetPaintType(nd svg.Node, clr image.Image, prop string) (
 }
 
 func (pv *PaintSetter) SelectStrokeGrad() {
-	// todo:
-	// es := &pv.Vector.EditState
-	// grl := &es.Gradients
-	// ss := pv.StrokeStack()
-	// sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
-	// sg.UnselectAllIndexes()
-	// for i, g := range *grl {
-	// 	if g.Name == pv.StrokeStops {
-	// 		sg.SelectIndex(i)
-	// 		break
-	// 	}
-	// }
+	es := &pv.Canvas.EditState
+	grl := &es.Gradients
+	sg := pv.strokeGrads
+	sg.ResetSelectedIndexes()
+	for i, g := range *grl {
+		if g.Name == pv.StrokeStops {
+			sg.SelectIndex(i)
+			break
+		}
+	}
 }
 
 func (pv *PaintSetter) SelectFillGrad() {
-	// todo:
-	// es := &pv.Vector.EditState
-	// grl := &es.Gradients
-	// fs := pv.FillStack()
-	// fg := fs.ChildByName("fill-grad", 1).(*core.Table)
-	// fg.UnselectAllIndexes()
-	// for i, g := range *grl {
-	// 	if g.Name == pv.FillStops {
-	// 		fg.SelectIndex(i)
-	// 		break
-	// 	}
-	// }
+	es := &pv.Canvas.EditState
+	grl := &es.Gradients
+	sg := pv.fillGrads
+	sg.ResetSelectedIndexes()
+	for i, g := range *grl {
+		if g.Name == pv.FillStops {
+			sg.SelectIndex(i)
+			break
+		}
+	}
 }
 
 // StrokeProp returns the stroke property string according to current settings
