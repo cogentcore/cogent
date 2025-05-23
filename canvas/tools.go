@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
@@ -36,28 +35,16 @@ func ToolDoesBasicSelect(tl Tools) bool {
 func (cv *Canvas) SetTool(tl Tools) {
 	es := &cv.EditState
 	if es.Tool == tl {
+		cv.tools.Restyle()
 		return
-	}
-	fs := es.FirstSelectedNode()
-	if fs != nil {
-		switch v := fs.(type) {
-		case *svg.Text:
-			Settings.TextStyle.CopyStyleFrom(&v.Paint)
-		case *svg.Line:
-			Settings.LineStyle.CopyStyleFrom(&v.Paint)
-		case *svg.Path:
-			Settings.PathStyle.CopyStyleFrom(&v.Paint)
-		default:
-			gg := fs.AsNodeBase()
-			Settings.ShapeStyle.CopyStyleFrom(&gg.Paint)
-		}
 	}
 	es.ResetSelected()
 	cv.EditState.Tool = tl
 	cv.SetDefaultStyle()
 	cv.modalTools.Update()
 	cv.SetStatus("Tool")
-	cv.Restyle()
+	cv.tools.Restyle()
+	cv.tools.Restyle() // needs 2 for some reason
 	cv.SVG.UpdateSelect()
 }
 

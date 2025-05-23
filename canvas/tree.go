@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
@@ -30,6 +31,9 @@ func (tv *Tree) Init() {
 	tv.Tree.Init()
 	tv.ContextMenus = nil
 	tv.AddContextMenu(tv.contextMenu)
+	tv.Styler(func(s *styles.Style) {
+		s.IconSize.Set(units.Em(1))
+	})
 	tv.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
 		if tv.HasChildren() {

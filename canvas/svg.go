@@ -335,8 +335,9 @@ func (sv *SVG) ResizeToContents(gridIncr bool) {
 // MetaData returns the overall metadata and grid if present.
 // if mknew is true, it will create new ones if not found.
 func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
-	if sv.NumChildren() > 0 {
-		kd := sv.Root().Children[0]
+	root := sv.Root()
+	if root.NumChildren() > 0 {
+		kd := root.Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			main = md
 		}
@@ -344,7 +345,7 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if main == nil && mknew {
 		id := sv.SVG.NewUniqueID()
 		main = svg.NewMetaData()
-		sv.Root().InsertChild(main, 0)
+		root.InsertChild(main, 0)
 		main.SetName(svg.NameID("namedview", id))
 	}
 	if main == nil {
@@ -559,8 +560,8 @@ func (sv *SVG) RenderGrid() {
 	// sc := sv.SVG.Scale
 	// wd := 1 / sc
 	pc.VectorEffect = ppath.VectorEffectNonScalingStroke
-	pc.Stroke.Width.Dp(2)
-	pc.Stroke.Width.Dots = 2
+	pc.Stroke.Width.Dp(1)
+	pc.Stroke.Width.Dots = 1
 	pos := root.ViewBox.Min
 	sz := root.ViewBox.Size
 

@@ -51,7 +51,7 @@ type Canvas struct {
 
 func (cv *Canvas) Init() {
 	cv.Frame.Init()
-	cv.EditState.ConfigDefaultGradient()
+	// cv.EditState.ConfigDefaultGradient()
 	cv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)

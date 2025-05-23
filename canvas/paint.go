@@ -62,7 +62,7 @@ func (pv *PaintSetter) Init() {
 	pv.FillType = PaintSolid
 	pv.curStrokeType = pv.StrokeType
 	pv.curFillType = pv.FillType
-	pv.PaintStyle = Settings.ShapeStyle
+	pv.PaintStyle.Defaults()
 
 	DashIconsInit()
 	MarkerIconsInit()
@@ -461,9 +461,10 @@ func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintType
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
 			pstr := reflectx.ToString(nd.AsTree().Properties[prop])
-			sv.GradientDeleteNodeProp(nd, pstr)
+			sv.GradientDeleteForNode(nd, pstr)
 		}
 		nd.AsNodeBase().SetColorProperties(prop, sp)
+		pv.SetOpacityWidth(nd)
 	}
 	cv.UpdateMarkerColors(nd)
 	cv.UpdateTree()
