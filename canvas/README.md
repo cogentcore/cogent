@@ -16,7 +16,7 @@ The simple Go install command should work:
 $ go install cogentcore.org/cogent/canvas/cmd/canvas@main
 ```
 
-Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
+Exporting PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
 
 ```bash
 $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/

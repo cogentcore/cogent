@@ -66,9 +66,27 @@ func (sv *SVG) Init() {
 		// if core.DebugSettings.KeyEventTrace {
 		// fmt.Println("SVG KeyInput:", kf, kc)
 		// }
-		if kc == " " {
+		switch kc {
+		case " ", "s", "S":
 			sv.Canvas.SetTool(SelectTool)
 			e.SetHandled()
+		case "n", "N":
+			sv.Canvas.SetTool(NodeTool)
+			e.SetHandled()
+		case "r", "R":
+			sv.Canvas.SetTool(RectTool)
+			e.SetHandled()
+		case "e", "E":
+			sv.Canvas.SetTool(EllipseTool)
+			e.SetHandled()
+		case "b", "B":
+			sv.Canvas.SetTool(BezierTool)
+			e.SetHandled()
+		case "t", "T":
+			sv.Canvas.SetTool(TextTool)
+			e.SetHandled()
+		}
+		if e.IsHandled() {
 			return
 		}
 		switch kf {

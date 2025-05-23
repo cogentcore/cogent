@@ -21,14 +21,14 @@ import (
 
 // InitSelectButton sets the given widget to only be enabled when
 // there is an item selected.
-func (vc *Canvas) InitSelectButton(w core.Widget) {
+func (cv *Canvas) InitSelectButton(w core.Widget) {
 	w.AsWidget().FirstStyler(func(s *styles.Style) {
-		s.SetEnabled(vc.EditState.HasSelected())
+		s.SetEnabled(cv.EditState.HasSelected())
 	})
 }
 
 // MakeSelectToolbar adds the select toolbar to the given plan.
-func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
+func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGrid, w)
 		w.SetText("Snap grid")
@@ -41,59 +41,59 @@ func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLower).SetText("").SetIcon(cicons.SelLower)
+		cv.InitSelectButton(w)
+		w.SetFunc(cv.SelectLower).SetText("").SetIcon(cicons.SelLower)
 	})
 	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("X: ")
-	})
+	// tree.Add(p, func(w *core.Text) {
+	// 	w.SetText("X: ")
+	// })
 	// TODO(config):
 	// core.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
 	// 	gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	// })
 
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("Y: ")
-	})
+	// tree.Add(p, func(w *core.Text) {
+	// 	w.SetText("Y: ")
+	// })
 	// py := core.NewSpinner(tb).SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	// py.OnChange(func(e events.Event) {
 	// 	// gv.SelectSetYPos(py.Value)
@@ -113,7 +113,8 @@ func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
 }
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
-func (vc *Canvas) UpdateSelectToolbar() {
+func (cv *Canvas) UpdateSelectToolbar() {
+	cv.modalTools.Restyle()
 	// tb := vc.SelectToolbar()
 	// tb.NeedsRender()
 	// tb.Update()
