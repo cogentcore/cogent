@@ -89,7 +89,7 @@ func (pv *PaintSetter) Init() {
 					}
 					pv.SelectStrokeGrad()
 				}
-				pv.Canvas.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
+				pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
 				pv.curStrokeType = pv.StrokeType
 				pv.Update()
 			})
@@ -273,13 +273,13 @@ func (pv *PaintSetter) Init() {
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
 			w.OnSelect(func(e events.Event) {
 				pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-				pv.Canvas.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+				pv.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
 			})
 			w.OnChange(func(e events.Event) {
 				pv.Canvas.UpdateGradients()
 				if w.SelectedIndex >= 0 {
 					pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-					pv.Canvas.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+					pv.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
 				}
 				w.Update()
 			})
@@ -305,7 +305,7 @@ func (pv *PaintSetter) Init() {
 					}
 					pv.SelectFillGrad()
 				}
-				pv.Canvas.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
+				pv.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
 				pv.curFillType = pv.FillType
 				pv.Update()
 			})
@@ -342,13 +342,13 @@ func (pv *PaintSetter) Init() {
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
 			w.OnSelect(func(e events.Event) {
 				pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-				pv.Canvas.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+				pv.SetFill(pv.FillType, pv.FillType, pv.FillStops)
 			})
 			w.OnChange(func(e events.Event) {
 				pv.Canvas.UpdateGradients()
 				if w.SelectedIndex >= 0 {
 					pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
-					pv.Canvas.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+					pv.SetFill(pv.FillType, pv.FillType, pv.FillStops)
 				}
 				w.Update()
 			})
@@ -442,10 +442,11 @@ func (pv *PaintSetter) SetFillStack(pt PaintTypes) {
 
 // SetColorNode sets the color properties of Node
 // based on previous and current PaintType
-func (cv *Canvas) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp string) {
+func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp string) {
+	cv := pv.Canvas
 	if gp, isgp := nd.(*svg.Group); isgp {
 		for _, kid := range gp.Children {
-			cv.SetColorNode(kid.(svg.Node), prop, prev, pt, sp)
+			pv.SetColorNode(kid.(svg.Node), prop, prev, pt, sp)
 		}
 		return
 	}
@@ -453,24 +454,27 @@ func (cv *Canvas) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp
 	switch pt {
 	case PaintLinear:
 		sv.GradientUpdateNodeProp(nd, prop, false, sp)
+		pv.SetOpacityWidth(nd)
 	case PaintRadial:
 		sv.GradientUpdateNodeProp(nd, prop, true, sp)
+		pv.SetOpacityWidth(nd)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
 			pstr := reflectx.ToString(nd.AsTree().Properties[prop])
-			_ = pstr
-			// svg.DeleteNodeGradient(nd, pstr)
+			sv.GradientDeleteNodeProp(nd, pstr)
 		}
 		nd.AsNodeBase().SetColorProperties(prop, sp)
 	}
 	cv.UpdateMarkerColors(nd)
+	cv.UpdateTree()
 }
 
 // SetStroke sets the stroke properties of selected items
 // based on previous and current PaintType
-func (cv *Canvas) SetStroke(prev, pt PaintTypes, sp string) {
+func (pv *PaintSetter) SetStroke(prev, pt PaintTypes, sp string) {
+	cv := pv.Canvas
 	cv.setPaintProp("SetStroke", sp, func(nd svg.Node) {
-		cv.SetColorNode(nd, "stroke", prev, pt, sp)
+		pv.SetColorNode(nd, "stroke", prev, pt, sp)
 	})
 }
 
@@ -535,9 +539,10 @@ func (cv *Canvas) SetDashProperties(dary []float64) {
 
 // SetFill sets the fill properties of selected items
 // based on previous and current PaintType
-func (cv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
+func (pv *PaintSetter) SetFill(prev, pt PaintTypes, fp string) {
+	cv := pv.Canvas
 	cv.setPaintProp("SetFill", fp, func(nd svg.Node) {
-		cv.SetColorNode(nd, "fill", prev, pt, fp)
+		pv.SetColorNode(nd, "fill", prev, pt, fp)
 	})
 }
 
@@ -776,15 +781,27 @@ func (pv *PaintSetter) FillProp() string {
 	return "none"
 }
 
+// SetOpacityWidth sets opacity and stroke width properties
+func (pv *PaintSetter) SetOpacityWidth(nd svg.Node) {
+	nb := nd.AsNodeBase()
+	if pv.IsStrokeOn() {
+		nb.SetProperty("stroke-width", pv.StrokeWidthProp())
+		nb.SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+	}
+	if pv.IsFillOn() {
+		nb.SetProperty("fill-opacity", pv.PaintStyle.Fill.Opacity)
+	}
+}
+
 // SetProperties sets the properties for given node according to current settings
 func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	cv := pv.Canvas
-	cv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
+	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		nd.AsTree().SetProperty("stroke-width", pv.StrokeWidthProp())
 		cv.SetMarkerProperties(pv.MarkerProperties())
 	}
-	cv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
+	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
+	pv.SetOpacityWidth(nd)
 }
 
 type PaintTypes int32 //enums:enum -trim-prefix Paint

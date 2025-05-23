@@ -179,48 +179,6 @@ func (cv *Canvas) Init() {
 		})
 		tree.AddChildAt(w, "status-text", func(w *core.Text) {})
 	})
-
-	// tv.TreeSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	gvv := recv.Embed(KiT_Vector).(*Vector)
-	// 	if data == nil {
-	// 		return
-	// 	}
-	// 	if sig == int64(core.TreeInserted) {
-	// 		sn, ok := data.(svg.Node)
-	// 		if ok {
-	// 			gvv.SVG.NodeEnsureUniqueID(sn)
-	// 			svg.CloneNodeGradientProp(sn, "fill")
-	// 			svg.CloneNodeGradientProp(sn, "stroke")
-	// 		}
-	// 		return
-	// 	}
-	// 	if sig == int64(core.TreeDeleted) {
-	// 		sn, ok := data.(svg.Node)
-	// 		if ok {
-	// 			svg.DeleteNodeGradientProp(sn, "fill")
-	// 			svg.DeleteNodeGradientProp(sn, "stroke")
-	// 		}
-	// 		return
-	// 	}
-	// 	if sig != int64(core.TreeOpened) {
-	// 		return
-	// 	}
-	// 	tvn, _ := data.(tree.Node).Embed(KiT_Tree).(*Tree)
-	// 	_, issvg := tvn.SrcNode.(svg.Node)
-	// 	if !issvg {
-	// 		return
-	// 	}
-	// 	if tvn.SrcNode.HasChildren() {
-	// 		return
-	// 	}
-	// 	core.FormDialog(gvv.Viewport, tvn.SrcNode, core.DlgOpts{Title: "SVG Element View"}, nil, nil)
-	// 	// ggv, _ := recv.Embed(KiT_Vector).(*Vector)
-	// 	// 		stv := ggv.RecycleTab("Obj", core.KiT_Form, true).(*core.Form)
-	// 	// 		stv.SetStruct(tvn.SrcNode)
-	// })
-
-	// vc.ConfigTools()
-	// vc.ConfigTabs()
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
@@ -255,8 +213,7 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
 	sv.backgroundGridEff = 0
-	sv.UpdateView(true)
-	cv.NeedsRender()
+	cv.UpdateAll()
 	return err
 }
 
@@ -326,6 +283,7 @@ func (cv *Canvas) SaveDrawingAs(fname core.Filename) error { //types:add
 	cv.SetTitle()
 	cv.SetStatus("Saved: " + path)
 	cv.EditState.Changed = false
+	cv.UpdateAll()
 	return err
 }
 
