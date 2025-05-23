@@ -235,7 +235,7 @@ func (cv *Canvas) PromptPhysSize() { //types:add
 		d.AddOK(bar).OnClick(func(e events.Event) {
 			cv.SetPhysSize(sz)
 			sv.backgroundGridEff = -1
-			sv.UpdateView(true)
+			sv.UpdateView()
 		})
 	})
 	d.RunDialog(cv)
@@ -287,39 +287,15 @@ func (cv *Canvas) SaveDrawingAs(fname core.Filename) error { //types:add
 	return err
 }
 
-// TODO(kai): don't use inkscape for exporting
-
 // ExportPNG exports drawing to a PNG image (auto-names to same name
-// with .png suffix).  Calls inkscape -- needs to be on the PATH.
-// specify either width or height of resulting image, or nothing for
+// with .png suffix).
+// Specify either width or height of resulting image, or nothing for
 // physical size as set.  Renders full current page -- do ResizeToContents
 // to render just current contents.
 func (cv *Canvas) ExportPNG(width, height float32) error { //types:add
-	path, _ := filepath.Split(string(cv.Filename))
-	fnm := filepath.Join(path, "export_png.svg")
-	sv := cv.SVG
-	err := sv.SVG.SaveXML(fnm)
-	if errors.Log(err) != nil {
-		return err
-	}
 	fext := filepath.Ext(string(cv.Filename))
 	onm := strings.TrimSuffix(string(cv.Filename), fext) + ".png"
-	cstr := "inkscape"
-	args := []string{`--export-type=png`, "-o", onm}
-	if width > 0 {
-		args = append(args, fmt.Sprintf("--export-width=%g", width))
-	}
-	if height > 0 {
-		args = append(args, fmt.Sprintf("--export-height=%g", height))
-	}
-	args = append(args, fnm)
-	cmd := exec.Command(cstr, args...)
-	fmt.Printf("executing command: %s %v\n", cstr, args)
-	out, err := cmd.CombinedOutput()
-	// if err != nil {
-	fmt.Println(string(out))
-	// }
-	os.Remove(fnm)
+	err := cv.SSVG().SaveImage(onm)
 	return err
 }
 
@@ -361,19 +337,19 @@ func (cv *Canvas) ExportPDF(dpi float32) error { //types:add
 func (cv *Canvas) ResizeToContents() { //types:add
 	sv := cv.SVG
 	sv.ResizeToContents(true)
-	sv.UpdateView(true)
+	sv.UpdateView()
 }
 
 // AddImage adds a new image node set to the given image
 func (cv *Canvas) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := cv.SVG
 	sv.UndoSave("AddImage", string(fname))
-	ind := NewSVGElement[svg.Image](sv)
+	ind := NewSVGElement[svg.Image](sv, false)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(string(fname), width, height)
-	sv.UpdateView(true)
 	cv.ChangeMade()
+	sv.UpdateView()
 	return err
 }
 
@@ -470,7 +446,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
 			sv.SVG.ZoomReset()
-			sv.UpdateView(false)
+			sv.UpdateView()
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
@@ -479,8 +455,13 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.OnClick(func(e events.Event) {
 			sv := cv.SVG
 			sv.SVG.ZoomToContents(sv.Geom.Size.Actual.Content)
-			sv.UpdateView(false)
+			sv.UpdateView()
 		})
+	})
+
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(core.SettingsWindow).SetText("Settings").SetIcon(icons.Settings)
+		w.SetTooltip("Canvas and system settings")
 	})
 }
 
@@ -555,8 +536,7 @@ func NewWindow(fnm string) *Canvas {
 	return cv
 }
 
-/////////////////////////////////////////////////////////////////////////
-//   Controls
+////////   Controls
 
 // Tab returns the tab with the given name
 func (gv *Canvas) Tab(name string) *core.Frame {
@@ -572,11 +552,11 @@ func (cv *Canvas) UpdateAll() { //types:add
 	cv.UpdateTabs()
 	cv.UpdateLayers()
 	cv.UpdateTree()
-	cv.UpdateDisp()
+	cv.UpdateSVG()
 }
 
-func (cv *Canvas) UpdateDisp() {
-	cv.SVG.UpdateView(true)
+func (cv *Canvas) UpdateSVG() {
+	cv.SVG.UpdateView()
 }
 
 func (cv *Canvas) UpdateTree() {
@@ -628,7 +608,7 @@ func (cv *Canvas) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 	sv := cv.SVG
 	es := &cv.EditState
 	es.SelectAction(sii, mode, image.Point{})
-	sv.UpdateView(false)
+	sv.UpdateView()
 }
 
 // Undo undoes the last action
@@ -663,8 +643,7 @@ func (cv *Canvas) ChangeMade() {
 	go cv.AutoSave()
 }
 
-/////////////////////////////////////////////////////////////////////////
-//   Basic infrastructure
+////////   Basic infrastructure
 
 /*
 func (gv *Canvas) OSFileEvent() {
@@ -744,8 +723,7 @@ func (cv *Canvas) HelpWiki() {
 	core.TheApp.OpenURL("https://vector.cogentcore.org")
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//		AutoSave
+////////  AutoSave
 
 // AutoSaveFilename returns the autosave filename
 func (cv *Canvas) AutoSaveFilename() string {

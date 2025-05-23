@@ -5,6 +5,8 @@
 package canvas
 
 import (
+	"fmt"
+
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -99,7 +101,7 @@ func (tv *Tree) CanvasRoot() *Tree {
 // NewGroup makes a new group.
 func (tv *Tree) NewGroup() { //types:add
 	cv := tv.CanvasRoot().Canvas
-	NewSVGElement[svg.Group](cv.SVG)
+	NewSVGElement[svg.Group](cv.SVG, true)
 }
 
 // SelectSVG selects node in SVG
@@ -272,29 +274,27 @@ func (cv *Canvas) DuplicateSelected() { //types:add
 	}
 	sv := cv.SVG
 	sv.UndoSave("DuplicateSelected", "")
-	tv := cv.tree
 	for _, tr := range tvl {
 		tr.AsCoreTree().Duplicate()
 	}
 	cv.SetStatus("Duplicated selected items")
-	tv.Resync() // todo: should not be needed
 	cv.ChangeMade()
+	sv.UpdateView()
 }
 
-// CopySelected copies selected items in SVG view, using Tree methods
+// CopySelected copies selected items in SVG view, using Tree methods.
 func (cv *Canvas) CopySelected() { //types:add
 	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		cv.SetStatus("Copy: no tree items found")
 		return
 	}
-	tv := cv.tree
-	tv.SetSelectedNodes(tvl)
-	tvl[0].Copy() // operates on first element in selection
+	cv.tree.SetSelectedNodes(tvl)
+	tvl[0].Copy() // must be called on first node
 	cv.SetStatus("Copied selected items")
 }
 
-// CutSelected cuts selected items in SVG view, using Tree methods
+// CutSelected cuts selected items in SVG view, using Tree methods.
 func (cv *Canvas) CutSelected() { //types:add
 	tvl := cv.SelectedAsTrees()
 	if len(tvl) == 0 {
@@ -304,13 +304,11 @@ func (cv *Canvas) CutSelected() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("CutSelected", "")
 	sv.EditState().ResetSelected()
-	tv := cv.tree
-	tv.SetSelectedNodes(tvl)
-	tvl[0].Cut() // operates on first element in selection
+	cv.tree.SetSelectedNodes(tvl)
+	tvl[0].Cut() // must be called on first node
 	cv.SetStatus("Cut selected items")
-	tv.Resync() // todo: should not be needed
-	sv.UpdateSelSprites()
 	cv.ChangeMade()
+	cv.UpdateSVG()
 }
 
 // PasteClip pastes clipboard, using cur layer etc
@@ -319,21 +317,16 @@ func (cv *Canvas) PasteClip() { //types:add
 	if md == nil {
 		return
 	}
-	// es := &gv.EditState
 	sv := cv.SVG
 	sv.UndoSave("Paste", "")
 	tv := cv.tree
-	// parent := tv
-	// if es.CurLayer != "" {
-	// 	ly := tv.ChildByName("tv_"+es.CurLayer, 1)
-	// 	if ly != nil {
-	// 		parent = ly.Embed(KiT_Tree).(*Tree)
-	// 	}
-	// }
-	// par.PasteChildren(md, dnd.DropCopy)
+	parent := sv.NewParent(false)
+	pn := tv.FindSyncNode(parent)
+	fmt.Println("c paste:", pn)
+	pn.PasteChildren(md, events.DropCopy)
 	cv.SetStatus("Pasted items from clipboard")
-	tv.Resync() // todo: should not be needed
 	cv.ChangeMade()
+	cv.UpdateSVG()
 }
 
 // DeleteSelected deletes selected items in SVG view, using Tree methods
@@ -346,14 +339,9 @@ func (cv *Canvas) DeleteSelected() {
 	sv := cv.SVG
 	sv.UndoSave("DeleteSelected", "")
 	sv.EditState().ResetSelected()
-	// sv.SetFullReRender()
-	tv := cv.tree
-	// tv.SetFullReRender()
-	// for _, tvi := range tvl {
-	// 	tvi.SrcDelete()
-	// }
+	cv.tree.SetSelectedNodes(tvl)
+	tvl[0].DeleteSelected() // must be called on first node
 	cv.SetStatus("Deleted selected items")
-	tv.Resync() // todo: should not be needed
-	sv.UpdateSelSprites()
 	cv.ChangeMade()
+	cv.UpdateSVG()
 }

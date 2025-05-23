@@ -22,24 +22,37 @@ func (sv *SVG) SetSVGName(el svg.Node) {
 	el.AsTree().SetName(nwnm)
 }
 
-// NewSVGElement makes a new SVG element of the given type.
-// It uses the current active layer if it is set.
-func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
-	cv := sv.Canvas
+// NewParent returns a parent for creating a new SVG element.
+// It uses the current selected group in SVG, or node selected in tree
+// if useTree is true, or active layer if it is set.
+// If nothing else, it returns the SVG Root node.
+func (sv *SVG) NewParent(useTree bool) tree.Node {
 	es := sv.EditState()
-	parent := tree.Node(sv.Root())
-	sl := cv.AnySelectedNodes()
+	cv := sv.Canvas
+	var sl []svg.Node
+	if useTree {
+		sl = cv.AnySelectedNodes()
+	} else {
+		sl = cv.EditState.SelectedList(false)
+	}
 	if len(sl) == 1 {
 		if gp, isgp := sl[0].(*svg.Group); isgp {
-			parent = gp
+			return gp.This
 		}
 	}
-	if parent == tree.Node(sv.Root()) && es.CurLayer != "" {
+	if es.CurLayer != "" {
 		ly := sv.Root().ChildByName(es.CurLayer, 1)
 		if ly != nil {
-			parent = ly
+			return ly
 		}
 	}
+	return sv.Root().This
+}
+
+// NewSVGElement makes a new SVG element of the given type.
+// see [Canvas.NewParent] for the parent where it is made.
+func NewSVGElement[T tree.NodeValue](sv *SVG, useTree bool) *T {
+	parent := sv.NewParent(useTree)
 	n := tree.New[T](parent)
 	sn := any(n).(svg.Node)
 	sv.SetSVGName(sn)
@@ -60,7 +73,7 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 		return nil
 	}
 	sv.ManipStart(NewElement, types.For[T]().IDName)
-	n := NewSVGElement[T](sv)
+	n := NewSVGElement[T](sv, false)
 	sn := any(n).(svg.Node)
 	snb := sn.AsNodeBase()
 
@@ -73,9 +86,8 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	sn.BBoxes(sv.SVG, snb.ParentTransform(false))
 
 	es.SelectAction(sn, events.SelectOne, end)
-	sv.UpdateSelSprites()
+	sv.UpdateView()
 	es.DragSelStart(start)
-	sv.NeedsRender()
 	return n
 }
 
@@ -90,7 +102,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	}
 
 	sv.ManipStart(NewText, "")
-	n := NewSVGElement[svg.Text](sv)
+	n := NewSVGElement[svg.Text](sv, false)
 	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
 	tspan := svg.NewText(n)
 	tspan.SetName(tsnm)
@@ -110,9 +122,8 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	tspan.BBoxes(sv.SVG, tspan.ParentTransform(false))
 
 	es.SelectAction(tspan, events.SelectOne, end)
-	sv.UpdateSelSprites()
+	sv.UpdateView()
 	es.DragSelStart(start)
-	sv.NeedsRender()
 	return n
 }
 
@@ -125,7 +136,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 		return nil
 	}
 	sv.ManipStart(NewPath, "")
-	n := NewSVGElement[svg.Path](sv)
+	n := NewSVGElement[svg.Path](sv, false)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	pos := xfi.MulVector2AsPoint(math32.FromPoint(start))
 	sz := xfi.MulVector2AsVector(dv)
@@ -136,9 +147,8 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	n.BBoxes(sv.SVG, n.ParentTransform(false))
 
 	es.SelectAction(n, events.SelectOne, end)
-	sv.UpdateSelSprites()
+	sv.UpdateView()
 	sv.EditState().DragSelStart(start)
-	sv.NeedsRender()
 
 	es.SelectBBox.Min.X += 1
 	es.SelectBBox.Min.Y += 1

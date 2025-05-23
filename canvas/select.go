@@ -394,7 +394,7 @@ func (gv *Canvas) SelectRotate(deg float32) {
 		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
 	}
-	sv.UpdateView(true)
+	sv.UpdateView()
 	gv.ChangeMade()
 }
 
@@ -414,7 +414,7 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
 	}
-	sv.UpdateView(true)
+	sv.UpdateView()
 	gv.ChangeMade()
 }
 
@@ -457,7 +457,7 @@ func (gv *Canvas) SelectRaiseTop() { //types:add
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, len(pt.Children)-1)
 	}
-	gv.UpdateDisp()
+	gv.UpdateSVG()
 	gv.ChangeMade()
 }
 
@@ -482,7 +482,7 @@ func (gv *Canvas) SelectRaise() { //types:add
 			pt.Children = slicesx.Move(pt.Children, ci, ci+1)
 		}
 	}
-	gv.UpdateDisp()
+	gv.UpdateSVG()
 	gv.ChangeMade()
 }
 
@@ -505,7 +505,7 @@ func (gv *Canvas) SelectLowerBottom() { //types:add
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, 0)
 	}
-	gv.UpdateDisp()
+	gv.UpdateSVG()
 	gv.ChangeMade()
 }
 
@@ -530,7 +530,7 @@ func (gv *Canvas) SelectLower() { //types:add
 			pt.Children = slicesx.Move(pt.Children, ci, ci-1)
 		}
 	}
-	gv.UpdateDisp()
+	gv.UpdateSVG()
 	gv.ChangeMade()
 }
 

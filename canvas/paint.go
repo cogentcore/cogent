@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -135,11 +136,6 @@ func (pv *PaintSetter) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.IconSize.X.Em(3)
 			})
-			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
-			// 	w.Styler(func(s *styles.Style) {
-			// 		s.Min.X.Em(3)
-			// 	})
-			// })
 			w.SetItems(AllDashItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -156,14 +152,8 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Chooser) { // start
 			pv.markerStart = w
 			w.Styler(func(s *styles.Style) {
-				s.IconSize.X.Em(3)
-				s.IconSize.Y.Em(2)
+				s.IconSize.Set(units.Em(3), units.Em(2))
 			})
-			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
-			// 	w.Styler(func(s *styles.Style) {
-			// 		s.Min.Set(units.Em(2))
-			// 	})
-			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -186,14 +176,8 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Chooser) { // mid
 			pv.markerMid = w
 			w.Styler(func(s *styles.Style) {
-				s.IconSize.X.Em(3)
-				s.IconSize.Y.Em(2)
+				s.IconSize.Set(units.Em(3), units.Em(2))
 			})
-			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
-			// 	w.Styler(func(s *styles.Style) {
-			// 		s.Min.Set(units.Em(2))
-			// 	})
-			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -216,14 +200,8 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Chooser) { // end
 			pv.markerEnd = w
 			w.Styler(func(s *styles.Style) {
-				s.IconSize.X.Em(3)
-				s.IconSize.Y.Em(2)
+				s.IconSize.Set(units.Em(3), units.Em(2))
 			})
-			// tree.AddChildInit(w, "icon", func(w *core.Icon) {
-			// 	w.Styler(func(s *styles.Style) {
-			// 		s.Min.Set(units.Em(2))
-			// 	})
-			// })
 			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -463,8 +441,12 @@ func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintType
 			pstr := reflectx.ToString(nd.AsTree().Properties[prop])
 			sv.GradientDeleteForNode(nd, pstr)
 		}
-		nd.AsNodeBase().SetColorProperties(prop, sp)
-		pv.SetOpacityWidth(nd)
+		if pt == PaintOff {
+			nd.AsNodeBase().SetColorProperties(prop, "none")
+		} else {
+			nd.AsNodeBase().SetColorProperties(prop, sp)
+			pv.SetOpacityWidth(nd)
+		}
 	}
 	cv.UpdateMarkerColors(nd)
 	cv.UpdateTree()

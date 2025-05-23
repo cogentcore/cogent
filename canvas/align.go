@@ -102,9 +102,8 @@ func (sv *SVG) Align(aa AlignAnchors, al Aligns) {
 	case AlignBaselineVert:
 		sv.AlignMin(aa, math32.Y, astr) // todo: should be baseline, not min
 	}
-	sv.UpdateView(true)
 	sv.Canvas.ChangeMade()
-	sv.UpdateSelSprites()
+	sv.UpdateView()
 }
 
 // alignAnchorBBox returns the bounding box for given type of align anchor
@@ -209,7 +208,7 @@ func (sv *SVG) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 		del.SetDim(odim, 0)
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, bb.Min)
 	}
-	sv.UpdateView(true)
+	sv.UpdateView()
 	sv.Canvas.ChangeMade()
 }
 

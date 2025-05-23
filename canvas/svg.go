@@ -62,10 +62,15 @@ func (sv *SVG) Init() {
 	})
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
-		// if core.DebugSettings.KeyEventTrace {
-		fmt.Printf("SVG KeyInput: %v\n", sv.Path())
-		// }
 		kf := keymap.Of(kc)
+		// if core.DebugSettings.KeyEventTrace {
+		// fmt.Println("SVG KeyInput:", kf, kc)
+		// }
+		if kc == " " {
+			sv.Canvas.SetTool(SelectTool)
+			e.SetHandled()
+			return
+		}
 		switch kf {
 		case keymap.Abort:
 			// todo: maybe something else
@@ -141,6 +146,10 @@ func (sv *SVG) Init() {
 			if sob != nil {
 				es.SelectAction(sob, e.SelectMode(), e.Pos())
 				sv.UpdateSelect()
+			} else {
+				if es.Tool != SelectTool { // click off = go to select
+					sv.Canvas.SetTool(SelectTool)
+				}
 			}
 		}
 	})
@@ -156,8 +165,7 @@ func (sv *SVG) Init() {
 				del.SetDivScalar(min(1, sv.SVG.Scale))
 			}
 			sv.SVG.Translate.SetAdd(del)
-			sv.UpdateSelSprites()
-			sv.NeedsRender()
+			sv.UpdateView()
 			return
 		}
 		if es.HasSelected() {
@@ -218,8 +226,7 @@ func (sv *SVG) Init() {
 			del /= min(1, sv.SVG.Scale)
 		}
 		sv.SVG.ZoomAt(se.Pos(), del)
-		sv.UpdateSelSprites()
-		sv.NeedsRender()
+		sv.UpdateView()
 	})
 }
 
@@ -252,8 +259,8 @@ func (sv *SVG) EditState() *EditState {
 	return &sv.Canvas.EditState
 }
 
-// UpdateView updates the view, optionally with a full re-render
-func (sv *SVG) UpdateView(full bool) { // TODO(config)
+// UpdateView updates the SVG view
+func (sv *SVG) UpdateView() {
 	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
 	sv.NeedsRender()
@@ -447,6 +454,8 @@ func (sv *SVG) EditNode(n tree.Node) { //types:add
 func (sv *SVG) contextMenu(m *core.Scene) {
 	sl := sv.EditState().SelectedList(false)
 	if len(sl) == 0 {
+		core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
+			SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 		return
 	}
 	sv.contextMenuNode(m, sl[0])

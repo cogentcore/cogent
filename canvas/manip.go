@@ -49,7 +49,7 @@ func (sv *SVG) ManipDone() {
 	es.ActDone()
 	sv.UpdateSelect()
 	es.DragSelStart(es.DragStartPos) // capture final state as new start
-	sv.UpdateView(true)
+	sv.UpdateView()
 	sv.Canvas.ChangeMade()
 }
 

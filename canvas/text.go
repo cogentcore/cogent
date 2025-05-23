@@ -36,6 +36,8 @@ func (ts *TextStyle) Update() {
 
 func (ts *TextStyle) Defaults() {
 	ts.Text = ""
+	ts.FontStyle.Defaults()
+	ts.TextStyle.Defaults()
 }
 
 // SetFromFontStyle sets from standard styles.Font style
@@ -155,7 +157,7 @@ func (gv *Canvas) SetText(txt string) {
 			break // only set first..
 		}
 	}
-	sv.UpdateView(true) // needs full update
+	sv.UpdateView() // needs full update
 	gv.ChangeMade()
 }
 
