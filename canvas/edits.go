@@ -365,6 +365,18 @@ func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image
 	}
 }
 
+// UpdateSelectIsText updates the SelectIsText state.
+func (es *EditState) UpdateSelectIsText() {
+	es.SelectIsText = false
+	fsel := es.FirstSelectedNode()
+	if fsel == nil {
+		return
+	}
+	if _, ok := fsel.(*svg.Text); ok {
+		es.SelectIsText = true
+	}
+}
+
 func (es *EditState) SelectedToRecents() {
 	for k, v := range es.Selected {
 		es.RecentlySelected[k] = v

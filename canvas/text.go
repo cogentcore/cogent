@@ -21,7 +21,7 @@ import (
 // TextStyle is text styling info -- using Form to do text editor
 type TextStyle struct {
 	// current text to edit
-	Text string
+	String string `label:"Text"`
 
 	// Color is the fill color to render the text in.
 	Color color.RGBA
@@ -34,11 +34,11 @@ type TextStyle struct {
 	// Opacity is the overall opacity multiplier on the text, between 0-1.
 	Opacity float32 `min:"0" max:"1", step:"0.1"`
 
-	// FontStyle styling properties.
-	FontStyle styles.Font `display:"add-fields"`
+	// Font styling properties.
+	Font styles.Font `display:"add-fields"`
 
-	// TextStyle styling properties.
-	TextStyle styles.Text `display:"add-fields"`
+	// Text styling properties.
+	Text styles.Text `display:"add-fields"`
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
@@ -48,14 +48,20 @@ func (ts *TextStyle) Defaults() {
 	ts.Color = colors.Black
 	ts.Stroke = colors.Transparent
 	ts.Opacity = 1
-	ts.FontStyle.Defaults()
-	ts.TextStyle.Defaults()
-	ts.FontStyle.Size.Px(32)
+	ts.Font.Defaults()
+	ts.Text.Defaults()
+	ts.Font.Size.Px(32)
 }
 
+// Update updates any selected text from updated settings in TextStyle.
 func (ts *TextStyle) Update() {
+	ts.SetTextProperties()
+	ts.Canvas.SetText(ts.String)
+}
+
+// SetTextProperties sets the text properties of selected Text nodes.
+func (ts *TextStyle) SetTextProperties() {
 	ts.Canvas.SetTextProperties(ts.TextProperties())
-	ts.Canvas.SetText(ts.Text)
 }
 
 // SetTextProperties sets the text properties of selected Text nodes.
@@ -71,11 +77,10 @@ func (ts *TextStyle) TextProperties() map[string]any {
 	sty := rich.NewStyle()
 	tsty := text.NewStyle()
 	clr := colors.Uniform(ts.Color)
-	styles.SetRichText(sty, tsty, &ts.FontStyle, &ts.TextStyle, clr, ts.Opacity)
+	styles.SetRichText(sty, tsty, &ts.Font, &ts.Text, clr, ts.Opacity)
 	if ts.Stroke != colors.Transparent {
 		sty.SetStrokeColor(ts.Stroke)
 	}
-	// todo: stroke color.
 	tps := map[string]any{}
 	tsty.ToProperties(sty, tps)
 	return tps
@@ -117,12 +122,18 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Defaults() // always start fresh
 	if txt.IsParText() {
 		tspan := txt.Children[0].(*svg.Text)
-		ts.Text = tspan.Text
+		ts.String = tspan.Text
 	} else {
-		ts.Text = txt.Text
+		ts.String = txt.Text
 	}
-	styles.SetFromRichText(&txt.Paint.Font, &txt.Paint.Text, &ts.FontStyle, &ts.TextStyle)
-	ts.Canvas.Tab("Text").Update()
+	styles.SetFromRichText(&txt.Paint.Font, &txt.Paint.Text, &ts.Font, &ts.Text)
+	ts.Color = colors.AsRGBA(colors.ToUniform(txt.Paint.Fill.Color)) // this is where it goes
+	ts.Opacity = txt.Paint.Opacity
+	if txt.Paint.HasStroke() {
+		ts.Stroke = colors.AsRGBA(colors.ToUniform(txt.Paint.Stroke.Color))
+	}
+
+	ts.Canvas.UpdateText()
 }
 
 //////// Toolbar
@@ -133,10 +144,30 @@ func (cv *Canvas) MakeTextToolbar(p *tree.Plan) {
 	ts.Canvas = cv
 
 	tree.Add(p, func(w *core.TextField) {
-		core.Bind(&ts.Text, w)
+		core.Bind(&ts.String, w)
 		w.SetTooltip("Current text")
 		w.OnChange(func(e events.Event) {
-			cv.SetText(ts.Text)
+			cv.SetText(ts.String)
+			ts.Canvas.UpdateText()
+		})
+	})
+
+	tree.Add(p, func(w *core.Spinner) {
+		core.Bind(&ts.Font.Size.Value, w)
+		w.Step = 1
+		w.SetTooltip("Current text size")
+		w.OnChange(func(e events.Event) {
+			ts.SetTextProperties()
+			ts.Canvas.UpdateText()
+		})
+	})
+
+	tree.Add(p, func(w *core.Chooser) {
+		core.Bind(&ts.Font.Size.Unit, w)
+		w.SetTooltip("Current text size units")
+		w.OnChange(func(e events.Event) {
+			ts.SetTextProperties()
+			ts.Canvas.UpdateText()
 		})
 	})
 

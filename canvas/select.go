@@ -112,27 +112,6 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	// })
 }
 
-// UpdateModalToolbar updates the select toolbar based on current selection
-func (cv *Canvas) UpdateModalToolbar() {
-	es := &cv.EditState
-	es.SelectIsText = false
-	sl := es.SelectedList(false)
-	if len(sl) == 1 {
-		if _, ok := sl[0].(*svg.Text); ok {
-			es.SelectIsText = true
-		}
-	}
-	cv.modalTools.Update()
-	// tb := vc.SelectToolbar()
-	// tb.NeedsRender()
-	// tb.Update()
-	// sz := es.DragSelEffBBox.Size()
-	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
-	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
-}
-
 // UpdateSelect should be called whenever selection changes
 func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()

@@ -78,6 +78,9 @@ func (cv *Canvas) Init() {
 
 	tree.AddChildAt(cv, "modal-tb", func(w *core.Toolbar) {
 		cv.modalTools = w
+		w.Styler(func(s *styles.Style) {
+			s.Min.Y.Em(2) // keep a consistent height
+		})
 		tool := cv.EditState.Tool
 		w.Maker(func(p *tree.Plan) {
 			switch {
@@ -579,26 +582,42 @@ func (cv *Canvas) SetDefaultStyle() {
 	// }
 }
 
+// UpdateSelectIsText updates the SelectIsText status
+func (cv *Canvas) UpdateModalToolbar() {
+	cv.EditState.UpdateSelectIsText()
+	cv.modalTools.Update()
+	// tb := vc.SelectToolbar()
+	// tb.NeedsRender()
+	// tb.Update()
+	// sz := es.DragSelEffBBox.Size()
+	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
+	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
+	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
+	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
+}
+
+func (cv *Canvas) UpdateText() {
+	cv.Tab("Text").Update()
+}
+
 func (cv *Canvas) UpdateTabs() {
+	cv.UpdateModalToolbar() // updates SelectIsText
 	es := &cv.EditState
 	fsel := es.FirstSelectedNode()
+	if es.SelectIsText {
+		es.Text.SetFromNode(fsel.(*svg.Text))
+		return
+	}
 	if fsel == nil {
 		return
+	}
+	_, idx := cv.tabs.CurrentTab()
+	if idx == 2 { // if looking at text, no text selected, go back to paint
+		cv.tabs.SelectTabIndex(0)
 	}
 	sel := fsel.AsNodeBase()
 	pv := cv.PaintSetter()
 	pv.UpdateFromNode(&sel.Paint, sel)
-	txt, istxt := fsel.(*svg.Text)
-	if istxt {
-		es.Text.SetFromNode(txt)
-		txv := cv.Tab("Text")
-		txv.Update()
-		// todo: only show text toolbar on double-click
-		// gv.SetModalText()
-		// gv.UpdateTextToolbar()
-	} else {
-		// cv.SetModalToolbar()
-	}
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
