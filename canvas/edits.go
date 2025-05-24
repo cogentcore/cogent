@@ -78,6 +78,9 @@ type EditState struct {
 	// recently selected item(s) -- within the same selection position
 	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" display:"-"`
 
+	// SelectIsText is true if the current selection is a single text item
+	SelectIsText bool
+
 	// bbox at start of dragging
 	DragSelectStartBBox math32.Box2
 
@@ -110,14 +113,16 @@ type EditState struct {
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init(vv *Canvas) {
+func (es *EditState) Init(cv *Canvas) {
 	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
-	es.Canvas = vv
+	es.Text.Defaults()
+	es.Text.Canvas = cv
+	es.Canvas = cv
 }
 
 // InAction reports whether we currently doing an action

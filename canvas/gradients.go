@@ -16,6 +16,24 @@ import (
 	"cogentcore.org/core/svg"
 )
 
+// DefaultGradient returns the default gradient to use for setting stops
+func (cv *Canvas) DefaultGradient() string {
+	es := &cv.EditState
+	sv := cv.SVG
+	if len(cv.EditState.Gradients) == 0 {
+		es.ConfigDefaultGradient()
+		sv.UpdateGradients(es.Gradients)
+	}
+	return es.Gradients[0].Name
+}
+
+// UpdateGradients updates gradients from EditState
+func (cv *Canvas) UpdateGradients() {
+	es := &cv.EditState
+	sv := cv.SVG
+	sv.UpdateGradients(es.Gradients)
+}
+
 // Gradients returns the currently defined gradients with stops
 // that are shared among obj-specific ones
 func (sv *SVG) Gradients() []*Gradient {

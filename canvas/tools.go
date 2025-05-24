@@ -46,6 +46,9 @@ func (cv *Canvas) SetTool(tl Tools) {
 	cv.tools.Restyle()
 	cv.tools.Restyle() // needs 2 for some reason
 	cv.SVG.UpdateSelect()
+	if tl == TextTool {
+		cv.tabs.SelectTabByName("Text")
+	}
 }
 
 func (cv *Canvas) MakeTools(p *tree.Plan) {

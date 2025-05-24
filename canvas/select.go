@@ -112,16 +112,20 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	// })
 }
 
-// UpdateSelectToolbar updates the select toolbar based on current selection
-func (cv *Canvas) UpdateSelectToolbar() {
-	cv.modalTools.Restyle()
+// UpdateModalToolbar updates the select toolbar based on current selection
+func (cv *Canvas) UpdateModalToolbar() {
+	es := &cv.EditState
+	es.SelectIsText = false
+	sl := es.SelectedList(false)
+	if len(sl) == 1 {
+		if _, ok := sl[0].(*svg.Text); ok {
+			es.SelectIsText = true
+		}
+	}
+	cv.modalTools.Update()
 	// tb := vc.SelectToolbar()
 	// tb.NeedsRender()
 	// tb.Update()
-	// es := &gv.EditState
-	// if !es.HasSelected() {
-	// 	return
-	// }
 	// sz := es.DragSelEffBBox.Size()
 	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
 	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
@@ -133,7 +137,7 @@ func (cv *Canvas) UpdateSelectToolbar() {
 func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()
 	sv.Canvas.UpdateTabs()
-	sv.Canvas.UpdateSelectToolbar()
+	sv.Canvas.UpdateModalToolbar()
 	if es.Tool == NodeTool {
 		sv.UpdateNodeSprites()
 		sv.RemoveSelSprites()

@@ -7,6 +7,7 @@ package canvas
 import (
 	"fmt"
 	"image"
+	"maps"
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
@@ -102,19 +103,21 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	}
 
 	sv.ManipStart(NewText, "")
-	n := NewSVGElement[svg.Text](sv, false)
-	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
-	tspan := svg.NewText(n)
-	tspan.SetName(tsnm)
+	tspan := NewSVGElement[svg.Text](sv, false)
 	tspan.Text = "Text"
 	tspan.Width = 200
+	// tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
+	// tspan := svg.NewText(n)
+	// tspan.SetName(tsnm)
+	// tspan.Text = "Text"
+	// tspan.Width = 200
 
 	xfi := sv.Root().Paint.Transform.Inverse()
 	pos := math32.FromPoint(start)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVector2AsPoint(pos)
-	// sv.Canvas.SetTextPropertiesNode(n, es.Text.TextProperties())
+	tspan.Properties = maps.Clone(es.Text.TextProperties())
 	tspan.Pos = pos
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
 	sz = xfi.MulVector2AsVector(sz)
@@ -124,7 +127,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es.SelectAction(tspan, events.SelectOne, end)
 	sv.UpdateView()
 	es.DragSelStart(start)
-	return n
+	return tspan
 }
 
 // NewPath makes a new SVG Path element during the drag operation

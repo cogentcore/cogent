@@ -5,9 +5,16 @@
 package canvas
 
 import (
+	"image/color"
+	"maps"
+
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -15,6 +22,17 @@ import (
 type TextStyle struct {
 	// current text to edit
 	Text string
+
+	// Color is the fill color to render the text in.
+	Color color.RGBA
+
+	// Stroke is the stroke color to render the text in: this is typically
+	// not set for standard text rendering, but can be used to render an outline
+	// around the text glyphs.
+	Stroke color.RGBA
+
+	// Opacity is the overall opacity multiplier on the text, between 0-1.
+	Opacity float32 `min:"0" max:"1", step:"0.1"`
 
 	// FontStyle styling properties.
 	FontStyle styles.Font `display:"add-fields"`
@@ -26,152 +44,100 @@ type TextStyle struct {
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
-func (ts *TextStyle) Update() {
-	// this is called automatically when edited (TODO: not anymore)
-	if ts.Canvas != nil {
-		// ts.Canvas.SetTextProperties(ts.TextProperties())
-		ts.Canvas.SetText(ts.Text)
-	}
-}
-
 func (ts *TextStyle) Defaults() {
-	ts.Text = ""
+	ts.Color = colors.Black
+	ts.Stroke = colors.Transparent
+	ts.Opacity = 1
 	ts.FontStyle.Defaults()
 	ts.TextStyle.Defaults()
+	ts.FontStyle.Size.Px(32)
 }
 
-// SetFromFontStyle sets from standard styles.Font style
-func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
-	ts.FontStyle = *fs
+func (ts *TextStyle) Update() {
+	ts.Canvas.SetTextProperties(ts.TextProperties())
+	ts.Canvas.SetText(ts.Text)
 }
 
-// SetFromNode sets text style info from given svg.Text node
-func (ts *TextStyle) SetFromNode(txt *svg.Text) {
-	ts.Defaults()                            // always start fresh
-	if txt.Text == "" && txt.HasChildren() { // todo: multi-line text..
-		tspan := txt.Children[0].(*svg.Text)
-		ts.Text = tspan.Text
-	}
-	// ts.SetFromFontStyle(&txt.Paint.FontStyle)
-	// ts.Align = txt.Paint.TextStyle.Align
-}
-
-// SetTextPropertiesNode sets the text properties of given Text node
-func (gv *Canvas) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
-		}
-		return
-	}
-	_, istxt := sii.(*svg.Text)
-	if !istxt {
-		return
-	}
-	g := sii.AsNodeBase()
-	for k, v := range tps {
-		if v == "" {
-			g.DeleteProperty(k)
-		} else {
-			g.SetProperty(k, v)
-		}
-	}
-}
-
-// SetTextProperties sets the text properties of selected Text nodes
-func (gv *Canvas) SetTextProperties(tps map[string]string) {
-	es := &gv.EditState
-	sv := gv.SVG
-	sv.UndoSave("SetTextProperties", "")
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		gv.SetTextPropertiesNode(itm.(svg.Node), tps)
-	}
-	sv.NeedsRender()
-	gv.ChangeMade()
+// SetTextProperties sets the text properties of selected Text nodes.
+func (cv *Canvas) SetTextProperties(tps map[string]any) {
+	cv.setPropsOnSelected("SetTextProperties", "", func(nd svg.Node) {
+		nb := nd.AsNodeBase()
+		nb.Properties = maps.Clone(tps)
+	})
 }
 
 // TextProperties returns non-default text properties to set
-// func (ts *TextStyle) TextProperties() map[string]string {
-// tps := make(map[string]string)
-// // tps["font-family"] = string(ts.Font)
-// tps["font-size"] = ts.Size.String()
-// if int(ts.Weight) != 0 {
-// 	tps["font-weight"] = ts.Weight.String()
-// } else {
-// 	tps["font-weight"] = ""
-// }
-// if int(ts.Stretch) != 0 {
-// 	tps["font-stretch"] = ts.Stretch.String()
-// } else {
-// 	tps["font-stretch"] = ""
-// }
-// if int(ts.Variant) != 0 {
-// 	tps["font-variant"] = ts.Variant.String()
-// } else {
-// 	tps["font-variant"] = ""
-// }
-// if int(ts.Deco) != 0 {
-// 	tps["text-decoration"] = ts.Deco.String()
-// } else {
-// 	tps["text-decoration"] = ""
-// }
-// if int(ts.Shift) != 0 {
-// 	tps["baseline-shift"] = ts.Shift.String()
-// } else {
-// 	tps["baseline-shift"] = ""
-// }
-// tps["text-align"] = ts.Align.String()
-// return tps
-// }
+func (ts *TextStyle) TextProperties() map[string]any {
+	sty := rich.NewStyle()
+	tsty := text.NewStyle()
+	clr := colors.Uniform(ts.Color)
+	styles.SetRichText(sty, tsty, &ts.FontStyle, &ts.TextStyle, clr, ts.Opacity)
+	if ts.Stroke != colors.Transparent {
+		sty.SetStrokeColor(ts.Stroke)
+	}
+	// todo: stroke color.
+	tps := map[string]any{}
+	tsty.ToProperties(sty, tps)
+	return tps
+}
 
 // SetTextNode sets the text of given Text node
-func (gv *Canvas) SetTextNode(sii svg.Node, txt string) bool {
-	if sii.AsTree().HasChildren() {
-		for _, kid := range sii.AsTree().Children {
-			if gv.SetTextNode(kid.(svg.Node), txt) {
-				return true
-			}
-		}
-		return false
-	}
-	tn, istxt := sii.(*svg.Text)
-	if !istxt {
-		return false
-	}
-	tn.Text = txt // todo: actually need to deal with multi-line here..
+func (cv *Canvas) SetTextNode(sii svg.Node, txt string) bool {
 	return true
 }
 
 // SetText sets the text of selected Text node
-func (gv *Canvas) SetText(txt string) {
-	es := &gv.EditState
+func (cv *Canvas) SetText(txt string) {
+	if txt == "" {
+		return
+	}
+	es := &cv.EditState
 	if len(es.Selected) != 1 { // only if exactly one selected
 		return
 	}
-	sv := gv.SVG
-	sv.UndoSave("SetText", "")
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		if gv.SetTextNode(itm.(svg.Node), txt) {
-			break // only set first..
-		}
+	tn, ok := es.SelectedList(false)[0].(*svg.Text)
+	if !ok {
+		return
 	}
-	sv.UpdateView() // needs full update
-	gv.ChangeMade()
+	if tn.IsParText() {
+		tn, ok = tn.Child(0).(*svg.Text)
+	}
+	if !ok {
+		return
+	}
+	sv := cv.SVG
+	sv.UndoSave("SetText", "")
+	tn.Text = txt
+	cv.ChangeMade()
+	sv.UpdateView()
 }
 
-///////////////////////////////////////////////////////////////////////
-// Toolbar
+// SetFromNode sets text style info from given svg.Text node
+func (ts *TextStyle) SetFromNode(txt *svg.Text) {
+	ts.Defaults() // always start fresh
+	if txt.IsParText() {
+		tspan := txt.Children[0].(*svg.Text)
+		ts.Text = tspan.Text
+	} else {
+		ts.Text = txt.Text
+	}
+	styles.SetFromRichText(&txt.Paint.Font, &txt.Paint.Text, &ts.FontStyle, &ts.TextStyle)
+	ts.Canvas.Tab("Text").Update()
+}
 
-func (vc *Canvas) MakeTextToolbar(p *tree.Plan) {
-	es := &vc.EditState
+//////// Toolbar
+
+func (cv *Canvas) MakeTextToolbar(p *tree.Plan) {
+	es := &cv.EditState
 	ts := &es.Text
-	ts.Canvas = vc
+	ts.Canvas = cv
 
 	tree.Add(p, func(w *core.TextField) {
 		core.Bind(&ts.Text, w)
 		w.SetTooltip("Current text")
+		w.OnChange(func(e events.Event) {
+			cv.SetText(ts.Text)
+		})
 	})
 
 	// txt.SetProp("width", units.NewCh(50))
@@ -205,7 +171,7 @@ func (vc *Canvas) MakeTextToolbar(p *tree.Plan) {
 }
 
 // UpdateTextToolbar updates the select toolbar based on current selection
-func (gv *Canvas) UpdateTextToolbar() {
+func (cv *Canvas) UpdateTextToolbar() {
 	// fw := tb.ChildByName("font", 0).(core.Node2D)
 	// ts.FontVal.UpdateWidget()
 

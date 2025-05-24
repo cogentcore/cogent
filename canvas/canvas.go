@@ -78,12 +78,13 @@ func (cv *Canvas) Init() {
 
 	tree.AddChildAt(cv, "modal-tb", func(w *core.Toolbar) {
 		cv.modalTools = w
+		tool := cv.EditState.Tool
 		w.Maker(func(p *tree.Plan) {
-			switch cv.EditState.Tool {
-			case NodeTool:
-				cv.MakeNodeToolbar(p)
-			case TextTool:
+			switch {
+			case tool == TextTool || cv.EditState.SelectIsText:
 				cv.MakeTextToolbar(p)
+			case tool == NodeTool:
+				cv.MakeNodeToolbar(p)
 			default:
 				cv.MakeSelectToolbar(p)
 			}
@@ -166,9 +167,10 @@ func (cv *Canvas) Init() {
 				NewPaintSetter(pt).SetCanvas(cv)
 				at, _ := w.NewTab("Align")
 				NewAlignView(at).SetCanvas(cv)
-				cv.EditState.Text.Defaults()
 				tt, _ := w.NewTab("Text")
-				core.NewForm(tt).SetStruct(&cv.EditState.Text)
+				core.NewForm(tt).SetStruct(&cv.EditState.Text).OnChange(func(e events.Event) {
+					cv.EditState.Text.Update()
+				})
 			})
 		})
 	})
