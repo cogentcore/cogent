@@ -15,26 +15,26 @@ import (
 type PhysSize struct { //types:add
 
 	// select a standard size -- this will set units and size
-	StandardSize StandardSizes
+	StandardSize StandardSizes `default:"Img1280x720"`
 
 	// for standard size, use first number as width, second as height
-	Portrait bool
+	Portrait bool `default:"false"`
 
 	// default units to use, e.g., in line widths etc
-	Units units.Units
+	Units units.Units `default:"px"`
 
 	// drawing size, in Units
 	Size math32.Vector2
 
 	// grid spacing, in units of ViewBox size
-	Grid float32
+	Grid float32 `default:"16"`
 }
 
 func (ps *PhysSize) Defaults() {
 	ps.StandardSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
-	ps.Grid = 48
+	ps.Grid = 16
 }
 
 func (ps *PhysSize) Update() {

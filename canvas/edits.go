@@ -5,16 +5,16 @@
 package canvas
 
 import (
+	"fmt"
 	"image"
-	"image/color"
 	"sort"
 	"strings"
 	"sync"
 
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/undo"
 )
 
@@ -78,6 +78,9 @@ type EditState struct {
 	// recently selected item(s) -- within the same selection position
 	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" display:"-"`
 
+	// SelectIsText is true if the current selection is a single text item
+	SelectIsText bool
+
 	// bbox at start of dragging
 	DragSelectStartBBox math32.Box2
 
@@ -110,14 +113,16 @@ type EditState struct {
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init(vv *Canvas) {
+func (es *EditState) Init(cv *Canvas) {
 	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
-	es.Canvas = vv
+	es.Text.Defaults()
+	es.Text.Canvas = cv
+	es.Canvas = cv
 }
 
 // InAction reports whether we currently doing an action
@@ -192,6 +197,20 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 		})
 	}
 	return sls
+}
+
+// DepthMap returns a map of all nodes and their associated depth count
+// counting up from 0 as the deepest, first drawn node.
+func (sv *SVG) DepthMap() map[tree.Node]int {
+	m := make(map[tree.Node]int)
+	depth := 0
+	n := tree.Next(sv.This)
+	for n != nil {
+		m[n] = depth
+		depth++
+		n = tree.Next(n)
+	}
+	return m
 }
 
 // SelectedListDepth returns list of selected items, sorted either
@@ -346,6 +365,18 @@ func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image
 	}
 }
 
+// UpdateSelectIsText updates the SelectIsText state.
+func (es *EditState) UpdateSelectIsText() {
+	es.SelectIsText = false
+	fsel := es.FirstSelectedNode()
+	if fsel == nil {
+		return
+	}
+	if _, ok := fsel.(*svg.Text); ok {
+		es.SelectIsText = true
+	}
+}
+
 func (es *EditState) SelectedToRecents() {
 	for k, v := range es.Selected {
 		es.RecentlySelected[k] = v
@@ -371,7 +402,7 @@ func (es *EditState) PosInLastSelect(pos image.Point) bool {
 	return pos.In(bb)
 }
 
-////////////////////////////////////////////////////////////////
+////////
 
 // UpdateSelectBBox updates the current selection bbox surrounding all selected items
 func (es *EditState) UpdateSelectBBox() {
@@ -383,8 +414,7 @@ func (es *EditState) UpdateSelectBBox() {
 	bbox.SetEmpty()
 	for itm := range es.Selected {
 		g := itm.AsNodeBase()
-		bb := math32.Box2{}
-		bb.SetFromRect(g.BBox)
+		bb := g.BBox
 		bbox.ExpandByBox(bb)
 	}
 	es.SelectBBox = bbox
@@ -415,10 +445,8 @@ func (es *EditState) DragSelStart(pos image.Point) {
 // position is starting position.
 func (es *EditState) DragNodeStart(pos image.Point) {
 	es.DragStartPos = pos
+	fmt.Println("dragNodestart:", pos)
 }
-
-//////////////////////////////////////////////////////
-//  Other Types
 
 // SelectedState is state for selected nodes
 type SelectedState struct {
@@ -426,172 +454,7 @@ type SelectedState struct {
 	// order item was selected
 	Order int
 
-	// initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there
+	// Initial geometry, saved when first selected or start dragging.
+	// Manipulations restore then transform from there.
 	InitGeom []float32
-}
-
-// GradStop represents a single gradient stop
-type GradStop struct {
-
-	// color -- alpha is ignored -- set opacity separately
-	Color color.Color
-
-	// opacity determines how opaque color is - used instead of alpha in color
-	Opacity float64
-
-	// offset position along the gradient vector: 0 = start, 1 = nominal end
-	Offset float64
-}
-
-// Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
-type Gradient struct {
-
-	// icon of gradient -- generated to display each gradient
-	Ic core.SVG `edit:"-" table:"no-header" width:"5"`
-
-	// name of gradient (id)
-	Id string `edit:"-" width:"6"`
-
-	// full name of gradient as SVG element
-	Name string `display:"-"`
-
-	// gradient stops
-	Stops []*GradStop
-}
-
-/*
-// Updates our gradient from svg gradient
-func (gr *Gradient) UpdateFromGrad(g *core.Gradient) {
-	_, id := svg.SplitNameIDDig(g.Nm)
-	gr.Id = fmt.Sprintf("%d", id)
-	gr.Name = g.Nm
-	if g.Grad.Gradient == nil {
-		gr.Stops = nil
-		return
-	}
-	xgr := g.Grad.Gradient
-	nst := len(xgr.Stops)
-	if len(gr.Stops) != nst || gr.Stops == nil {
-		gr.Stops = make([]*GradStop, nst)
-	}
-	for i, xst := range xgr.Stops {
-		gst := gr.Stops[i]
-		if gr.Stops[i] == nil {
-			gst = &GradStop{}
-		}
-		gst.Color.SetColor(xst.StopColor)
-		gst.Opacity = xst.Opacity
-		gst.Offset = xst.Offset
-		gr.Stops[i] = gst
-	}
-	gr.UpdateIcon()
-}
-*/
-
-// todo: update grad to sane vals for offs etc
-
-/*
-// Updates svg gradient from our gradient
-func (gr *Gradient) UpdateGrad(g *core.Gradient) {
-	_, id := svg.SplitNameIDDig(g.Nm) // we always need to sync to id & name though
-	gr.Id = fmt.Sprintf("%d", id)
-	gr.Name = g.Nm
-	gr.Ic = "stop" // todo manage separate list of gradient icons -- update
-	if g.Grad.Gradient == nil {
-		if strings.HasPrefix(gr.Name, "radial") {
-			g.Grad.NewRadialGradient()
-		} else {
-			g.Grad.NewLinearGradient()
-		}
-	}
-	xgr := g.Grad.Gradient
-	if gr.Stops == nil {
-		gr.ConfigDefaultGradientStops()
-	}
-	nst := len(gr.Stops)
-	if len(xgr.Stops) != nst {
-		xgr.Stops = make([]rasterx.GradStop, nst)
-	}
-	all0 := true
-	for _, gst := range gr.Stops {
-		if gst.Offset != 0 {
-			all0 = false
-		}
-	}
-	if all0 {
-		for i, gst := range gr.Stops {
-			gst.Offset = float64(i)
-		}
-	}
-
-	for i, gst := range gr.Stops {
-		xst := &xgr.Stops[i]
-		xst.StopColor = gst.Color
-		xst.Opacity = gst.Opacity
-		xst.Offset = gst.Offset
-	}
-	gr.UpdateIcon()
-}
-*/
-
-// ConfigDefaultGradient configures a new default gradient
-func (es *EditState) ConfigDefaultGradient() {
-	es.Gradients = make([]*Gradient, 1)
-	gr := &Gradient{}
-	es.Gradients[0] = gr
-	// gr.ConfigDefaultGradientStops()
-	gr.UpdateIcon()
-}
-
-/*
-// ConfigDefaultGradientStops configures a new default gradient stops
-func (gr *Gradient) ConfigDefaultGradientStops() {
-	gr.Stops = make([]*GradStop, 2)
-	st1 := &GradStop{Opacity: 1, Offset: 0}
-	st1.Color.SetName("white")
-	st2 := &GradStop{Opacity: 1, Offset: 1}
-	st2.Color.SetName("blue")
-	gr.Stops[0] = st1
-	gr.Stops[1] = st2
-}
-*/
-
-// UpdateIcon updates icon
-func (gr *Gradient) UpdateIcon() {
-	/*
-		nm := fmt.Sprintf("grid_grad_%s", gr.Name)
-		ici, err := core.TheIcons.IconByName(nm)
-		var ic *svg.Icon
-		if err != nil {
-			ic = &svg.Icon{}
-			ic.InitName(ic, nm)
-			ic.ViewBox.Size = math32.Vec2(1, 1)
-			ic.SetProp("width", units.NewCh(5))
-			svg.CurIconSet[nm] = ic
-		} else {
-			ic = ici.(*svg.Icon)
-		}
-		nst := len(gr.Stops)
-		if ic.NumChildren() != nst {
-			config := tree.Config
-			for i := range gr.Stops {
-				config.Add(svg.RectType, fmt.Sprintf("%d", i))
-			}
-			ic.ConfigChildren(config)
-
-		}
-
-		px := 0.9 / float32(nst)
-		for i, gst := range gr.Stops {
-			bx := ic.Child(i).(*svg.Rect)
-			bx.Pos.X = 0.05 + float32(i)*px
-			bx.Pos.Y = 0.05
-			bx.Size.X = px
-			bx.Size.Y = 0.9
-			bx.SetProp("stroke-width", units.NewPx(0))
-			bx.SetProp("stroke", "none")
-			bx.SetProp("fill", gst.Color.HexString())
-		}
-		gr.Ic = icons.Icon(nm)
-	*/
 }
