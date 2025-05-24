@@ -6,7 +6,6 @@ package canvas
 
 import (
 	"image/color"
-	"maps"
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -24,12 +23,12 @@ type TextStyle struct {
 	String string `label:"Text"`
 
 	// Color is the fill color to render the text in.
-	Color color.RGBA
+	Color color.RGBA `new-window:"+"`
 
 	// Stroke is the stroke color to render the text in: this is typically
 	// not set for standard text rendering, but can be used to render an outline
 	// around the text glyphs.
-	Stroke color.RGBA
+	Stroke color.RGBA `new-window:"+"`
 
 	// Opacity is the overall opacity multiplier on the text, between 0-1.
 	Opacity float32 `min:"0" max:"1", step:"0.1"`
@@ -68,7 +67,9 @@ func (ts *TextStyle) SetTextProperties() {
 func (cv *Canvas) SetTextProperties(tps map[string]any) {
 	cv.setPropsOnSelected("SetTextProperties", "", func(nd svg.Node) {
 		nb := nd.AsNodeBase()
-		nb.Properties = maps.Clone(tps)
+		for k, v := range tps {
+			nb.Properties[k] = v
+		}
 	})
 }
 

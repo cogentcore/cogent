@@ -63,7 +63,7 @@ func (tv *Tree) Init() {
 	tv.Updater(func() {
 		sn := tv.SyncNode
 		tv.Icon = icons.Blank
-		if NodeIsLayer(sn) {
+		if sn != nil && NodeIsLayer(sn) {
 			switch {
 			case tv.LayerIsCurrent():
 				tv.Icon = icons.Check

@@ -168,6 +168,9 @@ func (cv *Canvas) AddLayer() { //types:add
 
 // NodeIsLayer returns true if given node is a layer
 func NodeIsLayer(kn tree.Node) bool {
+	if tree.IsNil(kn) {
+		return false
+	}
 	gm := reflectx.ToString(kn.AsTree().Property("groupmode"))
 	return gm == "layer"
 }

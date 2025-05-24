@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"strings"
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -340,7 +341,8 @@ func (sv *SVG) DragMove(e events.Event) {
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SVG, tdel, math32.Vec2(1, 1), 0, pt)
+		xf := itm.AsNodeBase().DeltaTransform(tdel, math32.Vec2(1, 1), 0, pt)
+		itm.ApplyTransform(sv.SVG, xf)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sprites.Unlock()
@@ -449,13 +451,14 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 	npos := es.DragSelectEffectiveBBox.Min
 	nsz := es.DragSelectEffectiveBBox.Size()
-	pt := es.DragSelectStartBBox.Min
+	pt := es.DragSelectEffectiveBBox.Min
 	// fmt.Println("npos:", npos, "stpos:", stpos, "pt:", pt)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SVG, del, sc, 0, pt)
+		xf := itm.AsNodeBase().DeltaTransform(del, sc, 0, pt)
+		itm.ApplyTransform(sv.SVG, xf)
 		// if strings.HasPrefix(es.Action, "New") {
 		// 	svg.UpdateNodeGradientPoints(itm, "fill")
 		// 	svg.UpdateNodeGradientPoints(itm, "stroke")
@@ -469,7 +472,6 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
 func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
-	fmt.Println("rotate", delta)
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart(Rotate, es.SelectedNamesString())
@@ -531,12 +533,14 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
+		// todo: just use bit copy of item, put gradients on the node itself
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SVG, del, sc, ang, pt)
-		// if strings.HasPrefix(es.Action, "New") {
-		// 	sv.UpdateNodeGradientPoints(itm, "fill")
-		// 	sv.UpdateNodeGradientPoints(itm, "stroke")
-		// }
+		xf := itm.AsNodeBase().DeltaTransform(del, sc, ang, pt)
+		itm.ApplyTransform(sv.SVG, xf)
+		if strings.HasPrefix(es.Action.String(), "New") {
+			sv.SVG.GradientUpdateNodePoints(itm, "fill")
+			sv.SVG.GradientUpdateNodePoints(itm, "stroke")
+		}
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)

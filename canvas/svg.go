@@ -337,7 +337,7 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 				return tree.Break
 			}
 		}
-		sni.ApplyDeltaTransform(sv.SVG, trans, scale, rot, pt)
+		sni.ApplyTransform(sv.SVG, sni.AsNodeBase().DeltaTransform(trans, scale, rot, pt))
 		return tree.Continue
 	})
 }

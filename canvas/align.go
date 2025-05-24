@@ -151,7 +151,7 @@ func (sv *SVG) alignImpl(apos math32.Vector2, an svg.Node, useMax bool, dim math
 			del = apos.Sub(bb.Min)
 		}
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, bb.Min)
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, bb.Min))
 	}
 }
 
@@ -206,7 +206,7 @@ func (sv *SVG) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 		nctr := bb.Min.Add(bb.Max).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, bb.Min)
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, bb.Min))
 	}
 	sv.UpdateView()
 	sv.Canvas.ChangeMade()

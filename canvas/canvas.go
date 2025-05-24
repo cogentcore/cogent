@@ -218,7 +218,7 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
 	sv.backgroundGridEff = 0
-	cv.UpdateAll()
+	// cv.UpdateAll()
 	return err
 }
 

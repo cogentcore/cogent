@@ -376,7 +376,7 @@ func (gv *Canvas) SelectRotate(deg float32) {
 		sng := sn.AsNodeBase()
 		sz := sng.BBox.Size()
 		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, rot, ctr))
 	}
 	sv.UpdateView()
 	gv.ChangeMade()
@@ -396,7 +396,7 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 		sng := sn.AsNodeBase()
 		sz := sng.BBox.Size()
 		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, ctr))
 	}
 	sv.UpdateView()
 	gv.ChangeMade()
