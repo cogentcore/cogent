@@ -11,11 +11,11 @@ var _ModesValues = []Modes{0, 1, 2}
 // ModesN is the highest valid value for type Modes, plus one.
 const ModesN Modes = 3
 
-var _ModesValueMap = map[string]Modes{`Mode pass and play`: 0, `Mode computer`: 1, `Mode online`: 2}
+var _ModesValueMap = map[string]Modes{`Pass and play`: 0, `Computer`: 1, `Online`: 2}
 
 var _ModesDescMap = map[Modes]string{0: `ModePassAndPlay is a chess game played locally between two players.`, 1: `ModeComputer is a chess game played against the computer (bot/AI).`, 2: `ModeOnline is a chess game played online through the Lichess API.`}
 
-var _ModesMap = map[Modes]string{0: `Mode pass and play`, 1: `Mode computer`, 2: `Mode online`}
+var _ModesMap = map[Modes]string{0: `Pass and play`, 1: `Computer`, 2: `Online`}
 
 // String returns the string representation of this Modes value.
 func (i Modes) String() string { return enums.String(i, _ModesMap) }

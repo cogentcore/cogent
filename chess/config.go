@@ -10,7 +10,7 @@ type Config struct {
 }
 
 // Modes are the types of chess games.
-type Modes int32 //enums:enum -transform sentence
+type Modes int32 //enums:enum -trim-prefix Mode -transform sentence
 
 const (
 	// ModePassAndPlay is a chess game played locally between two players.

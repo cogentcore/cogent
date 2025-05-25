@@ -22,6 +22,9 @@ import (
 type Chess struct {
 	core.Frame
 
+	// config is the configuration for a new chess game.
+	config Config
+
 	game *chess.Game
 
 	// currentSquare is the current square from which a piece may be moved.
@@ -33,7 +36,6 @@ type Chess struct {
 
 func (ch *Chess) Init() {
 	ch.Frame.Init()
-	ch.game = chess.NewGame()
 
 	ch.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
@@ -43,6 +45,13 @@ func (ch *Chess) Init() {
 	})
 
 	ch.Maker(func(p *tree.Plan) {
+		if ch.game == nil {
+			tree.Add(p, func(w *core.Form) {
+				w.SetStruct(&ch.config)
+			})
+			return
+		}
+
 		for rank := range 8 {
 			for file := range 8 {
 				tree.AddAt(p, strconv.Itoa(rank)+strconv.Itoa(file), func(w *Square) {
@@ -60,6 +69,9 @@ func (ch *Chess) Init() {
 	})
 
 	ch.Updater(func() {
+		if ch.game == nil {
+			return
+		}
 		status := ch.game.CurrentPosition().Status()
 		if status == chess.NoMethod {
 			return

@@ -7,7 +7,7 @@ import (
 	"cogentcore.org/core/types"
 )
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Chess", IDName: "chess", Doc: "Chess is the main widget of the chess app.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "game"}, {Name: "currentSquare", Doc: "currentSquare is the current square from which a piece may be moved."}, {Name: "moves", Doc: "moves is the list of potential moves for the current piece."}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Chess", IDName: "chess", Doc: "Chess is the main widget of the chess app.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "config", Doc: "config is the configuration for a new chess game."}, {Name: "game"}, {Name: "currentSquare", Doc: "currentSquare is the current square from which a piece may be moved."}, {Name: "moves", Doc: "moves is the list of potential moves for the current piece."}}})
 
 // NewChess returns a new [Chess] with the given optional parent:
 // Chess is the main widget of the chess app.
