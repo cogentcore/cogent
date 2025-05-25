@@ -43,7 +43,7 @@ func (sq *Square) Init() {
 			s.StateColor = colors.Uniform(colors.Black)
 		}
 
-		if sq.isMoveTarget() {
+		if sq.moveTarget() != nil {
 			s.StateColor = colors.Uniform(colors.Yellow)
 			s.StateLayer += 0.2
 		}
@@ -60,6 +60,15 @@ func (sq *Square) Init() {
 	})
 
 	sq.OnClick(func(e events.Event) {
+		if move := sq.moveTarget(); move != nil {
+			sq.chess.game.Move(move, nil)
+
+			sq.chess.currentSquare = chess.NoSquare
+			sq.chess.moves = nil
+			sq.chess.Update()
+			return
+		}
+
 		if sq.chess.currentSquare == sq.square {
 			sq.chess.currentSquare = chess.NoSquare
 			sq.chess.moves = nil
@@ -89,12 +98,13 @@ func (sq *Square) moves() []chess.Move {
 	return res
 }
 
-// isMoveTarget returns whether this square is a target of a potential move.
-func (sq *Square) isMoveTarget() bool {
+// moveTarget returns the potential move this square is a target of, if there is one.
+// Otherwise, it returns nil.
+func (sq *Square) moveTarget() *chess.Move {
 	for _, move := range sq.chess.moves {
 		if move.S2() == sq.square {
-			return true
+			return &move
 		}
 	}
-	return false
+	return nil
 }
