@@ -43,11 +43,17 @@ func (ch *Chess) Init() {
 	})
 
 	ch.Maker(func(p *tree.Plan) {
-		for orank := range 8 {
+		for rank := range 8 {
 			for file := range 8 {
-				tree.AddAt(p, strconv.Itoa(orank)+strconv.Itoa(file), func(w *Square) {
+				tree.AddAt(p, strconv.Itoa(rank)+strconv.Itoa(file), func(w *Square) {
 					w.chess = ch
-					w.square = chess.NewSquare(chess.File(file), chess.Rank(7-orank))
+					w.Updater(func() {
+						if ch.game.CurrentPosition().Turn() == chess.White {
+							w.square = chess.NewSquare(chess.File(file), chess.Rank(7-rank))
+						} else {
+							w.square = chess.NewSquare(chess.File(7-file), chess.Rank(rank))
+						}
+					})
 				})
 			}
 		}
