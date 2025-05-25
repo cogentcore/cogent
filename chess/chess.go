@@ -5,7 +5,11 @@
 // Package chess implements a chess app.
 package chess
 
-import "cogentcore.org/core/core"
+//go:generate core generate
+
+import (
+	"cogentcore.org/core/core"
+)
 
 // Chess is the main widget of the chess app.
 type Chess struct {
