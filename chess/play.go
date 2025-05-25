@@ -6,6 +6,7 @@ package chess
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 
 	"cogentcore.org/core/core"
@@ -67,8 +68,8 @@ func (ch *Chess) makeMove(move *chess.Move) {
 
 	if ch.config.Mode == ModeBot {
 		moves := ch.game.ValidMoves()
-		if len(moves) > 0 {
-			ch.game.Move(&moves[0], nil)
+		if n := len(moves); n > 0 {
+			ch.game.Move(&moves[rand.IntN(n)], nil)
 		}
 	}
 
