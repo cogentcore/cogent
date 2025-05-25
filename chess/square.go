@@ -7,6 +7,7 @@ package chess
 import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
@@ -52,6 +53,11 @@ func (sq *Square) Init() {
 		piece := sq.chess.game.CurrentPosition().Board().Piece(sq.square)
 		sq.SetIcon(iconForPiece(piece))
 	})
+
+	sq.OnClick(func(e events.Event) {
+		sq.chess.moves = sq.moves()
+		sq.chess.Restyle()
+	})
 }
 
 // isDark returns whether this is a dark-colored square.
@@ -64,3 +70,15 @@ var (
 	squareDark  = colors.Uniform(colors.FromRGB(165, 117, 81))
 	squareLight = colors.Uniform(colors.FromRGB(235, 209, 166))
 )
+
+// moves returns the moves available from this square.
+func (sq *Square) moves() []chess.Move {
+	res := []chess.Move{}
+	moves := sq.chess.game.ValidMoves()
+	for _, move := range moves {
+		if move.S1() == sq.square {
+			res = append(res, move)
+		}
+	}
+	return res
+}

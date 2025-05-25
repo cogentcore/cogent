@@ -21,6 +21,9 @@ type Chess struct {
 	core.Frame
 
 	game *chess.Game
+
+	// moves is the list of potential moves for the current piece.
+	moves []chess.Move
 }
 
 func (ch *Chess) Init() {
