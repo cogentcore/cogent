@@ -17,6 +17,8 @@ import (
 
 // play is the page for a chess game.
 func (ch *Chess) play(pg *core.Pages) {
+	core.NewText(pg).SetType(core.TextHeadlineLarge).SetText(ch.config.Mode.String())
+
 	grid := core.NewFrame(pg)
 	grid.Styler(func(s *styles.Style) {
 		s.Display = styles.Grid
