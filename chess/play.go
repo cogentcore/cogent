@@ -69,7 +69,7 @@ func (ch *Chess) makeMove(move *chess.Move) {
 	if ch.config.Mode == ModeBot {
 		moves := ch.game.ValidMoves()
 		if n := len(moves); n > 0 {
-			ch.game.Move(&moves[rand.IntN(n)], nil)
+			ch.game.Move(&moves[rand.IntN(n)], nil) // TODO: use stockfish instead of random moves
 		}
 	}
 
