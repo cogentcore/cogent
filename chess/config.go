@@ -16,8 +16,8 @@ const (
 	// ModePassAndPlay is a chess game played locally between two players.
 	ModePassAndPlay Modes = iota
 
-	// ModeComputer is a chess game played against the computer (bot/AI).
-	ModeComputer
+	// ModeBot is a chess game played against the computer (bot/AI).
+	ModeBot
 
 	// ModeOnline is a chess game played online through the Lichess API.
 	ModeOnline

@@ -39,15 +39,25 @@ func (ch *Chess) Init() {
 
 	ch.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
-		s.Display = styles.Grid
-		s.Columns = 8
-		s.Gap.Zero()
+		if ch.game == nil {
+			s.Direction = styles.Column
+		} else {
+			s.Display = styles.Grid
+			s.Columns = 8
+			s.Gap.Zero()
+		}
 	})
 
 	ch.Maker(func(p *tree.Plan) {
 		if ch.game == nil {
+			tree.Add(p, func(w *core.Text) {
+				w.SetType(core.TextHeadlineLarge).SetText("Cogent Chess")
+			})
 			tree.Add(p, func(w *core.Form) {
 				w.SetStruct(&ch.config)
+			})
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("New game")
 			})
 			return
 		}
