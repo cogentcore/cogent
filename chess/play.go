@@ -42,9 +42,6 @@ func (ch *Chess) play(pg *core.Pages) {
 	})
 
 	grid.Updater(func() {
-		if ch.game == nil {
-			return
-		}
 		status := ch.game.CurrentPosition().Status()
 		if status == chess.NoMethod {
 			return
@@ -54,9 +51,8 @@ func (ch *Chess) play(pg *core.Pages) {
 		d := core.NewBody(result)
 		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddCancel(bar).SetText("View board")
-			d.AddOK(bar).SetText("New game").OnClick(func(e events.Event) {
-				ch.game = chess.NewGame()
-				ch.Update()
+			d.AddOK(bar).SetText("Home").OnClick(func(e events.Event) {
+				pg.Open("home")
 			})
 		})
 		d.RunDialog(ch)
