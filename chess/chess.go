@@ -30,6 +30,8 @@ func (ch *Chess) Init() {
 	ch.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 		s.Direction = styles.Column
+		s.Display = styles.Grid
+		s.Columns = 8
 	})
 
 	ch.Maker(func(p *tree.Plan) {

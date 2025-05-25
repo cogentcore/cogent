@@ -6,7 +6,6 @@ package chess
 
 import (
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"github.com/corentings/chess/v2"
 )
@@ -31,6 +30,6 @@ func (sq *Square) Init() {
 
 	sq.Updater(func() {
 		piece := sq.chess.game.CurrentPosition().Board().Piece(sq.square)
-		sq.SetIcon(icons.Icon(svgForPiece(piece)))
+		sq.SetIcon(iconForPiece(piece))
 	})
 }

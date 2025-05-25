@@ -8,14 +8,18 @@ import (
 	"embed"
 
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/icons"
 	"github.com/corentings/chess/v2"
 )
 
 //go:embed pieces
 var pieces embed.FS
 
-func svgForPiece(p chess.Piece) string {
+func iconForPiece(p chess.Piece) icons.Icon {
+	if p == chess.NoPiece {
+		return icons.Blank
+	}
 	pname := p.Color().String() + p.Type().String()
-	b := errors.Log1(pieces.ReadFile(pname))
-	return string(b)
+	b := errors.Log1(pieces.ReadFile("pieces/" + pname + ".svg"))
+	return icons.Icon(b)
 }
