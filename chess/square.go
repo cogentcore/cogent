@@ -35,14 +35,16 @@ func (sq *Square) Init() {
 		s.Padding.Set(units.Dp(16))
 
 		if sq.isDark() {
-			s.Background = colors.Uniform(colors.FromRGB(165, 117, 81))
+			s.Background = squareDark
+			s.StateColor = colors.Uniform(colors.White)
 		} else {
-			s.Background = colors.Uniform(colors.FromRGB(235, 209, 166))
+			s.Background = squareLight
+			s.StateColor = colors.Uniform(colors.Black)
 		}
 	})
 	tree.AddChildInit(sq, "icon", func(w *core.Icon) {
 		w.Styler(func(s *styles.Style) {
-			s.Font.Size.Dp(48)
+			s.Font.Size.Dp(64)
 		})
 	})
 
@@ -57,3 +59,8 @@ func (sq *Square) isDark() bool {
 	sqSum := int(sq.square.File()) + int(sq.square.Rank())
 	return sqSum%2 == 0
 }
+
+var (
+	squareDark  = colors.Uniform(colors.FromRGB(165, 117, 81))
+	squareLight = colors.Uniform(colors.FromRGB(235, 209, 166))
+)
