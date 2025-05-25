@@ -16,6 +16,8 @@ func main() {
 	htmlcore.ReadMDString(htmlcore.NewContext(), b, `# Cogent Apps
 * [Cogent Code](https://cogentcore.org/cogent/code)
 * [Cogent Canvas](https://cogentcore.org/cogent/canvas)
+* [Cogent Chess](https://cogentcore.org/cogent/chess)
+* [Cogent Marbles](https://cogentcore.org/cogent/marbles)
 
 See other Cogent Apps at https://github.com/cogentcore/cogent`)
 	b.RunMainWindow()
