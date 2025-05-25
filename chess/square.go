@@ -42,6 +42,11 @@ func (sq *Square) Init() {
 			s.Background = squareLight
 			s.StateColor = colors.Uniform(colors.Black)
 		}
+
+		if sq.isMoveTarget() {
+			s.StateColor = colors.Uniform(colors.Yellow)
+			s.StateLayer += 0.2
+		}
 	})
 	tree.AddChildInit(sq, "icon", func(w *core.Icon) {
 		w.Styler(func(s *styles.Style) {
@@ -81,4 +86,14 @@ func (sq *Square) moves() []chess.Move {
 		}
 	}
 	return res
+}
+
+// isMoveTarget returns whether this square is a target of a potential move.
+func (sq *Square) isMoveTarget() bool {
+	for _, move := range sq.chess.moves {
+		if move.S2() == sq.square {
+			return true
+		}
+	}
+	return false
 }
