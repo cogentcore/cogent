@@ -36,10 +36,10 @@ func (sq *Square) Init() {
 		s.Padding.Set(units.Dp(16))
 
 		if sq.isDark() {
-			s.Background = squareDark
+			s.Background = colors.Uniform(colors.FromRGB(165, 117, 81))
 			s.StateColor = colors.Uniform(colors.White)
 		} else {
-			s.Background = squareLight
+			s.Background = colors.Uniform(colors.FromRGB(235, 209, 166))
 			s.StateColor = colors.Uniform(colors.Black)
 		}
 
@@ -70,11 +70,6 @@ func (sq *Square) isDark() bool {
 	sqSum := int(sq.square.File()) + int(sq.square.Rank())
 	return sqSum%2 == 0
 }
-
-var (
-	squareDark  = colors.Uniform(colors.FromRGB(165, 117, 81))
-	squareLight = colors.Uniform(colors.FromRGB(235, 209, 166))
-)
 
 // moves returns the moves available from this square.
 func (sq *Square) moves() []chess.Move {
