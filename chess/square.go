@@ -5,6 +5,7 @@
 package chess
 
 import (
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"github.com/corentings/chess/v2"
@@ -26,11 +27,22 @@ func (sq *Square) Init() {
 	sq.Styler(func(s *styles.Style) {
 		s.Border.Width.Zero()
 		s.Border.Radius.Zero()
-		s.Background = nil
+
+		if sq.isDark() {
+			s.Background = colors.Uniform(colors.FromRGB(165, 117, 81))
+		} else {
+			s.Background = colors.Uniform(colors.FromRGB(235, 209, 166))
+		}
 	})
 
 	sq.Updater(func() {
 		piece := sq.chess.game.CurrentPosition().Board().Piece(sq.square)
 		sq.SetIcon(iconForPiece(piece))
 	})
+}
+
+// isDark returns whether this is a dark-colored square.
+func (sq *Square) isDark() bool {
+	sqSum := int(sq.square.File()) + int(sq.square.Rank())
+	return sqSum%2 == 0
 }
