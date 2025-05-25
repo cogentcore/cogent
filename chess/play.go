@@ -32,7 +32,7 @@ func (ch *Chess) play(pg *core.Pages) {
 				tree.AddAt(p, strconv.Itoa(rank)+strconv.Itoa(file), func(w *Square) {
 					w.chess = ch
 					w.Updater(func() {
-						if ch.game.CurrentPosition().Turn() == chess.White {
+						if ch.game.CurrentPosition().Turn() == chess.White || ch.config.Mode == ModeBot {
 							w.square = chess.NewSquare(chess.File(file), chess.Rank(7-rank))
 						} else {
 							w.square = chess.NewSquare(chess.File(7-file), chess.Rank(rank))
@@ -59,4 +59,20 @@ func (ch *Chess) play(pg *core.Pages) {
 		})
 		d.RunDialog(ch)
 	})
+}
+
+// makeMove makes the given move.
+func (ch *Chess) makeMove(move *chess.Move) {
+	ch.game.Move(move, nil)
+
+	if ch.config.Mode == ModeBot {
+		moves := ch.game.ValidMoves()
+		if len(moves) > 0 {
+			ch.game.Move(&moves[0], nil)
+		}
+	}
+
+	ch.currentSquare = chess.NoSquare
+	ch.moves = nil
+	ch.Update()
 }

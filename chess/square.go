@@ -61,11 +61,7 @@ func (sq *Square) Init() {
 
 	sq.OnClick(func(e events.Event) {
 		if move := sq.moveTarget(); move != nil {
-			sq.chess.game.Move(move, nil)
-
-			sq.chess.currentSquare = chess.NoSquare
-			sq.chess.moves = nil
-			sq.chess.Update()
+			sq.chess.makeMove(move)
 			return
 		}
 
