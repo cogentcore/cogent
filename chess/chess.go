@@ -37,6 +37,7 @@ func (ch *Chess) Init() {
 			for j := range 8 {
 				tree.AddAt(p, strconv.Itoa(i)+strconv.Itoa(j), func(w *Square) {
 					w.chess = ch
+					w.square = chess.NewSquare(chess.File(i), chess.Rank(j))
 				})
 			}
 		}

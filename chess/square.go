@@ -4,7 +4,12 @@
 
 package chess
 
-import "cogentcore.org/core/core"
+import (
+	"fmt"
+
+	"cogentcore.org/core/core"
+	"github.com/corentings/chess/v2"
+)
 
 // Square represents one square on the chess board.
 type Square struct {
@@ -12,4 +17,16 @@ type Square struct {
 
 	// chess is the chess app.
 	chess *Chess
+
+	// square is the position of the square.
+	square chess.Square
+}
+
+func (sq *Square) Init() {
+	sq.Frame.Init()
+
+	sq.Frame.Updater(func() {
+		piece := sq.chess.game.CurrentPosition().Board().Piece(sq.square)
+		fmt.Println(piece)
+	})
 }
