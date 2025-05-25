@@ -31,6 +31,7 @@ func (ch *Chess) Init() {
 		s.Grow.Set(1, 1)
 		s.Display = styles.Grid
 		s.Columns = 8
+		s.Gap.Zero()
 	})
 
 	ch.Maker(func(p *tree.Plan) {

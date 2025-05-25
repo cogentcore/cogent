@@ -8,6 +8,8 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/tree"
 	"github.com/corentings/chess/v2"
 )
 
@@ -24,15 +26,24 @@ type Square struct {
 
 func (sq *Square) Init() {
 	sq.Button.Init()
+	sq.SetType(core.ButtonAction)
 	sq.Styler(func(s *styles.Style) {
 		s.Border.Width.Zero()
+		s.MaxBorder.Width.Zero()
 		s.Border.Radius.Zero()
+
+		s.Padding.Set(units.Dp(16))
 
 		if sq.isDark() {
 			s.Background = colors.Uniform(colors.FromRGB(165, 117, 81))
 		} else {
 			s.Background = colors.Uniform(colors.FromRGB(235, 209, 166))
 		}
+	})
+	tree.AddChildInit(sq, "icon", func(w *core.Icon) {
+		w.Styler(func(s *styles.Style) {
+			s.Font.Size.Dp(48)
+		})
 	})
 
 	sq.Updater(func() {
