@@ -8,9 +8,11 @@ package chess
 //go:generate core generate
 
 import (
+	"fmt"
 	"strconv"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/corentings/chess/v2"
@@ -49,5 +51,23 @@ func (ch *Chess) Init() {
 				})
 			}
 		}
+	})
+
+	ch.Updater(func() {
+		status := ch.game.CurrentPosition().Status()
+		if status == chess.NoMethod {
+			return
+		}
+
+		result := fmt.Sprintf("%v %v", status, ch.game.Outcome())
+		d := core.NewBody(result)
+		d.AddBottomBar(func(bar *core.Frame) {
+			d.AddCancel(bar).SetText("View board")
+			d.AddOK(bar).SetText("New game").OnClick(func(e events.Event) {
+				ch.game = chess.NewGame()
+				ch.Update()
+			})
+		})
+		d.RunDialog(ch)
 	})
 }
