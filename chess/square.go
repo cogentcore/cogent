@@ -5,15 +5,15 @@
 package chess
 
 import (
-	"fmt"
-
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles"
 	"github.com/corentings/chess/v2"
 )
 
 // Square represents one square on the chess board.
 type Square struct {
-	core.Frame
+	core.Button
 
 	// chess is the chess app.
 	chess *Chess
@@ -23,10 +23,14 @@ type Square struct {
 }
 
 func (sq *Square) Init() {
-	sq.Frame.Init()
+	sq.Button.Init()
+	sq.Styler(func(s *styles.Style) {
+		s.Border.Width.Zero()
+		s.Border.Radius.Zero()
+	})
 
-	sq.Frame.Updater(func() {
+	sq.Updater(func() {
 		piece := sq.chess.game.CurrentPosition().Board().Piece(sq.square)
-		fmt.Println(piece)
+		sq.SetIcon(icons.Icon(svgForPiece(piece)))
 	})
 }

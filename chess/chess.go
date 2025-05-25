@@ -27,12 +27,12 @@ func (ch *Chess) Init() {
 	ch.Frame.Init()
 	ch.game = chess.NewGame()
 
-	ch.Frame.Styler(func(s *styles.Style) {
+	ch.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 		s.Direction = styles.Column
 	})
 
-	ch.Frame.Maker(func(p *tree.Plan) {
+	ch.Maker(func(p *tree.Plan) {
 		for i := range 8 {
 			for j := range 8 {
 				tree.AddAt(p, strconv.Itoa(i)+strconv.Itoa(j), func(w *Square) {
