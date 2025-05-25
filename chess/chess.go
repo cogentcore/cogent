@@ -8,19 +8,14 @@ package chess
 //go:generate core generate
 
 import (
-	"fmt"
-	"strconv"
-
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/styles"
-	"cogentcore.org/core/tree"
 	"github.com/corentings/chess/v2"
 )
 
 // Chess is the main widget of the chess app.
 type Chess struct {
-	core.Frame
+	core.Pages
 
 	// config is the configuration for a new chess game.
 	config Config
@@ -35,67 +30,17 @@ type Chess struct {
 }
 
 func (ch *Chess) Init() {
-	ch.Frame.Init()
+	ch.Pages.Init()
 
-	ch.Styler(func(s *styles.Style) {
-		s.Grow.Set(1, 1)
-		if ch.game == nil {
-			s.Direction = styles.Column
-		} else {
-			s.Display = styles.Grid
-			s.Columns = 8
-			s.Gap.Zero()
-		}
-	})
-
-	ch.Maker(func(p *tree.Plan) {
-		if ch.game == nil {
-			tree.Add(p, func(w *core.Text) {
-				w.SetType(core.TextHeadlineLarge).SetText("Cogent Chess")
-			})
-			tree.Add(p, func(w *core.Form) {
-				w.SetStruct(&ch.config)
-			})
-			tree.Add(p, func(w *core.Button) {
-				w.SetText("New game")
-			})
-			return
-		}
-
-		for rank := range 8 {
-			for file := range 8 {
-				tree.AddAt(p, strconv.Itoa(rank)+strconv.Itoa(file), func(w *Square) {
-					w.chess = ch
-					w.Updater(func() {
-						if ch.game.CurrentPosition().Turn() == chess.White {
-							w.square = chess.NewSquare(chess.File(file), chess.Rank(7-rank))
-						} else {
-							w.square = chess.NewSquare(chess.File(7-file), chess.Rank(rank))
-						}
-					})
-				})
-			}
-		}
-	})
-
-	ch.Updater(func() {
-		if ch.game == nil {
-			return
-		}
-		status := ch.game.CurrentPosition().Status()
-		if status == chess.NoMethod {
-			return
-		}
-
-		result := fmt.Sprintf("%v %v", status, ch.game.Outcome())
-		d := core.NewBody(result)
-		d.AddBottomBar(func(bar *core.Frame) {
-			d.AddCancel(bar).SetText("View board")
-			d.AddOK(bar).SetText("New game").OnClick(func(e events.Event) {
-				ch.game = chess.NewGame()
-				ch.Update()
-			})
+	ch.AddPage("home", func(pg *core.Pages) {
+		core.NewText(pg).SetType(core.TextHeadlineLarge).SetText("Cogent Chess")
+		core.NewForm(pg).SetStruct(&ch.config)
+		new := core.NewButton(pg).SetText("New game")
+		new.OnClick(func(e events.Event) {
+			ch.game = chess.NewGame()
+			pg.Open("play")
 		})
-		d.RunDialog(ch)
 	})
+
+	ch.AddPage("play", ch.play)
 }

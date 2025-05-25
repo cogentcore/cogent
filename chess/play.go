@@ -1,0 +1,64 @@
+// Copyright (c) 2025, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package chess
+
+import (
+	"fmt"
+	"strconv"
+
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
+	"github.com/corentings/chess/v2"
+)
+
+// play is the page for a chess game.
+func (ch *Chess) play(pg *core.Pages) {
+	grid := core.NewFrame(pg)
+	grid.Styler(func(s *styles.Style) {
+		s.Display = styles.Grid
+		s.Columns = 8
+		s.Gap.Zero()
+	})
+
+	grid.Maker(func(p *tree.Plan) {
+		for rank := range 8 {
+			for file := range 8 {
+				tree.AddAt(p, strconv.Itoa(rank)+strconv.Itoa(file), func(w *Square) {
+					w.chess = ch
+					w.Updater(func() {
+						if ch.game.CurrentPosition().Turn() == chess.White {
+							w.square = chess.NewSquare(chess.File(file), chess.Rank(7-rank))
+						} else {
+							w.square = chess.NewSquare(chess.File(7-file), chess.Rank(rank))
+						}
+					})
+				})
+			}
+		}
+	})
+
+	grid.Updater(func() {
+		if ch.game == nil {
+			return
+		}
+		status := ch.game.CurrentPosition().Status()
+		if status == chess.NoMethod {
+			return
+		}
+
+		result := fmt.Sprintf("%v %v", status, ch.game.Outcome())
+		d := core.NewBody(result)
+		d.AddBottomBar(func(bar *core.Frame) {
+			d.AddCancel(bar).SetText("View board")
+			d.AddOK(bar).SetText("New game").OnClick(func(e events.Event) {
+				ch.game = chess.NewGame()
+				ch.Update()
+			})
+		})
+		d.RunDialog(ch)
+	})
+}
