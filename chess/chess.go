@@ -9,9 +9,12 @@ package chess
 
 import (
 	"cogentcore.org/core/core"
+	"github.com/corentings/chess/v2"
 )
 
 // Chess is the main widget of the chess app.
 type Chess struct {
 	core.Frame
+
+	game *chess.Game
 }
