@@ -26,6 +26,7 @@ func (sq *Square) Init() {
 	sq.Styler(func(s *styles.Style) {
 		s.Border.Width.Zero()
 		s.Border.Radius.Zero()
+		s.Background = nil
 	})
 
 	sq.Updater(func() {

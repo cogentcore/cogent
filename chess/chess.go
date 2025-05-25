@@ -29,17 +29,16 @@ func (ch *Chess) Init() {
 
 	ch.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
-		s.Direction = styles.Column
 		s.Display = styles.Grid
 		s.Columns = 8
 	})
 
 	ch.Maker(func(p *tree.Plan) {
-		for i := range 8 {
-			for j := range 8 {
-				tree.AddAt(p, strconv.Itoa(i)+strconv.Itoa(j), func(w *Square) {
+		for orank := range 8 {
+			for file := range 8 {
+				tree.AddAt(p, strconv.Itoa(orank)+strconv.Itoa(file), func(w *Square) {
 					w.chess = ch
-					w.square = chess.NewSquare(chess.File(i), chess.Rank(j))
+					w.square = chess.NewSquare(chess.File(file), chess.Rank(7-orank))
 				})
 			}
 		}
