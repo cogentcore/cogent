@@ -7,13 +7,13 @@ import (
 	"cogentcore.org/core/types"
 )
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Chess", IDName: "chess", Doc: "Chess is the main widget of the chess app.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "game"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Chess", IDName: "chess", Doc: "Chess is the main widget of the chess app.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "game"}, {Name: "currentSquare", Doc: "currentSquare is the current square from which a piece may be moved."}, {Name: "moves", Doc: "moves is the list of potential moves for the current piece."}}})
 
 // NewChess returns a new [Chess] with the given optional parent:
 // Chess is the main widget of the chess app.
 func NewChess(parent ...tree.Node) *Chess { return tree.New[Chess](parent...) }
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Square", IDName: "square", Doc: "Square represents one square on the chess board.", Embeds: []types.Field{{Name: "Frame"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/chess.Square", IDName: "square", Doc: "Square represents one square on the chess board.", Embeds: []types.Field{{Name: "Button"}}, Fields: []types.Field{{Name: "chess", Doc: "chess is the chess app."}, {Name: "square", Doc: "square is the position of the square."}}})
 
 // NewSquare returns a new [Square] with the given optional parent:
 // Square represents one square on the chess board.
