@@ -22,6 +22,9 @@ type Chess struct {
 
 	game *chess.Game
 
+	// currentSquare is the current square from which a piece may be moved.
+	currentSquare chess.Square
+
 	// moves is the list of potential moves for the current piece.
 	moves []chess.Move
 }

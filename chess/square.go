@@ -60,7 +60,13 @@ func (sq *Square) Init() {
 	})
 
 	sq.OnClick(func(e events.Event) {
-		sq.chess.moves = sq.moves()
+		if sq.chess.currentSquare == sq.square {
+			sq.chess.currentSquare = chess.NoSquare
+			sq.chess.moves = nil
+		} else {
+			sq.chess.currentSquare = sq.square
+			sq.chess.moves = sq.moves()
+		}
 		sq.chess.Restyle()
 	})
 }
