@@ -202,8 +202,8 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
-	sv.SVG.ZoomReset()
 	sv.ReadMetaData()
+	sv.SVG.ZoomReset() // todo: not working
 	return err
 }
 

@@ -64,6 +64,7 @@ func (pv *PaintSetter) Init() {
 	pv.curStrokeType = pv.StrokeType
 	pv.curFillType = pv.FillType
 	pv.PaintStyle.Defaults()
+	pv.PaintStyle.Stroke.Width.Px(1) // dp is not understood by svg..
 
 	DashIconsInit()
 	MarkerIconsInit()
