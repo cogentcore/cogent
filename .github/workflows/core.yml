@@ -51,6 +51,9 @@ jobs:
       - name: Build Canvas
         run: core build web -dir canvas/cmd/canvas -o static/canvas
 
+      - name: Build Chess
+        run: core build web -dir chess/chess -o static/chess
+
       - name: Build Marbles
         run: core build web -dir marbles -o static/marbles
 

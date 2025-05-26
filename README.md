@@ -12,6 +12,6 @@
     <a href="https://github.com/cogentcore/cogent/tags"><img alt="Version" src="https://img.shields.io/github/v/tag/cogentcore/cogent?label=version"></a>
 </p>
 
-Cogent Core is a powerful, fast, elegant software ecosystem for all platforms. This repository contains the Cogent apps built with Cogent Core, such as [Cogent Code](https://cogentcore.org/cogent/code), [Cogent Canvas](https://cogentcore.org/cogent/canvas), and [Cogent Mail](https://github.com/cogentcore/cogent/tree/main/mail).
+Cogent Core is a powerful, fast, elegant software ecosystem for all platforms. This repository contains the Cogent apps built with Cogent Core, such as [Cogent Code](https://cogentcore.org/cogent/code), [Cogent Canvas](https://cogentcore.org/cogent/canvas), and [Cogent Chess](https://cogentcore.org/cogent/chess).
 
 See the [Cogent Apps Website](https://cogentcore.org/cogent) for more information.
