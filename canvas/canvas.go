@@ -192,6 +192,7 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	cv.Filename = core.Filename(path)
 	sv := cv.SVG
 	err := errors.Log(sv.SVG.OpenXML(path))
+	sv.SVG.GradientFromGradients()
 	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	fdir, _ := filepath.Split(path)

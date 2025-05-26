@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"strings"
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -340,7 +339,7 @@ func (sv *SVG) DragMove(e events.Event) {
 	pt := es.DragSelectStartBBox.Min
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(tdel, math32.Vec2(1, 1), 0, pt)
 		itm.ApplyTransform(sv.SVG, xf)
 	}
@@ -456,7 +455,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(del, sc, 0, pt)
 		itm.ApplyTransform(sv.SVG, xf)
 		// if strings.HasPrefix(es.Action, "New") {
@@ -533,14 +532,13 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
-		// todo: just use bit copy of item, put gradients on the node itself
-		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(del, sc, ang, pt)
 		itm.ApplyTransform(sv.SVG, xf)
-		if strings.HasPrefix(es.Action.String(), "New") {
-			sv.SVG.GradientUpdateNodePoints(itm, "fill")
-			sv.SVG.GradientUpdateNodePoints(itm, "stroke")
-		}
+		// if strings.HasPrefix(es.Action.String(), "New") {
+		// 	sv.SVG.GradientUpdateNodePoints(itm, "fill")
+		// 	sv.SVG.GradientUpdateNodePoints(itm, "stroke")
+		// }
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)

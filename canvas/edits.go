@@ -273,7 +273,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelectedState{Order: idx}
-	itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
+	ss.InitState = svg.BitCloneNode(itm)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -437,7 +437,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelectCurrentBBox = es.SelectBBox
 	es.DragSelectEffectiveBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
+		ss.InitState = svg.BitCloneNode(itm)
 	}
 }
 
@@ -454,7 +454,6 @@ type SelectedState struct {
 	// order item was selected
 	Order int
 
-	// Initial geometry, saved when first selected or start dragging.
-	// Manipulations restore then transform from there.
-	InitGeom []float32
+	// Initial state of the node: copy of node struct.
+	InitState svg.Node
 }
