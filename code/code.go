@@ -20,6 +20,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -28,6 +29,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/system"
 	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/spell"
@@ -111,21 +113,27 @@ func init() {
 func (cv *Code) Init() {
 	cv.Frame.Init()
 	cv.Styler(func(s *styles.Style) {
+		s.SetAbilities(true, abilities.Droppable) // external drop
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
 
 	cv.AddCloseDialog()
 	cv.OnFirst(events.KeyChord, cv.codeKeys)
-	cv.On(events.OSOpenFiles, func(e events.Event) {
-		ofe := e.(*events.OSFiles)
-		for _, fn := range ofe.Files {
-			cv.OpenFile(fn)
-		}
-	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
 		cv.UpdateFiles()
+	})
+	cv.On(events.Drop, func(e events.Event) {
+		de := e.(*events.DragDrop)
+		md := de.Data.(mimedata.Mimes)
+		for _, d := range md {
+			if d.Type != fileinfo.TextPlain {
+				continue
+			}
+			path := string(d.Data)
+			cv.ViewFile(core.Filename(path))
+		}
 	})
 	cv.Updater(func() {
 		if cv.NeedsRebuild() {
@@ -707,9 +715,12 @@ func CodeInScene(sc *core.Scene) *Code {
 	return tree.ChildByType[*Code](sc.Body)
 }
 
+var openFilesDone = false
+
 // NewCodeWindow is common code for Open CodeWindow from Project or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
-	winm := "Cogent Code • " + projnm
+	appnm := "Cogent Code • "
+	winm := appnm + projnm
 	if w := core.AllRenderWindows.FindName(winm); w != nil {
 		sc := w.MainScene()
 		cv := CodeInScene(sc)
@@ -727,6 +738,30 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 		tb.AddOverflowMenu(cv.OverflowMenu)
 	})
 	cv.Update() // get first pass so settings stick
+
+	b.OnShow(func(e events.Event) {
+		if openFilesDone || path != "" {
+			return
+		}
+		ofn := system.TheApp.OpenFiles()
+		if len(ofn) == 0 {
+			return
+		}
+		openFilesDone = true
+		path, _ = filepath.Abs(ofn[0])
+		_, projnm, _, _ := ProjectPathParse(path)
+		if projnm != "" {
+			cv.openProject(core.Filename(path))
+		} else {
+			cv.openPath(core.Filename(path))
+		}
+	})
+	b.Scene.On(events.OSOpenFiles, func(e events.Event) {
+		of := e.(*events.OSFiles)
+		for _, fn := range of.Files {
+			cv.ViewFile(core.Filename(fn))
+		}
+	})
 
 	if doPath {
 		cv.openPath(core.Filename(path))

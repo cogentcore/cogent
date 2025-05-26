@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -23,6 +25,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
@@ -54,10 +57,21 @@ func (cv *Canvas) Init() {
 	cv.Frame.Init()
 	// cv.EditState.ConfigDefaultGradient()
 	cv.Styler(func(s *styles.Style) {
+		s.SetAbilities(true, abilities.Droppable) // external drop
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-
+	cv.On(events.Drop, func(e events.Event) {
+		de := e.(*events.DragDrop)
+		md := de.Data.(mimedata.Mimes)
+		for _, d := range md {
+			if d.Type != fileinfo.TextPlain {
+				continue
+			}
+			path := string(d.Data)
+			NewWindow(path)
+		}
+	})
 	cv.AddCloseDialog(func(d *core.Body) bool {
 		return false // todo: temporary disable -- need to fix bug
 		if !cv.EditState.Changed {
@@ -199,12 +213,11 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	fdir, _ := filepath.Split(path)
 	errors.Log(os.Chdir(fdir))
 	cv.EditState.Init(cv)
-	cv.UpdateLayers()
-
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
 	sv.ReadMetaData()
 	sv.SVG.ZoomReset() // todo: not working
+	cv.UpdateAll()
 	return err
 }
 
@@ -503,6 +516,8 @@ func NewDrawing(sz PhysSize) *Canvas {
 	return ngr
 }
 
+var openFilesDone = false
+
 // NewWindow returns a new [Canvas] in a new window loading given file if non-empty.
 func NewWindow(fnm string) *Canvas {
 	path := ""
@@ -536,16 +551,22 @@ func NewWindow(fnm string) *Canvas {
 			cv.OpenDrawingFile(core.Filename(path))
 		} else {
 			ofn := system.TheApp.OpenFiles()
-			if len(ofn) > 0 {
+			if !openFilesDone && len(ofn) > 0 {
+				openFilesDone = true
 				path, _ = filepath.Abs(ofn[0])
 				dfnm = fsx.DirAndFile(path)
 				winm = appnm + dfnm
 				cv.OpenDrawingFile(core.Filename(path))
 				b.SetTitle(winm)
-
 			} else {
 				cv.EditState.Init(cv)
 			}
+		}
+	})
+	b.Scene.On(events.OSOpenFiles, func(e events.Event) {
+		of := e.(*events.OSFiles)
+		for _, fn := range of.Files {
+			NewWindow(fn)
 		}
 	})
 
