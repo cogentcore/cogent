@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 )
 
@@ -510,7 +511,8 @@ func NewWindow(fnm string) *Canvas {
 		path, _ = filepath.Abs(fnm)
 		dfnm = fsx.DirAndFile(path)
 	}
-	winm := "Cogent Canvas • " + dfnm
+	appnm := "Cogent Canvas • "
+	winm := appnm + dfnm
 
 	if w := core.AllRenderWindows.FindName(winm); w != nil {
 		sc := w.MainScene()
@@ -530,10 +532,20 @@ func NewWindow(fnm string) *Canvas {
 	})
 
 	b.OnShow(func(e events.Event) {
-		if fnm != "" {
+		if path != "" {
 			cv.OpenDrawingFile(core.Filename(path))
 		} else {
-			cv.EditState.Init(cv)
+			ofn := system.TheApp.OpenFiles()
+			if len(ofn) > 0 {
+				path, _ = filepath.Abs(ofn[0])
+				dfnm = fsx.DirAndFile(path)
+				winm = appnm + dfnm
+				cv.OpenDrawingFile(core.Filename(path))
+				b.SetTitle(winm)
+
+			} else {
+				cv.EditState.Init(cv)
+			}
 		}
 	})
 
