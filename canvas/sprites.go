@@ -7,12 +7,11 @@ package canvas
 import (
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint"
 )
 
 // note: all sprite functions assume overall sprites are locked.
@@ -107,6 +106,7 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 
 // SetSpriteProperties sets sprite properties
 func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
+	sp.InitProperties()
 	sp.Name = SpriteName(typ, subtyp, idx)
 	sp.Properties["grid-type"] = typ
 	sp.Properties["grid-sub"] = subtyp
@@ -141,26 +141,21 @@ func SpriteByName(ctx core.Widget, typ, subtyp Sprites, idx int) (*core.Sprite, 
 func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
 	spnm := SpriteName(typ, subtyp, idx)
 	sp, ok := sprites.SpriteByNameLocked(spnm)
-	if !ok {
-		sp = core.NewSprite(spnm, image.Point{}, image.Point{})
-		sp.Properties = map[string]any{}
-		SetSpriteProperties(sp, typ, subtyp, idx)
-		sprites.AddLocked(sp)
-		switch typ {
-		case SpReshapeBBox:
-			DrawSpriteReshape(sp, subtyp)
-		case SpSelBBox:
-			DrawSpriteSelect(sp, subtyp)
-		case SpNodePoint:
-			DrawSpriteNodePoint(sp, subtyp)
-		case SpNodeCtrl:
-			DrawSpriteNodeCtrl(sp, subtyp)
-		}
-		if init != nil {
-			init(sp)
-		}
+	if ok {
+		sprites.ActivateSpriteLocked(sp.Name)
+		return sp
 	}
+	sp = core.NewSprite(spnm, nil)
+	SetSpriteProperties(sp, typ, subtyp, idx)
 	switch typ {
+	case SpReshapeBBox:
+		sp.Draw = DrawSpriteReshape(sp, subtyp)
+	case SpSelBBox:
+		sp.Draw = DrawSpriteSelect(sp, subtyp)
+	case SpNodePoint:
+		sp.Draw = DrawSpriteNodePoint(sp, subtyp)
+	case SpNodeCtrl:
+		sp.Draw = DrawSpriteNodeCtrl(sp, subtyp)
 	case SpRubberBand:
 		switch subtyp {
 		case SpBBoxUpC, SpBBoxDnC:
@@ -176,53 +171,57 @@ func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Poi
 			DrawAlignMatchVert(sp, trgsz)
 		}
 	}
-	sprites.ActivateSpriteLocked(sp.Name)
+	if init != nil {
+		init(sp)
+	}
+	sprites.AddLocked(sp)
 	return sp
 }
 
 // SetSpritePos sets sprite position, taking into account relative offsets
-func SetSpritePos(sp *core.Sprite, pos image.Point) {
+func SetSpritePos(sp *core.Sprite, x, y int) {
 	typ, subtyp, _ := SpriteProperties(sp)
+	pos := image.Point{x, y}
 	switch {
-	case typ == SpRubberBand:
-		_, sz := LineSpriteSize()
-		switch subtyp {
-		case SpBBoxUpC:
-			pos.Y -= sz
-		case SpBBoxLfM:
-			pos.X -= sz
-		}
-	case typ == SpAlignMatch:
-		_, sz := LineSpriteSize()
-		bbtp := BBoxPoints(subtyp) // just hack it
-		switch bbtp {
-		case BBLeft:
-			pos.X -= sz
-		case BBCenter:
-			pos.X -= sz / 2
-		case BBTop:
-			pos.Y -= sz
-		case BBMiddle:
-			pos.Y -= sz / 2
-		}
+	// case typ == SpRubberBand:
+	// 	_, sz := LineSpriteSize()
+	// 	switch subtyp {
+	// 	case SpBBoxUpC:
+	// 		pos.Y -= sz
+	// 	case SpBBoxLfM:
+	// 		pos.X -= sz
+	// 	}
+	// case typ == SpAlignMatch:
+	// 	_, sz := LineSpriteSize()
+	// 	bbtp := BBoxPoints(subtyp) // just hack it
+	// 	switch bbtp {
+	// 	case BBLeft:
+	// 		pos.X -= sz
+	// 	case BBCenter:
+	// 		pos.X -= sz / 2
+	// 	case BBTop:
+	// 		pos.Y -= sz
+	// 	case BBMiddle:
+	// 		pos.Y -= sz / 2
+	// 	}
 	case typ == SpNodePoint || typ == SpNodeCtrl:
-		_, sz := HandleSpriteSize(1)
-		pos.X -= sz.X / 2
-		pos.Y -= sz.Y / 2
+		spbb, _ := HandleSpriteSize(1, image.Point{})
+		pos.X -= spbb.Dx() / 2
+		pos.Y -= spbb.Dy() / 2
 	case subtyp >= SpBBoxUpL && subtyp <= SpBBoxRtM: // Reshape, Sel BBox
 		sc := float32(1)
 		if typ == SpSelBBox {
 			sc = .8
 		}
-		_, sz := HandleSpriteSize(sc)
+		spbb, _ := HandleSpriteSize(sc, image.Point{})
 		if subtyp == SpBBoxDnL || subtyp == SpBBoxUpL || subtyp == SpBBoxLfM {
-			pos.X -= sz.X
+			pos.X -= spbb.Dx()
 		}
 		if subtyp == SpBBoxUpL || subtyp == SpBBoxUpC || subtyp == SpBBoxUpR {
-			pos.Y -= sz.Y
+			pos.Y -= spbb.Dy()
 		}
 	}
-	sp.Geom.Pos = pos
+	sp.SetPos(pos)
 }
 
 // InactivateSprites inactivates sprites of given type; must be locked.
@@ -240,87 +239,65 @@ func InactivateSprites(sprites *core.Sprites, typ Sprites) {
 
 ////////  Sprite rendering
 
-var (
-	HandleSpriteScale = float32(12)
+const (
+	HandleSpriteScale = 12
 	HandleSizeMin     = 4
 	HandleBorderMin   = 2
 )
 
-// HandleSpriteSize returns the border size and overall size
-// of handle-type sprites, with given scaling factor
-func HandleSpriteSize(scale float32) (int, image.Point) {
-	sz := int(math32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100))
+// HandleSpriteSize returns the bounding box and rect draw coords
+// for handle-type sprites.
+func HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw math32.Box2) {
+	sz := math32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100)
 	sz = max(sz, HandleSizeMin)
 	bsz := max(sz/6, HandleBorderMin)
-	bbsz := image.Point{sz, sz}
-	return bsz, bbsz
+	bb = image.Rectangle{Min: pos, Max: pos.Add(image.Pt(int(sz), int(sz)))}
+	fp := math32.FromPoint(pos).AddScalar(bsz)
+	rdraw = math32.Box2{Min: fp, Max: fp.AddScalar(sz).SubScalar(bsz)}
+	return
 }
 
-// DrawSpriteReshape renders a Reshape sprite handle
-func DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) {
-	bsz, bbsz := HandleSpriteSize(1)
-	if !sp.SetSize(bbsz) { // already set
-		return
+// DrawSpriteReshape returns sprite Draw function for reshape points
+func DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+	return func(pc *paint.Painter) {
+		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
+		sp.EventBBox = bb
+		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.Primary.Base)
 	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Min.Y += bsz
-	bbd.Max.X -= bsz
-	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.Point{}, draw.Src)
 }
 
 // DrawSpriteSelect renders a Select sprite handle -- smaller
-func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) {
-	bsz, bbsz := HandleSpriteSize(.8)
-	if !sp.SetSize(bbsz) { // already set
-		return
+func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+	return func(pc *paint.Painter) {
+		bb, rdraw := HandleSpriteSize(.8, sp.EventBBox.Min)
+		sp.EventBBox = bb
+		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
+		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
 	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Min.Y += bsz
-	bbd.Max.X -= bsz
-	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
 }
 
 // DrawSpriteNodePoint renders a NodePoint sprite handle
-func DrawSpriteNodePoint(sp *core.Sprite, bbtyp Sprites) {
-	bsz, bbsz := HandleSpriteSize(1)
-	if !sp.SetSize(bbsz) { // already set
-		return
+func DrawSpriteNodePoint(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+	return func(pc *paint.Painter) {
+		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
+		sp.EventBBox = bb
+		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
+		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
 	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Min.Y += bsz
-	bbd.Max.X -= bsz
-	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
 }
 
 // DrawSpriteNodeCtrl renders a NodePoint sprite handle
-func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) {
-	bsz, bbsz := HandleSpriteSize(1)
-	if !sp.SetSize(bbsz) { // already set
-		return
+func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) func(pc *paint.Painter) {
+	return func(pc *paint.Painter) {
+		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
+		sp.EventBBox = bb
+		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
+		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
 	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Min.Y += bsz
-	bbd.Max.X -= bsz
-	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
 }
 
-var (
-	LineSpriteScale = float32(4)
+const (
+	LineSpriteScale = 4
 	LineSizeMin     = 3
 	LineBorderMin   = 1
 )
@@ -335,68 +312,65 @@ func LineSpriteSize() (int, int) {
 
 // DrawRubberBandHoriz renders a horizontal rubber band line
 func DrawRubberBandHoriz(sp *core.Sprite, trgsz image.Point) {
-	bsz, sz := LineSpriteSize()
-	ssz := image.Point{trgsz.X, sz}
-	if !sp.SetSize(ssz) { // already set
-		return
-	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.Y += bsz
-	bbd.Max.Y -= bsz
-	for x := 0; x < ssz.X; x += sz * 2 {
-		bbd.Min.X = x
-		bbd.Max.X = x + sz
-		draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
-	}
+	// bsz, sz := LineSpriteSize()
+	// ssz := image.Point{trgsz.X, sz}
+	// ibd := sp.Pixels.Bounds()
+	// bbd := ibd
+	// bbd.Min.Y += bsz
+	// bbd.Max.Y -= bsz
+	// for x := 0; x < ssz.X; x += sz * 2 {
+	// 	bbd.Min.X = x
+	// 	bbd.Max.X = x + sz
+	// 	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
+	// }
 }
 
 // DrawRubberBandVert renders a vertical rubber band line
 func DrawRubberBandVert(sp *core.Sprite, trgsz image.Point) {
-	bsz, sz := LineSpriteSize()
-	ssz := image.Point{sz, trgsz.Y}
-	if !sp.SetSize(ssz) { // already set
-		return
-	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Max.X -= bsz
-	for y := sz; y < ssz.Y; y += sz * 2 {
-		bbd.Min.Y = y
-		bbd.Max.Y = y + sz
-		draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
-	}
+	// bsz, sz := LineSpriteSize()
+	// ssz := image.Point{sz, trgsz.Y}
+	// if !sp.SetSize(ssz) { // already set
+	// 	return
+	// }
+	// ibd := sp.Pixels.Bounds()
+	// bbd := ibd
+	// bbd.Min.X += bsz
+	// bbd.Max.X -= bsz
+	// for y := sz; y < ssz.Y; y += sz * 2 {
+	// 	bbd.Min.Y = y
+	// 	bbd.Max.Y = y + sz
+	// 	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
+	// }
 }
 
 // DrawAlignMatchHoriz renders a horizontal alignment line
 func DrawAlignMatchHoriz(sp *core.Sprite, trgsz image.Point) {
-	bsz, sz := LineSpriteSize()
-	ssz := image.Point{trgsz.X, sz}
-	if !sp.SetSize(ssz) { // already set
-		return
-	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.Y += bsz
-	bbd.Max.Y -= bsz
-	clr := color.RGBA{0, 200, 200, 255}
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
+	// bsz, sz := LineSpriteSize()
+	// ssz := image.Point{trgsz.X, sz}
+	// if !sp.SetSize(ssz) { // already set
+	// 	return
+	// }
+	// ibd := sp.Pixels.Bounds()
+	// bbd := ibd
+	// bbd.Min.Y += bsz
+	// bbd.Max.Y -= bsz
+	// clr := color.RGBA{0, 200, 200, 255}
+	// draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	// draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
 }
 
 // DrawAlignMatchVert renders a vertical alignment line
 func DrawAlignMatchVert(sp *core.Sprite, trgsz image.Point) {
-	bsz, sz := LineSpriteSize()
-	ssz := image.Point{sz, trgsz.Y}
-	if !sp.SetSize(ssz) { // already set
-		return
-	}
-	ibd := sp.Pixels.Bounds()
-	bbd := ibd
-	bbd.Min.X += bsz
-	bbd.Max.X -= bsz
-	clr := color.RGBA{0, 200, 200, 255}
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
+	// bsz, sz := LineSpriteSize()
+	// ssz := image.Point{sz, trgsz.Y}
+	// if !sp.SetSize(ssz) { // already set
+	// 	return
+	// }
+	// ibd := sp.Pixels.Bounds()
+	// bbd := ibd
+	// bbd.Min.X += bsz
+	// bbd.Max.X -= bsz
+	// clr := color.RGBA{0, 200, 200, 255}
+	// draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	// draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
 }

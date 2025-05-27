@@ -176,7 +176,7 @@ func (sv *SVG) UpdateNodeSprites() {
 		sp := Sprite(sprites, SpNodePoint, SpUnk, i, image.Point{}, func(sp *core.Sprite) {
 			// todo: events here
 		})
-		SetSpritePos(sp, pn.WinPt.ToPoint())
+		SetSpritePos(sp, int(pn.WinPt.X), int(pn.WinPt.Y))
 	}
 
 	// remove extra
