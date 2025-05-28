@@ -134,18 +134,23 @@ func (sv *SVG) Init() {
 			es.SelectNoDrag = true
 			es.DragSelStart(e.Pos())
 		case sob != nil && es.Tool == SelectTool:
-			fmt.Println("extend sel:", sob, e.SelectMode())
+			// todo: not getting extend select within groups..
+			// fmt.Println("extend sel:", sob, e.SelectMode())
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
 		case sob != nil && es.Tool == NodeTool:
+			es.ResetSelectedNodes()
 			es.SelectAction(sob, events.SelectOne, e.Pos())
-			sv.EditState().DragSelStart(e.Pos())
-			sv.UpdateNodeSprites()
+			path := es.FirstSelectedPath()
+			es.ResetSelected()
+			sv.UpdateNodeSprites(path)
 		case sob == nil:
 			es.DragStartPos = e.Pos()
 			// fmt.Println("Drag start:", es.DragStartPos) // todo: not nec
 			es.ResetSelected()
+			es.ResetSelectedNodes()
+			sv.RemoveNodeSprites()
 			sv.UpdateSelect()
 		}
 	})

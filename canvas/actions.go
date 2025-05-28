@@ -17,6 +17,7 @@ const (
 	NewElement
 	NewText
 	NewPath
+	NodeMove
 )
 
 // ActionHelpMap contains a set of help strings for different actions

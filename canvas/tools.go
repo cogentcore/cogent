@@ -39,6 +39,7 @@ func (cv *Canvas) SetTool(tl Tools) {
 		return
 	}
 	es.ResetSelected()
+	es.ResetSelectedNodes()
 	cv.EditState.Tool = tl
 	cv.SetDefaultStyle()
 	cv.modalTools.Update()

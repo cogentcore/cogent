@@ -56,7 +56,19 @@ const (
 	SpLfM
 	SpRtM
 
-	// todo: add nodectrl subtypes
+	// Node points
+	SpMoveTo
+	SpLineTo
+	SpCubeTo
+	SpQuadTo
+	SpArcTo
+	SpClose
+
+	SpStart
+	SpEnd
+	SpQuad1
+	SpCube1
+	SpCube2
 )
 
 // SpriteName returns the unique name of the sprite based
@@ -70,7 +82,7 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 		nm += fmt.Sprintf("-%d-%s", idx, subtyp.String())
 	case SpNodePoint:
 		nm += fmt.Sprintf("-%d", idx)
-	case SpNodeCtrl: // todo: subtype
+	case SpNodeCtrl:
 		nm += fmt.Sprintf("-%d", idx)
 	case SpRubberBand:
 		nm += "-" + subtyp.String()
@@ -114,24 +126,35 @@ func SpriteByName(ctx core.Widget, typ, subtyp Sprites, idx int) (*core.Sprite, 
 // Sprite returns the given sprite in the context of the given widget,
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes).  Init function is called on new sprites.
-func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
+func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
+	sprites := sv.SpritesNolock()
+	es := sv.EditState()
 	spnm := SpriteName(typ, subtyp, idx)
-	sp, ok := sprites.SpriteByNameLocked(spnm)
+	var sp *core.Sprite
+	ok := false
+	if typ == SpReshapeBBox {
+		sp, ok = sprites.Final.AtTry(spnm)
+	} else {
+		sp, ok = sprites.SpriteByNameLocked(spnm)
+	}
 	if ok {
-		sprites.ActivateSpriteLocked(sp.Name)
+		sp.Active = true
+		sprites.SetModifiedLocked()
 		return sp
 	}
 	sp = core.NewSprite(spnm, nil)
 	SetSpriteProperties(sp, typ, subtyp, idx)
+	final := false
 	switch typ {
 	case SpReshapeBBox:
+		final = true
 		sp.Draw = DrawSpriteReshape(sp, subtyp)
 	case SpSelBBox:
 		sp.Draw = DrawSpriteSelect(sp, subtyp)
 	case SpNodePoint:
-		sp.Draw = DrawSpriteNodePoint(sp, subtyp)
+		sp.Draw = DrawSpriteNodePoint(es, sp, subtyp, idx)
 	case SpNodeCtrl:
-		sp.Draw = DrawSpriteNodeCtrl(sp, subtyp)
+		sp.Draw = DrawSpriteNodeCtrl(es, sp, subtyp, idx)
 	case SpRubberBand:
 		sp.Draw = DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
@@ -140,7 +163,11 @@ func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Poi
 	if init != nil {
 		init(sp)
 	}
-	sprites.AddLocked(sp)
+	if final {
+		sprites.Final.Add(sp.Name, sp)
+	} else {
+		sprites.AddLocked(sp)
+	}
 	return sp
 }
 
@@ -171,15 +198,16 @@ func SetSpritePos(sp *core.Sprite, x, y int) {
 
 // InactivateSprites inactivates sprites of given type; must be locked.
 func InactivateSprites(sprites *core.Sprites, typ Sprites) {
-	nms := []string{}
-	for _, spkv := range sprites.Order {
-		sp := spkv.Value
-		st, _, _ := SpriteProperties(sp)
-		if st == typ {
-			nms = append(nms, sp.Name)
+	sprites.Do(func(sl core.SpriteList) {
+		for _, sp := range sl.Values {
+			st, _, _ := SpriteProperties(sp)
+			if st == typ {
+				sp.Active = false
+			}
 		}
-	}
-	sprites.InactivateSpriteLocked(nms...)
+
+	})
+	sprites.SetModifiedLocked()
 }
 
 ////////  Sprite rendering
@@ -222,22 +250,48 @@ func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 }
 
 // DrawSpriteNodePoint renders a NodePoint sprite handle
-func DrawSpriteNodePoint(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+func DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
-		sp.EventBBox = bb
-		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
-		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
+		isSel := es.NodeIsSelected(idx)
+		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
+		bb := math32.B2FromRect(bbi)
+		sz := bb.Size()
+		xctr := bb.Min.X + 0.5*sz.X
+		yctr := bb.Min.Y + 0.5*sz.Y
+		sp.EventBBox = bbi
+		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
+		if isSel {
+			pc.Fill.Color = colors.Scheme.Primary.Base
+		} else {
+			pc.Fill.Color = nil
+		}
+		pc.Stroke.Color = colors.Scheme.OnSurface
+		pc.Stroke.Width.Dp(1)
+		pc.Polygon(math32.Vec2(bb.Min.X, yctr), math32.Vec2(xctr, bb.Min.Y), math32.Vec2(bb.Max.X, yctr), math32.Vec2(xctr, bb.Max.Y))
+		pc.Draw()
 	}
 }
 
 // DrawSpriteNodeCtrl renders a NodePoint sprite handle
-func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) func(pc *paint.Painter) {
+func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
-		sp.EventBBox = bb
-		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
-		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
+		isSel := es.NodeIsSelected(idx)
+		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
+		bb := math32.B2FromRect(bbi)
+		sz := bb.Size()
+		xctr := bb.Min.X + 0.5*sz.X
+		yctr := bb.Min.Y + 0.5*sz.Y
+		sp.EventBBox = bbi
+		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
+		if isSel {
+			pc.Fill.Color = colors.Scheme.Primary.Base
+		} else {
+			pc.Fill.Color = nil
+		}
+		pc.Stroke.Color = colors.Scheme.OnSurface
+		pc.Stroke.Width.Dp(1)
+		pc.Polygon(math32.Vec2(bb.Min.X, yctr), math32.Vec2(xctr, bb.Min.Y), math32.Vec2(bb.Max.X, yctr), math32.Vec2(xctr, bb.Max.Y))
+		pc.Draw()
 	}
 }
 

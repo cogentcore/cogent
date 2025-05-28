@@ -118,7 +118,7 @@ func (sv *SVG) UpdateSelect() {
 	sv.Canvas.UpdateTabs()
 	sv.Canvas.UpdateModalToolbar()
 	if es.Tool == NodeTool {
-		sv.UpdateNodeSprites()
+		sv.UpdateNodeSprites(es.ActivePath)
 		sv.RemoveSelSprites()
 	} else {
 		sv.RemoveNodeSprites()
@@ -148,9 +148,8 @@ func (sv *SVG) UpdateSelSprites() {
 	sprites := sv.SpritesLock()
 	sv.setSelSpritePos()
 	for i := SpUpL; i <= SpRtM; i++ {
-		Sprite(sprites, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
+		sv.Sprite(SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
 			sp.OnSlideStart(func(e events.Event) {
-				fmt.Println("node sel start")
 				es.DragSelStart(e.Pos())
 				e.SetHandled()
 			})
@@ -206,13 +205,12 @@ func (sv *SVG) setSelSpritePos() {
 
 // SetBBoxSpritePos sets positions of given type of sprites.
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
-	sprites := sv.SpritesNolock()
 	spbb, _ := HandleSpriteSize(1, image.Point{})
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spbb.Dx())))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spbb.Dy())))
 	bbi := bbox.ToRect()
 	for i := SpUpL; i <= SpRtM; i++ {
-		sp := Sprite(sprites, typ, i, idx, image.ZP, nil)
+		sp := sv.Sprite(typ, i, idx, image.ZP, nil)
 		switch i {
 		case SpUpL:
 			SetSpritePos(sp, bbi.Min.X, bbi.Min.Y)
@@ -285,7 +283,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	sp := Sprite(sprites, SpRubberBand, SpUnknown, 0, sz, nil)
+	sp := sv.Sprite(SpRubberBand, SpUnknown, 0, sz, nil)
 	sp.Properties["size"] = sz
 	SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
 

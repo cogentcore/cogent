@@ -6,16 +6,16 @@ import (
 	"cogentcore.org/core/enums"
 )
 
-var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 // ActionsN is the highest valid value for type Actions, plus one.
-const ActionsN Actions = 10
+const ActionsN Actions = 11
 
-var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9}
+var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9, `NodeMove`: 10}
 
-var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``}
+var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``, 10: ``}
 
-var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`}
+var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`, 10: `NodeMove`}
 
 // String returns the string representation of this Actions value.
 func (i Actions) String() string { return enums.String(i, _ActionsMap) }
@@ -301,16 +301,16 @@ func (i *StandardSizes) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "StandardSizes")
 }
 
-var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
 
 // SpritesN is the highest valid value for type Sprites, plus one.
-const SpritesN Sprites = 15
+const SpritesN Sprites = 26
 
-var _SpritesValueMap = map[string]Sprites{`unknown`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `up-l`: 7, `up-c`: 8, `up-r`: 9, `dn-l`: 10, `dn-c`: 11, `dn-r`: 12, `lf-m`: 13, `rt-m`: 14}
+var _SpritesValueMap = map[string]Sprites{`unknown`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `up-l`: 7, `up-c`: 8, `up-r`: 9, `dn-l`: 10, `dn-c`: 11, `dn-r`: 12, `lf-m`: 13, `rt-m`: 14, `move-to`: 15, `line-to`: 16, `cube-to`: 17, `quad-to`: 18, `arc-to`: 19, `close`: 20, `start`: 21, `end`: 22, `quad1`: 23, `cube1`: 24, `cube2`: 25}
 
-var _SpritesDescMap = map[Sprites]string{0: `SpUnknown is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``}
+var _SpritesDescMap = map[Sprites]string{0: `SpUnknown is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``, 15: `Node points`, 16: ``, 17: ``, 18: ``, 19: ``, 20: ``, 21: ``, 22: ``, 23: ``, 24: ``, 25: ``}
 
-var _SpritesMap = map[Sprites]string{0: `unknown`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `up-l`, 8: `up-c`, 9: `up-r`, 10: `dn-l`, 11: `dn-c`, 12: `dn-r`, 13: `lf-m`, 14: `rt-m`}
+var _SpritesMap = map[Sprites]string{0: `unknown`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `up-l`, 8: `up-c`, 9: `up-r`, 10: `dn-l`, 11: `dn-c`, 12: `dn-r`, 13: `lf-m`, 14: `rt-m`, 15: `move-to`, 16: `line-to`, 17: `cube-to`, 18: `quad-to`, 19: `arc-to`, 20: `close`, 21: `start`, 22: `end`, 23: `quad1`, 24: `cube1`, 25: `cube2`}
 
 // String returns the string representation of this Sprites value.
 func (i Sprites) String() string { return enums.String(i, _SpritesMap) }

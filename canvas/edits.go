@@ -5,7 +5,6 @@
 package canvas
 
 import (
-	"fmt"
 	"image"
 	"sort"
 	"strings"
@@ -99,11 +98,14 @@ type EditState struct {
 	// currently manipulating path object
 	ActivePath *svg.Path
 
+	// Current path transform
+	PathTransform math32.Matrix2
+
 	// current path node points
 	PathNodes []*PathNode
 
 	// selected path nodes
-	PathSelect map[int]struct{}
+	NodeSelect map[int]struct{}
 
 	// current path command indexes within PathNodes -- where the commands start
 	PathCommands []int
@@ -441,11 +443,60 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	}
 }
 
+////////  Nodes
+
 // DragNodeStart captures the current state at start of node dragging.
 // position is starting position.
 func (es *EditState) DragNodeStart(pos image.Point) {
 	es.DragStartPos = pos
-	fmt.Println("dragNodestart:", pos)
+}
+
+func (es *EditState) NodeIsSelected(i int) bool {
+	_, ok := es.NodeSelect[i]
+	return ok
+}
+
+func (es *EditState) SelectNode(i int) {
+	es.NodeSelect[i] = struct{}{}
+}
+
+func (es *EditState) UnselectNode(i int) {
+	delete(es.NodeSelect, i)
+}
+
+func (es *EditState) ResetSelectedNodes() {
+	es.NodeSelect = make(map[int]struct{})
+}
+
+// NodeSelectAction is called when a select action has been received (e.g., a
+// mouse click) -- translates into selection updates -- gets selection mode
+// from mouse event (ExtendContinuous, ExtendOne)
+func (es *EditState) NodeSelectAction(idx int, mode events.SelectModes) {
+	if mode == events.NoSelect {
+		return
+	}
+	if es.NodeSelect == nil {
+		es.ResetSelectedNodes()
+	}
+	switch mode {
+	case events.SelectOne:
+		if len(es.NodeSelect) > 0 {
+			es.ResetSelectedNodes()
+		}
+		es.SelectNode(idx)
+	case events.ExtendContinuous, events.ExtendOne:
+		if es.NodeIsSelected(idx) {
+			es.UnselectNode(idx)
+		} else {
+			es.SelectNode(idx)
+		}
+	case events.Unselect:
+		es.UnselectNode(idx)
+	case events.SelectQuiet:
+		es.SelectNode(idx)
+	case events.UnselectQuiet:
+		es.UnselectNode(idx)
+	}
 }
 
 // SelectedState is state for selected nodes
