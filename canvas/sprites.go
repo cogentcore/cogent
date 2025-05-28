@@ -83,7 +83,7 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 	case SpNodePoint:
 		nm += fmt.Sprintf("-%d", idx)
 	case SpNodeCtrl:
-		nm += fmt.Sprintf("-%d", idx)
+		nm += fmt.Sprintf("-%d-%s", idx, subtyp.String())
 	case SpRubberBand:
 		nm += "-" + subtyp.String()
 	case SpAlignMatch:
@@ -145,6 +145,7 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	sp = core.NewSprite(spnm, nil)
 	SetSpriteProperties(sp, typ, subtyp, idx)
 	final := false
+	first := false
 	switch typ {
 	case SpReshapeBBox:
 		final = true
@@ -154,7 +155,8 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	case SpNodePoint:
 		sp.Draw = DrawSpriteNodePoint(es, sp, subtyp, idx)
 	case SpNodeCtrl:
-		sp.Draw = DrawSpriteNodeCtrl(es, sp, subtyp, idx)
+		first = true
+		sp.Draw = DrawSpriteNodeCtrl(es, sp, subtyp, idx, trgsz)
 	case SpRubberBand:
 		sp.Draw = DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
@@ -163,9 +165,12 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	if init != nil {
 		init(sp)
 	}
-	if final {
+	switch {
+	case first:
+		sprites.First.Add(sp.Name, sp)
+	case final:
 		sprites.Final.Add(sp.Name, sp)
-	} else {
+	default:
 		sprites.AddLocked(sp)
 	}
 	return sp
@@ -252,45 +257,47 @@ func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 // DrawSpriteNodePoint renders a NodePoint sprite handle
 func DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		isSel := es.NodeIsSelected(idx)
 		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
 		bb := math32.B2FromRect(bbi)
-		sz := bb.Size()
-		xctr := bb.Min.X + 0.5*sz.X
-		yctr := bb.Min.Y + 0.5*sz.Y
+		ctr := bb.Center()
 		sp.EventBBox = bbi
 		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
-		if isSel {
+		if es.NodeIsSelected(idx) {
 			pc.Fill.Color = colors.Scheme.Primary.Base
 		} else {
 			pc.Fill.Color = nil
 		}
 		pc.Stroke.Color = colors.Scheme.OnSurface
 		pc.Stroke.Width.Dp(1)
-		pc.Polygon(math32.Vec2(bb.Min.X, yctr), math32.Vec2(xctr, bb.Min.Y), math32.Vec2(bb.Max.X, yctr), math32.Vec2(xctr, bb.Max.Y))
+		pc.Polygon(math32.Vec2(bb.Min.X, ctr.Y), math32.Vec2(ctr.X, bb.Min.Y), math32.Vec2(bb.Max.X, ctr.Y), math32.Vec2(ctr.X, bb.Max.Y))
 		pc.Draw()
 	}
 }
 
-// DrawSpriteNodeCtrl renders a NodePoint sprite handle
-func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int) func(pc *paint.Painter) {
+// DrawSpriteNodeCtrl renders a NodeControl sprite handle
+func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int, nodepos image.Point) func(pc *paint.Painter) {
+	sp.Properties["nodePoint"] = nodepos
 	return func(pc *paint.Painter) {
-		isSel := es.NodeIsSelected(idx)
 		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
 		bb := math32.B2FromRect(bbi)
+		ctr := bb.Center()
 		sz := bb.Size()
-		xctr := bb.Min.X + 0.5*sz.X
-		yctr := bb.Min.Y + 0.5*sz.Y
+		ept := sp.Properties["nodePoint"].(image.Point)
+
+		pc.Stroke.Color = colors.Scheme.OnSurface
+		pc.Stroke.Width.Dp(1)
+		pc.Line(float32(ept.X), float32(ept.Y), ctr.X, ctr.Y)
+		pc.Draw()
+
 		sp.EventBBox = bbi
 		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
-		if isSel {
+
+		if idx == es.CtrlDragIndex && subtyp == es.CtrlDrag {
 			pc.Fill.Color = colors.Scheme.Primary.Base
 		} else {
 			pc.Fill.Color = nil
 		}
-		pc.Stroke.Color = colors.Scheme.OnSurface
-		pc.Stroke.Width.Dp(1)
-		pc.Polygon(math32.Vec2(bb.Min.X, yctr), math32.Vec2(xctr, bb.Min.Y), math32.Vec2(bb.Max.X, yctr), math32.Vec2(xctr, bb.Max.Y))
+		pc.Circle(ctr.X, ctr.Y, 0.5*sz.X)
 		pc.Draw()
 	}
 }

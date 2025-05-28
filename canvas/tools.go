@@ -11,6 +11,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 )
 
@@ -60,6 +61,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(SelectTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == SelectTool, states.Selected)
 		})
 	})
@@ -70,6 +72,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(NodeTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == NodeTool, states.Selected)
 		})
 	})
@@ -80,6 +83,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(RectTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == RectTool, states.Selected)
 		})
 	})
@@ -90,6 +94,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(EllipseTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == EllipseTool, states.Selected)
 		})
 	})
@@ -100,6 +105,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(BezierTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == BezierTool, states.Selected)
 		})
 	})
@@ -110,6 +116,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(TextTool)
 		})
 		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.5))
 			s.SetState(cv.EditState.Tool == TextTool, states.Selected)
 		})
 	})

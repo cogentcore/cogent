@@ -155,7 +155,7 @@ func (sv *SVG) UpdateSelSprites() {
 			})
 			sp.OnSlideMove(func(e events.Event) {
 				if e.HasAnyModifier(key.Alt) {
-					sv.SpriteRotateDrag(i, e.PrevDelta())
+					sv.SpriteRotateDrag(i, e)
 				} else {
 					sv.SpriteReshapeDrag(i, e)
 				}
@@ -232,36 +232,6 @@ func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 	}
 }
 
-/*
-func (sv *SVG) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
-	win := sv.Vector.ParentWindow()
-	es := sv.EditState()
-	es.SelNoDrag = false
-	switch et {
-	case events.MouseEvent:
-		me := d.(*mouse.Event)
-		me.SetProcessed()
-		// fmt.Printf("click %s\n", sp)
-		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteName(SpReshapeBBox, sp, 0)
-			sv.EditState().DragSelStart(me.Where)
-			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
-		} else if me.Action == mouse.Release {
-			sv.ManipDone()
-		}
-	case events.MouseDragEvent:
-		me := d.(*mouse.DragEvent)
-		me.SetProcessed()
-		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
-		if me.HasAnyModifier(key.Alt) {
-			sv.SpriteRotateDrag(sp, me.Delta(), win)
-		} else {
-			sv.SpriteReshapeDrag(sp, win, me)
-		}
-	}
-}
-*/
-
 // SetRubberBand updates the rubber band position.
 func (sv *SVG) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
@@ -291,8 +261,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	sv.NeedsRender()
 }
 
-///////////////////////////////////////////////////////////////////////
-//   Actions
+////////   Actions
 
 // SelectGroup groups items together
 func (gv *Canvas) SelectGroup() { //types:add

@@ -10,7 +10,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint/ppath"
 	"cogentcore.org/core/svg"
@@ -70,8 +69,7 @@ func (vv *Canvas) UpdateNodeToolbar() {
 	// py.SetValue(es.DragSelectCurrentBBox.Min.Y)
 }
 
-///////////////////////////////////////////////////////////////////////
-//   Actions
+////////   Actions
 
 func (vv *Canvas) NodeSetXPos(xp float32) {
 	es := &vv.EditState
@@ -115,49 +113,44 @@ type PathNode struct {
 	TStart, TEnd, TCp1, TCp2 math32.Vector2
 }
 
-// PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
-func (sv *SVG) PathNodes(path *svg.Path) ([]*PathNode, []int) {
+// PathNodes returns the PathNode data for given svg.Path.
+func (sv *SVG) PathNodes(path *svg.Path) []*PathNode {
 	xf := path.ParentTransform(true) // include self
 	pts := path.Data
-
-	nc := make([]*PathNode, 0)
-	cidxs := make([]int, 0)
-	pidx := 0
-
-	var pn *PathNode
+	pns := make([]*PathNode, 0)
 	pti := 0
-	for scanner := pts.Scanner(); scanner.Scan(); {
-		end := scanner.End()
-		start := scanner.Start()
+	for scan := pts.Scanner(); scan.Scan(); {
+		end := scan.End()
+		start := scan.Start()
 		tend := xf.MulVector2AsPoint(end)
 		tstart := xf.MulVector2AsPoint(end)
 
-		pn = &PathNode{Index: pidx, PtIndex: pti, Start: start, End: end, TStart: tstart, TEnd: tend}
-		cidxs = append(cidxs, pidx)
-		pidx = scanner.Index() + 1
-		nc = append(nc, pn)
+		pn := &PathNode{Index: scan.Index(), PtIndex: pti, Start: start, End: end, TStart: tstart, TEnd: tend}
+		pns = append(pns, pn)
 		pti++
 
-		switch scanner.Cmd() {
+		switch scan.Cmd() {
 		case ppath.MoveTo:
 			pn.Cmd = SpMoveTo
 		case ppath.LineTo:
 			pn.Cmd = SpLineTo
 		case ppath.QuadTo:
 			pn.Cmd = SpQuadTo
-			pn.Cp1 = scanner.CP1()
+			pn.Cp1 = scan.CP1()
 			pn.TCp1 = xf.MulVector2AsPoint(pn.Cp1)
 		case ppath.CubeTo:
 			pn.Cmd = SpCubeTo
-			pn.Cp1 = scanner.CP1()
-			pn.Cp2 = scanner.CP2()
+			pn.Cp1 = scan.CP1()
+			pn.Cp2 = scan.CP2()
 			pn.TCp1 = xf.MulVector2AsPoint(pn.Cp1)
 			pn.TCp2 = xf.MulVector2AsPoint(pn.Cp2)
+		// todo: arc
 		case ppath.Close:
 			pn.Cmd = SpClose
 		}
+		// fmt.Println(pti-1, pn.Cmd, end)
 	}
-	return nc, cidxs
+	return pns
 }
 
 func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
@@ -172,11 +165,12 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 
 	sprites := sv.SpritesLock()
 
-	es.PathNodes, es.PathCommands = sv.PathNodes(path)
+	es.PathNodes = sv.PathNodes(path)
 	es.NNodeSprites = len(es.PathNodes)
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
+		ept := pn.TEnd.ToPoint()
 		sp := sv.Sprite(SpNodePoint, pn.Cmd, i, image.Point{}, func(sp *core.Sprite) {
 			sp.OnClick(func(e events.Event) {
 				es.NodeSelectAction(i, e.SelectMode())
@@ -184,17 +178,14 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 				e.SetHandled()
 			})
 			sp.OnSlideStart(func(e events.Event) {
-				// if !es.NodeIsSelected(i) {
-				// 	es.SelectNode(i)
-				// }
+				if len(es.NodeSelect) == 0 {
+					es.SelectNode(i)
+				}
 				es.DragNodeStart(e.Pos())
 				sv.NeedsRender()
 				e.SetHandled()
 			})
 			sp.OnSlideMove(func(e events.Event) {
-				// if e.HasAnyModifier(key.Alt) {
-				// 	sv.SpriteRotateDrag(i, e.PrevDelta())
-				// } else {
 				sv.SpriteNodeDrag(i, e)
 				e.SetHandled()
 			})
@@ -203,13 +194,50 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 				e.SetHandled()
 			})
 		})
-		SetSpritePos(sp, int(pn.TEnd.X), int(pn.TEnd.Y))
+		SetSpritePos(sp, ept.X, ept.Y)
+
+		ctrlEvents := func(sp *core.Sprite, i int, ctyp Sprites) {
+			sp.OnSlideStart(func(e events.Event) {
+				es.DragCtrlStart(e.Pos(), i, ctyp)
+				sv.NeedsRender()
+				e.SetHandled()
+			})
+			sp.OnSlideMove(func(e events.Event) {
+				sv.SpriteCtrlDrag(i, ctyp, e)
+				e.SetHandled()
+			})
+			sp.OnSlideStop(func(e events.Event) {
+				es.CtrlDragIndex = -1
+				sv.ManipDone()
+				e.SetHandled()
+			})
+		}
+
+		InactivateNodeCtrls(sprites, i)
+		switch pn.Cmd {
+		case SpQuadTo:
+			sp1 := sv.Sprite(SpNodeCtrl, SpQuad1, i, ept, func(sp *core.Sprite) {
+				ctrlEvents(sp, i, SpQuad1)
+			})
+			sp1.Properties["nodePoint"] = ept
+			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+		case SpCubeTo:
+			sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, ept, func(sp *core.Sprite) {
+				ctrlEvents(sp, i, SpCube1)
+			})
+			sp1.Properties["nodePoint"] = ept
+			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+			sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
+				ctrlEvents(sp, i, SpCube2)
+			})
+			sp2.Properties["nodePoint"] = ept
+			SetSpritePos(sp2, int(pn.TCp2.X), int(pn.TCp2.Y))
+		}
 	}
 
 	// remove extra
 	for i := es.NNodeSprites; i < prvn; i++ {
-		spnm := SpriteName(SpNodePoint, SpUnknown, i)
-		sprites.InactivateSpriteLocked(spnm)
+		InactivateNodePoint(sprites, i)
 	}
 	sprites.Unlock()
 
@@ -217,28 +245,88 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 	sv.UpdateView()
 }
 
+func InactivateNodePoint(sprites *core.Sprites, i int) {
+	sprites.InactivateSpriteLocked(SpriteName(SpNodePoint, SpUnknown, i))
+	InactivateNodeCtrls(sprites, i)
+}
+
+func InactivateNodeCtrls(sprites *core.Sprites, i int) {
+	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
+	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube1, i))
+	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube2, i))
+}
+
 func (sv *SVG) RemoveNodeSprites() {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
 	for i := 0; i < es.NNodeSprites; i++ {
-		spnm := SpriteName(SpNodePoint, SpUnknown, i)
-		sprites.InactivateSpriteLocked(spnm)
+		InactivateNodePoint(sprites, i)
 	}
 	es.NNodeSprites = 0
 	es.PathNodes = nil
-	es.PathCommands = nil
 	es.ActivePath = nil
+	es.CtrlDragIndex = -1
 	sprites.Unlock()
 }
 
-// PathNodeSetOnePoint moves given node index by given delta in window coords
-// and all following points up to cmd = z or m are moved in the opposite
-// direction to compensate, so only the one point is moved in effect.
-// svoff is the window starting vector coordinate for view.
-func (sv *SVG) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dxf math32.Matrix2) {
+// SpriteNodeDrag processes a mouse node drag event on a path node sprite
+func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
+	es := sv.EditState()
+	sprites := sv.SpritesLock()
+	sv.ManipStartInDrag(NodeMove, es.ActivePath.Name)
+	es.DragConstrainPoint = true
+	spt, _, dv := sv.DragDelta(e)
+
+	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
+
+	for i, _ := range es.NodeSelect {
+		sv.PathNodeMove(es.ActivePath, es.PathNodes, i, dxf)
+		pn := es.PathNodes[i]
+		nwc := pn.TEnd.Add(dv).ToPoint()
+		spnm := SpriteName(SpNodePoint, SpUnknown, i)
+		sp, _ := sprites.SpriteByNameLocked(spnm)
+		SetSpritePos(sp, nwc.X, nwc.Y)
+
+		switch pn.Cmd {
+		case SpQuadTo:
+			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
+			sp1.Properties["nodePoint"] = nwc
+		case SpCubeTo:
+			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, i))
+			sp1.Properties["nodePoint"] = nwc
+			sp2, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, i))
+			sp2.Properties["nodePoint"] = nwc
+		}
+	}
+
+	sprites.Unlock()
+	sv.UpdateView()
+}
+
+// SpriteCtrlDrag processes a mouse node drag event on a path control sprite
+func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
+	es := sv.EditState()
+	sprites := sv.SpritesLock()
+	sv.ManipStartInDrag(CtrlMove, es.ActivePath.Name)
+
+	es.DragConstrainPoint = true
+	spt, _, dv := sv.DragDelta(e)
+	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
+
+	pos := sv.PathCtrlMove(es.ActivePath, es.PathNodes, idx, ctyp, dxf)
+	nwc := pos.Add(dv)
+	spnm := SpriteName(SpNodeCtrl, ctyp, idx)
+	sp, _ := sprites.SpriteByNameLocked(spnm)
+	SetSpritePos(sp, int(nwc.X), int(nwc.Y))
+
+	sprites.Unlock()
+	sv.UpdateView()
+}
+
+// PathNodeMove moves given node index by given delta transform.
+func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, dxf math32.Matrix2) {
 	pn := pts[pidx]
-	end := pn.End
-	end = dxf.MulVector2AsPoint(end)
+	end := dxf.MulVector2AsPoint(pn.End)
 	switch pn.Cmd {
 	case SpMoveTo, SpLineTo, SpClose:
 		path.Data[pn.Index+1] = end.X
@@ -253,41 +341,21 @@ func (sv *SVG) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dx
 	}
 }
 
-// SpriteNodeDrag processes a mouse node drag event on a path node sprite
-func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
-	es := sv.EditState()
-	if !es.InAction() {
-		sv.ManipStart(NodeMove, es.ActivePath.Name)
-		sv.GatherAlignPoints()
+// PathCtrlMove moves given node control point index by given delta transform.
+// returns scene position of given point.
+func (sv *SVG) PathCtrlMove(path *svg.Path, pts []*PathNode, pidx int, ctyp Sprites, dxf math32.Matrix2) math32.Vector2 {
+	pn := pts[pidx]
+	switch ctyp {
+	case SpQuad1, SpCube1:
+		cp1 := dxf.MulVector2AsPoint(pn.Cp1)
+		path.Data[pn.Index+1] = cp1.X
+		path.Data[pn.Index+2] = cp1.Y
+		return pn.TCp1
+	case SpCube2:
+		cp2 := dxf.MulVector2AsPoint(pn.Cp2)
+		path.Data[pn.Index+3] = cp2.X
+		path.Data[pn.Index+4] = cp2.Y
+		return pn.TCp2
 	}
-	sprites := sv.SpritesLock()
-	InactivateSprites(sprites, SpAlignMatch)
-
-	spt := math32.FromPoint(es.DragStartPos)
-	mpt := math32.FromPoint(e.Pos())
-
-	if e.HasAnyModifier(key.Control) {
-		mpt, _ = sv.ConstrainPoint(spt, mpt)
-	}
-	if Settings.SnapNodes {
-		mpt = sv.SnapPoint(mpt)
-	}
-
-	es.DragCurPos = mpt.ToPoint()
-	mdel := es.DragCurPos.Sub(es.DragStartPos)
-	dv := math32.FromPoint(mdel)
-
-	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
-
-	for i, _ := range es.NodeSelect {
-		sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, i, dxf)
-		pn := es.PathNodes[i]
-		nwc := pn.TEnd.Add(dv)
-		spnm := SpriteName(SpNodePoint, SpUnknown, i)
-		sp, _ := sprites.SpriteByNameLocked(spnm)
-		SetSpritePos(sp, int(nwc.X), int(nwc.Y))
-	}
-
-	sprites.Unlock()
-	sv.UpdateView()
+	return math32.Vector2{}
 }

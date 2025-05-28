@@ -65,6 +65,9 @@ type EditState struct {
 	// current dragging position, mouse coords
 	DragCurPos image.Point
 
+	// whether to constrain the current point when dragging
+	DragConstrainPoint bool
+
 	// current selection bounding box
 	SelectBBox math32.Box2
 
@@ -98,17 +101,15 @@ type EditState struct {
 	// currently manipulating path object
 	ActivePath *svg.Path
 
-	// Current path transform
-	PathTransform math32.Matrix2
-
 	// current path node points
 	PathNodes []*PathNode
 
 	// selected path nodes
 	NodeSelect map[int]struct{}
 
-	// current path command indexes within PathNodes -- where the commands start
-	PathCommands []int
+	// Current control being dragged
+	CtrlDragIndex int
+	CtrlDrag      Sprites
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
@@ -498,6 +499,18 @@ func (es *EditState) NodeSelectAction(idx int, mode events.SelectModes) {
 		es.UnselectNode(idx)
 	}
 }
+
+////////  Nodes
+
+// DragCtrlStart captures the current state at start of control point dragging.
+// position is starting position.
+func (es *EditState) DragCtrlStart(pos image.Point, idx int, ptyp Sprites) {
+	es.DragStartPos = pos
+	es.CtrlDragIndex = idx
+	es.CtrlDrag = ptyp
+}
+
+////////  SelectedState
 
 // SelectedState is state for selected nodes
 type SelectedState struct {

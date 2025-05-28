@@ -25,6 +25,19 @@ func (sv *SVG) ManipStart(act Actions, data string) {
 	es.ActUnlock()
 }
 
+// ManipStartInDrag is called at the start of a dragging action to ensure that
+// the action has started if it hasn't already, and to reset the align sprites.
+// sprites must already be locked.
+func (sv *SVG) ManipStartInDrag(act Actions, data string) {
+	es := sv.EditState()
+	sprites := sv.SpritesNolock()
+	InactivateSprites(sprites, SpAlignMatch)
+	if !es.InAction() {
+		sv.ManipStart(act, data)
+		sv.GatherAlignPoints()
+	}
+}
+
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVG) ManipDone() {
 	sprites := sv.SpritesLock()
@@ -308,24 +321,29 @@ func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	}
 }
 
+func (sv *SVG) DragDelta(e events.Event) (spt, mpt, dv math32.Vector2) {
+	es := sv.EditState()
+	spt = math32.FromPoint(es.DragStartPos)
+	mpt = math32.FromPoint(e.Pos())
+
+	if es.DragConstrainPoint && e.HasAnyModifier(key.Control) {
+		mpt, _ = sv.ConstrainPoint(spt, mpt)
+	}
+	if Settings.SnapNodes {
+		mpt = sv.SnapPoint(mpt)
+	}
+	es.DragCurPos = mpt.ToPointRound()
+	dv = mpt.Sub(spt)
+	return
+}
+
 // DragMove is when dragging a selection for moving
 func (sv *SVG) DragMove(e events.Event) {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
-
-	InactivateSprites(sprites, SpAlignMatch)
-
-	if !es.InAction() {
-		sv.ManipStart(Move, es.SelectedNamesString())
-		sv.GatherAlignPoints()
-	}
-
-	spt := math32.FromPoint(es.DragStartPos)
-	mpt := math32.FromPoint(e.Pos())
-	if e.HasAnyModifier(key.Control) {
-		mpt, _ = sv.ConstrainPoint(spt, mpt)
-	}
-	dv := mpt.Sub(spt)
+	sv.ManipStartInDrag(Move, es.SelectedNamesString())
+	es.DragConstrainPoint = true
+	_, _, dv := sv.DragDelta(e)
 
 	es.DragSelectCurrentBBox = es.DragSelectStartBBox
 	es.DragSelectCurrentBBox.Min.SetAdd(dv)
@@ -378,25 +396,17 @@ func ProportionalBBox(bb, orig math32.Box2) math32.Box2 {
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
 func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	es := sv.EditState()
-
 	sprites := sv.SpritesLock()
-	InactivateSprites(sprites, SpAlignMatch)
+	sv.ManipStartInDrag(Reshape, es.SelectedNamesString())
 
-	if !es.InAction() {
-		sv.ManipStart(Reshape, es.SelectedNamesString())
-		sv.GatherAlignPoints()
-	}
 	stsz := es.DragSelectStartBBox.Size()
 	stpos := es.DragSelectStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	spt := math32.FromPoint(es.DragStartPos)
-	mpt := math32.FromPoint(e.Pos())
+	es.DragConstrainPoint = (bbX != BBCenter && bbY != BBMiddle)
+	_, _, dv := sv.DragDelta(e)
+
 	diag := false
-	if e.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
-		mpt, diag = sv.ConstrainPoint(spt, mpt)
-	}
-	dv := mpt.Sub(spt)
 	es.DragSelectCurrentBBox = es.DragSelectStartBBox
 	switch sp {
 	case SpUpL:
@@ -459,24 +469,19 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(del, sc, 0, pt)
 		itm.ApplyTransform(sv.SVG, xf)
-		// if strings.HasPrefix(es.Action, "New") {
-		// 	svg.UpdateNodeGradientPoints(itm, "fill")
-		// 	svg.UpdateNodeGradientPoints(itm, "stroke")
-		// }
 	}
 
-	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sprites.Unlock()
 	sv.UpdateView()
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
-func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
+func (sv *SVG) SpriteRotateDrag(sp Sprites, e events.Event) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart(Rotate, es.SelectedNamesString())
 	}
-	dv := math32.FromPoint(delta)
+	dv := math32.FromPoint(e.PrevDelta()) // not from start but just current delta: adding to control points
 	pt := es.DragSelectStartBBox.Min
 	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
@@ -528,7 +533,9 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 		pt = ctr
 	}
 	ang := math32.Atan2(dy, dx)
-	ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
+	if !e.HasAnyModifier(key.Shift) {
+		ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
+	}
 	ang = math32.DegToRad(ang)
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)

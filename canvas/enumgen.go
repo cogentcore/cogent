@@ -6,16 +6,16 @@ import (
 	"cogentcore.org/core/enums"
 )
 
-var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 
 // ActionsN is the highest valid value for type Actions, plus one.
-const ActionsN Actions = 11
+const ActionsN Actions = 12
 
-var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9, `NodeMove`: 10}
+var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9, `NodeMove`: 10, `CtrlMove`: 11}
 
-var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``, 10: ``}
+var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``, 10: ``, 11: ``}
 
-var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`, 10: `NodeMove`}
+var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`, 10: `NodeMove`, 11: `CtrlMove`}
 
 // String returns the string representation of this Actions value.
 func (i Actions) String() string { return enums.String(i, _ActionsMap) }
