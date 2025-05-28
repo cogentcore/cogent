@@ -134,6 +134,7 @@ func (sv *SVG) Init() {
 			es.SelectNoDrag = true
 			es.DragSelStart(e.Pos())
 		case sob != nil && es.Tool == SelectTool:
+			fmt.Println("extend sel:", sob, e.SelectMode())
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
@@ -189,7 +190,7 @@ func (sv *SVG) Init() {
 		if es.HasSelected() {
 			switch es.Action {
 			case NewElement:
-				sv.SpriteReshapeDrag(SpBBoxDnR, e)
+				sv.SpriteReshapeDrag(SpDnR, e)
 			default:
 				sv.DragMove(e)
 			}

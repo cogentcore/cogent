@@ -344,6 +344,7 @@ func (sv *SVG) DragMove(e events.Event) {
 		itm.ApplyTransform(sv.SVG, xf)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
+	sv.setSelSpritePos()
 	sprites.Unlock()
 	sv.NeedsRender()
 }
@@ -398,32 +399,32 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	dv := mpt.Sub(spt)
 	es.DragSelectCurrentBBox = es.DragSelectStartBBox
 	switch sp {
-	case SpBBoxUpL:
+	case SpUpL:
 		es.DragSelectCurrentBBox.Min.SetAdd(dv)
 		es.DragSelectEffectiveBBox.Min = sv.SnapPoint(es.DragSelectCurrentBBox.Min)
-	case SpBBoxUpC:
+	case SpUpC:
 		es.DragSelectCurrentBBox.Min.Y += dv.Y
 		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
-	case SpBBoxUpR:
+	case SpUpR:
 		es.DragSelectCurrentBBox.Min.Y += dv.Y
 		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
 		es.DragSelectCurrentBBox.Max.X += dv.X
 		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
-	case SpBBoxDnL:
+	case SpDnL:
 		es.DragSelectCurrentBBox.Min.X += dv.X
 		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
 		es.DragSelectCurrentBBox.Max.Y += dv.Y
 		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
-	case SpBBoxDnC:
+	case SpDnC:
 		es.DragSelectCurrentBBox.Max.Y += dv.Y
 		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
-	case SpBBoxDnR:
+	case SpDnR:
 		es.DragSelectCurrentBBox.Max.SetAdd(dv)
 		es.DragSelectEffectiveBBox.Max = sv.SnapPoint(es.DragSelectCurrentBBox.Max)
-	case SpBBoxLfM:
+	case SpLfM:
 		es.DragSelectCurrentBBox.Min.X += dv.X
 		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
-	case SpBBoxRtM:
+	case SpRtM:
 		es.DragSelectCurrentBBox.Max.X += dv.X
 		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
 	}
@@ -465,6 +466,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
+	sv.setSelSpritePos()
 	sprites.Unlock()
 	sv.NeedsRender()
 }
@@ -480,47 +482,47 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
 	switch sp {
-	case SpBBoxUpL:
+	case SpUpL:
 		es.DragSelectCurrentBBox.Min.SetAdd(dv)
 		dy = es.DragSelectStartBBox.Min.Y - es.DragSelectCurrentBBox.Min.Y
 		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
 		pt.X = es.DragSelectStartBBox.Max.X
-	case SpBBoxUpC:
+	case SpUpC:
 		es.DragSelectCurrentBBox.Min.Y += dv.Y
 		es.DragSelectCurrentBBox.Max.X += dv.X
 		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
-	case SpBBoxUpR:
+	case SpUpR:
 		es.DragSelectCurrentBBox.Min.Y += dv.Y
 		es.DragSelectCurrentBBox.Max.X += dv.X
 		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = es.DragSelectStartBBox.Min
-	case SpBBoxDnL:
+	case SpDnL:
 		es.DragSelectCurrentBBox.Min.X += dv.X
 		es.DragSelectCurrentBBox.Max.Y += dv.Y
 		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
 		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
 		pt = es.DragSelectStartBBox.Max
-	case SpBBoxDnC:
+	case SpDnC:
 		es.DragSelectCurrentBBox.Max.SetAdd(dv)
 		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
-	case SpBBoxDnR:
+	case SpDnR:
 		es.DragSelectCurrentBBox.Max.SetAdd(dv)
 		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt.X = es.DragSelectStartBBox.Min.X
 		pt.Y = es.DragSelectStartBBox.Max.Y
-	case SpBBoxLfM:
+	case SpLfM:
 		es.DragSelectCurrentBBox.Min.X += dv.X
 		es.DragSelectCurrentBBox.Max.Y += dv.Y
 		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
 		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
 		pt = ctr
-	case SpBBoxRtM:
+	case SpRtM:
 		es.DragSelectCurrentBBox.Max.SetAdd(dv)
 		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
@@ -542,5 +544,6 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
+	sv.setSelSpritePos()
 	sv.NeedsRender()
 }

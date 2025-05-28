@@ -173,7 +173,7 @@ func (sv *SVG) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		sp := Sprite(sprites, SpNodePoint, SpUnk, i, image.Point{}, func(sp *core.Sprite) {
+		sp := Sprite(sprites, SpNodePoint, SpUnknown, i, image.Point{}, func(sp *core.Sprite) {
 			// todo: events here
 		})
 		SetSpritePos(sp, int(pn.WinPt.X), int(pn.WinPt.Y))
@@ -181,7 +181,7 @@ func (sv *SVG) UpdateNodeSprites() {
 
 	// remove extra
 	for i := es.NNodeSprites; i < prvn; i++ {
-		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		spnm := SpriteName(SpNodePoint, SpUnknown, i)
 		sprites.InactivateSpriteLocked(spnm)
 	}
 	sprites.Unlock()
@@ -193,7 +193,7 @@ func (sv *SVG) RemoveNodeSprites() {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
 	for i := 0; i < es.NNodeSprites; i++ {
-		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		spnm := SpriteName(SpNodePoint, SpUnknown, i)
 		sprites.InactivateSpriteLocked(spnm)
 	}
 	es.NNodeSprites = 0
@@ -213,7 +213,7 @@ func (sv *SVG) NodeSpriteEvent(idx int, et events.Type, d any) {
 	// 	me := d.(*mouse.Event)
 	// 	me.SetProcessed()
 	// 	if me.Action == mouse.Press {
-	// 		win.SpriteDragging = SpriteName(SpNodePoint, SpUnk, idx)
+	// 		win.SpriteDragging = SpriteName(SpNodePoint, SpUnknown, idx)
 	// 		es.DragNodeStart(me.Where)
 	// 	} else if me.Action == mouse.Release {
 	// 		sv.UpdateNodeSprites()
@@ -308,7 +308,7 @@ func (sv *SVG) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
 	nwc := pn.WinPt.Add(dv) // new window coord
 	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)
 
-	spnm := SpriteName(SpNodePoint, SpUnk, idx)
+	spnm := SpriteName(SpNodePoint, SpUnknown, idx)
 	sp, _ := win.SpriteByName(spnm)
 	SetSpritePos(sp, image.Point{int(nwc.X), int(nwc.Y)})
 	go sv.RenderSVG()

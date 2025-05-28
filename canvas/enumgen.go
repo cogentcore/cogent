@@ -306,11 +306,11 @@ var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
 // SpritesN is the highest valid value for type Sprites, plus one.
 const SpritesN Sprites = 15
 
-var _SpritesValueMap = map[string]Sprites{`SpUnk`: 0, `SpReshapeBBox`: 1, `SpSelBBox`: 2, `SpNodePoint`: 3, `SpNodeCtrl`: 4, `SpRubberBand`: 5, `SpAlignMatch`: 6, `SpBBoxUpL`: 7, `SpBBoxUpC`: 8, `SpBBoxUpR`: 9, `SpBBoxDnL`: 10, `SpBBoxDnC`: 11, `SpBBoxDnR`: 12, `SpBBoxLfM`: 13, `SpBBoxRtM`: 14}
+var _SpritesValueMap = map[string]Sprites{`unknown`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `up-l`: 7, `up-c`: 8, `up-r`: 9, `dn-l`: 10, `dn-c`: 11, `dn-r`: 12, `lf-m`: 13, `rt-m`: 14}
 
-var _SpritesDescMap = map[Sprites]string{0: `SpUnk is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable sel box subtyp = UpC, LfM, RtM, DnC for sides`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``}
+var _SpritesDescMap = map[Sprites]string{0: `SpUnknown is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``}
 
-var _SpritesMap = map[Sprites]string{0: `SpUnk`, 1: `SpReshapeBBox`, 2: `SpSelBBox`, 3: `SpNodePoint`, 4: `SpNodeCtrl`, 5: `SpRubberBand`, 6: `SpAlignMatch`, 7: `SpBBoxUpL`, 8: `SpBBoxUpC`, 9: `SpBBoxUpR`, 10: `SpBBoxDnL`, 11: `SpBBoxDnC`, 12: `SpBBoxDnR`, 13: `SpBBoxLfM`, 14: `SpBBoxRtM`}
+var _SpritesMap = map[Sprites]string{0: `unknown`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `up-l`, 8: `up-c`, 9: `up-r`, 10: `dn-l`, 11: `dn-c`, 12: `dn-r`, 13: `lf-m`, 14: `rt-m`}
 
 // String returns the string representation of this Sprites value.
 func (i Sprites) String() string { return enums.String(i, _SpritesMap) }

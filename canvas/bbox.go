@@ -73,21 +73,21 @@ func (ev BBoxPoints) Dim() math32.Dims {
 // control point.
 func ReshapeBBoxPoints(reshape Sprites) (bbX, bbY BBoxPoints) {
 	switch reshape {
-	case SpBBoxUpL:
+	case SpUpL:
 		return BBLeft, BBTop
-	case SpBBoxUpC:
+	case SpUpC:
 		return BBCenter, BBTop
-	case SpBBoxUpR:
+	case SpUpR:
 		return BBRight, BBTop
-	case SpBBoxDnL:
+	case SpDnL:
 		return BBLeft, BBBottom
-	case SpBBoxDnC:
+	case SpDnC:
 		return BBCenter, BBBottom
-	case SpBBoxDnR:
+	case SpDnR:
 		return BBRight, BBBottom
-	case SpBBoxLfM:
+	case SpLfM:
 		return BBLeft, BBMiddle
-	case SpBBoxRtM:
+	case SpRtM:
 		return BBRight, BBMiddle
 	}
 	return

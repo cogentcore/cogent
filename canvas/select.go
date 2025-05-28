@@ -146,7 +146,7 @@ func (sv *SVG) UpdateSelSprites() {
 		return
 	}
 	sprites := sv.SpritesLock()
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+	for i := SpUpL; i <= SpRtM; i++ {
 		Sprite(sprites, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
 			sp.OnSlideStart(func(e events.Event) {
 				fmt.Println("node sel start")
@@ -168,6 +168,7 @@ func (sv *SVG) UpdateSelSprites() {
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
+	sv.setSelSpritePos()
 	sprites.Unlock()
 }
 
@@ -196,7 +197,7 @@ func (sv *SVG) setSelSpritePos() {
 
 	sprites := sv.SpritesNolock()
 	for si := es.NSelectSprites; si < nsel; si++ {
-		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+		for i := SpUpL; i <= SpRtM; i++ {
 			spnm := SpriteName(SpSelBBox, i, si)
 			sprites.InactivateSpriteLocked(spnm)
 		}
@@ -210,24 +211,24 @@ func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spbb.Dx())))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spbb.Dy())))
 	bbi := bbox.ToRect()
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+	for i := SpUpL; i <= SpRtM; i++ {
 		sp := Sprite(sprites, typ, i, idx, image.ZP, nil)
 		switch i {
-		case SpBBoxUpL:
+		case SpUpL:
 			SetSpritePos(sp, bbi.Min.X, bbi.Min.Y)
-		case SpBBoxUpC:
+		case SpUpC:
 			SetSpritePos(sp, midX, bbi.Min.Y)
-		case SpBBoxUpR:
+		case SpUpR:
 			SetSpritePos(sp, bbi.Max.X, bbi.Min.Y)
-		case SpBBoxDnL:
+		case SpDnL:
 			SetSpritePos(sp, bbi.Min.X, bbi.Max.Y)
-		case SpBBoxDnC:
+		case SpDnC:
 			SetSpritePos(sp, midX, bbi.Max.Y)
-		case SpBBoxDnR:
+		case SpDnR:
 			SetSpritePos(sp, bbi.Max.X, bbi.Max.Y)
-		case SpBBoxLfM:
+		case SpLfM:
 			SetSpritePos(sp, bbi.Min.X, midY)
-		case SpBBoxRtM:
+		case SpRtM:
 			SetSpritePos(sp, bbi.Max.X, midY)
 		}
 	}
@@ -284,14 +285,9 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	// rt := Sprite(sprites, SpRubberBand, SpBBoxUpC, 0, sz, nil)
-	// rb := Sprite(sprites, SpRubberBand, SpBBoxDnC, 0, sz, nil)
-	// rr := Sprite(sprites, SpRubberBand, SpBBoxRtM, 0, sz, nil)
-	// rl := Sprite(sprites, SpRubberBand, SpBBoxLfM, 0, sz, nil)
-	// SetSpritePos(rt, bbox.Min.X, bbox.Min.Y)
-	// SetSpritePos(rb, bbox.Min.X, bbox.Max.Y)
-	// SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	// SetSpritePos(rl, bbox.Min)
+	sp := Sprite(sprites, SpRubberBand, SpUnknown, 0, sz, nil)
+	sp.Properties["size"] = sz
+	SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
 
 	sprites.Unlock()
 	sv.NeedsRender()

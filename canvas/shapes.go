@@ -159,6 +159,6 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	es.DragSelectCurrentBBox = es.SelectBBox
 	es.DragSelectEffectiveBBox = es.SelectBBox
 
-	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
+	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpDnR, 0)
 	return n
 }

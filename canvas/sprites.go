@@ -18,11 +18,11 @@ import (
 // which keeps everything consistent under async rendering.
 
 // Sprites are the type of sprite
-type Sprites int32 //enums:enum
+type Sprites int32 //enums:enum -transform kebab -trim-prefix Sp
 
 const (
-	// SpUnk is an unknown sprite type
-	SpUnk Sprites = iota
+	// SpUnknown is an unknown sprite type
+	SpUnknown Sprites = iota
 
 	// SpReshapeBBox is a reshape bbox -- the overall active selection BBox
 	// for active manipulation
@@ -37,8 +37,7 @@ const (
 	// SpNodeCtrl is a control coordinate point for path node
 	SpNodeCtrl
 
-	// SpRubberBand is the draggable sel box
-	// subtyp = UpC, LfM, RtM, DnC for sides
+	// SpRubberBand is the draggable selection box
 	SpRubberBand
 
 	// SpAlignMatch is an alignment match (n of these),
@@ -48,56 +47,33 @@ const (
 	// below are subtypes:
 
 	// Sprite bounding boxes are set as a "bbox" property on sprites
-	SpBBoxUpL
-	SpBBoxUpC
-	SpBBoxUpR
-	SpBBoxDnL
-	SpBBoxDnC
-	SpBBoxDnR
-	SpBBoxLfM
-	SpBBoxRtM
+	SpUpL
+	SpUpC
+	SpUpR
+	SpDnL
+	SpDnC
+	SpDnR
+	SpLfM
+	SpRtM
 
 	// todo: add nodectrl subtypes
 )
 
-// SpriteNames are name strings to use for naming sprites
-var SpriteNames = map[Sprites]string{
-	SpBBoxUpL: "up-l",
-	SpBBoxUpC: "up-c",
-	SpBBoxUpR: "up-r",
-	SpBBoxDnL: "dn-l",
-	SpBBoxDnC: "dn-c",
-	SpBBoxDnR: "dn-r",
-	SpBBoxLfM: "lf-m",
-	SpBBoxRtM: "rt-m",
-
-	SpReshapeBBox: "reshape-bbox",
-
-	SpSelBBox: "sel-bbox",
-
-	SpNodePoint: "node-point",
-	SpNodeCtrl:  "node-ctrl",
-
-	SpRubberBand: "rubber-band",
-
-	SpAlignMatch: "align-match",
-}
-
 // SpriteName returns the unique name of the sprite based
 // on main type, subtype (e.g., bbox) if relevant, and index if relevant
 func SpriteName(typ, subtyp Sprites, idx int) string {
-	nm := SpriteNames[typ]
+	nm := typ.String()
 	switch typ {
 	case SpReshapeBBox:
-		nm += "-" + SpriteNames[subtyp]
+		nm += "-" + subtyp.String()
 	case SpSelBBox:
-		nm += fmt.Sprintf("-%d-%s", idx, SpriteNames[subtyp])
+		nm += fmt.Sprintf("-%d-%s", idx, subtyp.String())
 	case SpNodePoint:
 		nm += fmt.Sprintf("-%d", idx)
 	case SpNodeCtrl: // todo: subtype
 		nm += fmt.Sprintf("-%d", idx)
 	case SpRubberBand:
-		nm += "-" + SpriteNames[subtyp]
+		nm += "-" + subtyp.String()
 	case SpAlignMatch:
 		nm += fmt.Sprintf("-%d", idx)
 	}
@@ -113,12 +89,12 @@ func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
 	sp.Properties["grid-idx"] = idx
 }
 
-// SpriteProperties reads the sprite properties -- returns SpUnk if
+// SpriteProperties reads the sprite properties -- returns SpUnknown if
 // not one of our sprites.
 func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
 	typi, has := sp.Properties["grid-type"]
 	if !has {
-		typ = SpUnk
+		typ = SpUnknown
 		return
 	}
 	typ = typi.(Sprites)
@@ -157,12 +133,7 @@ func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Poi
 	case SpNodeCtrl:
 		sp.Draw = DrawSpriteNodeCtrl(sp, subtyp)
 	case SpRubberBand:
-		switch subtyp {
-		case SpBBoxUpC, SpBBoxDnC:
-			DrawRubberBandHoriz(sp, trgsz)
-		case SpBBoxLfM, SpBBoxRtM:
-			DrawRubberBandVert(sp, trgsz)
-		}
+		sp.Draw = DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
 		switch {
 		case trgsz.X > trgsz.Y:
@@ -183,41 +154,20 @@ func SetSpritePos(sp *core.Sprite, x, y int) {
 	typ, subtyp, _ := SpriteProperties(sp)
 	pos := image.Point{x, y}
 	switch {
-	// case typ == SpRubberBand:
-	// 	_, sz := LineSpriteSize()
-	// 	switch subtyp {
-	// 	case SpBBoxUpC:
-	// 		pos.Y -= sz
-	// 	case SpBBoxLfM:
-	// 		pos.X -= sz
-	// 	}
-	// case typ == SpAlignMatch:
-	// 	_, sz := LineSpriteSize()
-	// 	bbtp := BBoxPoints(subtyp) // just hack it
-	// 	switch bbtp {
-	// 	case BBLeft:
-	// 		pos.X -= sz
-	// 	case BBCenter:
-	// 		pos.X -= sz / 2
-	// 	case BBTop:
-	// 		pos.Y -= sz
-	// 	case BBMiddle:
-	// 		pos.Y -= sz / 2
-	// 	}
 	case typ == SpNodePoint || typ == SpNodeCtrl:
 		spbb, _ := HandleSpriteSize(1, image.Point{})
 		pos.X -= spbb.Dx() / 2
 		pos.Y -= spbb.Dy() / 2
-	case subtyp >= SpBBoxUpL && subtyp <= SpBBoxRtM: // Reshape, Sel BBox
+	case subtyp >= SpUpL && subtyp <= SpRtM: // Reshape, Sel BBox
 		sc := float32(1)
 		if typ == SpSelBBox {
 			sc = .8
 		}
 		spbb, _ := HandleSpriteSize(sc, image.Point{})
-		if subtyp == SpBBoxDnL || subtyp == SpBBoxUpL || subtyp == SpBBoxLfM {
+		if subtyp == SpDnL || subtyp == SpUpL || subtyp == SpLfM {
 			pos.X -= spbb.Dx()
 		}
-		if subtyp == SpBBoxUpL || subtyp == SpBBoxUpC || subtyp == SpBBoxUpR {
+		if subtyp == SpUpL || subtyp == SpUpC || subtyp == SpUpR {
 			pos.Y -= spbb.Dy()
 		}
 	}
@@ -253,7 +203,7 @@ func HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw
 	bsz := max(sz/6, HandleBorderMin)
 	bb = image.Rectangle{Min: pos, Max: pos.Add(image.Pt(int(sz), int(sz)))}
 	fp := math32.FromPoint(pos).AddScalar(bsz)
-	rdraw = math32.Box2{Min: fp, Max: fp.AddScalar(sz).SubScalar(bsz)}
+	rdraw = math32.Box2{Min: fp.AddScalar(bsz), Max: fp.AddScalar(sz).SubScalar(bsz)}
 	return
 }
 
@@ -297,50 +247,30 @@ func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) func(pc *paint.Painter)
 }
 
 const (
-	LineSpriteScale = 4
-	LineSizeMin     = 3
-	LineBorderMin   = 1
+	SpriteLineBorderWidth = 4
+	SpriteLineWidth       = 2
 )
 
-// LineSpriteSize returns the border size and overall size of line-type sprites
-func LineSpriteSize() (int, int) {
-	sz := int(math32.Ceil(core.AppearanceSettings.Zoom * LineSpriteScale / 100))
-	sz = max(sz, LineSizeMin)
-	bsz := max(sz/6, LineBorderMin)
-	return bsz, sz
-}
-
-// DrawRubberBandHoriz renders a horizontal rubber band line
-func DrawRubberBandHoriz(sp *core.Sprite, trgsz image.Point) {
-	// bsz, sz := LineSpriteSize()
-	// ssz := image.Point{trgsz.X, sz}
-	// ibd := sp.Pixels.Bounds()
-	// bbd := ibd
-	// bbd.Min.Y += bsz
-	// bbd.Max.Y -= bsz
-	// for x := 0; x < ssz.X; x += sz * 2 {
-	// 	bbd.Min.X = x
-	// 	bbd.Max.X = x + sz
-	// 	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
-	// }
-}
-
-// DrawRubberBandVert renders a vertical rubber band line
-func DrawRubberBandVert(sp *core.Sprite, trgsz image.Point) {
-	// bsz, sz := LineSpriteSize()
-	// ssz := image.Point{sz, trgsz.Y}
-	// if !sp.SetSize(ssz) { // already set
-	// 	return
-	// }
-	// ibd := sp.Pixels.Bounds()
-	// bbd := ibd
-	// bbd.Min.X += bsz
-	// bbd.Max.X -= bsz
-	// for y := sz; y < ssz.Y; y += sz * 2 {
-	// 	bbd.Min.Y = y
-	// 	bbd.Max.Y = y + sz
-	// 	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
-	// }
+// DrawRubberBand renders the rubber-band box.
+func DrawRubberBand(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
+	sp.Properties["size"] = trgsz
+	return func(pc *paint.Painter) {
+		trgsz := sp.Properties["size"].(image.Point)
+		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
+		bb := math32.B2FromRect(sp.EventBBox)
+		fsz := math32.FromPoint(trgsz)
+		pc.Fill.Color = nil
+		pc.Stroke.Dashes = []float32{4, 4}
+		pc.Stroke.Width.Dp(SpriteLineBorderWidth)
+		pc.Stroke.Color = colors.Scheme.Surface
+		pc.Rectangle(bb.Min.X, bb.Min.Y, fsz.X, fsz.Y)
+		pc.Draw()
+		pc.Stroke.Width.Dp(SpriteLineWidth)
+		pc.Stroke.Color = colors.Scheme.Primary.Base
+		pc.Rectangle(bb.Min.X, bb.Min.Y, fsz.X, fsz.Y)
+		pc.Draw()
+		pc.Stroke.Dashes = nil
+	}
 }
 
 // DrawAlignMatchHoriz renders a horizontal alignment line
