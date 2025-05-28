@@ -135,12 +135,7 @@ func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Poi
 	case SpRubberBand:
 		sp.Draw = DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
-		switch {
-		case trgsz.X > trgsz.Y:
-			DrawAlignMatchHoriz(sp, trgsz)
-		default:
-			DrawAlignMatchVert(sp, trgsz)
-		}
+		sp.Draw = DrawAlignMatch(sp, trgsz)
 	}
 	if init != nil {
 		init(sp)
@@ -273,34 +268,22 @@ func DrawRubberBand(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) 
 	}
 }
 
-// DrawAlignMatchHoriz renders a horizontal alignment line
-func DrawAlignMatchHoriz(sp *core.Sprite, trgsz image.Point) {
-	// bsz, sz := LineSpriteSize()
-	// ssz := image.Point{trgsz.X, sz}
-	// if !sp.SetSize(ssz) { // already set
-	// 	return
-	// }
-	// ibd := sp.Pixels.Bounds()
-	// bbd := ibd
-	// bbd.Min.Y += bsz
-	// bbd.Max.Y -= bsz
-	// clr := color.RGBA{0, 200, 200, 255}
-	// draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	// draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
-}
-
-// DrawAlignMatchVert renders a vertical alignment line
-func DrawAlignMatchVert(sp *core.Sprite, trgsz image.Point) {
-	// bsz, sz := LineSpriteSize()
-	// ssz := image.Point{sz, trgsz.Y}
-	// if !sp.SetSize(ssz) { // already set
-	// 	return
-	// }
-	// ibd := sp.Pixels.Bounds()
-	// bbd := ibd
-	// bbd.Min.X += bsz
-	// bbd.Max.X -= bsz
-	// clr := color.RGBA{0, 200, 200, 255}
-	// draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	// draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
+// DrawAlignMatch renders an alignment line
+func DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
+	sp.Properties["size"] = trgsz
+	return func(pc *paint.Painter) {
+		trgsz := sp.Properties["size"].(image.Point)
+		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
+		bb := math32.B2FromRect(sp.EventBBox)
+		pc.Fill.Color = nil
+		pc.Stroke.Dashes = nil
+		pc.Stroke.Width.Dp(SpriteLineBorderWidth)
+		pc.Stroke.Color = colors.Scheme.Surface
+		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
+		pc.Draw()
+		pc.Stroke.Width.Dp(SpriteLineWidth)
+		pc.Stroke.Color = colors.Scheme.Success.Container
+		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
+		pc.Draw()
+	}
 }

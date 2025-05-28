@@ -146,6 +146,7 @@ func (sv *SVG) UpdateSelSprites() {
 		return
 	}
 	sprites := sv.SpritesLock()
+	sv.setSelSpritePos()
 	for i := SpUpL; i <= SpRtM; i++ {
 		Sprite(sprites, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
 			sp.OnSlideStart(func(e events.Event) {
@@ -168,7 +169,6 @@ func (sv *SVG) UpdateSelSprites() {
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
-	sv.setSelSpritePos()
 	sprites.Unlock()
 }
 

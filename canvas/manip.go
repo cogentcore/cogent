@@ -294,7 +294,7 @@ func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 }
 
 // ShowAlignMatches draws the align matches as given
-// between BBox Min - Max.  typs are corresponding bounding box sources.
+// between BBox Min - Max. typs are corresponding bounding box sources.
 // sprites must already be locked.
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	sprites := sv.SpritesNolock()
@@ -303,6 +303,7 @@ func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 		pt := pts[i].Canon()
 		lsz := pt.Max.Sub(pt.Min)
 		sp := Sprite(sprites, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
+		sp.Properties["size"] = lsz
 		SetSpritePos(sp, pt.Min.X, pt.Min.Y)
 	}
 }
@@ -344,9 +345,8 @@ func (sv *SVG) DragMove(e events.Event) {
 		itm.ApplyTransform(sv.SVG, xf)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
-	sv.setSelSpritePos()
 	sprites.Unlock()
-	sv.NeedsRender()
+	sv.UpdateView()
 }
 
 func SquareBBox(bb math32.Box2) math32.Box2 {
@@ -465,10 +465,9 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 		// }
 	}
 
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
-	sv.setSelSpritePos()
+	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sprites.Unlock()
-	sv.NeedsRender()
+	sv.UpdateView()
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
@@ -543,7 +542,7 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 		// }
 	}
 
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
-	sv.setSelSpritePos()
-	sv.NeedsRender()
+	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
+	// sv.setSelSpritePos()
+	sv.UpdateView()
 }
