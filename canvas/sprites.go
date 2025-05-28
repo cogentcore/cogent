@@ -95,6 +95,7 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 // SetSpriteProperties sets sprite properties
 func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
 	sp.InitProperties()
+	sp.Active = true
 	sp.Name = SpriteName(typ, subtyp, idx)
 	sp.Properties["grid-type"] = typ
 	sp.Properties["grid-sub"] = subtyp
@@ -295,7 +296,11 @@ func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int,
 		if idx == es.CtrlDragIndex && subtyp == es.CtrlDrag {
 			pc.Fill.Color = colors.Scheme.Primary.Base
 		} else {
-			pc.Fill.Color = nil
+			if subtyp == SpCube2 {
+				pc.Fill.Color = colors.Scheme.Warn.Container
+			} else {
+				pc.Fill.Color = nil
+			}
 		}
 		pc.Circle(ctr.X, ctr.Y, 0.5*sz.X)
 		pc.Draw()

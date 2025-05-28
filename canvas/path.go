@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint/ppath"
 	"cogentcore.org/core/svg"
@@ -123,7 +124,7 @@ func (sv *SVG) PathNodes(path *svg.Path) []*PathNode {
 		end := scan.End()
 		start := scan.Start()
 		tend := xf.MulVector2AsPoint(end)
-		tstart := xf.MulVector2AsPoint(end)
+		tstart := xf.MulVector2AsPoint(start)
 
 		pn := &PathNode{Index: scan.Index(), PtIndex: pti, Start: start, End: end, TStart: tstart, TEnd: tend}
 		pns = append(pns, pn)
@@ -222,10 +223,11 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 			sp1.Properties["nodePoint"] = ept
 			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
 		case SpCubeTo:
-			sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, ept, func(sp *core.Sprite) {
+			spt := pn.TStart.ToPoint()
+			sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, spt, func(sp *core.Sprite) {
 				ctrlEvents(sp, i, SpCube1)
 			})
-			sp1.Properties["nodePoint"] = ept
+			sp1.Properties["nodePoint"] = spt
 			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
 			sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
 				ctrlEvents(sp, i, SpCube2)
@@ -277,10 +279,11 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	es.DragConstrainPoint = true
 	spt, _, dv := sv.DragDelta(e)
 
+	pointOnly := e.HasAnyModifier(key.Alt)
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
 
 	for i, _ := range es.NodeSelect {
-		sv.PathNodeMove(es.ActivePath, es.PathNodes, i, dxf)
+		sv.PathNodeMove(es.ActivePath, es.PathNodes, i, pointOnly, dv, dxf)
 		pn := es.PathNodes[i]
 		nwc := pn.TEnd.Add(dv).ToPoint()
 		spnm := SpriteName(SpNodePoint, SpUnknown, i)
@@ -292,10 +295,12 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
 			sp1.Properties["nodePoint"] = nwc
 		case SpCubeTo:
-			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, i))
-			sp1.Properties["nodePoint"] = nwc
 			sp2, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, i))
 			sp2.Properties["nodePoint"] = nwc
+		}
+		// next node is using us as a start
+		if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, i+1)); ok {
+			sp1.Properties["nodePoint"] = nwc
 		}
 	}
 
@@ -324,7 +329,9 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 }
 
 // PathNodeMove moves given node index by given delta transform.
-func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, dxf math32.Matrix2) {
+// pointOnly = true moves just the end point, otherwise all move.
+func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, pointOnly bool, dv math32.Vector2, dxf math32.Matrix2) {
+	sprites := sv.SpritesNolock()
 	pn := pts[pidx]
 	end := dxf.MulVector2AsPoint(pn.End)
 	switch pn.Cmd {
@@ -334,11 +341,40 @@ func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, dxf math3
 	case SpQuadTo:
 		path.Data[pn.Index+3] = end.X
 		path.Data[pn.Index+4] = end.Y
+		if !pointOnly {
+			cp1 := dxf.MulVector2AsPoint(pn.Cp1)
+			path.Data[pn.Index+1] = cp1.X
+			path.Data[pn.Index+2] = cp1.Y
+			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx))
+			SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
+		}
 	case SpCubeTo:
 		path.Data[pn.Index+5] = end.X
 		path.Data[pn.Index+6] = end.Y
+		if !pointOnly {
+			cp2 := dxf.MulVector2AsPoint(pn.Cp2)
+			path.Data[pn.Index+3] = cp2.X
+			path.Data[pn.Index+4] = cp2.Y
+			sp2, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx))
+			SetSpritePos(sp2, int(pn.TCp2.X+dv.X), int(pn.TCp2.Y+dv.Y))
+		}
 		// todo: arc
 	}
+	if pointOnly || pidx+1 >= len(pts) {
+		return
+	}
+	// update next node control point b/c it uses start which is this guy
+	pidx++
+	pn = pts[pidx]
+	if pn.Cmd != SpCubeTo {
+		return
+	}
+	cp1 := dxf.MulVector2AsPoint(pn.Cp1)
+	path.Data[pn.Index+1] = cp1.X
+	path.Data[pn.Index+2] = cp1.Y
+	sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, pidx))
+	SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
+
 }
 
 // PathCtrlMove moves given node control point index by given delta transform.

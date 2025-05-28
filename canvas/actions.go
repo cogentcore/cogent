@@ -21,9 +21,10 @@ const (
 	CtrlMove
 )
 
-// ActionHelpMap contains a set of help strings for different actions
-// which are the names given e.g., in the ActStart, SaveUndo etc.
+// ActionHelpMap contains a set of help strings for different actions.
 var ActionHelpMap = map[Actions]string{
-	Move:    "<b>Alt</b> = move without snapping, <b>Ctrl</b> = constrain to axis with smallest delta",
-	Reshape: "<b>Alt</b> = rotate, <b>Ctrl</b> = constraint to axis with smallest delta",
+	Move:     "<b>Alt</b> = move without snapping, <b>Ctrl</b> = constrain to axis with smallest delta",
+	Reshape:  "<b>Alt</b> = rotate, <b>Ctrl</b> = constrain to axis with smallest delta",
+	NodeMove: "<b>Alt</b> = only move node, not control points, <b>Ctrl</b> = constrain to axis with smallest delta",
+	CtrlMove: "<b>Ctrl</b> = constrain to axis with smallest delta",
 }
