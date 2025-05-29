@@ -1,0 +1,45 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs
+    id="defs" />
+  <sodipodi:namedview
+    id="namedview195"
+    style="inkscape:document-units:px;inkscape:current-layer:;inkscape:cx:0;inkscape:cy:0;inkscape:zoom:1;">
+    <inkscape:grid
+      id="grid708"
+      style="spacingx:16;spacingy:16;type:xygrid;units:px;" />
+  </sodipodi:namedview>
+  <style
+    id="css116" />
+  <style
+    id="css2" />
+  <sodipodi:namedview
+    id="namedview"
+    style="cx:8.925158;gridtolerance:10;current-layer:node-type-smooth;window-x:54;window-width:1858;zoom:38.41879;guidetolerance:10;window-y:-8;cy:6.5218763;window-height:1177;window-maximized:1;showgrid:true;objecttolerance:10;document-rotation:0;">
+    <inkscape:grid
+      id="grid"
+      style="type:xygrid;" />
+  </sodipodi:namedview>
+  <g
+    id="node-type-smooth"
+    transform="matrix(0.998641,0,0,1,-588.17786,-558.36218)">
+    <path
+      id="path3252"
+      style="opacity:0;fill:none;connector-curvature:0;"
+      d="M589 558.3622H605V574.3622H589z" />
+    <path
+      id="path7534"
+      style="connector-curvature:0;opacity:1;"
+      d="M604.3125 559.2812C604.0397 559.3352 603.8578 559.6012 603.9062 559.875C604.1396 561.4771 603.8452 563.6229 602.7812 565.3125C601.7169 567.0021 599.9368 568.2812 596.9062 568.2812C593.8722 568.2812 592.1072 567.0584 591.0937 565.4062C590.0803 563.7541 589.864 561.639 590.125 560.0312C590.1765 559.7483 589.986 559.4733 589.7031 559.4218C589.4202 559.3704 589.1452 559.5608 589.0938 559.8437C588.796 561.6777 589.0407 564.0171 590.2187 565.9375C591.3967 567.8579 593.58 569.3125 596.9062 569.3125C600.2359 569.3125 602.4296 567.8223 603.6562 565.875C604.8829 563.9277 605.1742 561.5896 604.9062 559.75C604.8953 559.6068 604.8249 559.4744 604.7122 559.3854C604.5994 559.2963 604.4543 559.2585 604.3125 559.2812z" />
+    <path
+      id="path16754"
+      style="opacity:1;connector-curvature:0;"
+      d="M595 566.3622H599V571.3622H595z" />
+  </g>
+</svg>

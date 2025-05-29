@@ -6,6 +6,7 @@ package canvas
 
 import (
 	"image"
+	"slices"
 
 	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
@@ -20,8 +21,11 @@ import (
 
 // PathNode is info about each node in a path that is being edited
 type PathNode struct {
-	// path command
+	// path command using sprite encoding
 	Cmd Sprites
+
+	// CmdPath command using ppath float32 encoding
+	CmdPath float32
 
 	// index of start of command in path
 	Index int
@@ -36,6 +40,12 @@ type PathNode struct {
 	TStart, TEnd, TCp1, TCp2 math32.Vector2
 }
 
+// EndIndex returns the exclusive index for the end of this command:
+// Index + CmdLen for this command.
+func (pn *PathNode) EndIndex() int {
+	return pn.Index + ppath.CmdLen(pn.CmdPath)
+}
+
 // PathNodes returns the PathNode data for given svg.Path.
 func (sv *SVG) PathNodes(path *svg.Path) []*PathNode {
 	xf := path.ParentTransform(true) // include self
@@ -43,16 +53,17 @@ func (sv *SVG) PathNodes(path *svg.Path) []*PathNode {
 	pns := make([]*PathNode, 0)
 	pti := 0
 	for scan := pts.Scanner(); scan.Scan(); {
+		cmd := scan.Cmd()
 		end := scan.End()
 		start := scan.Start()
 		tend := xf.MulVector2AsPoint(end)
 		tstart := xf.MulVector2AsPoint(start)
 
-		pn := &PathNode{Index: scan.Index(), PtIndex: pti, Start: start, End: end, TStart: tstart, TEnd: tend}
+		pn := &PathNode{CmdPath: cmd, Index: scan.Index(), PtIndex: pti, Start: start, End: end, TStart: tstart, TEnd: tend}
 		pns = append(pns, pn)
 		pti++
 
-		switch scan.Cmd() {
+		switch cmd {
 		case ppath.MoveTo:
 			pn.Cmd = SpMoveTo
 		case ppath.LineTo:
@@ -362,11 +373,23 @@ func (cv *Canvas) MakeNodeToolbar(p *tree.Plan) {
 		cv.nodeEnabledStyler(w)
 		w.SetFunc(cv.InsertCubicNode).SetIcon(cicons.NodeAdd).SetText("Curve")
 	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.nodeSelectEnabledStyler(w)
+		w.SetFunc(cv.InsertBreak).SetIcon(cicons.NodeBreak).SetText("Break")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.nodeSelectEnabledStyler(w)
+		w.SetFunc(cv.NodeDelete).SetIcon(cicons.NodeDelete).SetText("Delete")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.nodeSelectEnabledStyler(w)
+		w.SetFunc(cv.NodeReplaceCubic).SetIcon(cicons.NodeSmooth).SetText("Smooth")
+	})
 }
 
 ////////  Actions
 
-// InsertLineNode inserts a node of given type into current active path:
+// InsertLineNode inserts a LineTo node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertLineNode() { //types:add
 	es := &cv.EditState
@@ -374,11 +397,47 @@ func (cv *Canvas) InsertLineNode() { //types:add
 	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
-// InsertCubicNode inserts a node of given type into current active path:
+// InsertCubicNode inserts a cubic node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertCubicNode() { //types:add
 	es := &cv.EditState
 	cv.InsertNode(SpCubeTo)
+	cv.SVG.UpdateNodeSprites(es.ActivePath)
+}
+
+// InsertBreak inserts a break (move) into current active path:
+// If no selection: at end, otherwise after first selected node.
+func (cv *Canvas) InsertBreak() { //types:add
+	es := &cv.EditState
+	cv.InsertNode(SpMoveTo)
+	cv.SVG.UpdateNodeSprites(es.ActivePath)
+}
+
+// NodeReplaceCubic replaces selected non-cubic nodes with cubic ones
+// into current active path
+func (cv *Canvas) NodeReplaceCubic() { //types:add
+	es := &cv.EditState
+	cv.ReplaceNode(SpCubeTo)
+	cv.SVG.UpdateNodeSprites(es.ActivePath)
+}
+
+// NodeDelete deletes the selected node(s) from current active path.
+func (cv *Canvas) NodeDelete() { //types:add
+	es := &cv.EditState
+	sv := cv.SVG
+	sls := es.NodeSelectedList()
+	n := len(sls)
+	if n == 0 {
+		return
+	}
+	sv.UndoSave("NodeDelete", "")
+	pt := es.ActivePath.Data
+	for i := n - 1; i >= 0; i-- {
+		idx := sls[i]
+		pn := es.PathNodes[idx]
+		pt = slices.Delete(pt, pn.Index, pn.EndIndex())
+	}
+	es.ActivePath.Data = pt
 	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
@@ -398,6 +457,26 @@ func (cv *Canvas) InsertNode(ntyp Sprites) {
 		return
 	}
 	sv.InsertNode(ntyp, sls[0])
+}
+
+// ReplaceNode replaces current node with new one of given type
+// into current active path.
+func (cv *Canvas) ReplaceNode(ntyp Sprites) {
+	es := &cv.EditState
+	sv := cv.SVG
+	if es.ActivePath == nil {
+		return
+	}
+	sls := es.NodeSelectedList()
+	n := len(sls)
+	if n == 0 {
+		return
+	}
+	sv.UndoSave("ReplaceNode", ntyp.String())
+	for i := n - 1; i >= 0; i-- {
+		idx := sls[i]
+		sv.ReplaceNode(ntyp, idx)
+	}
 }
 
 func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) ppath.Path {
@@ -461,6 +540,21 @@ func (sv *SVG) InsertNode(ntyp Sprites, idx int) {
 	sp := path.Data[:nnd.Index]
 	rest := path.Data[nnd.Index:].Clone()
 	sp = sv.AddNode(ntyp, sp, mid, start)
+	path.Data = append(sp, rest...)
+}
+
+func (sv *SVG) ReplaceNode(ntyp Sprites, idx int) {
+	es := sv.EditState()
+	path := es.ActivePath
+	snd := es.PathNodes[idx]
+	if snd.Cmd == ntyp {
+		return
+	}
+	start := snd.TStart
+	end := snd.TEnd
+	sp := path.Data[:snd.Index]
+	rest := path.Data[snd.EndIndex():].Clone()
+	sp = sv.AddNode(ntyp, sp, end, start)
 	path.Data = append(sp, rest...)
 }
 

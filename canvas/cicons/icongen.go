@@ -37,6 +37,16 @@ var (
 	NodeAdd icons.Icon
 	//go:embed node-break.svg
 	NodeBreak icons.Icon
+	//go:embed node-cusp.svg
+	NodeCusp icons.Icon
+	//go:embed node-delete.svg
+	NodeDelete icons.Icon
+	//go:embed node-join.svg
+	NodeJoin icons.Icon
+	//go:embed node-smooth.svg
+	NodeSmooth icons.Icon
+	//go:embed node-symmetric.svg
+	NodeSymmetric icons.Icon
 	//go:embed sel-flip-horiz.svg
 	SelFlipHoriz icons.Icon
 	//go:embed sel-flip-vert.svg
