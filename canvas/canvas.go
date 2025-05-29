@@ -96,8 +96,8 @@ func (cv *Canvas) Init() {
 		w.Styler(func(s *styles.Style) {
 			s.Min.Y.Em(2) // keep a consistent height
 		})
-		tool := cv.EditState.Tool
 		w.Maker(func(p *tree.Plan) {
+			tool := cv.EditState.Tool
 			switch {
 			case tool == TextTool || cv.EditState.SelectIsText:
 				cv.MakeTextToolbar(p)
@@ -216,8 +216,6 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
 	sv.ReadMetaData()
-	sv.SVG.ZoomReset() // todo: not working
-	cv.UpdateAll()
 	return err
 }
 
@@ -233,7 +231,8 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
 	sv.backgroundGridEff = 0
-	// cv.UpdateAll()
+	sv.SVG.ZoomReset()
+	cv.UpdateAll()
 	return err
 }
 

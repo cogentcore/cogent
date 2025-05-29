@@ -201,15 +201,3 @@ func (cv *Canvas) MakeTextToolbar(p *tree.Plan) {
 	// })
 
 }
-
-// UpdateTextToolbar updates the select toolbar based on current selection
-func (cv *Canvas) UpdateTextToolbar() {
-	// fw := tb.ChildByName("font", 0).(core.Node2D)
-	// ts.FontVal.UpdateWidget()
-
-	// fsz := tb.ChildByName("size", 0).(*core.Spinner)
-	// fsz.SetValue(ts.Size.Val)
-
-	// fzu := tb.ChildByName("size-units", 0).(*core.Chooser)
-	// fzu.SetCurrentIndex(int(ts.Size.Un))
-}

@@ -33,6 +33,10 @@ var (
 	AlignTopAnchor icons.Icon
 	//go:embed align-top.svg
 	AlignTop icons.Icon
+	//go:embed node-add.svg
+	NodeAdd icons.Icon
+	//go:embed node-break.svg
+	NodeBreak icons.Icon
 	//go:embed sel-flip-horiz.svg
 	SelFlipHoriz icons.Icon
 	//go:embed sel-flip-vert.svg

@@ -6,6 +6,7 @@ package canvas
 
 import (
 	"image"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -107,6 +108,9 @@ type EditState struct {
 	// selected path nodes
 	NodeSelect map[int]struct{}
 
+	// current hover targets
+	NodeHover, CtrlHover int
+
 	// Current control being dragged
 	CtrlDragIndex int
 	CtrlDrag      Sprites
@@ -126,6 +130,8 @@ func (es *EditState) Init(cv *Canvas) {
 	es.Text.Defaults()
 	es.Text.Canvas = cv
 	es.Canvas = cv
+	es.NodeHover = -1
+	es.CtrlHover = -1
 }
 
 // InAction reports whether we currently doing an action
@@ -452,6 +458,10 @@ func (es *EditState) DragNodeStart(pos image.Point) {
 	es.DragStartPos = pos
 }
 
+func (es *EditState) HasNodeSelected() bool {
+	return len(es.NodeSelect) > 0
+}
+
 func (es *EditState) NodeIsSelected(i int) bool {
 	_, ok := es.NodeSelect[i]
 	return ok
@@ -467,6 +477,18 @@ func (es *EditState) UnselectNode(i int) {
 
 func (es *EditState) ResetSelectedNodes() {
 	es.NodeSelect = make(map[int]struct{})
+}
+
+// NodeSelectedList returns list of selected nodes in ascending index order.
+func (es *EditState) NodeSelectedList() []int {
+	sls := make([]int, len(es.NodeSelect))
+	idx := 0
+	for i := range es.NodeSelect {
+		sls[idx] = i
+		idx++
+	}
+	slices.Sort(sls)
+	return sls
 }
 
 // NodeSelectAction is called when a select action has been received (e.g., a
@@ -500,7 +522,7 @@ func (es *EditState) NodeSelectAction(idx int, mode events.SelectModes) {
 	}
 }
 
-////////  Nodes
+////////  NodeCtrl points
 
 // DragCtrlStart captures the current state at start of control point dragging.
 // position is starting position.

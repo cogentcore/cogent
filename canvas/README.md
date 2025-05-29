@@ -58,15 +58,11 @@ Basic functionality now in place:
 
 * double-click on text brings up text bar and text panel
 
-* add more layer logic -- if layers, everything should be in a layer?
-
 * import svg -- same as marker
 
 * add group / ungroup to context menu (conditional on selection n etc)
 
 * implement the full transform panel
-
-* render gradient icons
 
 * show selected path node in diff color..  red?  node sel map
 
@@ -75,7 +71,6 @@ Basic functionality now in place:
 * dropper = grab style from containsnode, apply to selection -- don't affect selection!
 
 * svg.Node ToPath -- convert any node to a path
-* node editor -- big job but needed for making basic bezier curves..
 
 * esc aborts new el drag
 
@@ -84,12 +79,9 @@ Basic functionality now in place:
 * svg.Text align Center, etc affects different tspans within overall text block
 * Text edit panel -- finish toolbar
 
-* cut / paste not updating tree reliably.  more tree update debugging fun!
-
 * use grid itself to render all new icons!
 
 * figure out mask clipping eventually.
-
 
 # LINKS
 

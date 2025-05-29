@@ -19,9 +19,9 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// InitSelectButton sets the given widget to only be enabled when
+// selectEnabledStyler sets the given widget to only be enabled when
 // there is an item selected.
-func (cv *Canvas) InitSelectButton(w core.Widget) {
+func (cv *Canvas) selectEnabledStyler(w core.Widget) {
 	w.AsWidget().FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(cv.EditState.HasSelected())
 	})
@@ -41,45 +41,45 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		cv.InitSelectButton(w)
+		cv.selectEnabledStyler(w)
 		w.SetFunc(cv.SelectLower).SetText("").SetIcon(cicons.SelLower)
 	})
 	tree.Add(p, func(w *core.Separator) {})

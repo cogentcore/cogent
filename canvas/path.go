@@ -5,96 +5,18 @@
 package canvas
 
 import (
-	"fmt"
 	"image"
 
+	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint/ppath"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
-
-func (vv *Canvas) MakeNodeToolbar(p *tree.Plan) {
-	tree.Add(p, func(w *core.Switch) {
-		core.Bind(&Settings.SnapNodes, w)
-		w.SetText("Snap nodes").SetTooltip("Snap movement and sizing of nodes, using overall snap settings")
-	})
-	tree.Add(p, func(w *core.Separator) {})
-
-	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
-	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
-	// 		grr := recv.Embed(KiT_Vector).(*Vector)
-	// 		grr.SelGroup()
-	// 	})
-	//
-	// core.NewSeparator(tb, "sep-group")
-
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("X: ")
-	})
-	// px := core.NewSpinner(tb).SetStep(1).SetValue(0).
-	// 	SetTooltip("horizontal coordinate of node, in document units")
-	// px.OnChange(func(e events.Event) {
-	// 	// vv.NodeSetXPos(px.Value)
-	// })
-
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("Y: ")
-	})
-	// py := core.NewSpinner(tb).SetStep(1).SetValue(0).
-	// 	SetTooltip("vertical coordinate of node, in document units")
-	// py.OnChange(func(e events.Event) {
-	// 	// vv.NodeSetYPos(py.Value)
-	// })
-}
-
-// NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (vv *Canvas) NodeEnableFunc(act *core.Button) {
-	// es := &gv.EditState
-	// act.SetInactiveState(!es.HasNodeed())
-}
-
-// UpdateNodeToolbar updates the node toolbar based on current nodeion
-func (vv *Canvas) UpdateNodeToolbar() {
-	// tb := vv.NodeToolbar()
-	// es := &vv.EditState
-	// if es.Tool != NodeTool {
-	// 	return
-	// }
-	// px := tb.ChildByName("posx", 8).(*core.Spinner)
-	// px.SetValue(es.DragSelectCurrentBBox.Min.X)
-	// py := tb.ChildByName("posy", 9).(*core.Spinner)
-	// py.SetValue(es.DragSelectCurrentBBox.Min.Y)
-}
-
-////////   Actions
-
-func (vv *Canvas) NodeSetXPos(xp float32) {
-	es := &vv.EditState
-	if !es.HasSelected() {
-		return
-	}
-	sv := vv.SVG
-	sv.UndoSave("NodeToX", fmt.Sprintf("%g", xp))
-	// todo
-	vv.ChangeMade()
-}
-
-func (vv *Canvas) NodeSetYPos(yp float32) {
-	es := &vv.EditState
-	if !es.HasSelected() {
-		return
-	}
-	sv := vv.SVG
-	sv.UndoSave("NodeToY", fmt.Sprintf("%g", yp))
-	// todo
-	vv.ChangeMade()
-}
-
-////////  PathNode
 
 // PathNode is info about each node in a path that is being edited
 type PathNode struct {
@@ -173,6 +95,16 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 	for i, pn := range es.PathNodes {
 		ept := pn.TEnd.ToPoint()
 		sp := sv.Sprite(SpNodePoint, pn.Cmd, i, image.Point{}, func(sp *core.Sprite) {
+			sp.On(events.MouseEnter, func(e events.Event) {
+				es.NodeHover = i
+				e.SetHandled()
+				sv.NeedsRender()
+			})
+			sp.On(events.MouseLeave, func(e events.Event) {
+				es.NodeHover = -1
+				e.SetHandled()
+				sv.NeedsRender()
+			})
 			sp.OnClick(func(e events.Event) {
 				es.NodeSelectAction(i, e.SelectMode())
 				sv.NeedsRender()
@@ -242,8 +174,6 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 		InactivateNodePoint(sprites, i)
 	}
 	sprites.Unlock()
-
-	sv.Canvas.UpdateNodeToolbar()
 	sv.UpdateView()
 }
 
@@ -268,6 +198,8 @@ func (sv *SVG) RemoveNodeSprites() {
 	es.PathNodes = nil
 	es.ActivePath = nil
 	es.CtrlDragIndex = -1
+	es.NodeHover = -1
+	es.CtrlHover = -1
 	sprites.Unlock()
 }
 
@@ -394,4 +326,149 @@ func (sv *SVG) PathCtrlMove(path *svg.Path, pts []*PathNode, pidx int, ctyp Spri
 		return pn.TCp2
 	}
 	return math32.Vector2{}
+}
+
+// nodeEnabledStyler sets the given widget to only be enabled when
+// in NodeTool mode.
+func (cv *Canvas) nodeEnabledStyler(w core.Widget) {
+	es := &cv.EditState
+	w.AsWidget().FirstStyler(func(s *styles.Style) {
+		s.SetEnabled(es.Tool == NodeTool)
+	})
+}
+
+// nodeSelectEnabledStyler sets the given widget to only be enabled when
+// there is a node selected.
+func (cv *Canvas) nodeSelectEnabledStyler(w core.Widget) {
+	es := &cv.EditState
+	w.AsWidget().FirstStyler(func(s *styles.Style) {
+		s.SetEnabled(es.Tool == NodeTool && es.HasNodeSelected())
+	})
+}
+
+func (cv *Canvas) MakeNodeToolbar(p *tree.Plan) {
+	// es := &cv.EditState
+	tree.Add(p, func(w *core.Switch) {
+		core.Bind(&Settings.SnapNodes, w)
+		w.SetText("Snap nodes").SetTooltip("Snap movement and sizing of nodes, using overall snap settings")
+	})
+	tree.Add(p, func(w *core.Separator) {})
+
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.nodeEnabledStyler(w)
+		w.SetFunc(cv.InsertLineNode).SetIcon(cicons.NodeAdd).SetText("Line")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.nodeEnabledStyler(w)
+		w.SetFunc(cv.InsertCubicNode).SetIcon(cicons.NodeAdd).SetText("Curve")
+	})
+}
+
+////////  Actions
+
+// InsertLineNode inserts a node of given type into current active path:
+// If no selection: at end, otherwise after first selected node.
+func (cv *Canvas) InsertLineNode() { //types:add
+	es := &cv.EditState
+	cv.InsertNode(SpLineTo)
+	cv.SVG.UpdateNodeSprites(es.ActivePath)
+}
+
+// InsertCubicNode inserts a node of given type into current active path:
+// If no selection: at end, otherwise after first selected node.
+func (cv *Canvas) InsertCubicNode() { //types:add
+	es := &cv.EditState
+	cv.InsertNode(SpCubeTo)
+	cv.SVG.UpdateNodeSprites(es.ActivePath)
+}
+
+// InsertNode inserts a node of given type into current active path:
+// If no selection: at end, otherwise after first selected node.
+func (cv *Canvas) InsertNode(ntyp Sprites) {
+	es := &cv.EditState
+	sv := cv.SVG
+	if es.ActivePath == nil {
+		return
+	}
+	sv.UndoSave("InsertNode", ntyp.String())
+	sls := es.NodeSelectedList()
+	nsel := len(sls)
+	if nsel == 0 {
+		sv.AppendNode(ntyp)
+		return
+	}
+	sv.InsertNode(ntyp, sls[0])
+}
+
+func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) ppath.Path {
+	es := sv.EditState()
+	path := es.ActivePath
+	xf := path.ParentTransform(true).Inverse()
+	lend := xf.MulVector2AsPoint(end)
+	lstart := xf.MulVector2AsPoint(start)
+	del := lend.Sub(lstart)
+	switch ntyp {
+	case SpMoveTo:
+		p.MoveTo(lend.X, lend.Y)
+	case SpLineTo:
+		p.LineTo(lend.X, lend.Y)
+	case SpQuadTo:
+		cp1 := lend.Add(del.MulScalar(0.25))
+		p.QuadTo(cp1.X, cp1.Y, lend.X, lend.Y)
+	case SpCubeTo:
+		cp1 := lstart.Add(del.MulScalar(0.25))
+		cp2 := lend.Sub(del.MulScalar(0.25))
+		p.CubeTo(cp1.X, cp1.Y, cp2.X, cp2.Y, lend.X, lend.Y)
+	}
+	return p
+}
+
+func (sv *SVG) AppendNode(ntyp Sprites) {
+	es := sv.EditState()
+	var end, start math32.Vector2
+	np := len(es.PathNodes)
+	ctr := math32.FromPoint(sv.SVG.Geom.Size).MulScalar(0.5)
+	switch np {
+	case 0:
+		end = math32.FromPoint(sv.SVG.Geom.Pos).Add(ctr)
+		start = end.Add(ctr.MulScalar(0.1))
+	case 1:
+		start = es.PathNodes[np-1].TEnd
+		end = start.Add(ctr.MulScalar(0.1))
+	default:
+		start = es.PathNodes[np-1].TEnd
+		del := start.Sub(es.PathNodes[np-2].TEnd)
+		end = start.Add(del)
+	}
+	path := es.ActivePath
+	path.Data = sv.AddNode(ntyp, path.Data, end, start)
+}
+
+func (sv *SVG) InsertNode(ntyp Sprites, idx int) {
+	es := sv.EditState()
+	np := len(es.PathNodes)
+	if idx >= np-1 {
+		sv.AppendNode(ntyp)
+		return
+	}
+	snd := es.PathNodes[idx]
+	nnd := es.PathNodes[idx+1]
+	start := snd.TEnd
+	end := nnd.TEnd
+	del := end.Sub(start)
+	mid := start.Add(del.MulScalar(0.5))
+	path := es.ActivePath
+	sp := path.Data[:nnd.Index]
+	rest := path.Data[nnd.Index:].Clone()
+	sp = sv.AddNode(ntyp, sp, mid, start)
+	path.Data = append(sp, rest...)
+}
+
+func (sv *SVG) DrawAddNode(ntyp Sprites, pos image.Point) {
+	es := sv.EditState()
+	np := len(es.PathNodes)
+	start := es.PathNodes[np-1].TEnd
+	end := math32.FromPoint(pos)
+	path := es.ActivePath
+	path.Data = sv.AddNode(ntyp, path.Data, end, start)
 }

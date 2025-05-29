@@ -106,11 +106,6 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	tspan := NewSVGElement[svg.Text](sv, false)
 	tspan.Text = "Text"
 	tspan.Width = 200
-	// tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
-	// tspan := svg.NewText(n)
-	// tspan.SetName(tsnm)
-	// tspan.Text = "Text"
-	// tspan.Width = 200
 
 	xfi := sv.Root().Paint.Transform.Inverse()
 	pos := math32.FromPoint(start)
@@ -146,7 +141,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	fmt.Println(n.Data)
 	n.Data = nil
 	n.Data.MoveTo(pos.X, pos.Y)
-	n.Data.LineTo(sz.X, sz.Y)
+	n.Data.LineTo(pos.X+sz.X, pos.Y+sz.Y)
 	n.BBoxes(sv.SVG, n.ParentTransform(false))
 
 	es.SelectAction(n, events.SelectOne, end)

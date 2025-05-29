@@ -1,0 +1,49 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs
+    id="defs" />
+  <sodipodi:namedview
+    id="namedview561"
+    style="inkscape:current-layer:;inkscape:cx:0;inkscape:cy:0;inkscape:zoom:1;inkscape:document-units:px;">
+    <inkscape:grid
+      id="grid600"
+      style="spacingy:16;type:xygrid;units:px;spacingx:16;" />
+  </sodipodi:namedview>
+  <style
+    id="css285" />
+  <style
+    id="css2" />
+  <sodipodi:namedview
+    id="namedview"
+    style="window-maximized:1;cx:3.4888904;zoom:27.166187;current-layer:node-add;showgrid:true;window-x:54;guidetolerance:10;objecttolerance:10;window-width:1858;cy:3.1243683;gridtolerance:10;document-rotation:0;window-y:-8;window-height:1177;">
+    <inkscape:grid
+      id="grid"
+      style="type:xygrid;" />
+  </sodipodi:namedview>
+  <g
+    id="node-add"
+    transform="matrix(0.999988,0,0,1,-377.99539,-558.36218)">
+    <path
+      id="path10573"
+      style="opacity:0;fill:none;connector-curvature:0;"
+      d="M378 558.3622H394V574.3622H378z" />
+    <path
+      id="path10583"
+      style="opacity:1;connector-curvature:0;"
+      d="M378.4579 571.3622C378.2786 571.3784 378.1212 571.4893 378.0459 571.6524C377.9706 571.8156 377.9886 572.007 378.093 572.1534C378.1973 572.2997 378.3726 572.3795 378.5518 572.3622H393.4917C393.6722 572.3647 393.8406 572.2698 393.9316 572.1143C394.0226 571.9587 394.0227 571.7657 393.9317 571.6101C393.8407 571.4545 393.6722 571.3596 393.4917 571.3622H378.5518C378.5206 571.3593 378.4891 571.3593 378.4579 571.3622z" />
+    <path
+      id="path10585"
+      style="opacity:1;connector-curvature:0;"
+      d="M383 569.3622H389V574.3622H383z" />
+    <path
+      id="path10587"
+      style="connector-curvature:0;opacity:1;"
+      d="M385 558.3622H387V561.3622H390V563.3622H387V566.3622H385V563.3622H382V561.3622H385z" />
+  </g>
+</svg>

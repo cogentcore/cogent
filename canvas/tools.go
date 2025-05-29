@@ -43,14 +43,14 @@ func (cv *Canvas) SetTool(tl Tools) {
 	es.ResetSelectedNodes()
 	cv.EditState.Tool = tl
 	cv.SetDefaultStyle()
-	cv.modalTools.Update()
-	cv.SetStatus("Tool")
+	cv.SetStatus("Tool: " + tl.String())
 	cv.tools.Restyle()
 	cv.tools.Restyle() // needs 2 for some reason
 	cv.SVG.UpdateSelect()
 	if tl == TextTool {
 		cv.tabs.SelectTabByName("Text")
 	}
+	cv.modalTools.Update()
 }
 
 func (cv *Canvas) MakeTools(p *tree.Plan) {

@@ -220,7 +220,7 @@ func InactivateSprites(sprites *core.Sprites, typ Sprites) {
 
 const (
 	HandleSpriteScale = 12
-	HandleSizeMin     = 4
+	HandleSizeMin     = 12
 	HandleBorderMin   = 2
 )
 
@@ -263,9 +263,12 @@ func DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int)
 		ctr := bb.Center()
 		sp.EventBBox = bbi
 		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
-		if es.NodeIsSelected(idx) {
+		switch {
+		case es.NodeIsSelected(idx):
 			pc.Fill.Color = colors.Scheme.Primary.Base
-		} else {
+		case es.NodeHover == idx:
+			pc.Fill.Color = colors.Scheme.Select.Container
+		default:
 			pc.Fill.Color = nil
 		}
 		pc.Stroke.Color = colors.Scheme.OnSurface
