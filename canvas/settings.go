@@ -31,7 +31,7 @@ type SettingsData struct { //types:add
 	core.SettingsBase
 
 	// default physical size, when app is started without opening a file
-	Size PhysSize
+	Size PhysSize `display:"add-fields"`
 
 	// turns on the grid display
 	GridDisp bool `default:"true"`

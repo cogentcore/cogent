@@ -296,14 +296,15 @@ func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int,
 		sp.EventBBox = bbi
 		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
 
-		if idx == es.CtrlDragIndex && subtyp == es.CtrlDrag {
+		switch {
+		case idx == es.CtrlDragIndex && subtyp == es.CtrlDrag:
 			pc.Fill.Color = colors.Scheme.Primary.Base
-		} else {
-			if subtyp == SpCube2 {
-				pc.Fill.Color = colors.Scheme.Warn.Container
-			} else {
-				pc.Fill.Color = nil
-			}
+		case es.CtrlHover == idx && subtyp == es.CtrlHoverType:
+			pc.Fill.Color = colors.Scheme.Select.Container
+		case subtyp == SpCube2:
+			pc.Fill.Color = colors.Scheme.Warn.Container
+		default:
+			pc.Fill.Color = nil
 		}
 		pc.Circle(ctr.X, ctr.Y, 0.5*sz.X)
 		pc.Draw()

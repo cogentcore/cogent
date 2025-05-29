@@ -118,7 +118,7 @@ func (sv *SVG) UpdateSelect() {
 	sv.Canvas.UpdateTabs()
 	sv.Canvas.UpdateModalToolbar()
 	if es.Tool == NodeTool {
-		sv.UpdateNodeSprites(es.ActivePath)
+		sv.UpdateNodeSprites()
 		sv.RemoveSelSprites()
 	} else {
 		sv.RemoveNodeSprites()
@@ -574,7 +574,6 @@ func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 // SelectContainsPoint finds the first node whose BBox contains the given
 // point in scene coordinates; nil if none.  If leavesOnly is set then only nodes that have no
 // nodes (leaves, terminal nodes) will be considered.
-// if leavesOnly, only terminal leaves (no children) are included
 // if excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {

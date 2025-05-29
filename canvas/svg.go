@@ -124,7 +124,12 @@ func (sv *SVG) Init() {
 		sv.SetFocusQuiet()
 		e.SetHandled()
 		es := sv.EditState()
-		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+		var sob svg.Node
+		if es.Tool == NodeTool {
+			sob = sv.SelectContainsPoint(e.Pos(), true, true) // yes leavesonly, yes exclude existing sels
+		} else {
+			sob = sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+		}
 
 		es.SelectNoDrag = false
 		switch {
@@ -143,8 +148,9 @@ func (sv *SVG) Init() {
 			es.ResetSelectedNodes()
 			es.SelectAction(sob, events.SelectOne, e.Pos())
 			path := es.FirstSelectedPath()
-			es.ResetSelected()
-			sv.UpdateNodeSprites(path)
+			es.ActivePath = path
+			es.SelectedToRecents()
+			sv.UpdateNodeSprites()
 		case sob == nil:
 			es.DragStartPos = e.Pos()
 			// fmt.Println("Drag start:", es.DragStartPos) // todo: not nec
@@ -247,8 +253,9 @@ func (sv *SVG) Init() {
 		se := e.(*events.MouseScroll)
 		del := 0.01 * se.Delta.Y * max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01)
 		if sv.SVG.Scale > 0 {
-			del /= min(1, sv.SVG.Scale)
+			del /= max(1, sv.SVG.Scale)
 		}
+		del = math32.Clamp(del, -0.1, 0.1)
 		sv.SVG.ZoomAt(se.Pos(), del)
 		sv.UpdateView()
 	})
@@ -287,6 +294,7 @@ func (sv *SVG) EditState() *EditState {
 func (sv *SVG) UpdateView() {
 	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
+	sv.UpdateNodeSprites()
 	sv.NeedsRender()
 }
 
@@ -476,13 +484,24 @@ func (sv *SVG) EditNode(n tree.Node) { //types:add
 }
 
 func (sv *SVG) contextMenu(m *core.Scene) {
-	sl := sv.EditState().SelectedList(false)
-	if len(sl) == 0 {
+	var itm tree.Node
+	es := sv.EditState()
+	if es.ActivePath != nil {
+		itm = es.ActivePath.AsTree().This
+	} else {
+		sl := sv.EditState().SelectedList(false)
+		if len(sl) > 0 {
+			itm = sl[0]
+		}
+	}
+
+	if itm == nil {
 		core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
 			SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 		return
 	}
-	sv.contextMenuNode(m, sl[0])
+
+	sv.contextMenuNode(m, itm)
 }
 
 func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
@@ -533,6 +552,7 @@ func (sv *SVG) UndoSaveReplace(action, data string) {
 func (sv *SVG) Undo() string {
 	es := sv.EditState()
 	es.ResetSelected()
+	es.ResetSelectedNodes()
 	if es.Undos.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
 		errors.Log(jsonx.Write(sv.Root(), b))
@@ -554,6 +574,7 @@ func (sv *SVG) Undo() string {
 func (sv *SVG) Redo() string {
 	es := sv.EditState()
 	es.ResetSelected()
+	es.ResetSelectedNodes()
 	act, _, state := es.Undos.Redo()
 	if state == nil {
 		return act

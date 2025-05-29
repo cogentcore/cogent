@@ -110,6 +110,7 @@ type EditState struct {
 
 	// current hover targets
 	NodeHover, CtrlHover int
+	CtrlHoverType        Sprites
 
 	// Current control being dragged
 	CtrlDragIndex int
@@ -124,12 +125,16 @@ func (es *EditState) Init(cv *Canvas) {
 	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
+	es.ActivePath = nil
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
 	es.Text.Defaults()
 	es.Text.Canvas = cv
 	es.Canvas = cv
+	es.NewSelected()
+	es.NewRecents()
+	es.ResetSelectedNodes()
 	es.NodeHover = -1
 	es.CtrlHover = -1
 }

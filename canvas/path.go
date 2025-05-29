@@ -87,16 +87,15 @@ func (sv *SVG) PathNodes(path *svg.Path) []*PathNode {
 	return pns
 }
 
-func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
+func (sv *SVG) UpdateNodeSprites() {
 	es := sv.EditState()
-	prvn := es.NNodeSprites
-
-	if path == nil {
+	path := es.ActivePath
+	if path == nil || tree.IsNil(path) {
 		sv.RemoveNodeSprites()
-		sv.UpdateView()
 		return
 	}
 
+	prvn := es.NNodeSprites
 	sprites := sv.SpritesLock()
 
 	es.PathNodes = sv.PathNodes(path)
@@ -141,6 +140,17 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 		SetSpritePos(sp, ept.X, ept.Y)
 
 		ctrlEvents := func(sp *core.Sprite, i int, ctyp Sprites) {
+			sp.On(events.MouseEnter, func(e events.Event) {
+				es.CtrlHover = i
+				es.CtrlHoverType = ctyp
+				e.SetHandled()
+				sv.NeedsRender()
+			})
+			sp.On(events.MouseLeave, func(e events.Event) {
+				es.CtrlHover = -1
+				e.SetHandled()
+				sv.NeedsRender()
+			})
 			sp.OnSlideStart(func(e events.Event) {
 				es.DragCtrlStart(e.Pos(), i, ctyp)
 				sv.NeedsRender()
@@ -185,7 +195,6 @@ func (sv *SVG) UpdateNodeSprites(path *svg.Path) {
 		InactivateNodePoint(sprites, i)
 	}
 	sprites.Unlock()
-	sv.UpdateView()
 }
 
 func InactivateNodePoint(sprites *core.Sprites, i int) {
@@ -220,7 +229,8 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(NodeMove, es.ActivePath.Name)
 	es.DragConstrainPoint = true
-	spt, _, dv := sv.DragDelta(e)
+	spt, _, _ := sv.DragDelta(e)
+	dv := math32.FromPoint(e.PrevDelta())
 
 	pointOnly := e.HasAnyModifier(key.Alt)
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
@@ -258,7 +268,8 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 	sv.ManipStartInDrag(CtrlMove, es.ActivePath.Name)
 
 	es.DragConstrainPoint = true
-	spt, _, dv := sv.DragDelta(e)
+	spt, _, _ := sv.DragDelta(e)
+	dv := math32.FromPoint(e.PrevDelta())
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
 
 	pos := sv.PathCtrlMove(es.ActivePath, es.PathNodes, idx, ctyp, dxf)
@@ -392,33 +403,25 @@ func (cv *Canvas) MakeNodeToolbar(p *tree.Plan) {
 // InsertLineNode inserts a LineTo node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertLineNode() { //types:add
-	es := &cv.EditState
 	cv.InsertNode(SpLineTo)
-	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
 // InsertCubicNode inserts a cubic node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertCubicNode() { //types:add
-	es := &cv.EditState
 	cv.InsertNode(SpCubeTo)
-	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
 // InsertBreak inserts a break (move) into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertBreak() { //types:add
-	es := &cv.EditState
 	cv.InsertNode(SpMoveTo)
-	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
 // NodeReplaceCubic replaces selected non-cubic nodes with cubic ones
 // into current active path
 func (cv *Canvas) NodeReplaceCubic() { //types:add
-	es := &cv.EditState
 	cv.ReplaceNode(SpCubeTo)
-	cv.SVG.UpdateNodeSprites(es.ActivePath)
 }
 
 // NodeDelete deletes the selected node(s) from current active path.
@@ -438,7 +441,7 @@ func (cv *Canvas) NodeDelete() { //types:add
 		pt = slices.Delete(pt, pn.Index, pn.EndIndex())
 	}
 	es.ActivePath.Data = pt
-	cv.SVG.UpdateNodeSprites(es.ActivePath)
+	sv.UpdateView()
 }
 
 // InsertNode inserts a node of given type into current active path:
@@ -457,6 +460,7 @@ func (cv *Canvas) InsertNode(ntyp Sprites) {
 		return
 	}
 	sv.InsertNode(ntyp, sls[0])
+	sv.UpdateView()
 }
 
 // ReplaceNode replaces current node with new one of given type
@@ -477,6 +481,7 @@ func (cv *Canvas) ReplaceNode(ntyp Sprites) {
 		idx := sls[i]
 		sv.ReplaceNode(ntyp, idx)
 	}
+	sv.UpdateView()
 }
 
 func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) ppath.Path {

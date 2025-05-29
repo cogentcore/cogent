@@ -105,7 +105,6 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	sv.ManipStart(NewText, "")
 	tspan := NewSVGElement[svg.Text](sv, false)
 	tspan.Text = "Text"
-	tspan.Width = 200
 
 	xfi := sv.Root().Paint.Transform.Inverse()
 	pos := math32.FromPoint(start)
