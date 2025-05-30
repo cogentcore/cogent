@@ -105,6 +105,9 @@ func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
 // SpriteProperties reads the sprite properties -- returns SpUnknown if
 // not one of our sprites.
 func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
+	if sp.Properties == nil {
+		return
+	}
 	typi, has := sp.Properties["grid-type"]
 	if !has {
 		typ = SpUnknown

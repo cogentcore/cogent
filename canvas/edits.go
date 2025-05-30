@@ -57,6 +57,10 @@ type EditState struct {
 	// selection just happened on press, and no drag happened in between
 	SelectNoDrag bool
 
+	// MouseDownSel is selected object from the mouse down event,
+	// which is carried over to the mouse up event to adjudicate between drag and select.
+	MouseDownSel svg.Node
+
 	// true if a new text item was made while dragging
 	NewTextMade bool
 
@@ -255,6 +259,9 @@ func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node 
 // FirstSelectedNode returns the first selected node, that is not a Group
 // (recurses into groups)
 func (es *EditState) FirstSelectedNode() svg.Node {
+	if es.Tool == NodeTool && es.ActivePath != nil {
+		return es.ActivePath
+	}
 	if !es.HasSelected() {
 		return nil
 	}
@@ -349,9 +356,6 @@ func (es *EditState) SelectedNamesString() string {
 func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image.Point) {
 	if mode == events.NoSelect {
 		return
-	}
-	if !es.HasSelected() || !es.PosInLastSelect(pos) {
-		es.StartRecents(pos)
 	}
 	switch mode {
 	case events.SelectOne:

@@ -70,6 +70,9 @@ func (sv *SVG) Init() {
 		case " ", "s", "S":
 			sv.Canvas.SetTool(SelectTool)
 			e.SetHandled()
+		case "b", "B":
+			sv.Canvas.SetTool(SelBoxTool)
+			e.SetHandled()
 		case "n", "N":
 			sv.Canvas.SetTool(NodeTool)
 			e.SetHandled()
@@ -79,7 +82,7 @@ func (sv *SVG) Init() {
 		case "e", "E":
 			sv.Canvas.SetTool(EllipseTool)
 			e.SetHandled()
-		case "b", "B":
+		case "d", "D":
 			sv.Canvas.SetTool(BezierTool)
 			e.SetHandled()
 		case "t", "T":
@@ -121,43 +124,43 @@ func (sv *SVG) Init() {
 		if e.MouseButton() != events.Left {
 			return
 		}
+		es := sv.EditState()
+		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
 		sv.SetFocusQuiet()
 		e.SetHandled()
-		es := sv.EditState()
 		var sob svg.Node
 		if es.Tool == NodeTool {
 			sob = sv.SelectContainsPoint(e.Pos(), true, true) // yes leavesonly, yes exclude existing sels
 		} else {
 			sob = sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
 		}
+		es.MouseDownSel = sob
 
 		es.SelectNoDrag = false
 		switch {
-		case es.HasSelected() && es.SelectBBox.ContainsPoint(math32.FromPoint(e.Pos())):
+		case isSelTool && es.HasSelected() && es.SelectBBox.ContainsPoint(math32.FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
-			es.SelectNoDrag = true
+			es.SelectNoDrag = true // will be reset if drag
 			es.DragSelStart(e.Pos())
-		case sob != nil && es.Tool == SelectTool:
-			// todo: not getting extend select within groups..
-			// fmt.Println("extend sel:", sob, e.SelectMode())
+		case sob == nil || es.Tool == SelBoxTool:
+			es.DragStartPos = e.Pos()
+			es.ResetSelected()
+			es.ResetSelectedNodes()
+			sv.RemoveNodeSprites()
+			sv.UpdateSelect()
+		case sob != nil && isSelTool:
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
 		case sob != nil && es.Tool == NodeTool:
 			es.ResetSelectedNodes()
+			es.ActivePath = nil
 			es.SelectAction(sob, events.SelectOne, e.Pos())
-			path := es.FirstSelectedPath()
-			es.ActivePath = path
+			es.ActivePath = es.FirstSelectedPath()
 			es.SelectedToRecents()
 			sv.UpdateNodeSprites()
-		case sob == nil:
-			es.DragStartPos = e.Pos()
-			// fmt.Println("Drag start:", es.DragStartPos) // todo: not nec
-			es.ResetSelected()
-			es.ResetSelectedNodes()
-			sv.RemoveNodeSprites()
-			sv.UpdateSelect()
+			sv.Canvas.UpdateTabs()
 		}
 	})
 	sv.On(events.MouseUp, func(e events.Event) {
@@ -165,9 +168,9 @@ func (sv *SVG) Init() {
 			return
 		}
 		es := sv.EditState()
-		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
-		// release on select -- do extended selection processing
-		if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
+		sob := es.MouseDownSel
+		if es.SelectNoDrag && isSelTool { // do select on up to allow for drag of selected item on down
 			es.SelectNoDrag = false
 			e.SetHandled()
 			if sob == nil {
@@ -209,7 +212,7 @@ func (sv *SVG) Init() {
 		}
 		if !es.InAction() {
 			switch es.Tool {
-			case SelectTool:
+			case SelectTool, SelBoxTool:
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
 				NewSVGElementDrag[svg.Rect](sv, es.DragStartPos, e.Pos())
@@ -221,7 +224,7 @@ func (sv *SVG) Init() {
 			case BezierTool:
 				sv.NewPath(es.DragStartPos, e.Pos())
 			}
-		} else if es.Action == BoxSelect {
+		} else if es.Action == BoxSelect || es.Tool == SelBoxTool {
 			sv.SetRubberBand(e.Pos())
 		}
 	})
@@ -236,7 +239,7 @@ func (sv *SVG) Init() {
 			return
 		}
 		// release on select -- do extended selection processing
-		if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+		if (es.SelectNoDrag && es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool) {
 			es.SelectNoDrag = false
 			e.SetHandled()
 			if sob == nil {
@@ -631,4 +634,71 @@ func (sv *SVG) RenderGrid() {
 	}
 	pc.Draw()
 	pc.PopContext()
+}
+
+// DistributeProps distributes properties into leaf nodes
+// from groups. Putting properties on groups is not good
+// for editing.
+func (sv *SVG) DistributeProps() {
+	gotSome := false
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This {
+			return tree.Continue
+		}
+		if nb.HasChildren() {
+			return tree.Continue
+		}
+		if txt, istxt := n.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				if _, istxt := txt.Parent.(*svg.Text); istxt {
+					return tree.Break
+				}
+			}
+		}
+		if nb.Properties == nil {
+			nb.Properties = make(map[string]any)
+		}
+		par := nb.Parent.(svg.Node).AsNodeBase()
+		for {
+			if par.Properties != nil {
+				for k, v := range par.Properties {
+					if k == "transform" {
+						continue
+					}
+					if _, has := nb.Properties[k]; !has {
+						gotSome = true
+						nb.Properties[k] = v
+					}
+				}
+			}
+			if par.Parent == nil || par.Parent == sv.Root().This {
+				break
+			}
+			par = par.Parent.(svg.Node).AsNodeBase()
+		}
+		return tree.Continue
+	})
+	if !gotSome {
+		return
+	}
+
+	// then get rid of properties on groups
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This {
+			return tree.Continue
+		}
+		if !nb.HasChildren() {
+			return tree.Break
+		}
+		if nb.Properties == nil {
+			return tree.Continue
+		}
+		for k := range nb.Properties {
+			if k == "transform" {
+				continue
+			}
+			delete(nb.Properties, k)
+		}
+		return tree.Continue
+	})
 }

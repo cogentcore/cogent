@@ -23,8 +23,12 @@ func setPropsNode(nd svg.Node, fun func(g svg.Node)) {
 func (cv *Canvas) setPropsOnSelected(actName, val string, fun func(g svg.Node)) {
 	es := &cv.EditState
 	cv.SVG.UndoSave(actName, val)
-	for itm := range es.Selected {
-		setPropsNode(itm, fun)
+	if es.Tool == NodeTool && es.ActivePath != nil {
+		setPropsNode(es.ActivePath, fun)
+	} else {
+		for itm := range es.Selected {
+			setPropsNode(itm, fun)
+		}
 	}
 	cv.ChangeMade()
 	cv.SVG.NeedsRender()
@@ -53,8 +57,12 @@ func (cv *Canvas) setPropsOnSelectedInput(act Actions, data string, final bool, 
 			sv.UndoSave(act.String(), data)
 		}
 	}
-	for nd := range es.Selected {
-		setPropsNode(nd, fun)
+	if es.Tool == NodeTool && es.ActivePath != nil {
+		setPropsNode(es.ActivePath, fun)
+	} else {
+		for nd := range es.Selected {
+			setPropsNode(nd, fun)
+		}
 	}
 	if final {
 		if !actStart {

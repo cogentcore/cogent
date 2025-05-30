@@ -215,6 +215,7 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	cv.EditState.Init(cv)
 	cv.EditState.Gradients = sv.Gradients()
 	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
+	sv.DistributeProps()
 	sv.ReadMetaData()
 	return err
 }
@@ -662,6 +663,7 @@ func (cv *Canvas) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 	sv := cv.SVG
 	es := &cv.EditState
 	es.SelectAction(sii, mode, image.Point{})
+	sv.UpdateSelect()
 	sv.UpdateView()
 }
 

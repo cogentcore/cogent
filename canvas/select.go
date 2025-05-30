@@ -550,9 +550,6 @@ func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 				}
 			}
 		}
-		if nb.Paint.Off {
-			return tree.Break
-		}
 		nl := NodeParentLayer(n)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
@@ -609,9 +606,6 @@ func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) 
 			if _, issel := es.RecentlySelected[n]; issel {
 				return tree.Continue
 			}
-		}
-		if nb.Paint.Off {
-			return tree.Break
 		}
 		nl := NodeParentLayer(n)
 		if nl != nil {

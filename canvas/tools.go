@@ -20,6 +20,7 @@ type Tools int //enums:enum
 
 const (
 	SelectTool Tools = iota
+	SelBoxTool
 	NodeTool
 	RectTool
 	EllipseTool
@@ -29,7 +30,7 @@ const (
 
 // ToolDoesBasicSelect returns true if tool should do select for clicks
 func ToolDoesBasicSelect(tl Tools) bool {
-	return tl != NodeTool
+	return tl != SelectTool && tl != NodeTool && tl != SelBoxTool
 }
 
 // SetTool sets the current active tool
@@ -61,8 +62,19 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(SelectTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == SelectTool, states.Selected)
+		})
+	})
+	tree.Add(p, func(w *core.Button) {
+		w.SetIcon(cicons.Rubberband).SetShortcut("B")
+		w.SetTooltip("Select by dragging a box around items")
+		w.OnClick(func(e events.Event) {
+			cv.SetTool(SelBoxTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.IconSize.Set(units.Em(1.3))
+			s.SetState(cv.EditState.Tool == SelBoxTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
@@ -72,7 +84,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(NodeTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == NodeTool, states.Selected)
 		})
 	})
@@ -83,7 +95,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(RectTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == RectTool, states.Selected)
 		})
 	})
@@ -94,18 +106,18 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(EllipseTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == EllipseTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetIcon(icons.LineCurve).SetShortcut("B")
-		w.SetTooltip("Create bezier curves (straight lines and curves with control points)")
+		w.SetIcon(icons.LineCurve).SetShortcut("D")
+		w.SetTooltip("Draw using bezier curves (straight lines and curves with control points)")
 		w.OnClick(func(e events.Event) {
 			cv.SetTool(BezierTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == BezierTool, states.Selected)
 		})
 	})
@@ -116,7 +128,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 			cv.SetTool(TextTool)
 		})
 		w.Styler(func(s *styles.Style) {
-			s.IconSize.Set(units.Em(1.5))
+			s.IconSize.Set(units.Em(1.3))
 			s.SetState(cv.EditState.Tool == TextTool, states.Selected)
 		})
 	})
