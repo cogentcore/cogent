@@ -7,6 +7,7 @@ package canvas
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"strings"
 
 	"cogentcore.org/core/base/reflectx"
@@ -64,7 +65,8 @@ func (pv *PaintSetter) Init() {
 	pv.curStrokeType = pv.StrokeType
 	pv.curFillType = pv.FillType
 	pv.PaintStyle.Defaults()
-	pv.PaintStyle.Stroke.Width.Px(1) // dp is not understood by svg..
+	pv.PaintStyle.Stroke.Color = colors.Uniform(color.Black) // default is off
+	pv.PaintStyle.Stroke.Width.Px(1)                         // dp is not understood by svg..
 
 	DashIconsInit()
 	MarkerIconsInit()
@@ -626,7 +628,8 @@ func (pv *PaintSetter) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Stroke.Color))
+		// opacity handled separately: always report colors as pure
+		return colors.AsHex(colors.WithA(colors.ToUniform(pv.PaintStyle.Stroke.Color), 255))
 	case PaintLinear:
 		return pv.StrokeStops
 	case PaintRadial:
@@ -685,7 +688,8 @@ func (pv *PaintSetter) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Fill.Color))
+		// opacity handled separately: always report colors as pure
+		return colors.AsHex(colors.WithA(colors.ToUniform(pv.PaintStyle.Fill.Color), 255))
 	case PaintLinear:
 		return pv.FillStops
 	case PaintRadial:

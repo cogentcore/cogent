@@ -609,10 +609,10 @@ func (cv *Canvas) PaintSetter() *PaintSetter {
 
 // UpdateAll updates the display
 func (cv *Canvas) UpdateAll() { //types:add
+	cv.UpdateSVG() // svg first b/c that renders so other stuff is accurate
 	cv.UpdateTabs()
 	cv.UpdateLayers()
 	cv.UpdateTree()
-	cv.UpdateSVG()
 }
 
 func (cv *Canvas) UpdateSVG() {

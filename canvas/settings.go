@@ -49,6 +49,9 @@ type SettingsData struct { //types:add
 
 	// number of screen pixels around target point (in either direction) to snap
 	SnapTol int `min:"1" default:"3"`
+
+	// enables saving of metadata about the image (in inkscape-compatible format)
+	MetaData bool
 }
 
 func (se *SettingsData) Defaults() {
@@ -58,6 +61,7 @@ func (se *SettingsData) Defaults() {
 	se.SnapGuide = true
 	se.SnapNodes = true
 	se.SnapTol = 3
+	se.MetaData = true
 }
 
 func (se *SettingsData) Update() {

@@ -253,7 +253,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	sp := sv.Sprite(SpRubberBand, SpUnknown, 0, sz, nil)
+	sp := sv.Sprite(SpRubberBand, SpNone, 0, sz, nil)
 	sp.Properties["size"] = sz
 	SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
 

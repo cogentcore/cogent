@@ -21,8 +21,8 @@ import (
 type Sprites int32 //enums:enum -transform kebab -trim-prefix Sp
 
 const (
-	// SpUnknown is an unknown sprite type
-	SpUnknown Sprites = iota
+	// SpNone is used for subtypes
+	SpNone Sprites = iota
 
 	// SpReshapeBBox is a reshape bbox -- the overall active selection BBox
 	// for active manipulation
@@ -43,7 +43,7 @@ const (
 	// SpAlignMatch is an alignment match (n of these),
 	SpAlignMatch
 
-	// SpLineAdd is new line to add
+	// SpLineAdd is preview of new line to add
 	SpLineAdd
 
 	// below are subtypes:
@@ -104,7 +104,7 @@ func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
 	sp.Properties["grid-idx"] = idx
 }
 
-// SpriteProperties reads the sprite properties -- returns SpUnknown if
+// SpriteProperties reads the sprite properties -- returns SpNone if
 // not one of our sprites.
 func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
 	if sp.Properties == nil {
@@ -112,7 +112,7 @@ func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
 	}
 	typi, has := sp.Properties["grid-type"]
 	if !has {
-		typ = SpUnknown
+		typ = SpNone
 		return
 	}
 	typ = typi.(Sprites)
@@ -366,8 +366,9 @@ func (sv *SVG) DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint
 	sp.Properties["size"] = trgsz
 	return func(pc *paint.Painter) {
 		trgsz := sp.Properties["size"].(image.Point)
-		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
-		bb := math32.B2FromRect(sp.EventBBox)
+		sp.EventBBox.Max = sp.EventBBox.Min // no events
+		bbi := image.Rectangle{Min: sp.EventBBox.Min, Max: sp.EventBBox.Min.Add(trgsz)}
+		bb := math32.B2FromRect(bbi)
 		pc.Fill.Color = nil
 		pc.Stroke.Dashes = nil
 		pc.Stroke.Width.Dp(SpriteLineBorderWidth)
@@ -386,8 +387,9 @@ func (sv *SVG) DrawLineAdd(sp *core.Sprite, trgsz image.Point) func(pc *paint.Pa
 	sp.Properties["lastPoint"] = trgsz
 	return func(pc *paint.Painter) {
 		trgsz := sp.Properties["lastPoint"].(image.Point)
-		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
-		bb := math32.B2FromRect(sp.EventBBox)
+		sp.EventBBox.Max = sp.EventBBox.Min // no events
+		bbi := image.Rectangle{Min: sp.EventBBox.Min, Max: trgsz}
+		bb := math32.B2FromRect(bbi)
 		pc.Fill.Color = nil
 		pc.Stroke.Dashes = nil
 		pc.Stroke.Width.Dp(SpriteLineBorderWidth)
@@ -395,7 +397,7 @@ func (sv *SVG) DrawLineAdd(sp *core.Sprite, trgsz image.Point) func(pc *paint.Pa
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 		pc.Stroke.Width.Dp(SpriteLineWidth)
-		pc.Stroke.Color = colors.Scheme.Success.Container
+		pc.Stroke.Color = colors.Scheme.Error.Base
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 	}

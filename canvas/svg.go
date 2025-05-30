@@ -29,7 +29,7 @@ import (
 
 // SVG is the element for viewing and interacting with the SVG.
 type SVG struct {
-	core.WidgetBase
+	core.Frame
 
 	// SVG is the SVG drawing to display in this widget
 	SVG *svg.SVG `set:"-"`
@@ -48,7 +48,7 @@ type SVG struct {
 }
 
 func (sv *SVG) Init() {
-	sv.WidgetBase.Init()
+	sv.Frame.Init()
 	sv.SVG = svg.NewSVG(math32.Vec2(10, 10))
 	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
@@ -62,6 +62,7 @@ func (sv *SVG) Init() {
 		s.StateLayer = 0 // always focused..
 	})
 	sv.OnKeyChord(func(e events.Event) {
+		es := sv.EditState()
 		kc := e.KeyChord()
 		kf := keymap.Of(kc)
 		// if core.DebugSettings.KeyEventTrace {
@@ -89,15 +90,31 @@ func (sv *SVG) Init() {
 		case "t", "T":
 			sv.Canvas.SetTool(TextTool)
 			e.SetHandled()
+		case "Alt+ReturnEnter":
+			e.SetHandled()
+			if es.Tool == BezierTool && es.ActivePath != nil {
+				es.ActivePath.Data.Close()
+				es.ActivePath = nil
+				sv.UpdateView()
+			}
 		}
 		if e.IsHandled() {
 			return
 		}
 		switch kf {
 		case keymap.Abort:
-			// todo: maybe something else
 			e.SetHandled()
-			sv.Canvas.SetTool(SelectTool)
+			if es.Tool == BezierTool {
+				sv.NodeDeleteLast()
+			} else {
+				sv.Canvas.SetTool(SelectTool)
+			}
+		case keymap.Enter:
+			e.SetHandled()
+			if es.Tool == BezierTool {
+				es.ActivePath = nil
+				sv.UpdateView()
+			}
 		case keymap.Undo:
 			e.SetHandled()
 			sv.Canvas.Undo()
@@ -118,7 +135,11 @@ func (sv *SVG) Init() {
 			sv.Canvas.PasteClip()
 		case keymap.Delete, keymap.Backspace:
 			e.SetHandled()
-			sv.Canvas.DeleteSelected()
+			if es.Tool == BezierTool {
+				sv.NodeDeleteLast()
+			} else {
+				sv.Canvas.DeleteSelected()
+			}
 		}
 	})
 	sv.On(events.MouseDown, func(e events.Event) {
@@ -140,25 +161,22 @@ func (sv *SVG) Init() {
 		es.SelectNoDrag = false
 		switch {
 		case es.Tool == BezierTool:
-			var path *svg.Path
+			es.DrawCurPos = e.Pos()
 			newPt := false
 			if es.ActivePath == nil {
-				path = NewSVGElement[svg.Path](sv, false)
-				es.ActivePath = path
+				es.ActivePath = NewSVGElement[svg.Path](sv, false)
 				newPt = true
-				sv.Canvas.UpdateTabs()
-			} else {
-				path = es.ActivePath
 			}
 			switch {
 			case newPt:
-				sv.DrawAddNode(SpMoveTo, e.Pos())
+				sv.DrawNodeAdd(SpMoveTo, e.Pos())
 			case e.HasAnyModifier(key.Alt):
-				sv.DrawAddNode(SpCubeTo, e.Pos())
+				sv.DrawNodeAdd(SpCubeTo, e.Pos())
 			default:
-				sv.DrawAddNode(SpLineTo, e.Pos())
+				sv.DrawNodeAdd(SpLineTo, e.Pos())
 			}
-			sv.UpdateNodeSprites()
+			sv.Canvas.PaintSetter().SetProperties(es.ActivePath)
+			sv.UpdateView()
 		case isSelTool && es.HasSelected() && es.SelectBBox.ContainsPoint(math32.FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
@@ -184,11 +202,22 @@ func (sv *SVG) Init() {
 			sv.Canvas.UpdateTabs()
 		}
 	})
+	sv.On(events.MouseMove, func(e events.Event) {
+		es := sv.EditState()
+		if es.Tool == BezierTool {
+			es.DrawCurPos = e.Pos()
+			sv.UpdateLineAddSprite()
+		}
+	})
 	sv.On(events.MouseUp, func(e events.Event) {
 		if e.MouseButton() != events.Left {
 			return
 		}
 		es := sv.EditState()
+		if es.Tool == BezierTool {
+			es.DrawCurPos = e.Pos()
+			return
+		}
 		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
 		sob := es.MouseDownSel
 		if es.SelectNoDrag && isSelTool { // do select on up to allow for drag of selected item on down
@@ -209,11 +238,17 @@ func (sv *SVG) Init() {
 	})
 	sv.On(events.SlideMove, func(e events.Event) {
 		es := sv.EditState()
+		if es.Tool == BezierTool {
+			e.SetHandled()
+			es.DrawCurPos = e.Pos()
+			sv.UpdateLineAddSprite()
+			return
+		}
 		es.SelectNoDrag = false
-		e.SetHandled()
 		es.DragStartPos = e.StartPos() // this is the operative start
 		// fmt.Println("sm drag start:", es.DragStartPos)
 		if e.HasAnyModifier(key.Shift) {
+			e.SetHandled()
 			del := math32.FromPoint(e.PrevDelta()).MulScalar(max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01))
 			if sv.SVG.Scale > 0 {
 				del.SetDivScalar(min(1, sv.SVG.Scale))
@@ -223,6 +258,7 @@ func (sv *SVG) Init() {
 			return
 		}
 		if es.HasSelected() {
+			e.SetHandled()
 			switch es.Action {
 			case NewElement:
 				sv.SpriteReshapeDrag(SpDnR, e)
@@ -233,7 +269,12 @@ func (sv *SVG) Init() {
 		}
 		if !es.InAction() {
 			switch es.Tool {
-			case SelectTool, SelBoxTool:
+			case SelectTool:
+				if core.TheApp.SystemPlatform().IsMobile() { // fallthrough to frame scroll
+					return
+				}
+				sv.SetRubberBand(e.Pos())
+			case SelBoxTool:
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
 				NewSVGElementDrag[svg.Rect](sv, es.DragStartPos, e.Pos())
@@ -245,8 +286,10 @@ func (sv *SVG) Init() {
 			case BezierTool:
 				sv.NewPath(es.DragStartPos, e.Pos())
 			}
+			e.SetHandled()
 		} else if es.Action == BoxSelect || es.Tool == SelBoxTool {
 			sv.SetRubberBand(e.Pos())
+			e.SetHandled()
 		}
 	})
 	sv.On(events.SlideStop, func(e events.Event) {
@@ -406,7 +449,7 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 			main = md
 		}
 	}
-	if main == nil && mknew {
+	if main == nil && mknew && Settings.MetaData {
 		id := sv.SVG.NewUniqueID()
 		main = svg.NewMetaData()
 		root.InsertChild(main, 0)
@@ -434,6 +477,9 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 func (sv *SVG) SetMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(true)
+	if nv == nil {
+		return
+	}
 
 	uts := strings.ToLower(sv.SVG.PhysicalWidth.Unit.String())
 
@@ -626,7 +672,7 @@ func (sv *SVG) UpdateGridEff() {
 // RenderGrid renders the background grid
 func (sv *SVG) RenderGrid() {
 	root := sv.Root()
-	if root == nil {
+	if root == nil || !Settings.GridDisp {
 		return
 	}
 	sv.UpdateGridEff()

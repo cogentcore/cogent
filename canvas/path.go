@@ -5,6 +5,7 @@
 package canvas
 
 import (
+	"fmt"
 	"image"
 	"slices"
 
@@ -116,11 +117,26 @@ func (sv *SVG) UpdateNodeSprites() {
 				sv.NeedsRender()
 			})
 			sp.OnClick(func(e events.Event) {
+				e.SetHandled()
+				if es.Tool == BezierTool {
+					if i == 0 {
+						es.ActivePath.Data.Close()
+						es.ActivePath = nil
+						sv.UpdateView()
+					} else if i == len(es.PathNodes)-1 {
+						es.ActivePath = nil
+						sv.UpdateView()
+					}
+					return
+				}
 				es.NodeSelectAction(i, e.SelectMode())
 				sv.NeedsRender()
-				e.SetHandled()
 			})
 			sp.OnSlideStart(func(e events.Event) {
+				if es.Tool == BezierTool {
+					e.SetHandled()
+					return
+				}
 				if len(es.NodeSelect) == 0 {
 					es.SelectNode(i)
 				}
@@ -129,10 +145,18 @@ func (sv *SVG) UpdateNodeSprites() {
 				e.SetHandled()
 			})
 			sp.OnSlideMove(func(e events.Event) {
+				if es.Tool == BezierTool {
+					e.SetHandled()
+					return
+				}
 				sv.SpriteNodeDrag(i, e)
 				e.SetHandled()
 			})
 			sp.OnSlideStop(func(e events.Event) {
+				if es.Tool == BezierTool {
+					e.SetHandled()
+					return
+				}
 				sv.ManipDone()
 				e.SetHandled()
 			})
@@ -168,25 +192,31 @@ func (sv *SVG) UpdateNodeSprites() {
 		}
 
 		InactivateNodeCtrls(sprites, i)
-		switch pn.Cmd {
-		case SpQuadTo:
-			sp1 := sv.Sprite(SpNodeCtrl, SpQuad1, i, ept, func(sp *core.Sprite) {
-				ctrlEvents(sp, i, SpQuad1)
-			})
-			sp1.Properties["nodePoint"] = ept
-			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
-		case SpCubeTo:
-			spt := pn.TStart.ToPoint()
-			sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, spt, func(sp *core.Sprite) {
-				ctrlEvents(sp, i, SpCube1)
-			})
-			sp1.Properties["nodePoint"] = spt
-			SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
-			sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
-				ctrlEvents(sp, i, SpCube2)
-			})
-			sp2.Properties["nodePoint"] = ept
-			SetSpritePos(sp2, int(pn.TCp2.X), int(pn.TCp2.Y))
+		if es.Tool == BezierTool {
+			if i == len(es.PathNodes)-1 {
+				sv.UpdateLineAddSprite()
+			}
+		} else {
+			switch pn.Cmd {
+			case SpQuadTo:
+				sp1 := sv.Sprite(SpNodeCtrl, SpQuad1, i, ept, func(sp *core.Sprite) {
+					ctrlEvents(sp, i, SpQuad1)
+				})
+				sp1.Properties["nodePoint"] = ept
+				SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+			case SpCubeTo:
+				spt := pn.TStart.ToPoint()
+				sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, spt, func(sp *core.Sprite) {
+					ctrlEvents(sp, i, SpCube1)
+				})
+				sp1.Properties["nodePoint"] = spt
+				SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+				sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
+					ctrlEvents(sp, i, SpCube2)
+				})
+				sp2.Properties["nodePoint"] = ept
+				SetSpritePos(sp2, int(pn.TCp2.X), int(pn.TCp2.Y))
+			}
 		}
 	}
 
@@ -197,8 +227,21 @@ func (sv *SVG) UpdateNodeSprites() {
 	sprites.Unlock()
 }
 
+func (sv *SVG) UpdateLineAddSprite() {
+	es := sv.EditState()
+	np := len(es.PathNodes)
+	if np == 0 {
+		return
+	}
+	pn := es.PathNodes[np-1]
+	ept := pn.TEnd.ToPoint()
+	sp := sv.Sprite(SpLineAdd, SpNone, 0, ept, nil)
+	sp.Properties["lastPoint"] = ept
+	SetSpritePos(sp, es.DrawCurPos.X, es.DrawCurPos.Y)
+}
+
 func InactivateNodePoint(sprites *core.Sprites, i int) {
-	sprites.InactivateSpriteLocked(SpriteName(SpNodePoint, SpUnknown, i))
+	sprites.InactivateSpriteLocked(SpriteName(SpNodePoint, SpNone, i))
 	InactivateNodeCtrls(sprites, i)
 }
 
@@ -206,6 +249,7 @@ func InactivateNodeCtrls(sprites *core.Sprites, i int) {
 	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
 	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube1, i))
 	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube2, i))
+	sprites.InactivateSpriteLocked(SpriteName(SpLineAdd, SpNone, 0))
 }
 
 func (sv *SVG) RemoveNodeSprites() {
@@ -239,7 +283,7 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 		sv.PathNodeMove(es.ActivePath, es.PathNodes, i, pointOnly, dv, dxf)
 		pn := es.PathNodes[i]
 		nwc := pn.TEnd.Add(dv).ToPoint()
-		spnm := SpriteName(SpNodePoint, SpUnknown, i)
+		spnm := SpriteName(SpNodePoint, SpNone, i)
 		sp, _ := sprites.SpriteByNameLocked(spnm)
 		SetSpritePos(sp, nwc.X, nwc.Y)
 
@@ -403,25 +447,25 @@ func (cv *Canvas) MakeNodeToolbar(p *tree.Plan) {
 // InsertLineNode inserts a LineTo node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertLineNode() { //types:add
-	cv.InsertNode(SpLineTo)
+	cv.NodeInsert(SpLineTo)
 }
 
 // InsertCubicNode inserts a cubic node into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertCubicNode() { //types:add
-	cv.InsertNode(SpCubeTo)
+	cv.NodeInsert(SpCubeTo)
 }
 
 // InsertBreak inserts a break (move) into current active path:
 // If no selection: at end, otherwise after first selected node.
 func (cv *Canvas) InsertBreak() { //types:add
-	cv.InsertNode(SpMoveTo)
+	cv.NodeInsert(SpMoveTo)
 }
 
 // NodeReplaceCubic replaces selected non-cubic nodes with cubic ones
 // into current active path
 func (cv *Canvas) NodeReplaceCubic() { //types:add
-	cv.ReplaceNode(SpCubeTo)
+	cv.NodeReplace(SpCubeTo)
 }
 
 // NodeDelete deletes the selected node(s) from current active path.
@@ -434,38 +478,35 @@ func (cv *Canvas) NodeDelete() { //types:add
 		return
 	}
 	sv.UndoSave("NodeDelete", "")
-	pt := es.ActivePath.Data
 	for i := n - 1; i >= 0; i-- {
 		idx := sls[i]
-		pn := es.PathNodes[idx]
-		pt = slices.Delete(pt, pn.Index, pn.EndIndex())
+		sv.NodeDelete(idx)
 	}
-	es.ActivePath.Data = pt
 	sv.UpdateView()
 }
 
-// InsertNode inserts a node of given type into current active path:
+// NodeInsert inserts a node of given type into current active path:
 // If no selection: at end, otherwise after first selected node.
-func (cv *Canvas) InsertNode(ntyp Sprites) {
+func (cv *Canvas) NodeInsert(ntyp Sprites) {
 	es := &cv.EditState
 	sv := cv.SVG
 	if es.ActivePath == nil {
 		return
 	}
-	sv.UndoSave("InsertNode", ntyp.String())
+	sv.UndoSave("NodeInsert", ntyp.String())
 	sls := es.NodeSelectedList()
 	nsel := len(sls)
 	if nsel == 0 {
-		sv.AppendNode(ntyp)
+		sv.NodeAppend(ntyp)
 		return
 	}
-	sv.InsertNode(ntyp, sls[0])
+	sv.NodeInsert(ntyp, sls[0])
 	sv.UpdateView()
 }
 
-// ReplaceNode replaces current node with new one of given type
+// NodeReplace replaces current node with new one of given type
 // into current active path.
-func (cv *Canvas) ReplaceNode(ntyp Sprites) {
+func (cv *Canvas) NodeReplace(ntyp Sprites) {
 	es := &cv.EditState
 	sv := cv.SVG
 	if es.ActivePath == nil {
@@ -476,15 +517,15 @@ func (cv *Canvas) ReplaceNode(ntyp Sprites) {
 	if n == 0 {
 		return
 	}
-	sv.UndoSave("ReplaceNode", ntyp.String())
+	sv.UndoSave("NodeReplace", ntyp.String())
 	for i := n - 1; i >= 0; i-- {
 		idx := sls[i]
-		sv.ReplaceNode(ntyp, idx)
+		sv.NodeReplace(ntyp, idx)
 	}
 	sv.UpdateView()
 }
 
-func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) ppath.Path {
+func (sv *SVG) NodeAdd(ntyp Sprites, p ppath.Path, end, start math32.Vector2) ppath.Path {
 	es := sv.EditState()
 	path := es.ActivePath
 	xf := path.ParentTransform(true).Inverse()
@@ -492,6 +533,9 @@ func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) pp
 	lstart := xf.MulVector2AsPoint(start)
 	del := lend.Sub(lstart)
 	switch ntyp {
+	case SpClose:
+		fmt.Println("add close")
+		p.Close()
 	case SpMoveTo:
 		p.MoveTo(lend.X, lend.Y)
 	case SpLineTo:
@@ -507,7 +551,7 @@ func (sv *SVG) AddNode(ntyp Sprites, p ppath.Path, end, start math32.Vector2) pp
 	return p
 }
 
-func (sv *SVG) AppendNode(ntyp Sprites) {
+func (sv *SVG) NodeAppend(ntyp Sprites) {
 	es := sv.EditState()
 	var end, start math32.Vector2
 	np := len(es.PathNodes)
@@ -525,14 +569,14 @@ func (sv *SVG) AppendNode(ntyp Sprites) {
 		end = start.Add(del)
 	}
 	path := es.ActivePath
-	path.Data = sv.AddNode(ntyp, path.Data, end, start)
+	path.Data = sv.NodeAdd(ntyp, path.Data, end, start)
 }
 
-func (sv *SVG) InsertNode(ntyp Sprites, idx int) {
+func (sv *SVG) NodeInsert(ntyp Sprites, idx int) {
 	es := sv.EditState()
 	np := len(es.PathNodes)
 	if idx >= np-1 {
-		sv.AppendNode(ntyp)
+		sv.NodeAppend(ntyp)
 		return
 	}
 	snd := es.PathNodes[idx]
@@ -544,11 +588,11 @@ func (sv *SVG) InsertNode(ntyp Sprites, idx int) {
 	path := es.ActivePath
 	sp := path.Data[:nnd.Index]
 	rest := path.Data[nnd.Index:].Clone()
-	sp = sv.AddNode(ntyp, sp, mid, start)
+	sp = sv.NodeAdd(ntyp, sp, mid, start)
 	path.Data = append(sp, rest...)
 }
 
-func (sv *SVG) ReplaceNode(ntyp Sprites, idx int) {
+func (sv *SVG) NodeReplace(ntyp Sprites, idx int) {
 	es := sv.EditState()
 	path := es.ActivePath
 	snd := es.PathNodes[idx]
@@ -559,11 +603,33 @@ func (sv *SVG) ReplaceNode(ntyp Sprites, idx int) {
 	end := snd.TEnd
 	sp := path.Data[:snd.Index]
 	rest := path.Data[snd.EndIndex():].Clone()
-	sp = sv.AddNode(ntyp, sp, end, start)
+	sp = sv.NodeAdd(ntyp, sp, end, start)
 	path.Data = append(sp, rest...)
 }
 
-func (sv *SVG) DrawAddNode(ntyp Sprites, pos image.Point) {
+// NodeDelete deletes node from active path at given index.
+// if doing multiple deletes in a loop, go in reverse.
+func (sv *SVG) NodeDelete(idx int) {
+	es := sv.EditState()
+	pn := es.PathNodes[idx]
+	es.ActivePath.Data = slices.Delete(es.ActivePath.Data, pn.Index, pn.EndIndex())
+}
+
+// NodeDeleteLast deletes the last node from ActivePath if n > 1.
+func (sv *SVG) NodeDeleteLast() {
+	es := sv.EditState()
+	if es.ActivePath == nil {
+		return
+	}
+	np := len(es.PathNodes)
+	if np <= 1 {
+		return
+	}
+	sv.NodeDelete(np - 1)
+	sv.UpdateView()
+}
+
+func (sv *SVG) DrawNodeAdd(ntyp Sprites, pos image.Point) {
 	es := sv.EditState()
 	np := len(es.PathNodes)
 	var start math32.Vector2
@@ -572,5 +638,5 @@ func (sv *SVG) DrawAddNode(ntyp Sprites, pos image.Point) {
 	}
 	end := math32.FromPoint(pos)
 	path := es.ActivePath
-	path.Data = sv.AddNode(ntyp, path.Data, end, start)
+	path.Data = sv.NodeAdd(ntyp, path.Data, end, start)
 }

@@ -120,6 +120,9 @@ type EditState struct {
 	CtrlDragIndex int
 	CtrlDrag      Sprites
 
+	// Current position while drawing
+	DrawCurPos image.Point
+
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }

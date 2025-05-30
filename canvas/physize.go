@@ -27,14 +27,14 @@ type PhysSize struct { //types:add
 	Size math32.Vector2
 
 	// grid spacing, in units of ViewBox size
-	Grid float32 `default:"16"`
+	Grid float32 `default:"32"`
 }
 
 func (ps *PhysSize) Defaults() {
 	ps.StandardSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
-	ps.Grid = 16
+	ps.Grid = 32
 }
 
 func (ps *PhysSize) Update() {

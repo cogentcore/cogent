@@ -40,7 +40,7 @@ var ToolHelpMap = map[Tools]string{
 	NodeTool:    "Click to select a path to edit <b>Alt</b> = only move node, not control points, <b>Ctrl</b> = constrain to axis with smallest delta",
 	RectTool:    "Drag to add a new rectangle <b>Ctrl</b> = constrain to axis with smallest delta",
 	EllipseTool: "Drag to add a new ellipse <b>Ctrl</b> = constrain to axis with smallest delta",
-	BezierTool:  "Click to add points (no dragging) <b>Alt</b> = add curve nodes, otherwise lines",
+	BezierTool:  "Click to add points (don't drag) <b>Alt</b> = add curve nodes, otherwise lines, <b>Enter</b> or click on same spot when done (Alt closes)",
 }
 
 // SetTool sets the current active tool
