@@ -704,3 +704,70 @@ func (sv *SVG) DistributeProps() {
 		return tree.Continue
 	})
 }
+
+// UngroupSingletons moves leaf nodes that are all by self in a group
+// out of the group.
+func (sv *SVG) UngroupSingletons() {
+	var singles []svg.Node
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This {
+			return tree.Continue
+		}
+		if nb.HasChildren() {
+			return tree.Continue
+		}
+		if txt, istxt := n.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				if _, istxt := txt.Parent.(*svg.Text); istxt {
+					return tree.Break
+				}
+			}
+		}
+		par := nb.Parent.(svg.Node).AsNodeBase()
+		if par.NumChildren() != 1 || par.Parent == nil {
+			return tree.Continue
+		}
+		singles = append(singles, n)
+		return tree.Continue
+	})
+	if len(singles) == 0 {
+		return
+	}
+	sv.SVG.Style() // ensure all styles are set
+	for _, n := range singles {
+		nb := n.AsNodeBase()
+		par := nb.Parent.(svg.Node).AsNodeBase()
+		parPar := par.Parent
+		tree.MoveToParent(nb.This, parPar)
+		if !par.Paint.Transform.IsIdentity() {
+			nb.ApplyTransform(sv.SVG, par.Paint.Transform)
+		}
+		ppn := parPar.(svg.Node).AsNodeBase()
+		ppn.DeleteChild(par.This)
+	}
+}
+
+// RemoveEmptyGroups removes groups that have no children.
+func (sv *SVG) RemoveEmptyGroups() {
+	var empties []svg.Node
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This {
+			return tree.Continue
+		}
+		if nb.HasChildren() {
+			return tree.Continue
+		}
+		if _, isgp := n.(*svg.Group); isgp {
+			empties = append(empties, n)
+		}
+		return tree.Continue
+	})
+	if len(empties) == 0 {
+		return
+	}
+	for _, n := range empties {
+		nb := n.AsNodeBase()
+		par := nb.Parent.(svg.Node).AsNodeBase()
+		par.DeleteChild(n)
+	}
+}

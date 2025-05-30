@@ -321,6 +321,7 @@ func (cv *Canvas) SelectUnGroup() { //types:add
 			}
 		}
 	}
+	sv.RemoveEmptyGroups()
 	cv.UpdateAll()
 	cv.ChangeMade()
 }
