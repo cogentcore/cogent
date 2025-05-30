@@ -55,7 +55,6 @@ func (cv *Canvas) SetTool(tl Tools) {
 		es.ResetSelectedNodes()
 	}
 	cv.EditState.Tool = tl
-	cv.SetDefaultStyle()
 	cv.SetStatus(" " + ToolHelpMap[tl])
 	cv.tools.Restyle()
 	cv.tools.Restyle() // needs 2 for some reason

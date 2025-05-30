@@ -41,16 +41,19 @@ type Canvas struct {
 	// current edit state
 	EditState EditState `set:"-"`
 
-	SVG        *SVG
-	tabs       *core.Tabs
-	splits     *core.Splits
-	modalTools *core.Toolbar
-	tools      *core.Toolbar
-	tree       *Tree
-	defs       *Tree
-	layerTree  *core.Frame
-	layers     *core.Table
-	statusBar  *core.Frame
+	// SVG displays the SVG image and has methods for managing it.
+	SVG *SVG
+
+	tabs        *core.Tabs
+	splits      *core.Splits
+	modalTools  *core.Toolbar
+	tools       *core.Toolbar
+	tree        *Tree
+	defs        *Tree
+	layerTree   *core.Frame
+	layers      *core.Table
+	statusBar   *core.Frame
+	canvasFlags canvasFlags
 }
 
 func (cv *Canvas) Init() {
@@ -73,7 +76,6 @@ func (cv *Canvas) Init() {
 		}
 	})
 	cv.AddCloseDialog(func(d *core.Body) bool {
-		return false // todo: temporary disable -- need to fix bug
 		if !cv.EditState.Changed {
 			return false
 		}
@@ -225,7 +227,7 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 }
 
 // OpenDrawing opens a new .svg drawing
-func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
+func (cv *Canvas) OpenDrawing(fnm core.Filename) error {
 	err := cv.OpenDrawingFile(fnm)
 	RecentPaths.AddPath(string(fnm), core.SystemSettings.SavedPathsMax)
 	SavePaths()
@@ -240,7 +242,28 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	sv.backgroundGridEff = 0
 	sv.SVG.ZoomReset()
 	cv.UpdateAll()
+	core.ErrorSnackbar(cv, err)
 	return err
+}
+
+// OpenDrawingCheck opens a new .svg drawing, checking for autosave file.
+func (cv *Canvas) OpenDrawingCheck(fnm core.Filename) error { //types:add
+	if !cv.AutosaveCheck(fnm) {
+		return cv.OpenDrawing(fnm)
+	}
+	d := core.NewBody("Autosave file exists")
+	core.NewText(d).SetType(core.TextSupporting).SetText("Autosave file for this drawing is present: Open autosave or last saved file?")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar).SetText("Open last saved").OnClick(func(e events.Event) {
+			cv.OpenDrawing(fnm)
+		})
+		d.AddOK(bar).SetText("Open autosave").OnClick(func(e events.Event) {
+			afnm := cv.autoSaveFilename(fnm)
+			cv.OpenDrawing(core.Filename(afnm))
+		})
+	})
+	d.RunDialog(cv)
+	return nil
 }
 
 // NewDrawing creates a new drawing of the given size
@@ -304,7 +327,7 @@ func (cv *Canvas) SaveDrawingAs(fname core.Filename) error { //types:add
 	sv.SetMetaData()
 	err := sv.SVG.SaveXML(path)
 	if errors.Log(err) == nil {
-		cv.AutoSaveDelete()
+		cv.AutosaveDelete()
 	}
 	cv.SetTitle()
 	cv.SetStatus("Saved: " + path)
@@ -416,7 +439,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
 			for _, rp := range RecentPaths {
 				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
-					cv.OpenDrawing(core.Filename(rp))
+					cv.OpenDrawingCheck(core.Filename(rp))
 				})
 			}
 			core.NewSeparator(m)
@@ -429,7 +452,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(cv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+		w.SetFunc(cv.OpenDrawingCheck).SetText("Open").SetIcon(icons.Open)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
@@ -624,19 +647,6 @@ func (cv *Canvas) UpdateTree() {
 	cv.tree.Resync()
 }
 
-func (cv *Canvas) SetDefaultStyle() {
-	// pv := vv.PaintSetter()
-	// es := &vv.EditState
-	// switch es.Tool {
-	// case TextTool:
-	// 	pv.Update(&Settings.TextStyle, nil)
-	// case BezierTool:
-	// 	pv.Update(&Settings.PathStyle, nil)
-	// default:
-	// 	pv.Update(&Settings.ShapeStyle, nil)
-	// }
-}
-
 // UpdateSelectIsText updates the SelectIsText status
 func (cv *Canvas) UpdateModalToolbar() {
 	cv.EditState.UpdateSelectIsText()
@@ -706,12 +716,6 @@ func (cv *Canvas) Redo() string { //types:add
 	return act
 }
 
-// ChangeMade should be called after any change is completed on the drawing.
-// Calls autosave.
-func (cv *Canvas) ChangeMade() {
-	go cv.AutoSave()
-}
-
 ////////   Basic infrastructure
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
@@ -727,47 +731,57 @@ func (cv *Canvas) HelpWiki() {
 	core.TheApp.OpenURL("https://cogentcore.org/canvas")
 }
 
-////////  AutoSave
+////////  Autosave
 
-// AutoSaveFilename returns the autosave filename
-func (cv *Canvas) AutoSaveFilename() string {
-	path, fn := filepath.Split(string(cv.Filename))
+// ChangeMade should be called after any change is completed on the drawing.
+// Calls autosave.
+func (cv *Canvas) ChangeMade() {
+	go cv.Autosave()
+}
+
+// autoSaveFilename returns the autosave filename
+func (cv *Canvas) autoSaveFilename(fnm core.Filename) string {
+	path, fn := filepath.Split(string(fnm))
 	if fn == "" {
 		fn = "new_file_" + cv.Name + ".svg"
 	}
-	asfn := filepath.Join(path, "#"+fn+"#")
-	return asfn
+	return filepath.Join(path, "#"+fn+"#")
 }
 
-// AutoSave does the autosave -- safe to call in a separate goroutine
-func (cv *Canvas) AutoSave() error {
-	// if vv.HasFlag(int(VectorAutoSaving)) {
-	// 	return nil
-	// }
-	// vv.SetFlag(int(VectorAutoSaving))
-	// asfn := vv.AutoSaveFilename()
-	// sv := vv.SVG
-	// err := sv.SaveXML(core.Filename(asfn))
-	// if err != nil && err != io.EOF {
-	// 	log.Println(err)
-	// }
-	// vv.ClearFlag(int(VectorAutoSaving))
-	// return err
-	return nil
+// Autosave does the autosave -- safe to call in a separate goroutine
+func (cv *Canvas) Autosave() error {
+	if cv.canvasFlags.HasFlag(canvasAutoSaving) {
+		return nil
+	}
+	cv.canvasFlags.SetFlag(true, canvasAutoSaving)
+	asfn := cv.autoSaveFilename(cv.Filename)
+	sv := cv.SSVG()
+	err := sv.SaveXML(asfn)
+	errors.Log(err)
+	cv.canvasFlags.SetFlag(false, canvasAutoSaving)
+	return err
 }
 
-// AutoSaveDelete deletes any existing autosave file
-func (cv *Canvas) AutoSaveDelete() {
-	asfn := cv.AutoSaveFilename()
+// AutosaveDelete deletes any existing autosave file
+func (cv *Canvas) AutosaveDelete() {
+	asfn := cv.autoSaveFilename(cv.Filename)
 	os.Remove(asfn)
 }
 
-// AutoSaveCheck checks if an autosave file exists -- logic for dealing with
-// it is left to larger app -- call this before opening a file
-func (cv *Canvas) AutoSaveCheck() bool {
-	asfn := cv.AutoSaveFilename()
+// AutosaveCheck checks if an autosave file exists.
+func (cv *Canvas) AutosaveCheck(fnm core.Filename) bool {
+	asfn := cv.autoSaveFilename(fnm)
 	if _, err := os.Stat(asfn); os.IsNotExist(err) {
 		return false // does not exist
 	}
 	return true
 }
+
+// canvasFlags are atomic bit flags for [Canvas] state.
+// They must be atomic to prevent race conditions.
+type canvasFlags int64 //enums:bitflag -trim-prefix canvas
+
+const (
+	// canvasAutoSaving is true if auto-saving.
+	canvasAutoSaving canvasFlags = iota
+)

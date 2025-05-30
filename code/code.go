@@ -342,8 +342,7 @@ func (cv *Code) FocusOnTabs() bool {
 	return cv.FocusOnPanel(TabsIndex)
 }
 
-////////////////////////////////////////////////////////
-//  Main project API
+////////  Main project API
 
 // UpdateFiles updates the list of files saved in project
 func (cv *Code) UpdateFiles() { //types:add
@@ -656,8 +655,7 @@ func CheckForProjectAtPath(path string) (string, bool) {
 	return gproj, true
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Close / Quit Req
+////////   Close / Quit Req
 
 // NChangedFiles returns number of opened files with unsaved changes
 func (cv *Code) NChangedFiles() int {
@@ -689,8 +687,7 @@ func (cv *Code) AddCloseDialog() {
 	})
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Project window
+////////   Project window
 
 // NewCodeProjectPath creates a new Code window with a new Code project for given
 // path, returning the window and the path
