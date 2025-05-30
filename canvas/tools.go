@@ -40,8 +40,10 @@ func (cv *Canvas) SetTool(tl Tools) {
 		cv.tools.Restyle()
 		return
 	}
-	es.ResetSelected()
-	es.ResetSelectedNodes()
+	if es.Tool == NodeTool {
+		es.ResetSelected()
+		es.ResetSelectedNodes()
+	}
 	cv.EditState.Tool = tl
 	cv.SetDefaultStyle()
 	cv.SetStatus("Tool: " + tl.String())

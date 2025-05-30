@@ -76,11 +76,11 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		cv.selectEnabledStyler(w)
-		w.SetFunc(cv.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
+		w.SetFunc(cv.SelectLower).SetText("").SetIcon(cicons.SelLower)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		cv.selectEnabledStyler(w)
-		w.SetFunc(cv.SelectLower).SetText("").SetIcon(cicons.SelLower)
+		w.SetFunc(cv.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	// tree.Add(p, func(w *core.Text) {
@@ -264,12 +264,12 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 ////////   Actions
 
 // SelectGroup groups items together
-func (gv *Canvas) SelectGroup() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectGroup() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("Group", es.SelectedNamesString())
 
 	sl := es.SelectedListDepth(sv, false) // ascending depth order
@@ -289,17 +289,17 @@ func (gv *Canvas) SelectGroup() { //types:add
 	es.ResetSelected()
 	es.Select(ng)
 
-	gv.UpdateAll()
-	gv.ChangeMade()
+	cv.UpdateAll()
+	cv.ChangeMade()
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *Canvas) SelectUnGroup() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectUnGroup() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("UnGroup", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -321,16 +321,16 @@ func (gv *Canvas) SelectUnGroup() { //types:add
 			}
 		}
 	}
-	gv.UpdateAll()
-	gv.ChangeMade()
+	cv.UpdateAll()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectRotate(deg float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectRotate(deg float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
 	del := math32.Vector2{}
@@ -343,15 +343,15 @@ func (gv *Canvas) SelectRotate(deg float32) {
 		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, rot, ctr))
 	}
 	sv.UpdateView()
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectScale(scx, scy float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectScale(scx, scy float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
 	del := math32.Vector2{}
@@ -363,167 +363,155 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, ctr))
 	}
 	sv.UpdateView()
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *Canvas) SelectRotateLeft() { //types:add
-	gv.SelectRotate(-90)
+func (cv *Canvas) SelectRotateLeft() { //types:add
+	cv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *Canvas) SelectRotateRight() { //types:add
-	gv.SelectRotate(90)
+func (cv *Canvas) SelectRotateRight() { //types:add
+	cv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *Canvas) SelectFlipHorizontal() { //types:add
-	gv.SelectScale(-1, 1)
+func (cv *Canvas) SelectFlipHorizontal() { //types:add
+	cv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *Canvas) SelectFlipVertical() { //types:add
-	gv.SelectScale(1, -1)
+func (cv *Canvas) SelectFlipVertical() { //types:add
+	cv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *Canvas) SelectRaiseTop() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectRaiseTop() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("RaiseTop", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, len(pt.Children)-1)
 	}
-	gv.UpdateSVG()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.ChangeMade()
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *Canvas) SelectRaise() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectRaise() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("Raise", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		if ci < parent.AsTree().NumChildren()-1 {
 			pt := parent.AsTree()
 			pt.Children = slicesx.Move(pt.Children, ci, ci+1)
 		}
 	}
-	gv.UpdateSVG()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.ChangeMade()
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *Canvas) SelectLowerBottom() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectLowerBottom() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("LowerBottom", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, 0)
 	}
-	gv.UpdateSVG()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.ChangeMade()
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *Canvas) SelectLower() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectLower() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("Lower", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
 			pt := parent.AsTree()
 			pt.Children = slicesx.Move(pt.Children, ci, ci-1)
 		}
 	}
-	gv.UpdateSVG()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetXPos(xp float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetXPos(xp float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("MoveToX", fmt.Sprintf("%g", xp))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetYPos(yp float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetYPos(yp float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("MoveToY", fmt.Sprintf("%g", yp))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetWidth(wd float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetWidth(wd float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("SetWidth", fmt.Sprintf("%g", wd))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetHeight(ht float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetHeight(ht float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG
+	sv := cv.SVG
 	sv.UndoSave("SetHeight", fmt.Sprintf("%g", ht))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
 ////////   Select tree traversal

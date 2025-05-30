@@ -209,6 +209,9 @@ func SetSpritePos(sp *core.Sprite, x, y int) {
 func InactivateSprites(sprites *core.Sprites, typ Sprites) {
 	sprites.Do(func(sl core.SpriteList) {
 		for _, sp := range sl.Values {
+			if sp == nil {
+				continue
+			}
 			st, _, _ := SpriteProperties(sp)
 			if st == typ {
 				sp.Active = false

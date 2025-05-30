@@ -59,6 +59,7 @@ func (sv *SVG) Init() {
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
 		s.Cursor = cursors.Arrow // todo: modulate based on tool etc
 		sv.SVG.TextShaper = sv.Scene.TextShaper()
+		s.StateLayer = 0 // always focused..
 	})
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
@@ -299,6 +300,7 @@ func (sv *SVG) UpdateView() {
 	sv.UpdateSelSprites()
 	sv.UpdateNodeSprites()
 	sv.NeedsRender()
+	sv.SetFocus()
 }
 
 // SpritesNolock returns the [core.Sprites] without locking.
