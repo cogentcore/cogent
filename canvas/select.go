@@ -205,7 +205,7 @@ func (sv *SVG) setSelSpritePos() {
 
 // SetBBoxSpritePos sets positions of given type of sprites.
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
-	spbb, _ := HandleSpriteSize(1, image.Point{})
+	spbb, _ := sv.HandleSpriteSize(1, image.Point{})
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spbb.Dx())))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spbb.Dy())))
 	bbi := bbox.ToRect()
@@ -213,21 +213,21 @@ func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 		sp := sv.Sprite(typ, i, idx, image.ZP, nil)
 		switch i {
 		case SpUpL:
-			SetSpritePos(sp, bbi.Min.X, bbi.Min.Y)
+			sv.SetSpritePos(sp, bbi.Min.X, bbi.Min.Y)
 		case SpUpC:
-			SetSpritePos(sp, midX, bbi.Min.Y)
+			sv.SetSpritePos(sp, midX, bbi.Min.Y)
 		case SpUpR:
-			SetSpritePos(sp, bbi.Max.X, bbi.Min.Y)
+			sv.SetSpritePos(sp, bbi.Max.X, bbi.Min.Y)
 		case SpDnL:
-			SetSpritePos(sp, bbi.Min.X, bbi.Max.Y)
+			sv.SetSpritePos(sp, bbi.Min.X, bbi.Max.Y)
 		case SpDnC:
-			SetSpritePos(sp, midX, bbi.Max.Y)
+			sv.SetSpritePos(sp, midX, bbi.Max.Y)
 		case SpDnR:
-			SetSpritePos(sp, bbi.Max.X, bbi.Max.Y)
+			sv.SetSpritePos(sp, bbi.Max.X, bbi.Max.Y)
 		case SpLfM:
-			SetSpritePos(sp, bbi.Min.X, midY)
+			sv.SetSpritePos(sp, bbi.Min.X, midY)
 		case SpRtM:
-			SetSpritePos(sp, bbi.Max.X, midY)
+			sv.SetSpritePos(sp, bbi.Max.X, midY)
 		}
 	}
 }
@@ -255,7 +255,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	}
 	sp := sv.Sprite(SpRubberBand, SpNone, 0, sz, nil)
 	sp.Properties["size"] = sz
-	SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
+	sv.SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
 
 	sprites.Unlock()
 	sv.NeedsRender()

@@ -317,7 +317,7 @@ func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 		lsz := pt.Max.Sub(pt.Min)
 		sp := sv.Sprite(SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
 		sp.Properties["size"] = lsz
-		SetSpritePos(sp, pt.Min.X, pt.Min.Y)
+		sv.SetSpritePos(sp, pt.Min.X, pt.Min.Y)
 	}
 }
 

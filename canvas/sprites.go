@@ -12,6 +12,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint"
+	"cogentcore.org/core/styles/units"
 )
 
 // note: all sprite functions assume overall sprites are locked.
@@ -185,12 +186,12 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 }
 
 // SetSpritePos sets sprite position, taking into account relative offsets
-func SetSpritePos(sp *core.Sprite, x, y int) {
+func (sv *SVG) SetSpritePos(sp *core.Sprite, x, y int) {
 	typ, subtyp, _ := SpriteProperties(sp)
 	pos := image.Point{x, y}
 	switch {
 	case typ == SpNodePoint || typ == SpNodeCtrl:
-		spbb, _ := HandleSpriteSize(1, image.Point{})
+		spbb, _ := sv.HandleSpriteSize(1, image.Point{})
 		pos.X -= spbb.Dx() / 2
 		pos.Y -= spbb.Dy() / 2
 	case subtyp >= SpUpL && subtyp <= SpRtM: // Reshape, Sel BBox
@@ -198,7 +199,7 @@ func SetSpritePos(sp *core.Sprite, x, y int) {
 		if typ == SpSelBBox {
 			sc = .8
 		}
-		spbb, _ := HandleSpriteSize(sc, image.Point{})
+		spbb, _ := sv.HandleSpriteSize(sc, image.Point{})
 		if subtyp == SpDnL || subtyp == SpUpL || subtyp == SpLfM {
 			pos.X -= spbb.Dx()
 		}
@@ -229,15 +230,22 @@ func InactivateSprites(sprites *core.Sprites, typ Sprites) {
 ////////  Sprite rendering
 
 const (
-	HandleSpriteScale = 12
-	HandleSizeMin     = 12
-	HandleBorderMin   = 2
+	HandleSpriteDp  = 12
+	HandleSizeMin   = 12
+	HandleBorderMin = 2
 )
 
 // HandleSpriteSize returns the bounding box and rect draw coords
 // for handle-type sprites.
-func HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw math32.Box2) {
-	sz := math32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100)
+func (sv *SVG) HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw math32.Box2) {
+	dp := float32(HandleSpriteDp)
+	if core.TheApp.SystemPlatform().IsMobile() {
+		dp *= 2
+	}
+	un := units.Value{}
+	un.Dp(dp)
+	un.ToDots(&sv.Styles.UnitContext)
+	sz := math32.Ceil(scale * un.Dots)
 	sz = max(sz, HandleSizeMin)
 	bsz := max(sz/6, HandleBorderMin)
 	bb = image.Rectangle{Min: pos, Max: pos.Add(image.Pt(int(sz), int(sz)))}
@@ -249,7 +257,7 @@ func HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw
 // DrawSpriteReshape returns sprite Draw function for reshape points
 func (sv *SVG) DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
+		bb, rdraw := sv.HandleSpriteSize(1, sp.EventBBox.Min)
 		sp.EventBBox = bb
 		if sv.Geom.ContentBBox.Intersect(bb) == (image.Rectangle{}) {
 			return
@@ -261,7 +269,7 @@ func (sv *SVG) DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.
 // DrawSpriteSelect renders a Select sprite handle -- smaller
 func (sv *SVG) DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		bb, rdraw := HandleSpriteSize(.8, sp.EventBBox.Min)
+		bb, rdraw := sv.HandleSpriteSize(.8, sp.EventBBox.Min)
 		sp.EventBBox = bb
 		if sv.Geom.ContentBBox.Intersect(bb) == (image.Rectangle{}) {
 			return
@@ -274,7 +282,7 @@ func (sv *SVG) DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.P
 // DrawSpriteNodePoint renders a NodePoint sprite handle
 func (sv *SVG) DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
-		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
+		bbi, _ := sv.HandleSpriteSize(1, sp.EventBBox.Min)
 		bb := math32.B2FromRect(bbi)
 		ctr := bb.Center()
 		sp.EventBBox = bbi
@@ -301,7 +309,7 @@ func (sv *SVG) DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites
 func (sv *SVG) DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int, nodepos image.Point) func(pc *paint.Painter) {
 	sp.Properties["nodePoint"] = nodepos
 	return func(pc *paint.Painter) {
-		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
+		bbi, _ := sv.HandleSpriteSize(1, sp.EventBBox.Min)
 		if sv.Geom.ContentBBox.Intersect(bbi) == (image.Rectangle{}) {
 			return
 		}
