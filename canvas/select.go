@@ -404,6 +404,7 @@ func (cv *Canvas) SelectRaiseTop() { //types:add
 		pt.Children = slicesx.Move(pt.Children, ci, len(pt.Children)-1)
 	}
 	cv.UpdateSVG()
+	cv.UpdateTree()
 	cv.ChangeMade()
 }
 
@@ -426,6 +427,7 @@ func (cv *Canvas) SelectRaise() { //types:add
 		}
 	}
 	cv.UpdateSVG()
+	cv.UpdateTree()
 	cv.ChangeMade()
 }
 
@@ -446,6 +448,7 @@ func (cv *Canvas) SelectLowerBottom() { //types:add
 		pt.Children = slicesx.Move(pt.Children, ci, 0)
 	}
 	cv.UpdateSVG()
+	cv.UpdateTree()
 	cv.ChangeMade()
 }
 
@@ -468,6 +471,7 @@ func (cv *Canvas) SelectLower() { //types:add
 		}
 	}
 	cv.UpdateSVG()
+	cv.UpdateTree()
 	cv.ChangeMade()
 }
 

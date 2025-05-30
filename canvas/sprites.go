@@ -153,14 +153,14 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	switch typ {
 	case SpReshapeBBox:
 		final = true
-		sp.Draw = DrawSpriteReshape(sp, subtyp)
+		sp.Draw = sv.DrawSpriteReshape(sp, subtyp)
 	case SpSelBBox:
-		sp.Draw = DrawSpriteSelect(sp, subtyp)
+		sp.Draw = sv.DrawSpriteSelect(sp, subtyp)
 	case SpNodePoint:
-		sp.Draw = DrawSpriteNodePoint(es, sp, subtyp, idx)
+		sp.Draw = sv.DrawSpriteNodePoint(es, sp, subtyp, idx)
 	case SpNodeCtrl:
 		first = true
-		sp.Draw = DrawSpriteNodeCtrl(es, sp, subtyp, idx, trgsz)
+		sp.Draw = sv.DrawSpriteNodeCtrl(es, sp, subtyp, idx, trgsz)
 	case SpRubberBand:
 		sp.Draw = DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
@@ -243,31 +243,40 @@ func HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectangle, rdraw
 }
 
 // DrawSpriteReshape returns sprite Draw function for reshape points
-func DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+func (sv *SVG) DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
 		bb, rdraw := HandleSpriteSize(1, sp.EventBBox.Min)
 		sp.EventBBox = bb
+		if sv.Geom.ContentBBox.Intersect(bb) == (image.Rectangle{}) {
+			return
+		}
 		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.Primary.Base)
 	}
 }
 
 // DrawSpriteSelect renders a Select sprite handle -- smaller
-func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
+func (sv *SVG) DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
 		bb, rdraw := HandleSpriteSize(.8, sp.EventBBox.Min)
 		sp.EventBBox = bb
+		if sv.Geom.ContentBBox.Intersect(bb) == (image.Rectangle{}) {
+			return
+		}
 		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
 		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.OnSurface)
 	}
 }
 
 // DrawSpriteNodePoint renders a NodePoint sprite handle
-func DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int) func(pc *paint.Painter) {
+func (sv *SVG) DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int) func(pc *paint.Painter) {
 	return func(pc *paint.Painter) {
 		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
 		bb := math32.B2FromRect(bbi)
 		ctr := bb.Center()
 		sp.EventBBox = bbi
+		if sv.Geom.ContentBBox.Intersect(bbi) == (image.Rectangle{}) {
+			return
+		}
 		pc.BlitBox(math32.FromPoint(bbi.Min), math32.FromPoint(bbi.Size()), colors.Scheme.Surface)
 		switch {
 		case es.NodeIsSelected(idx):
@@ -285,10 +294,14 @@ func DrawSpriteNodePoint(es *EditState, sp *core.Sprite, bbtyp Sprites, idx int)
 }
 
 // DrawSpriteNodeCtrl renders a NodeControl sprite handle
-func DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int, nodepos image.Point) func(pc *paint.Painter) {
+func (sv *SVG) DrawSpriteNodeCtrl(es *EditState, sp *core.Sprite, subtyp Sprites, idx int, nodepos image.Point) func(pc *paint.Painter) {
 	sp.Properties["nodePoint"] = nodepos
 	return func(pc *paint.Painter) {
 		bbi, _ := HandleSpriteSize(1, sp.EventBBox.Min)
+		if sv.Geom.ContentBBox.Intersect(bbi) == (image.Rectangle{}) {
+			return
+		}
+
 		bb := math32.B2FromRect(bbi)
 		ctr := bb.Center()
 		sz := bb.Size()

@@ -566,7 +566,10 @@ func (sv *SVG) ReplaceNode(ntyp Sprites, idx int) {
 func (sv *SVG) DrawAddNode(ntyp Sprites, pos image.Point) {
 	es := sv.EditState()
 	np := len(es.PathNodes)
-	start := es.PathNodes[np-1].TEnd
+	var start math32.Vector2
+	if ntyp != SpMoveTo && np > 0 {
+		start = es.PathNodes[np-1].TEnd
+	}
 	end := math32.FromPoint(pos)
 	path := es.ActivePath
 	path.Data = sv.AddNode(ntyp, path.Data, end, start)

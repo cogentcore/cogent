@@ -139,6 +139,26 @@ func (sv *SVG) Init() {
 
 		es.SelectNoDrag = false
 		switch {
+		case es.Tool == BezierTool:
+			var path *svg.Path
+			newPt := false
+			if es.ActivePath == nil {
+				path = NewSVGElement[svg.Path](sv, false)
+				es.ActivePath = path
+				newPt = true
+				sv.Canvas.UpdateTabs()
+			} else {
+				path = es.ActivePath
+			}
+			switch {
+			case newPt:
+				sv.DrawAddNode(SpMoveTo, e.Pos())
+			case e.HasAnyModifier(key.Alt):
+				sv.DrawAddNode(SpCubeTo, e.Pos())
+			default:
+				sv.DrawAddNode(SpLineTo, e.Pos())
+			}
+			sv.UpdateNodeSprites()
 		case isSelTool && es.HasSelected() && es.SelectBBox.ContainsPoint(math32.FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
