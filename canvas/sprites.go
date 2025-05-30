@@ -41,8 +41,10 @@ const (
 	SpRubberBand
 
 	// SpAlignMatch is an alignment match (n of these),
-	// subtyp is actually BBoxPoints so we just hack cast that
 	SpAlignMatch
+
+	// SpLineAdd is new line to add
+	SpLineAdd
 
 	// below are subtypes:
 
@@ -162,9 +164,11 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 		first = true
 		sp.Draw = sv.DrawSpriteNodeCtrl(es, sp, subtyp, idx, trgsz)
 	case SpRubberBand:
-		sp.Draw = DrawRubberBand(sp, trgsz)
+		sp.Draw = sv.DrawRubberBand(sp, trgsz)
 	case SpAlignMatch:
-		sp.Draw = DrawAlignMatch(sp, trgsz)
+		sp.Draw = sv.DrawAlignMatch(sp, trgsz)
+	case SpLineAdd:
+		sp.Draw = sv.DrawLineAdd(sp, trgsz)
 	}
 	if init != nil {
 		init(sp)
@@ -336,7 +340,7 @@ const (
 )
 
 // DrawRubberBand renders the rubber-band box.
-func DrawRubberBand(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
+func (sv *SVG) DrawRubberBand(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
 	sp.Properties["size"] = trgsz
 	return func(pc *paint.Painter) {
 		trgsz := sp.Properties["size"].(image.Point)
@@ -358,10 +362,30 @@ func DrawRubberBand(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) 
 }
 
 // DrawAlignMatch renders an alignment line
-func DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
+func (sv *SVG) DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
 	sp.Properties["size"] = trgsz
 	return func(pc *paint.Painter) {
 		trgsz := sp.Properties["size"].(image.Point)
+		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
+		bb := math32.B2FromRect(sp.EventBBox)
+		pc.Fill.Color = nil
+		pc.Stroke.Dashes = nil
+		pc.Stroke.Width.Dp(SpriteLineBorderWidth)
+		pc.Stroke.Color = colors.Scheme.Surface
+		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
+		pc.Draw()
+		pc.Stroke.Width.Dp(SpriteLineWidth)
+		pc.Stroke.Color = colors.Scheme.Success.Container
+		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
+		pc.Draw()
+	}
+}
+
+// DrawLineAdd where new line would go.
+func (sv *SVG) DrawLineAdd(sp *core.Sprite, trgsz image.Point) func(pc *paint.Painter) {
+	sp.Properties["lastPoint"] = trgsz
+	return func(pc *paint.Painter) {
+		trgsz := sp.Properties["lastPoint"].(image.Point)
 		sp.EventBBox.Max = sp.EventBBox.Min.Add(trgsz)
 		bb := math32.B2FromRect(sp.EventBBox)
 		pc.Fill.Color = nil

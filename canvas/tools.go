@@ -33,6 +33,16 @@ func ToolDoesBasicSelect(tl Tools) bool {
 	return tl != SelectTool && tl != NodeTool && tl != SelBoxTool
 }
 
+// ToolHelpMap contains a set of help strings for different tools.
+var ToolHelpMap = map[Tools]string{
+	SelectTool:  "Click to select items: keep clicking to go deeper",
+	SelBoxTool:  "Drag a box to select elements within",
+	NodeTool:    "Click to select a path to edit <b>Alt</b> = only move node, not control points, <b>Ctrl</b> = constrain to axis with smallest delta",
+	RectTool:    "Drag to add a new rectangle <b>Ctrl</b> = constrain to axis with smallest delta",
+	EllipseTool: "Drag to add a new ellipse <b>Ctrl</b> = constrain to axis with smallest delta",
+	BezierTool:  "Click to add points (no dragging) <b>Alt</b> = add curve nodes, otherwise lines",
+}
+
 // SetTool sets the current active tool
 func (cv *Canvas) SetTool(tl Tools) {
 	es := &cv.EditState
@@ -46,7 +56,7 @@ func (cv *Canvas) SetTool(tl Tools) {
 	}
 	cv.EditState.Tool = tl
 	cv.SetDefaultStyle()
-	cv.SetStatus("Tool: " + tl.String())
+	cv.SetStatus(" " + ToolHelpMap[tl])
 	cv.tools.Restyle()
 	cv.tools.Restyle() // needs 2 for some reason
 	cv.SVG.UpdateSelect()

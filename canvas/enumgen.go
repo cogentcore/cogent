@@ -301,16 +301,16 @@ func (i *StandardSizes) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "StandardSizes")
 }
 
-var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
+var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}
 
 // SpritesN is the highest valid value for type Sprites, plus one.
-const SpritesN Sprites = 26
+const SpritesN Sprites = 27
 
-var _SpritesValueMap = map[string]Sprites{`unknown`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `up-l`: 7, `up-c`: 8, `up-r`: 9, `dn-l`: 10, `dn-c`: 11, `dn-r`: 12, `lf-m`: 13, `rt-m`: 14, `move-to`: 15, `line-to`: 16, `cube-to`: 17, `quad-to`: 18, `arc-to`: 19, `close`: 20, `start`: 21, `end`: 22, `quad1`: 23, `cube1`: 24, `cube2`: 25}
+var _SpritesValueMap = map[string]Sprites{`unknown`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `line-add`: 7, `up-l`: 8, `up-c`: 9, `up-r`: 10, `dn-l`: 11, `dn-c`: 12, `dn-r`: 13, `lf-m`: 14, `rt-m`: 15, `move-to`: 16, `line-to`: 17, `cube-to`: 18, `quad-to`: 19, `arc-to`: 20, `close`: 21, `start`: 22, `end`: 23, `quad1`: 24, `cube1`: 25, `cube2`: 26}
 
-var _SpritesDescMap = map[Sprites]string{0: `SpUnknown is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``, 15: `Node points`, 16: ``, 17: ``, 18: ``, 19: ``, 20: ``, 21: ``, 22: ``, 23: ``, 24: ``, 25: ``}
+var _SpritesDescMap = map[Sprites]string{0: `SpUnknown is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these),`, 7: `SpLineAdd is new line to add`, 8: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``, 15: ``, 16: `Node points`, 17: ``, 18: ``, 19: ``, 20: ``, 21: ``, 22: ``, 23: ``, 24: ``, 25: ``, 26: ``}
 
-var _SpritesMap = map[Sprites]string{0: `unknown`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `up-l`, 8: `up-c`, 9: `up-r`, 10: `dn-l`, 11: `dn-c`, 12: `dn-r`, 13: `lf-m`, 14: `rt-m`, 15: `move-to`, 16: `line-to`, 17: `cube-to`, 18: `quad-to`, 19: `arc-to`, 20: `close`, 21: `start`, 22: `end`, 23: `quad1`, 24: `cube1`, 25: `cube2`}
+var _SpritesMap = map[Sprites]string{0: `unknown`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `line-add`, 8: `up-l`, 9: `up-c`, 10: `up-r`, 11: `dn-l`, 12: `dn-c`, 13: `dn-r`, 14: `lf-m`, 15: `rt-m`, 16: `move-to`, 17: `line-to`, 18: `cube-to`, 19: `quad-to`, 20: `arc-to`, 21: `close`, 22: `start`, 23: `end`, 24: `quad1`, 25: `cube1`, 26: `cube2`}
 
 // String returns the string representation of this Sprites value.
 func (i Sprites) String() string { return enums.String(i, _SpritesMap) }
@@ -342,16 +342,16 @@ func (i Sprites) MarshalText() ([]byte, error) { return []byte(i.String()), nil 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *Sprites) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Sprites") }
 
-var _ToolsValues = []Tools{0, 1, 2, 3, 4, 5}
+var _ToolsValues = []Tools{0, 1, 2, 3, 4, 5, 6}
 
 // ToolsN is the highest valid value for type Tools, plus one.
-const ToolsN Tools = 6
+const ToolsN Tools = 7
 
-var _ToolsValueMap = map[string]Tools{`SelectTool`: 0, `NodeTool`: 1, `RectTool`: 2, `EllipseTool`: 3, `BezierTool`: 4, `TextTool`: 5}
+var _ToolsValueMap = map[string]Tools{`SelectTool`: 0, `SelBoxTool`: 1, `NodeTool`: 2, `RectTool`: 3, `EllipseTool`: 4, `BezierTool`: 5, `TextTool`: 6}
 
-var _ToolsDescMap = map[Tools]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``}
+var _ToolsDescMap = map[Tools]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``}
 
-var _ToolsMap = map[Tools]string{0: `SelectTool`, 1: `NodeTool`, 2: `RectTool`, 3: `EllipseTool`, 4: `BezierTool`, 5: `TextTool`}
+var _ToolsMap = map[Tools]string{0: `SelectTool`, 1: `SelBoxTool`, 2: `NodeTool`, 3: `RectTool`, 4: `EllipseTool`, 5: `BezierTool`, 6: `TextTool`}
 
 // String returns the string representation of this Tools value.
 func (i Tools) String() string { return enums.String(i, _ToolsMap) }
