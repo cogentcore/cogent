@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"slices"
 
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 )
@@ -15,7 +18,6 @@ import (
 func init() {
 	core.TheApp.SetName("Cogent Canvas")
 	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
-	// OpenIcons()
 }
 
 // Settings are the overall Code settings
@@ -47,9 +49,6 @@ type SettingsData struct { //types:add
 
 	// number of screen pixels around target point (in either direction) to snap
 	SnapTol int `min:"1" default:"3"`
-
-	// named-split config in use for configuring the splitters
-	SplitName SplitName
 }
 
 func (se *SettingsData) Defaults() {
@@ -66,14 +65,65 @@ func (se *SettingsData) Update() {
 }
 
 func (se *SettingsData) Save() error {
+	SavePaths()
+	SaveSplits()
 	return tomlx.Save(se, se.Filename())
 }
 
 func (se *SettingsData) Open() error {
+	OpenPaths()
+	OpenSplits()
 	return tomlx.Open(se, se.Filename())
 }
 
-// EditSplits opens the SplitsView editor to customize saved splitter settings
-func (se *SettingsData) EditSplits() {
-	SplitsView(&AvailableSplits)
+////////   Recents
+
+var (
+	// RecentPaths is a slice of recent file paths
+	RecentPaths core.FilePaths
+
+	// SavedPathsFilename is the name of the saved file paths file in Cogent Code data directory
+	SavedPathsFilename = "saved-paths.json"
+)
+
+// SavePaths saves the active SavedPaths to settings dir
+func SavePaths() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SavedPathsFilename)
+	RecentPaths.Save(pnm)
+}
+
+// OpenPaths loads the active SavedPaths from settings dir
+func OpenPaths() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SavedPathsFilename)
+	RecentPaths.Open(pnm)
+}
+
+////////   Splits
+
+var (
+	// Splits are the proportions for main window splits, saved and loaded
+	Splits = [3]float32{0.15, 0.60, 0.25}
+
+	// SplitsSettingsFilename is the name of the settings file in App prefs
+	// directory for saving / loading the current splits
+	SplitsSettingsFilename = "splits-settings.json"
+)
+
+// OpenSplits opens last saved splits from settings file.
+func OpenSplits() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
+	if !errors.Ignore1(fsx.FileExists(pnm)) {
+		return
+	}
+	jsonx.Open(&Splits, pnm)
+}
+
+// SaveSplits saves named splits to a json-formatted file.
+func SaveSplits() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
+	jsonx.Save(&Splits, pnm)
 }

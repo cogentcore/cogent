@@ -39,7 +39,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 				})
 			}
 			core.NewSeparator(m)
-			core.NewButton(m).SetText("Recent recent paths").OnClick(func(e events.Event) {
+			core.NewButton(m).SetText("Clear recent paths").OnClick(func(e events.Event) {
 				RecentPaths = nil
 			})
 			core.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {

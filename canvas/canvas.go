@@ -121,7 +121,11 @@ func (cv *Canvas) Init() {
 			w.Maker(cv.MakeTools)
 		})
 		tree.AddChildAt(w, "splits", func(w *core.Splits) {
-			w.SetSplits(0.15, 0.60, 0.25)
+			w.SetSplits(Splits[:]...)
+			w.OnChange(func(e events.Event) {
+				copy(Splits[:], w.Splits())
+				SaveSplits()
+			})
 			tree.AddChildAt(w, "layer-tree", func(w *core.Frame) {
 				cv.layerTree = w
 				w.Styler(func(s *styles.Style) {
@@ -208,8 +212,6 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	sv := cv.SVG
 	err := errors.Log(sv.SVG.OpenXML(path))
 	sv.SVG.GradientFromGradients()
-	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
-	// SavePaths()
 	fdir, _ := filepath.Split(path)
 	errors.Log(os.Chdir(fdir))
 	cv.EditState.Init(cv)
@@ -225,6 +227,8 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 // OpenDrawing opens a new .svg drawing
 func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	err := cv.OpenDrawingFile(fnm)
+	RecentPaths.AddPath(string(fnm), core.SystemSettings.SavedPathsMax)
+	SavePaths()
 
 	sv := cv.SVG
 	cv.SetTitle()
@@ -293,8 +297,8 @@ func (cv *Canvas) SaveDrawingAs(fname core.Filename) error { //types:add
 	}
 	path, _ := filepath.Abs(string(fname))
 	cv.Filename = core.Filename(path)
-	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
-	// SavePaths()
+	RecentPaths.AddPath(path, core.SystemSettings.SavedPathsMax)
+	SavePaths()
 	sv := cv.SVG
 	sv.SVG.RemoveOrphanedDefs()
 	sv.SetMetaData()
@@ -312,12 +316,12 @@ func (cv *Canvas) SaveDrawingAs(fname core.Filename) error { //types:add
 // ExportPNG exports drawing to a PNG image (auto-names to same name
 // with .png suffix).
 // Specify either width or height of resulting image, or nothing for
-// physical size as set.  Renders full current page -- do ResizeToContents
+// physical size as set. Renders full current page: Do Size/Resize to contents
 // to render just current contents.
 func (cv *Canvas) ExportPNG(width, height float32) error { //types:add
 	fext := filepath.Ext(string(cv.Filename))
 	onm := strings.TrimSuffix(string(cv.Filename), fext) + ".png"
-	err := cv.SSVG().SaveImage(onm)
+	err := cv.SSVG().SaveImageSize(onm, width, height)
 	return err
 }
 
@@ -391,10 +395,9 @@ func (cv *Canvas) PasteAvailFunc(bt *core.Button) {
 }
 
 func (cv *Canvas) MakeToolbar(p *tree.Plan) {
-	tree.Add(p, func(w *core.FuncButton) {
-		// TODO(kai): remove Update
-		w.SetFunc(cv.UpdateAll).SetText("Update").SetIcon(icons.Update)
-	})
+	// tree.Add(p, func(w *core.FuncButton) {
+	// 	w.SetFunc(cv.UpdateAll).SetText("Update").SetIcon(icons.Update)
+	// })
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("New").SetIcon(icons.Add).
 			OnClick(func(e events.Event) {
@@ -409,6 +412,22 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		})
 	})
 
+	tree.Add(p, func(w *core.Button) {
+		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
+			for _, rp := range RecentPaths {
+				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
+					cv.OpenDrawing(core.Filename(rp))
+				})
+			}
+			core.NewSeparator(m)
+			core.NewButton(m).SetText("Clear recent paths").OnClick(func(e events.Event) {
+				RecentPaths = nil
+			})
+			core.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
+				cv.EditRecentPaths()
+			})
+		})
+	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
 	})
@@ -622,14 +641,6 @@ func (cv *Canvas) SetDefaultStyle() {
 func (cv *Canvas) UpdateModalToolbar() {
 	cv.EditState.UpdateSelectIsText()
 	cv.modalTools.Update()
-	// tb := vc.SelectToolbar()
-	// tb.NeedsRender()
-	// tb.Update()
-	// sz := es.DragSelEffBBox.Size()
-	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
-	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
 }
 
 func (cv *Canvas) UpdateText() {
@@ -703,82 +714,17 @@ func (cv *Canvas) ChangeMade() {
 
 ////////   Basic infrastructure
 
-/*
-func (gv *Canvas) OSFileEvent() {
-	gv.ConnectEvent(oswin.OSOpenFilesEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
-		ofe := d.(*osevent.OpenFilesEvent)
-		for _, fn := range ofe.Files {
-			NewCanvas(fn)
-		}
-	})
-}
-*/
-
-// OpenRecent opens a recently used file
-func (cv *Canvas) OpenRecent(filename core.Filename) {
-	// if string(filename) == VectorResetRecents {
-	// 	SavedPaths = nil
-	// 	core.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	// } else if string(filename) == VectorEditRecents {
-	// 	vv.EditRecents()
-	// } else {
-	// 	vv.OpenDrawing(filename)
-	// }
-}
-
-// RecentsEdit opens a dialog editor for deleting from the recents project list
-func (cv *Canvas) EditRecents() {
-	// tmp := make([]string, len(SavedPaths))
-	// copy(tmp, SavedPaths)
-	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
-	// opts := core.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
-	// core.ListDialog(vv.Viewport, &tmp, opts,
-	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
-	// 		if sig == int64(core.DialogAccepted) {
-	// 			SavedPaths = nil
-	// 			SavedPaths = append(SavedPaths, tmp...)
-	// 			core.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	// 		}
-	// 	})
-}
-
-// SplitsSetView sets split view splitters to given named setting
-func (cv *Canvas) SplitsSetView(split SplitName) {
-	sv := cv.splits
-	sp, _, ok := AvailableSplits.SplitByName(split)
-	if ok {
-		sv.SetSplits(sp.Splits...).NeedsLayout()
-		Settings.SplitName = split
-	}
-}
-
-// SplitsSave saves current splitter settings to named splitter settings under
-// existing name, and saves to prefs file
-func (cv *Canvas) SplitsSave(split SplitName) {
-	sv := cv.splits
-	sp, _, ok := AvailableSplits.SplitByName(split)
-	if ok {
-		sp.SaveSplits(sv.Splits())
-		AvailableSplits.SaveSettings()
-	}
-}
-
-// SplitsSaveAs saves current splitter settings to new named splitter settings, and
-// saves to prefs file
-func (cv *Canvas) SplitsSaveAs(name, desc string) {
-	spv := cv.splits
-	AvailableSplits.Add(name, desc, spv.Splits())
-	AvailableSplits.SaveSettings()
-}
-
-// SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (cv *Canvas) SplitsEdit() {
-	SplitsView(&AvailableSplits)
+// EditRecentPaths opens a dialog editor for editing the recent project paths list
+func (cv *Canvas) EditRecentPaths() {
+	d := core.NewBody("Recent drawing paths")
+	core.NewText(d).SetType(core.TextSupporting).SetText("You can delete paths you no longer use")
+	core.NewList(d).SetSlice(&RecentPaths)
+	d.AddOKOnly().RunDialog(cv)
 }
 
 // HelpWiki opens wiki page for grid on github
 func (cv *Canvas) HelpWiki() {
-	core.TheApp.OpenURL("https://vector.cogentcore.org")
+	core.TheApp.OpenURL("https://cogentcore.org/canvas")
 }
 
 ////////  AutoSave
