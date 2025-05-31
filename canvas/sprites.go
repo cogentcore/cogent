@@ -188,7 +188,7 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 // SetSpritePos sets sprite position, taking into account relative offsets
 func (sv *SVG) SetSpritePos(sp *core.Sprite, x, y int) {
 	typ, subtyp, _ := SpriteProperties(sp)
-	pos := image.Point{x, y}
+	pos := image.Point{x, y}.Add(sv.Scene.SceneGeom.Pos)
 	switch {
 	case typ == SpNodePoint || typ == SpNodeCtrl:
 		spbb, _ := sv.HandleSpriteSize(1, image.Point{})
@@ -212,7 +212,7 @@ func (sv *SVG) SetSpritePos(sp *core.Sprite, x, y int) {
 
 // InactivateSprites inactivates sprites of given type; must be locked.
 func InactivateSprites(sprites *core.Sprites, typ Sprites) {
-	sprites.Do(func(sl core.SpriteList) {
+	sprites.Do(func(sl *core.SpriteList) {
 		for _, sp := range sl.Values {
 			if sp == nil {
 				continue

@@ -709,7 +709,16 @@ func (sv *SVG) RenderGrid() {
 // for editing.
 func (sv *SVG) DistributeProps() {
 	gotSome := false
-	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+	root := sv.Root()
+
+	exclude := func(k string) bool {
+		if k == "transform" || strings.Contains(k, "groupmode") || strings.Contains(k, "display:inline") || strings.Contains(k, "xmlns:") || strings.Contains(k, "xlink:") {
+			return true
+		}
+		return false
+	}
+
+	svg.SVGWalkDownNoDefs(root, func(n svg.Node, nb *svg.NodeBase) bool {
 		if n == sv.Root().This {
 			return tree.Continue
 		}
@@ -727,10 +736,13 @@ func (sv *SVG) DistributeProps() {
 			nb.Properties = make(map[string]any)
 		}
 		par := nb.Parent.(svg.Node).AsNodeBase()
+		if par.This == root.This || NodeIsLayer(par) {
+			return tree.Continue
+		}
 		for {
 			if par.Properties != nil {
 				for k, v := range par.Properties {
-					if k == "transform" {
+					if exclude(k) {
 						continue
 					}
 					if _, has := nb.Properties[k]; !has {
@@ -758,11 +770,14 @@ func (sv *SVG) DistributeProps() {
 		if !nb.HasChildren() {
 			return tree.Break
 		}
+		if NodeIsLayer(n) {
+			return tree.Continue
+		}
 		if nb.Properties == nil {
 			return tree.Continue
 		}
 		for k := range nb.Properties {
-			if k == "transform" {
+			if exclude(k) {
 				continue
 			}
 			delete(nb.Properties, k)
