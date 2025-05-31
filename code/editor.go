@@ -24,7 +24,6 @@ import (
 	"cogentcore.org/core/text/parse"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/parser"
-	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 )
@@ -346,48 +345,21 @@ func (cv *Code) CountWordsRegion() string { //types:add
 
 ////////   Links
 
-// TextLinkHandler is the Code handler for text links -- preferred one b/c
-// directly connects to correct Code project
-func TextLinkHandler(tl rich.Hyperlink) bool {
-	// todo:
-	// tve := textcore.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*textcore.Editor)
-	// gek := tl.Widget.ParentByType(KiT_Code, true)
-	// if gek != nil {
-	// 	ge := gek.Embed(KiT_Code).(*Code)
-	// 	ur := tl.URL
-	// 	// todo: use net/url package for more systematic parsing
-	// 	switch {
-	// 	case strings.HasPrefix(ur, "find:///"):
-	// 		ge.OpenFindURL(ur, ftv)
-	// 	case strings.HasPrefix(ur, "file:///"):
-	// 		ge.OpenFileURL(ur, ftv)
-	// 	default:
-	// 		system.TheApp.OpenURL(ur)
-	// 	}
-	// } else {
-	// 	system.TheApp.OpenURL(tl.URL)
-	// }
-	return true
-}
-
-// // URLHandler is the Code handler for urls --
-// func URLHandler(url string) bool {
-// 	return true
-// }
-
-// OpenFileURL opens given file:/// url
+// OpenFileURL is the link handler for command editors: opens given file:/// url
 func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("Code OpenFileURL parse err: %v\n", err)
 		return false
 	}
-	fpath := up.Path[1:] // has double //
+	fpath := up.Path[1:]                                                  // has double //
+	if strings.HasPrefix(fpath, "a/") || strings.HasPrefix(fpath, "b/") { // diff output, skip
+		fpath = fpath[2:]
+	}
 	cdpath := ""
-	if ftv != nil && ftv.Lines != nil { // get cd path for non-pathed fnames
+	if ftv != nil && ftv.Lines != nil {
 		cdln := ftv.Lines.String()
-		if strings.HasPrefix(cdln, "cd ") {
+		if strings.HasPrefix(cdln, "cd ") { // get cd path for non-pathed fnames
 			fmidx := strings.Index(cdln, " (from: ")
 			if fmidx > 0 {
 				cdpath = cdln[3:fmidx]

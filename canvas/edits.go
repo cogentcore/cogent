@@ -6,15 +6,15 @@ package canvas
 
 import (
 	"image"
-	"image/color"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/undo"
 )
 
@@ -57,6 +57,10 @@ type EditState struct {
 	// selection just happened on press, and no drag happened in between
 	SelectNoDrag bool
 
+	// MouseDownSel is selected object from the mouse down event,
+	// which is carried over to the mouse up event to adjudicate between drag and select.
+	MouseDownSel svg.Node
+
 	// true if a new text item was made while dragging
 	NewTextMade bool
 
@@ -65,6 +69,9 @@ type EditState struct {
 
 	// current dragging position, mouse coords
 	DragCurPos image.Point
+
+	// whether to constrain the current point when dragging
+	DragConstrainPoint bool
 
 	// current selection bounding box
 	SelectBBox math32.Box2
@@ -77,6 +84,9 @@ type EditState struct {
 
 	// recently selected item(s) -- within the same selection position
 	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" display:"-"`
+
+	// SelectIsText is true if the current selection is a single text item
+	SelectIsText bool
 
 	// bbox at start of dragging
 	DragSelectStartBBox math32.Box2
@@ -100,24 +110,40 @@ type EditState struct {
 	PathNodes []*PathNode
 
 	// selected path nodes
-	PathSelect map[int]struct{}
+	NodeSelect map[int]struct{}
 
-	// current path command indexes within PathNodes -- where the commands start
-	PathCommands []int
+	// current hover targets
+	NodeHover, CtrlHover int
+	CtrlHoverType        Sprites
+
+	// Current control being dragged
+	CtrlDragIndex int
+	CtrlDrag      Sprites
+
+	// Current position while drawing
+	DrawCurPos image.Point
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init(vv *Canvas) {
+func (es *EditState) Init(cv *Canvas) {
 	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
+	es.ActivePath = nil
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
-	es.Canvas = vv
+	es.Text.Defaults()
+	es.Text.Canvas = cv
+	es.Canvas = cv
+	es.NewSelected()
+	es.NewRecents()
+	es.ResetSelectedNodes()
+	es.NodeHover = -1
+	es.CtrlHover = -1
 }
 
 // InAction reports whether we currently doing an action
@@ -194,6 +220,20 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 	return sls
 }
 
+// DepthMap returns a map of all nodes and their associated depth count
+// counting up from 0 as the deepest, first drawn node.
+func (sv *SVG) DepthMap() map[tree.Node]int {
+	m := make(map[tree.Node]int)
+	depth := 0
+	n := tree.Next(sv.This)
+	for n != nil {
+		m[n] = depth
+		depth++
+		n = tree.Next(n)
+	}
+	return m
+}
+
 // SelectedListDepth returns list of selected items, sorted either
 // ascending or descending according to depth:
 // ascending = deepest first, descending = highest first
@@ -222,6 +262,9 @@ func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node 
 // FirstSelectedNode returns the first selected node, that is not a Group
 // (recurses into groups)
 func (es *EditState) FirstSelectedNode() svg.Node {
+	if (es.Tool == NodeTool || es.Tool == BezierTool) && es.ActivePath != nil {
+		return es.ActivePath
+	}
 	if !es.HasSelected() {
 		return nil
 	}
@@ -254,7 +297,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelectedState{Order: idx}
-	itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
+	ss.InitState = svg.BitCloneNode(itm)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -317,9 +360,6 @@ func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image
 	if mode == events.NoSelect {
 		return
 	}
-	if !es.HasSelected() || !es.PosInLastSelect(pos) {
-		es.StartRecents(pos)
-	}
 	switch mode {
 	case events.SelectOne:
 		if es.IsSelected(n) {
@@ -343,6 +383,18 @@ func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image
 		es.Select(n)
 	case events.UnselectQuiet:
 		es.Unselect(n)
+	}
+}
+
+// UpdateSelectIsText updates the SelectIsText state.
+func (es *EditState) UpdateSelectIsText() {
+	es.SelectIsText = false
+	fsel := es.FirstSelectedNode()
+	if fsel == nil {
+		return
+	}
+	if _, ok := fsel.(*svg.Text); ok {
+		es.SelectIsText = true
 	}
 }
 
@@ -371,7 +423,7 @@ func (es *EditState) PosInLastSelect(pos image.Point) bool {
 	return pos.In(bb)
 }
 
-////////////////////////////////////////////////////////////////
+////////
 
 // UpdateSelectBBox updates the current selection bbox surrounding all selected items
 func (es *EditState) UpdateSelectBBox() {
@@ -383,8 +435,7 @@ func (es *EditState) UpdateSelectBBox() {
 	bbox.SetEmpty()
 	for itm := range es.Selected {
 		g := itm.AsNodeBase()
-		bb := math32.Box2{}
-		bb.SetFromRect(g.BBox)
+		bb := g.BBox
 		bbox.ExpandByBox(bb)
 	}
 	es.SelectBBox = bbox
@@ -407,9 +458,11 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelectCurrentBBox = es.SelectBBox
 	es.DragSelectEffectiveBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
+		ss.InitState = svg.BitCloneNode(itm)
 	}
 }
+
+////////  Nodes
 
 // DragNodeStart captures the current state at start of node dragging.
 // position is starting position.
@@ -417,8 +470,81 @@ func (es *EditState) DragNodeStart(pos image.Point) {
 	es.DragStartPos = pos
 }
 
-//////////////////////////////////////////////////////
-//  Other Types
+func (es *EditState) HasNodeSelected() bool {
+	return len(es.NodeSelect) > 0
+}
+
+func (es *EditState) NodeIsSelected(i int) bool {
+	_, ok := es.NodeSelect[i]
+	return ok
+}
+
+func (es *EditState) SelectNode(i int) {
+	es.NodeSelect[i] = struct{}{}
+}
+
+func (es *EditState) UnselectNode(i int) {
+	delete(es.NodeSelect, i)
+}
+
+func (es *EditState) ResetSelectedNodes() {
+	es.NodeSelect = make(map[int]struct{})
+}
+
+// NodeSelectedList returns list of selected nodes in ascending index order.
+func (es *EditState) NodeSelectedList() []int {
+	sls := make([]int, len(es.NodeSelect))
+	idx := 0
+	for i := range es.NodeSelect {
+		sls[idx] = i
+		idx++
+	}
+	slices.Sort(sls)
+	return sls
+}
+
+// NodeSelectAction is called when a select action has been received (e.g., a
+// mouse click) -- translates into selection updates -- gets selection mode
+// from mouse event (ExtendContinuous, ExtendOne)
+func (es *EditState) NodeSelectAction(idx int, mode events.SelectModes) {
+	if mode == events.NoSelect {
+		return
+	}
+	if es.NodeSelect == nil {
+		es.ResetSelectedNodes()
+	}
+	switch mode {
+	case events.SelectOne:
+		if len(es.NodeSelect) > 0 {
+			es.ResetSelectedNodes()
+		}
+		es.SelectNode(idx)
+	case events.ExtendContinuous, events.ExtendOne:
+		if es.NodeIsSelected(idx) {
+			es.UnselectNode(idx)
+		} else {
+			es.SelectNode(idx)
+		}
+	case events.Unselect:
+		es.UnselectNode(idx)
+	case events.SelectQuiet:
+		es.SelectNode(idx)
+	case events.UnselectQuiet:
+		es.UnselectNode(idx)
+	}
+}
+
+////////  NodeCtrl points
+
+// DragCtrlStart captures the current state at start of control point dragging.
+// position is starting position.
+func (es *EditState) DragCtrlStart(pos image.Point, idx int, ptyp Sprites) {
+	es.DragStartPos = pos
+	es.CtrlDragIndex = idx
+	es.CtrlDrag = ptyp
+}
+
+////////  SelectedState
 
 // SelectedState is state for selected nodes
 type SelectedState struct {
@@ -426,172 +552,6 @@ type SelectedState struct {
 	// order item was selected
 	Order int
 
-	// initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there
-	InitGeom []float32
-}
-
-// GradStop represents a single gradient stop
-type GradStop struct {
-
-	// color -- alpha is ignored -- set opacity separately
-	Color color.Color
-
-	// opacity determines how opaque color is - used instead of alpha in color
-	Opacity float64
-
-	// offset position along the gradient vector: 0 = start, 1 = nominal end
-	Offset float64
-}
-
-// Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
-type Gradient struct {
-
-	// icon of gradient -- generated to display each gradient
-	Ic core.SVG `edit:"-" table:"no-header" width:"5"`
-
-	// name of gradient (id)
-	Id string `edit:"-" width:"6"`
-
-	// full name of gradient as SVG element
-	Name string `display:"-"`
-
-	// gradient stops
-	Stops []*GradStop
-}
-
-/*
-// Updates our gradient from svg gradient
-func (gr *Gradient) UpdateFromGrad(g *core.Gradient) {
-	_, id := svg.SplitNameIDDig(g.Nm)
-	gr.Id = fmt.Sprintf("%d", id)
-	gr.Name = g.Nm
-	if g.Grad.Gradient == nil {
-		gr.Stops = nil
-		return
-	}
-	xgr := g.Grad.Gradient
-	nst := len(xgr.Stops)
-	if len(gr.Stops) != nst || gr.Stops == nil {
-		gr.Stops = make([]*GradStop, nst)
-	}
-	for i, xst := range xgr.Stops {
-		gst := gr.Stops[i]
-		if gr.Stops[i] == nil {
-			gst = &GradStop{}
-		}
-		gst.Color.SetColor(xst.StopColor)
-		gst.Opacity = xst.Opacity
-		gst.Offset = xst.Offset
-		gr.Stops[i] = gst
-	}
-	gr.UpdateIcon()
-}
-*/
-
-// todo: update grad to sane vals for offs etc
-
-/*
-// Updates svg gradient from our gradient
-func (gr *Gradient) UpdateGrad(g *core.Gradient) {
-	_, id := svg.SplitNameIDDig(g.Nm) // we always need to sync to id & name though
-	gr.Id = fmt.Sprintf("%d", id)
-	gr.Name = g.Nm
-	gr.Ic = "stop" // todo manage separate list of gradient icons -- update
-	if g.Grad.Gradient == nil {
-		if strings.HasPrefix(gr.Name, "radial") {
-			g.Grad.NewRadialGradient()
-		} else {
-			g.Grad.NewLinearGradient()
-		}
-	}
-	xgr := g.Grad.Gradient
-	if gr.Stops == nil {
-		gr.ConfigDefaultGradientStops()
-	}
-	nst := len(gr.Stops)
-	if len(xgr.Stops) != nst {
-		xgr.Stops = make([]rasterx.GradStop, nst)
-	}
-	all0 := true
-	for _, gst := range gr.Stops {
-		if gst.Offset != 0 {
-			all0 = false
-		}
-	}
-	if all0 {
-		for i, gst := range gr.Stops {
-			gst.Offset = float64(i)
-		}
-	}
-
-	for i, gst := range gr.Stops {
-		xst := &xgr.Stops[i]
-		xst.StopColor = gst.Color
-		xst.Opacity = gst.Opacity
-		xst.Offset = gst.Offset
-	}
-	gr.UpdateIcon()
-}
-*/
-
-// ConfigDefaultGradient configures a new default gradient
-func (es *EditState) ConfigDefaultGradient() {
-	es.Gradients = make([]*Gradient, 1)
-	gr := &Gradient{}
-	es.Gradients[0] = gr
-	// gr.ConfigDefaultGradientStops()
-	gr.UpdateIcon()
-}
-
-/*
-// ConfigDefaultGradientStops configures a new default gradient stops
-func (gr *Gradient) ConfigDefaultGradientStops() {
-	gr.Stops = make([]*GradStop, 2)
-	st1 := &GradStop{Opacity: 1, Offset: 0}
-	st1.Color.SetName("white")
-	st2 := &GradStop{Opacity: 1, Offset: 1}
-	st2.Color.SetName("blue")
-	gr.Stops[0] = st1
-	gr.Stops[1] = st2
-}
-*/
-
-// UpdateIcon updates icon
-func (gr *Gradient) UpdateIcon() {
-	/*
-		nm := fmt.Sprintf("grid_grad_%s", gr.Name)
-		ici, err := core.TheIcons.IconByName(nm)
-		var ic *svg.Icon
-		if err != nil {
-			ic = &svg.Icon{}
-			ic.InitName(ic, nm)
-			ic.ViewBox.Size = math32.Vec2(1, 1)
-			ic.SetProp("width", units.NewCh(5))
-			svg.CurIconSet[nm] = ic
-		} else {
-			ic = ici.(*svg.Icon)
-		}
-		nst := len(gr.Stops)
-		if ic.NumChildren() != nst {
-			config := tree.Config
-			for i := range gr.Stops {
-				config.Add(svg.RectType, fmt.Sprintf("%d", i))
-			}
-			ic.ConfigChildren(config)
-
-		}
-
-		px := 0.9 / float32(nst)
-		for i, gst := range gr.Stops {
-			bx := ic.Child(i).(*svg.Rect)
-			bx.Pos.X = 0.05 + float32(i)*px
-			bx.Pos.Y = 0.05
-			bx.Size.X = px
-			bx.Size.Y = 0.9
-			bx.SetProp("stroke-width", units.NewPx(0))
-			bx.SetProp("stroke", "none")
-			bx.SetProp("fill", gst.Color.HexString())
-		}
-		gr.Ic = icons.Icon(nm)
-	*/
+	// Initial state of the node: copy of node struct.
+	InitState svg.Node
 }

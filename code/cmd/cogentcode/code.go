@@ -24,11 +24,12 @@ func main() {
 	errors.Log(core.LoadAllSettings())
 
 	// note: comment this out when printing out debug messages involving components of code itself!
-	// InitConsole(lfnm)
+	InitConsole(lfnm)
 
 	var path string
 	var proj string
 
+	// not: not likely
 	ofs := core.TheApp.OpenFiles()
 	if len(ofs) > 0 {
 		path = ofs[0]
