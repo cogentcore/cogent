@@ -105,10 +105,12 @@ func (sv *SVG) Init() {
 		case keymap.Abort:
 			e.SetHandled()
 			if es.Tool == BezierTool {
+				if es.ActivePath != nil && len(es.PathNodes) <= 1 {
+					sv.Canvas.DeleteItems(es.ActivePath)
+				}
 				sv.NodeDeleteLast()
-			} else {
-				sv.Canvas.SetTool(SelectTool)
 			}
+			sv.Canvas.SetTool(SelectTool)
 		case keymap.Enter:
 			e.SetHandled()
 			if es.Tool == BezierTool {

@@ -254,9 +254,14 @@ func (cv *Canvas) SelectedAsTrees() []core.Treer {
 	if len(sl) == 0 {
 		return nil
 	}
+	return cv.ItemsAsTrees(sl...)
+}
+
+// ItemsAsTrees returns the list of SVG items as Tree nodes.
+func (cv *Canvas) ItemsAsTrees(nd ...svg.Node) []core.Treer {
 	tv := cv.tree
 	var tvl []core.Treer
-	for _, si := range sl {
+	for _, si := range nd {
 		tvn := tv.FindSyncNode(si.AsTree().This)
 		if tvn != nil {
 			tvl = append(tvl, tvn)
@@ -342,6 +347,18 @@ func (cv *Canvas) DeleteSelected() {
 	cv.tree.SetSelectedNodes(tvl)
 	tvl[0].DeleteSelected() // must be called on first node
 	cv.SetStatus("Deleted selected items")
+	cv.ChangeMade()
+	cv.UpdateSVG()
+}
+
+// DeleteItems deletes the given svg.Node item(s) using Tree methods.
+func (cv *Canvas) DeleteItems(nd ...svg.Node) {
+	sv := cv.SVG
+	sv.UndoSave("DeleteItems", "")
+	tvl := cv.ItemsAsTrees(nd...)
+	cv.tree.SetSelectedNodes(tvl)
+	tvl[0].DeleteSelected() // must be called on first node
+	cv.SetStatus("Deleted items")
 	cv.ChangeMade()
 	cv.UpdateSVG()
 }

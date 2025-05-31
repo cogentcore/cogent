@@ -5,7 +5,6 @@
 package canvas
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"strings"
@@ -71,6 +70,8 @@ func (pv *PaintSetter) Init() {
 	DashIconsInit()
 	MarkerIconsInit()
 
+	pstyle := &pv.PaintStyle
+
 	pv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(0, 1)
@@ -110,29 +111,24 @@ func (pv *PaintSetter) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Spinner) {
-			core.Bind(&pv.PaintStyle.Stroke.Width.Value, w)
+			core.Bind(&pstyle.Stroke.Width.Value, w)
 			w.SetMin(0).SetStep(0.05)
 			w.OnChange(func(e events.Event) {
-				pv.PaintStyle.ToDots()
+				pstyle.ToDots()
 				if pv.IsStrokeOn() {
-					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp())
+					pv.Canvas.SetStrokeProperty("stroke-width", pstyle.Stroke.Width.String())
 				}
 			})
 		})
 
-		// uncb.SetCurrentIndex(int(Settings.Size.Units))
 		tree.AddChild(w, func(w *core.Chooser) {
-			core.Bind(&pv.PaintStyle.Stroke.Width.Unit, w)
+			core.Bind(&pstyle.Stroke.Width.Unit, w)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
-					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp())
+					pv.Canvas.SetStrokeProperty("stroke-width", pstyle.Stroke.Width.String())
 				}
 			})
 		})
-
-		// core.NewSpace(wr, "sp1").Styler(func(s *styles.Style) {
-		// 	s.Min.X.Ch(5)
-		// })
 
 		tree.AddChild(w, func(w *core.Chooser) {
 			pv.dashes = w
@@ -146,6 +142,25 @@ func (pv *PaintSetter) Init() {
 				}
 			})
 		})
+
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Stroke.Cap, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Canvas.SetStrokeProperty("stroke-linecap", pstyle.Stroke.Cap.String())
+				}
+			})
+		})
+
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Stroke.Join, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Canvas.SetStrokeProperty("stroke-linejoin", pstyle.Stroke.Join.String())
+				}
+			})
+		})
+
 	})
 
 	tree.AddChildAt(pv, "stroke-markers", func(w *core.Frame) {
@@ -235,7 +250,7 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.Stroke.Color, w)
+			core.Bind(&pstyle.Stroke.Color, w)
 			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
@@ -304,7 +319,7 @@ func (pv *PaintSetter) Init() {
 		tree.AddChild(w, func(w *core.Frame) {})
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.Fill.Color, w)
+			core.Bind(&pstyle.Fill.Color, w)
 			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.FillType == PaintSolid {
@@ -350,16 +365,23 @@ func (pv *PaintSetter) PaintTypeStack(pt PaintTypes) int {
 	return st
 }
 
-// SetOpacityWidth sets opacity and stroke width properties
-func (pv *PaintSetter) SetOpacityWidth(nd svg.Node) {
+// SetOtherStrokeProps sets opacity and stroke width properties
+func (pv *PaintSetter) SetOtherStrokeProps(nd svg.Node) {
+	if !pv.IsStrokeOn() {
+		return
+	}
 	nb := nd.AsNodeBase()
-	if pv.IsStrokeOn() {
-		nb.SetProperty("stroke-width", pv.StrokeWidthProp())
-		nb.SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+	nb.SetProperty("stroke-width", pv.PaintStyle.Stroke.Width.String())
+	nb.SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+	nb.SetProperty("stroke-linecap", pv.PaintStyle.Stroke.Cap.String())
+	nb.SetProperty("stroke-linejoin", pv.PaintStyle.Stroke.Join.String())
+}
+
+func (pv *PaintSetter) SetFillOpacity(nd svg.Node) {
+	if !pv.IsFillOn() {
+		return
 	}
-	if pv.IsFillOn() {
-		nb.SetProperty("fill-opacity", pv.PaintStyle.Fill.Opacity)
-	}
+	nd.AsNodeBase().SetProperty("fill-opacity", pv.PaintStyle.Fill.Opacity)
 }
 
 // SetProperties sets the properties for given node according to current settings
@@ -368,9 +390,10 @@ func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
 		cv.SetMarkerProperties(pv.MarkerProperties())
+		pv.SetOtherStrokeProps(nd)
 	}
 	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
-	pv.SetOpacityWidth(nd)
+	pv.SetFillOpacity(nd)
 }
 
 func (pv *PaintSetter) SetStrokeStack(pt PaintTypes) {
@@ -386,14 +409,23 @@ func (pv *PaintSetter) SetFillStack(pt PaintTypes) {
 func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp string) {
 	cv := pv.Canvas
 	sv := cv.SSVG()
+
+	others := func() {
+		if prop == "stroke" {
+			pv.SetOtherStrokeProps(nd)
+		} else {
+			pv.SetFillOpacity(nd)
+		}
+	}
+
 	setPropsNode(nd, func(nd svg.Node) {
 		switch pt {
 		case PaintLinear:
 			sv.GradientUpdateNodeProp(nd, prop, false, sp)
-			pv.SetOpacityWidth(nd)
+			others()
 		case PaintRadial:
 			sv.GradientUpdateNodeProp(nd, prop, true, sp)
-			pv.SetOpacityWidth(nd)
+			others()
 		default:
 			if prev == PaintLinear || prev == PaintRadial {
 				pstr := reflectx.ToString(nd.AsTree().Properties[prop])
@@ -403,7 +435,7 @@ func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintType
 				nd.AsNodeBase().SetColorProperties(prop, "none")
 			} else {
 				nd.AsNodeBase().SetColorProperties(prop, sp)
-				pv.SetOpacityWidth(nd)
+				others()
 			}
 		}
 	})
@@ -434,11 +466,12 @@ func (cv *Canvas) SetStrokeColor(sp string, final bool) {
 		})
 }
 
-func (cv *Canvas) SetStrokeWidth(wp string) {
-	cv.setPropsOnSelected("SetStrokeWidth", wp, func(nd svg.Node) {
+// SetStrokeProperty sets given property only if stroke.color is non-nil.
+func (cv *Canvas) SetStrokeProperty(prop, wp string) {
+	cv.setPropsOnSelected(prop, wp, func(nd svg.Node) {
 		g := nd.AsNodeBase()
 		if g.Paint.Stroke.Color != nil {
-			g.SetProperty("stroke-width", wp)
+			g.SetProperty(prop, wp)
 		}
 	})
 }
@@ -517,6 +550,8 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 
 	pv.PaintStyle.Stroke.Width = ps.Stroke.Width
 	pv.PaintStyle.Stroke.Dashes = ps.Stroke.Dashes
+	pv.PaintStyle.Stroke.Cap = ps.Stroke.Cap
+	pv.PaintStyle.Stroke.Join = ps.Stroke.Join
 
 	setMarker := func(ic, cc *core.Chooser, ms string, mc MarkerColors) {
 		if ms != "" {
@@ -655,12 +690,6 @@ func (pv *PaintSetter) MarkerProperties() (start, mid, end string, sc, mc, ec Ma
 // IsStrokeOn returns true if stroke is active
 func (pv *PaintSetter) IsStrokeOn() bool {
 	return pv.StrokeType >= PaintSolid && pv.StrokeType < PaintInherit
-}
-
-// StrokeWidthProp returns stroke-width property
-func (pv *PaintSetter) StrokeWidthProp() string {
-	unnm := pv.PaintStyle.Stroke.Width.Unit.String()
-	return fmt.Sprintf("%g%s", pv.PaintStyle.Stroke.Width.Value, unnm)
 }
 
 // StrokeDashProp returns stroke-dasharray property as an array (nil = none)
