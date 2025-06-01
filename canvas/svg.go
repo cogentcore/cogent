@@ -57,9 +57,19 @@ func (sv *SVG) Init() {
 		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended)
 		s.ObjectFit = styles.FitNone
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
-		s.Cursor = cursors.Arrow // todo: modulate based on tool etc
 		sv.SVG.TextShaper = sv.Scene.TextShaper()
 		s.StateLayer = 0 // always focused..
+	})
+	sv.FinalStyler(func(s *styles.Style) {
+		es := sv.EditState()
+		sv.Styles.Cursor = cursors.Arrow
+		switch {
+		case es.Tool == BezierTool:
+			sv.Styles.Cursor = cursors.Crosshair
+		case es.Action == Move || es.Action == Reshape:
+			// fmt.Println("move")
+			sv.Styles.Cursor = cursors.Move
+		}
 	})
 	sv.OnKeyChord(func(e events.Event) {
 		es := sv.EditState()
@@ -160,6 +170,8 @@ func (sv *SVG) Init() {
 		}
 		es.MouseDownSel = sob
 
+		// fmt.Println(sv.Styles.Cursor)
+
 		es.SelectNoDrag = false
 		switch {
 		case es.Tool == BezierTool:
@@ -246,6 +258,7 @@ func (sv *SVG) Init() {
 			sv.UpdateLineAddSprite()
 			return
 		}
+		// fmt.Println(sv.Styles.Cursor)
 		es.SelectNoDrag = false
 		es.DragStartPos = e.StartPos() // this is the operative start
 		// fmt.Println("sm drag start:", es.DragStartPos)
@@ -366,6 +379,7 @@ func (sv *SVG) UpdateView() {
 	sv.UpdateNodeSprites()
 	sv.NeedsRender()
 	sv.SetFocus()
+	sv.Restyle()
 }
 
 // SpritesNolock returns the [core.Sprites] without locking.

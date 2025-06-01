@@ -161,21 +161,22 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 		bv := rawpt.Dim(dim)
 		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
 		if snap {
-			snpt.SetDim(dim, sval)
-			mx := min(len(clVals[dim]), 4)
-			for i := 0; i < mx; i++ {
-				pt := clVals[dim][i]
-				rpt := image.Rectangle{}
-				rpt.Min = rawpt.ToPoint()
-				rpt.Max = pt.ToPoint()
-				if dim == math32.X {
-					rpt.Min.X = rpt.Max.X
-				} else {
-					rpt.Min.Y = rpt.Max.Y
-				}
-				alpts = append(alpts, rpt)
-				altyps = append(altyps, clPts[dim][i])
+			continue
+		}
+		snpt.SetDim(dim, sval)
+		mx := min(len(clVals[dim]), 4)
+		for i := 0; i < mx; i++ {
+			pt := clVals[dim][i]
+			rpt := image.Rectangle{}
+			rpt.Min = rawpt.ToPoint()
+			rpt.Max = pt.ToPoint()
+			if dim == math32.X {
+				rpt.Min.X = rpt.Max.X
+			} else {
+				rpt.Min.Y = rpt.Max.Y
 			}
+			alpts = append(alpts, rpt)
+			altyps = append(altyps, clPts[dim][i])
 		}
 	}
 	sv.ShowAlignMatches(alpts, altyps)
@@ -222,22 +223,23 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 		}
 		bv := bbval[dim].Dim(dim)
 		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
-		if snap {
-			clPts[dim][0].MoveDelta(&snapbb, sval-bv)
-			mx := min(len(clVals[dim]), 4)
-			for i := 0; i < mx; i++ {
-				pt := clVals[dim][i]
-				rpt := image.Rectangle{}
-				rpt.Min = bbval[dim].ToPoint()
-				rpt.Max = pt.ToPoint()
-				if dim == math32.X {
-					rpt.Min.X = rpt.Max.X
-				} else {
-					rpt.Min.Y = rpt.Max.Y
-				}
-				alpts = append(alpts, rpt)
-				altyps = append(altyps, clPts[dim][i])
+		if !snap {
+			continue
+		}
+		clPts[dim][0].MoveDelta(&snapbb, sval-bv)
+		mx := min(len(clVals[dim]), 4)
+		for i := 0; i < mx; i++ {
+			pt := clVals[dim][i]
+			rpt := image.Rectangle{}
+			rpt.Min = bbval[dim].ToPoint()
+			rpt.Max = pt.ToPoint()
+			if dim == math32.X {
+				rpt.Min.X = rpt.Max.X
+			} else {
+				rpt.Min.Y = rpt.Max.Y
 			}
+			alpts = append(alpts, rpt)
+			altyps = append(altyps, clPts[dim][i])
 		}
 	}
 	sv.ShowAlignMatches(alpts, altyps)
