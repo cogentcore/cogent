@@ -172,16 +172,16 @@ func (i *BBoxPoints) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "BBoxPoints")
 }
 
-var _canvasFlagsValues = []canvasFlags{}
+var _canvasFlagsValues = []canvasFlags{0}
 
 // canvasFlagsN is the highest valid value for type canvasFlags, plus one.
 const canvasFlagsN canvasFlags = 1
 
-var _canvasFlagsValueMap = map[string]canvasFlags{}
+var _canvasFlagsValueMap = map[string]canvasFlags{`AutoSaving`: 0}
 
-var _canvasFlagsDescMap = map[canvasFlags]string{}
+var _canvasFlagsDescMap = map[canvasFlags]string{0: `canvasAutoSaving is true if auto-saving.`}
 
-var _canvasFlagsMap = map[canvasFlags]string{}
+var _canvasFlagsMap = map[canvasFlags]string{0: `AutoSaving`}
 
 // String returns the string representation of this canvasFlags value.
 func (i canvasFlags) String() string { return enums.BitFlagString(i, _canvasFlagsValues) }

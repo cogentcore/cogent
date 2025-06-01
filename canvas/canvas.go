@@ -181,7 +181,7 @@ func (cv *Canvas) Init() {
 				cv.SVG = w
 				w.Canvas = cv
 				w.UpdateGradients(cv.EditState.Gradients)
-				cv.SetPhysSize(&Settings.Size)
+				cv.SetPhysicalSize(&Settings.Size)
 				cv.SyncLayersFromSVG()
 			})
 			tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
@@ -239,7 +239,6 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error {
 	tv.Resync()
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
-	sv.backgroundGridEff = 0
 	sv.SVG.ZoomReset()
 	cv.UpdateAll()
 	core.ErrorSnackbar(cv, err)
@@ -267,31 +266,30 @@ func (cv *Canvas) OpenDrawingCheck(fnm core.Filename) error { //types:add
 }
 
 // NewDrawing creates a new drawing of the given size
-func (cv *Canvas) NewDrawing(sz PhysSize) *Canvas {
+func (cv *Canvas) NewDrawing(sz PhysicalSize) *Canvas {
 	ngr := NewDrawing(sz)
 	return ngr
 }
 
-// PromptPhysSize prompts for the physical size of the drawing and sets it
-func (cv *Canvas) PromptPhysSize() { //types:add
+// PromptPhysicalSize prompts for the physical size of the drawing and sets it
+func (cv *Canvas) PromptPhysicalSize() { //types:add
 	sv := cv.SVG
-	sz := &PhysSize{}
+	sz := &PhysicalSize{}
 	sz.SetFromSVG(sv)
 	d := core.NewBody("SVG physical size")
 	core.NewForm(d).SetStruct(sz)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).OnClick(func(e events.Event) {
-			cv.SetPhysSize(sz)
-			sv.backgroundGridEff = -1
+			cv.SetPhysicalSize(sz)
 			sv.UpdateView()
 		})
 	})
 	d.RunDialog(cv)
 }
 
-// SetPhysSize sets physical size of drawing
-func (cv *Canvas) SetPhysSize(sz *PhysSize) {
+// SetPhysicalSize sets physical size of drawing
+func (cv *Canvas) SetPhysicalSize(sz *PhysicalSize) {
 	if sz == nil {
 		return
 	}
@@ -425,12 +423,12 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 		w.SetText("New").SetIcon(icons.Add).
 			OnClick(func(e events.Event) {
 				ndr := cv.NewDrawing(Settings.Size)
-				ndr.PromptPhysSize()
+				ndr.PromptPhysicalSize()
 			})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
-			core.NewFuncButton(m).SetFunc(cv.PromptPhysSize).SetText("Set size").SetIcon(icons.FormatSize)
+			core.NewFuncButton(m).SetFunc(cv.PromptPhysicalSize).SetText("Set size").SetIcon(icons.FormatSize)
 			core.NewFuncButton(m).SetFunc(cv.ResizeToContents).SetIcon(icons.Resize)
 		})
 	})
@@ -554,9 +552,9 @@ func (cv *Canvas) SetTitle() {
 }
 
 // NewDrawing opens a new drawing window
-func NewDrawing(sz PhysSize) *Canvas {
+func NewDrawing(sz PhysicalSize) *Canvas {
 	ngr := NewWindow("")
-	ngr.SetPhysSize(&sz)
+	ngr.SetPhysicalSize(&sz)
 	return ngr
 }
 

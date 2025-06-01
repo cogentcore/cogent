@@ -30,14 +30,30 @@ func (cv *Canvas) selectEnabledStyler(w core.Widget) {
 // MakeSelectToolbar adds the select toolbar to the given plan.
 func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Switch) {
-		core.Bind(&Settings.SnapGrid, w)
-		w.SetText("Snap grid")
-		w.SetTooltip("Whether to snap movement and sizing of selection to the grid")
-	})
-	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapAlign, w)
 		w.SetText("Snap align")
-		w.SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
+		w.SetTooltip("Snap to align with other elements in the scene, as indicated")
+	})
+	tree.Add(p, func(w *core.Switch) {
+		core.Bind(&Settings.SnapGrid, w)
+		w.SetText("Snap grid")
+		w.SetTooltip("Snap to the grid (edit grid in settings)")
+	})
+	tree.Add(p, func(w *core.Spinner) {
+		if cv.SVG != nil {
+			core.Bind(&cv.SVG.Grid, w) // todo: need a better soln
+		}
+		w.Min = 0.01
+		w.Step = 1
+		w.Styler(func(s *styles.Style) {
+			s.Min.X.Ch(4)
+		})
+		w.Updater(func() {
+			if cv.SVG != nil {
+				cv.SVG.UpdateGridPixels()
+			}
+		})
+		w.SetTooltip("Grid spacing in the ViewBox units of the drawing. Saved if metadata is on.")
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {

@@ -427,7 +427,7 @@ func (es *EditState) StartRecents(pos image.Point) {
 // PosInLastSelect returns true if position is within tolerance of
 // last selection point
 func (es *EditState) PosInLastSelect(pos image.Point) bool {
-	tol := image.Point{Settings.SnapTol, Settings.SnapTol}
+	tol := image.Point{Settings.SnapZone, Settings.SnapZone}
 	bb := image.Rectangle{Min: es.LastSelectPos.Sub(tol), Max: es.LastSelectPos.Add(tol)}
 	return pos.In(bb)
 }

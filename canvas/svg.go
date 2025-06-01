@@ -37,14 +37,15 @@ type SVG struct {
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
-	// grid spacing, in native ViewBox units
+	// Grid spacing, in native ViewBox units.
 	Grid float32 ` set:"-"`
 
-	// effective grid spacing given Scale level
-	GridEff float32 `edit:"-" set:"-"`
+	// GridPixels is the current pixel (dot) grid spacing, with scaling.
+	// Will be a multiple of underlying Grid if < SnapZone.
+	GridPixels math32.Vector2 `edit:"-" set:"-"`
 
-	// bg rendered grid
-	backgroundGridEff float32
+	// GridOffset is the current pixel offset in mouse coordinates.
+	GridOffset math32.Vector2 `edit:"-" set:"-"`
 }
 
 func (sv *SVG) Init() {
@@ -375,6 +376,7 @@ func (sv *SVG) EditState() *EditState {
 
 // UpdateView updates the SVG view
 func (sv *SVG) UpdateView() {
+	sv.UpdateGridPixels()
 	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
 	sv.UpdateNodeSprites()
@@ -674,28 +676,33 @@ func (sv *SVG) Redo() string {
 	return act
 }
 
-////////  Bg render
+////////  Grid render
 
-// UpdateGridEff updates the GirdEff value based on current scale
-func (sv *SVG) UpdateGridEff() {
-	sv.GridEff = sv.Grid
-	sp := sv.GridEff * sv.SVG.Scale
-	for sp <= 2*(float32(Settings.SnapTol)+1) {
-		sv.GridEff *= 2
-		sp = sv.GridEff * sv.SVG.Scale
+// UpdateGridPixels updates the GirdEff value based on current scale
+func (sv *SVG) UpdateGridPixels() {
+	if sv.Grid == 0 { // shouldn't happen!
+		sv.Grid = 16
 	}
+	tx, ty, _, sx, sy, _ := sv.Root().Paint.Transform.Decompose()
+	sv.GridPixels = math32.Vec2(sx, sy).MulScalar(sv.Grid)
+	tol := 2 * (float32(Settings.SnapZone) + 1)
+	for sv.GridPixels.X < tol || sv.GridPixels.Y < tol {
+		sv.GridPixels.SetMulScalar(2)
+	}
+	tl := math32.Vec2(tx, ty)
+	sv.GridOffset = tl
+	fmt.Println("grid:", sv.Grid, sv.GridPixels, sv.GridOffset)
 }
 
 // RenderGrid renders the background grid
 func (sv *SVG) RenderGrid() {
 	root := sv.Root()
-	if root == nil || !Settings.GridDisp {
+	if root == nil || !Settings.ShowGrid {
 		return
 	}
-	sv.UpdateGridEff()
 
 	pc := &sv.Scene.Painter
-	pc.PushContext(&root.Paint, nil)
+	pc.PushContext(&root.Paint, nil) // gets root transform
 	pc.Stroke.Color = colors.Scheme.OutlineVariant
 	pc.Fill.Color = nil
 
@@ -708,8 +715,8 @@ func (sv *SVG) RenderGrid() {
 	sz := root.ViewBox.Size
 
 	pc.Rectangle(pos.X, pos.Y, sz.X, sz.Y)
-	if Settings.GridDisp {
-		gsz := float32(sv.GridEff)
+	if Settings.ShowGrid {
+		gsz := float32(sv.Grid)
 		for x := gsz; x < sz.X; x += gsz {
 			pc.Line(pos.X+x, pos.Y, pos.X+x, pos.Y+sz.Y)
 		}
@@ -719,153 +726,4 @@ func (sv *SVG) RenderGrid() {
 	}
 	pc.Draw()
 	pc.PopContext()
-}
-
-// DistributeProps distributes properties into leaf nodes
-// from groups. Putting properties on groups is not good
-// for editing.
-func (sv *SVG) DistributeProps() {
-	gotSome := false
-	root := sv.Root()
-
-	exclude := func(k string) bool {
-		if k == "transform" || strings.Contains(k, "groupmode") || strings.Contains(k, "display:inline") || strings.Contains(k, "xmlns:") || strings.Contains(k, "xlink:") {
-			return true
-		}
-		return false
-	}
-
-	svg.SVGWalkDownNoDefs(root, func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This {
-			return tree.Continue
-		}
-		if nb.HasChildren() {
-			return tree.Continue
-		}
-		if txt, istxt := n.(*svg.Text); istxt { // no tspans
-			if txt.Text != "" {
-				if _, istxt := txt.Parent.(*svg.Text); istxt {
-					return tree.Break
-				}
-			}
-		}
-		if nb.Properties == nil {
-			nb.Properties = make(map[string]any)
-		}
-		par := nb.Parent.(svg.Node).AsNodeBase()
-		if par.This == root.This || NodeIsLayer(par) {
-			return tree.Continue
-		}
-		for {
-			if par.Properties != nil {
-				for k, v := range par.Properties {
-					if exclude(k) {
-						continue
-					}
-					if _, has := nb.Properties[k]; !has {
-						gotSome = true
-						nb.Properties[k] = v
-					}
-				}
-			}
-			if par.Parent == nil || par.Parent == sv.Root().This {
-				break
-			}
-			par = par.Parent.(svg.Node).AsNodeBase()
-		}
-		return tree.Continue
-	})
-	if !gotSome {
-		return
-	}
-
-	// then get rid of properties on groups
-	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This {
-			return tree.Continue
-		}
-		if !nb.HasChildren() {
-			return tree.Break
-		}
-		if NodeIsLayer(n) {
-			return tree.Continue
-		}
-		if nb.Properties == nil {
-			return tree.Continue
-		}
-		for k := range nb.Properties {
-			if exclude(k) {
-				continue
-			}
-			delete(nb.Properties, k)
-		}
-		return tree.Continue
-	})
-}
-
-// UngroupSingletons moves leaf nodes that are all by self in a group
-// out of the group.
-func (sv *SVG) UngroupSingletons() {
-	var singles []svg.Node
-	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This {
-			return tree.Continue
-		}
-		if nb.HasChildren() {
-			return tree.Continue
-		}
-		if txt, istxt := n.(*svg.Text); istxt { // no tspans
-			if txt.Text != "" {
-				if _, istxt := txt.Parent.(*svg.Text); istxt {
-					return tree.Break
-				}
-			}
-		}
-		par := nb.Parent.(svg.Node).AsNodeBase()
-		if par.NumChildren() != 1 || par.Parent == nil {
-			return tree.Continue
-		}
-		singles = append(singles, n)
-		return tree.Continue
-	})
-	if len(singles) == 0 {
-		return
-	}
-	sv.SVG.Style() // ensure all styles are set
-	for _, n := range singles {
-		nb := n.AsNodeBase()
-		par := nb.Parent.(svg.Node).AsNodeBase()
-		parPar := par.Parent
-		tree.MoveToParent(nb.This, parPar)
-		if !par.Paint.Transform.IsIdentity() {
-			nb.ApplyTransform(sv.SVG, par.Paint.Transform)
-		}
-		ppn := parPar.(svg.Node).AsNodeBase()
-		ppn.DeleteChild(par.This)
-	}
-}
-
-// RemoveEmptyGroups removes groups that have no children.
-func (sv *SVG) RemoveEmptyGroups() {
-	var empties []svg.Node
-	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This {
-			return tree.Continue
-		}
-		if nb.HasChildren() {
-			return tree.Continue
-		}
-		if _, isgp := n.(*svg.Group); isgp {
-			empties = append(empties, n)
-		}
-		return tree.Continue
-	})
-	if len(empties) == 0 {
-		return
-	}
-	for _, n := range empties {
-		nb := n.AsNodeBase()
-		par := nb.Parent.(svg.Node).AsNodeBase()
-		par.DeleteChild(n)
-	}
 }

@@ -33,22 +33,25 @@ type SettingsData struct { //types:add
 	core.SettingsBase
 
 	// default physical size, when app is started without opening a file
-	Size PhysSize `display:"add-fields"`
+	Size PhysicalSize `display:"add-fields"`
 
 	// turns on the grid display
-	GridDisp bool `default:"true"`
+	ShowGrid bool `default:"true"`
 
-	// snap positions and sizes to underlying grid
+	// snap to grid intervals.
 	SnapGrid bool `default:"true"`
 
-	// snap positions and sizes to line up with other elements
+	// snap to align with other elements.
 	SnapAlign bool `default:"true"`
 
-	// snap node movements to align with guides
+	// snap individual path nodes using snap settings, while drawing and editing nodes.
 	SnapNodes bool `default:"true"`
 
-	// number of screen pixels around target point (in either direction) to snap
-	SnapTol int `min:"1" default:"3"`
+	// zone of attraction around a potential snapping point (grid, align) where
+	// snapping happens. Small values here allow a reasonable balance of snapping
+	// and non-snapping, while larger values produce more visible and strong snapping
+	// constraints.
+	SnapZone int `min:"1" default:"3"`
 
 	// enables saving of metadata about the image (in inkscape-compatible format)
 	MetaData bool
@@ -56,11 +59,11 @@ type SettingsData struct { //types:add
 
 func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
-	se.GridDisp = true
+	se.ShowGrid = true
 	se.SnapGrid = true
 	se.SnapAlign = true
 	se.SnapNodes = true
-	se.SnapTol = 3
+	se.SnapZone = 3
 	se.MetaData = true
 }
 
@@ -80,7 +83,7 @@ func (se *SettingsData) Open() error {
 	return tomlx.Open(se, se.Filename())
 }
 
-////////   Recents
+////////  Recents
 
 var (
 	// RecentPaths is a slice of recent file paths

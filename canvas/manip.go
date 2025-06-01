@@ -66,24 +66,11 @@ func (sv *SVG) ManipDone() {
 	sv.Canvas.ChangeMade()
 }
 
-// GridDots returns the current grid spacing and offsets in dots.
-func (sv *SVG) GridDots() (float32, math32.Vector2) {
-	grid := sv.GridEff
-	if grid <= 0 {
-		grid = 12
-	}
-	incr := grid * sv.SVG.Scale // our zoom factor
-	org := sv.Root().Paint.Transform.MulVector2AsPoint(math32.Vector2{})
-	org.X = math32.Mod(org.X, incr)
-	org.Y = math32.Mod(org.Y, incr)
-	return incr, org
-}
-
 // SnapToPoint snaps value to given potential snap point, in screen pixel units.
 // Tolerance is determined by settings.  Returns true if snapped.
 func SnapToPoint(val, snap float32) (float32, bool) {
 	d := math32.Abs(val - snap)
-	if d <= float32(Settings.SnapTol) {
+	if d <= float32(Settings.SnapZone) {
 		return snap, true
 	}
 	return val, false
@@ -95,7 +82,7 @@ func SnapToPoint(val, snap float32) (float32, bool) {
 func SnapToIncr(val, off, incr float32) float32 {
 	nint := math32.Round((val-off)/incr)*incr + off
 	dint := math32.Abs(val - nint)
-	if dint <= float32(Settings.SnapTol) {
+	if dint <= float32(Settings.SnapZone) {
 		return nint
 	}
 	return val
@@ -105,8 +92,7 @@ func (sv *SVG) SnapGridPoint(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapGrid {
 		return rawpt
 	}
-	grinc, groff := sv.GridDots()
-	return math32.Vec2(SnapToIncr(rawpt.X, groff.X, grinc), SnapToIncr(rawpt.Y, groff.Y, grinc))
+	return math32.Vec2(SnapToIncr(rawpt.X, sv.GridOffset.X, sv.GridPixels.X), SnapToIncr(rawpt.Y, sv.GridOffset.Y, sv.GridPixels.Y))
 }
 
 // SnapPoint does grid and align snapping on one raw point, given that point,
