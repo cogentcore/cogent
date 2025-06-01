@@ -35,8 +35,8 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 		w.SetTooltip("Whether to snap movement and sizing of selection to the grid")
 	})
 	tree.Add(p, func(w *core.Switch) {
-		core.Bind(&Settings.SnapGuide, w)
-		w.SetText("Snap guide")
+		core.Bind(&Settings.SnapAlign, w)
+		w.SetText("Snap align")
 		w.SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
 	})
 	tree.Add(p, func(w *core.Separator) {})
@@ -87,8 +87,8 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	// 	w.SetText("X: ")
 	// })
 	// TODO(config):
-	// core.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
-	// 	gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
+	// core.NewValue(tb, &gv.EditState.DragSnapBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+	// 	gv.SelectSetXPos(gv.EditState.DragSnapBBox.Min.X)
 	// })
 
 	// tree.Add(p, func(w *core.Text) {
@@ -241,9 +241,9 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 		es.ActStart(BoxSelect, fmt.Sprintf("%v", es.DragStartPos))
 		es.ActUnlock()
 	}
-	es.DragCurPos = cur
+	es.DragPos = cur
 
-	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragPos}
 	bbox = bbox.Canon()
 
 	sz := bbox.Size()

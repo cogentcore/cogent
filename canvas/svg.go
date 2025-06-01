@@ -154,14 +154,13 @@ func (sv *SVG) Init() {
 			}
 		}
 	})
-	sv.On(events.MouseDown, func(e events.Event) {
+	sv.OnFirst(events.MouseDown, func(e events.Event) {
 		if e.MouseButton() != events.Left {
 			return
 		}
 		es := sv.EditState()
 		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
 		sv.SetFocusQuiet()
-		e.SetHandled()
 		var sob svg.Node
 		if es.Tool == NodeTool {
 			sob = sv.SelectContainsPoint(e.Pos(), true, true) // yes leavesonly, yes exclude existing sels
@@ -175,22 +174,24 @@ func (sv *SVG) Init() {
 		es.SelectNoDrag = false
 		switch {
 		case es.Tool == BezierTool:
-			es.DrawCurPos = e.Pos()
+			pt := sv.DrawPoint(e)
 			newPt := false
 			if es.ActivePath == nil {
 				es.ActivePath = NewSVGElement[svg.Path](sv, false)
 				newPt = true
+				es.DrawStartPos = pt
 			}
 			switch {
 			case newPt:
-				sv.DrawNodeAdd(SpMoveTo, e.Pos())
+				sv.DrawNodeAdd(SpMoveTo, pt)
 			case e.HasAnyModifier(key.Alt):
-				sv.DrawNodeAdd(SpCubeTo, e.Pos())
+				sv.DrawNodeAdd(SpCubeTo, pt)
 			default:
-				sv.DrawNodeAdd(SpLineTo, e.Pos())
+				sv.DrawNodeAdd(SpLineTo, pt)
 			}
 			sv.Canvas.PaintSetter().SetProperties(es.ActivePath)
 			sv.UpdateView()
+			e.SetHandled() // allows control to work here
 		case isSelTool && es.HasSelected() && es.SelectBBox.ContainsPoint(math32.FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
@@ -219,7 +220,7 @@ func (sv *SVG) Init() {
 	sv.On(events.MouseMove, func(e events.Event) {
 		es := sv.EditState()
 		if es.Tool == BezierTool {
-			es.DrawCurPos = e.Pos()
+			sv.DrawPoint(e)
 			sv.UpdateLineAddSprite()
 		}
 	})
@@ -229,7 +230,7 @@ func (sv *SVG) Init() {
 		}
 		es := sv.EditState()
 		if es.Tool == BezierTool {
-			es.DrawCurPos = e.Pos()
+			es.DrawPos = e.Pos()
 			return
 		}
 		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
@@ -254,14 +255,14 @@ func (sv *SVG) Init() {
 		es := sv.EditState()
 		if es.Tool == BezierTool {
 			e.SetHandled()
-			es.DrawCurPos = e.Pos()
+			sv.DrawPoint(e)
 			sv.UpdateLineAddSprite()
 			return
 		}
 		// fmt.Println(sv.Styles.Cursor)
 		es.SelectNoDrag = false
 		es.DragStartPos = e.StartPos() // this is the operative start
-		// fmt.Println("sm drag start:", es.DragStartPos)
+
 		if e.HasAnyModifier(key.Shift) {
 			e.SetHandled()
 			del := math32.FromPoint(e.PrevDelta()).MulScalar(max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01))

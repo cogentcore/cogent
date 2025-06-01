@@ -64,14 +64,17 @@ type EditState struct {
 	// true if a new text item was made while dragging
 	NewTextMade bool
 
-	// point where dragging started, mouse coords
+	// point where dragging started
 	DragStartPos image.Point
 
-	// current dragging position, mouse coords
-	DragCurPos image.Point
+	// current dragging position
+	DragPos image.Point
 
-	// whether to constrain the current point when dragging
-	DragConstrainPoint bool
+	// current dragging position, which is snapped if SnapNodes is on.
+	DragSnapPos math32.Vector2
+
+	// whether to constrain the current point if ctrl key is down.
+	ConstrainPoint bool
 
 	// current selection bounding box
 	SelectBBox math32.Box2
@@ -89,13 +92,13 @@ type EditState struct {
 	SelectIsText bool
 
 	// bbox at start of dragging
-	DragSelectStartBBox math32.Box2
+	DragStartBBox math32.Box2
 
 	// current bbox during dragging -- non-snapped version
-	DragSelectCurrentBBox math32.Box2
+	DragBBox math32.Box2
 
 	// current effective bbox during dragging -- snapped version
-	DragSelectEffectiveBBox math32.Box2
+	DragSnapBBox math32.Box2
 
 	// potential points of alignment for dragging
 	AlignPts [BBoxPointsN][]math32.Vector2
@@ -121,7 +124,13 @@ type EditState struct {
 	CtrlDrag      Sprites
 
 	// Current position while drawing
-	DrawCurPos image.Point
+	DrawPos image.Point
+
+	// Current position while drawing, snapped
+	DrawSnapPos image.Point
+
+	// Starting position for drawing: first point in line
+	DrawStartPos image.Point
 
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
@@ -454,9 +463,9 @@ func (es *EditState) DragSelStart(pos image.Point) {
 		return
 	}
 	es.UpdateSelectBBox()
-	es.DragSelectStartBBox = es.SelectBBox
-	es.DragSelectCurrentBBox = es.SelectBBox
-	es.DragSelectEffectiveBBox = es.SelectBBox
+	es.DragStartBBox = es.SelectBBox
+	es.DragBBox = es.SelectBBox
+	es.DragSnapBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
 		ss.InitState = svg.BitCloneNode(itm)
 	}

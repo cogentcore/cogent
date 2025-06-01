@@ -45,7 +45,7 @@ func (sv *SVG) ManipDone() {
 	es := sv.EditState()
 	switch {
 	case es.Action == BoxSelect:
-		bbox := math32.Box2{Min: math32.FromPoint(es.DragStartPos), Max: math32.FromPoint(es.DragCurPos)}
+		bbox := math32.Box2{Min: math32.FromPoint(es.DragStartPos), Max: math32.FromPoint(es.DragPos)}
 		bbox = bbox.Canon()
 		InactivateSprites(sprites, SpRubberBand)
 		sel := sv.SelectWithinBBox(bbox, false)
@@ -68,32 +68,20 @@ func (sv *SVG) ManipDone() {
 
 // GridDots returns the current grid spacing and offsets in dots.
 func (sv *SVG) GridDots() (float32, math32.Vector2) {
-	svoff := math32.Vector2{} // math32.FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.GridEff
 	if grid <= 0 {
 		grid = 12
 	}
 	incr := grid * sv.SVG.Scale // our zoom factor
-
-	org := math32.Vector2{}
-	org = sv.Root().Paint.Transform.MulVector2AsPoint(org)
-
-	// fmt.Printf("org: %v\n", org)
-
-	org.SetAdd(svoff)
-	// fmt.Printf("org: %v   svgoff: %v\n", org, svoff)
-
+	org := sv.Root().Paint.Transform.MulVector2AsPoint(math32.Vector2{})
 	org.X = math32.Mod(org.X, incr)
 	org.Y = math32.Mod(org.Y, incr)
-
-	// fmt.Printf("mod org: %v   incr: %v\n", org, incr)
-
 	return incr, org
 }
 
-// SnapToPt snaps value to given potential snap point, in screen pixel units.
+// SnapToPoint snaps value to given potential snap point, in screen pixel units.
 // Tolerance is determined by settings.  Returns true if snapped.
-func SnapToPt(val, snap float32) (float32, bool) {
+func SnapToPoint(val, snap float32) (float32, bool) {
 	d := math32.Abs(val - snap)
 	if d <= float32(Settings.SnapTol) {
 		return snap, true
@@ -104,32 +92,29 @@ func SnapToPt(val, snap float32) (float32, bool) {
 // SnapToIncr snaps value to given increment, first subtracting given offset.
 // Tolerance is determined by settings, which is in screen pixels.
 // Returns true if snapped.
-func SnapToIncr(val, off, incr float32) (float32, bool) {
+func SnapToIncr(val, off, incr float32) float32 {
 	nint := math32.Round((val-off)/incr)*incr + off
 	dint := math32.Abs(val - nint)
 	if dint <= float32(Settings.SnapTol) {
-		return nint, true
+		return nint
 	}
-	return val, false
+	return val
 }
 
-func (sv *SVG) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
+func (sv *SVG) SnapGridPoint(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapGrid {
 		return rawpt
 	}
 	grinc, groff := sv.GridDots()
-	var snpt math32.Vector2
-	snpt.X, _ = SnapToIncr(rawpt.X, groff.X, grinc)
-	snpt.Y, _ = SnapToIncr(rawpt.Y, groff.Y, grinc)
-	return snpt
+	return math32.Vec2(SnapToIncr(rawpt.X, groff.X, grinc), SnapToIncr(rawpt.Y, groff.Y, grinc))
 }
 
-// SnapPoint does snapping on one raw point, given that point,
+// SnapPoint does grid and align snapping on one raw point, given that point,
 // in window coordinates. returns the snapped point.
 func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	es := sv.EditState()
-	snpt := sv.SnapPointToVector(rawpt)
-	if !Settings.SnapGuide {
+	snpt := sv.SnapGridPoint(rawpt)
+	if !Settings.SnapAlign {
 		return snpt
 	}
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
@@ -159,7 +144,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 			continue
 		}
 		bv := rawpt.Dim(dim)
-		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+		sval, snap := SnapToPoint(bv, clVals[dim][0].Dim(dim))
 		if snap {
 			continue
 		}
@@ -187,7 +172,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
 func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
-	if !Settings.SnapGuide {
+	if !Settings.SnapAlign {
 		return rawbb
 	}
 	es := sv.EditState()
@@ -222,7 +207,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 			continue
 		}
 		bv := bbval[dim].Dim(dim)
-		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+		sval, snap := SnapToPoint(bv, clVals[dim][0].Dim(dim))
 		if !snap {
 			continue
 		}
@@ -323,18 +308,18 @@ func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	}
 }
 
-func (sv *SVG) DragDelta(e events.Event) (spt, mpt, dv math32.Vector2) {
+func (sv *SVG) DragDelta(e events.Event, node bool) (spt, mpt, dv math32.Vector2) {
 	es := sv.EditState()
 	spt = math32.FromPoint(es.DragStartPos)
 	mpt = math32.FromPoint(e.Pos())
 
-	if es.DragConstrainPoint && e.HasAnyModifier(key.Control) {
+	if es.ConstrainPoint && e.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
-	if Settings.SnapNodes {
+	if node && Settings.SnapNodes {
 		mpt = sv.SnapPoint(mpt)
 	}
-	es.DragCurPos = mpt.ToPointRound()
+	es.DragPos = mpt.ToPointRound()
 	dv = mpt.Sub(spt)
 	return
 }
@@ -344,27 +329,27 @@ func (sv *SVG) DragMove(e events.Event) {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(Move, es.SelectedNamesString())
-	es.DragConstrainPoint = true
-	_, _, dv := sv.DragDelta(e)
+	es.ConstrainPoint = true
+	_, _, dv := sv.DragDelta(e, false)
 
-	es.DragSelectCurrentBBox = es.DragSelectStartBBox
-	es.DragSelectCurrentBBox.Min.SetAdd(dv)
-	es.DragSelectCurrentBBox.Max.SetAdd(dv)
+	es.DragBBox = es.DragStartBBox
+	es.DragBBox.Min.SetAdd(dv)
+	es.DragBBox.Max.SetAdd(dv)
 
-	es.DragSelectEffectiveBBox.Min = sv.SnapPointToVector(es.DragSelectCurrentBBox.Min)
-	ndv := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
-	es.DragSelectEffectiveBBox.Max = es.DragSelectStartBBox.Max.Add(ndv)
+	es.DragSnapBBox.Min = sv.SnapGridPoint(es.DragBBox.Min)
+	ndv := es.DragSnapBBox.Min.Sub(es.DragStartBBox.Min)
+	es.DragSnapBBox.Max = es.DragStartBBox.Max.Add(ndv)
 
-	es.DragSelectEffectiveBBox = sv.SnapBBox(es.DragSelectEffectiveBBox)
+	es.DragSnapBBox = sv.SnapBBox(es.DragSnapBBox)
 
-	pt := es.DragSelectStartBBox.Min
-	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
+	pt := es.DragStartBBox.Min
+	tdel := es.DragSnapBBox.Min.Sub(es.DragStartBBox.Min)
 	for itm, ss := range es.Selected {
 		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(tdel, math32.Vec2(1, 1), 0, pt)
 		itm.ApplyTransform(sv.SVG, xf)
 	}
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSnapBBox)
 	sprites.Unlock()
 	sv.UpdateView()
 }
@@ -401,44 +386,44 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(Reshape, es.SelectedNamesString())
 
-	stsz := es.DragSelectStartBBox.Size()
-	stpos := es.DragSelectStartBBox.Min
+	stsz := es.DragStartBBox.Size()
+	stpos := es.DragStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	es.DragConstrainPoint = (bbX != BBCenter && bbY != BBMiddle)
-	_, _, dv := sv.DragDelta(e)
+	es.ConstrainPoint = (bbX != BBCenter && bbY != BBMiddle)
+	_, _, dv := sv.DragDelta(e, false)
 
 	diag := false
-	es.DragSelectCurrentBBox = es.DragSelectStartBBox
+	es.DragBBox = es.DragStartBBox
 	switch sp {
 	case SpUpL:
-		es.DragSelectCurrentBBox.Min.SetAdd(dv)
-		es.DragSelectEffectiveBBox.Min = sv.SnapPoint(es.DragSelectCurrentBBox.Min)
+		es.DragBBox.Min.SetAdd(dv)
+		es.DragSnapBBox.Min = sv.SnapPoint(es.DragBBox.Min)
 	case SpUpC:
-		es.DragSelectCurrentBBox.Min.Y += dv.Y
-		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
+		es.DragBBox.Min.Y += dv.Y
+		es.DragSnapBBox.Min.Y = sv.SnapPoint(es.DragBBox.Min).Y
 	case SpUpR:
-		es.DragSelectCurrentBBox.Min.Y += dv.Y
-		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
-		es.DragSelectCurrentBBox.Max.X += dv.X
-		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
+		es.DragBBox.Min.Y += dv.Y
+		es.DragSnapBBox.Min.Y = sv.SnapPoint(es.DragBBox.Min).Y
+		es.DragBBox.Max.X += dv.X
+		es.DragSnapBBox.Max.X = sv.SnapPoint(es.DragBBox.Max).X
 	case SpDnL:
-		es.DragSelectCurrentBBox.Min.X += dv.X
-		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
-		es.DragSelectCurrentBBox.Max.Y += dv.Y
-		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
+		es.DragBBox.Min.X += dv.X
+		es.DragSnapBBox.Min.X = sv.SnapPoint(es.DragBBox.Min).X
+		es.DragBBox.Max.Y += dv.Y
+		es.DragSnapBBox.Max.Y = sv.SnapPoint(es.DragBBox.Max).Y
 	case SpDnC:
-		es.DragSelectCurrentBBox.Max.Y += dv.Y
-		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
+		es.DragBBox.Max.Y += dv.Y
+		es.DragSnapBBox.Max.Y = sv.SnapPoint(es.DragBBox.Max).Y
 	case SpDnR:
-		es.DragSelectCurrentBBox.Max.SetAdd(dv)
-		es.DragSelectEffectiveBBox.Max = sv.SnapPoint(es.DragSelectCurrentBBox.Max)
+		es.DragBBox.Max.SetAdd(dv)
+		es.DragSnapBBox.Max = sv.SnapPoint(es.DragBBox.Max)
 	case SpLfM:
-		es.DragSelectCurrentBBox.Min.X += dv.X
-		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
+		es.DragBBox.Min.X += dv.X
+		es.DragSnapBBox.Min.X = sv.SnapPoint(es.DragBBox.Min).X
 	case SpRtM:
-		es.DragSelectCurrentBBox.Max.X += dv.X
-		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
+		es.DragBBox.Max.X += dv.X
+		es.DragSnapBBox.Max.X = sv.SnapPoint(es.DragBBox.Max).X
 	}
 
 	if diag {
@@ -455,15 +440,15 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 			}
 		}
 		if sq {
-			es.DragSelectEffectiveBBox = SquareBBox(es.DragSelectEffectiveBBox)
+			es.DragSnapBBox = SquareBBox(es.DragSnapBBox)
 		} else {
-			es.DragSelectEffectiveBBox = ProportionalBBox(es.DragSelectEffectiveBBox, es.DragSelectStartBBox)
+			es.DragSnapBBox = ProportionalBBox(es.DragSnapBBox, es.DragStartBBox)
 		}
 	}
 
-	npos := es.DragSelectEffectiveBBox.Min
-	nsz := es.DragSelectEffectiveBBox.Size()
-	pt := es.DragSelectEffectiveBBox.Min
+	npos := es.DragSnapBBox.Min
+	nsz := es.DragSnapBBox.Size()
+	pt := es.DragSnapBBox.Min
 	// fmt.Println("npos:", npos, "stpos:", stpos, "pt:", pt)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
@@ -484,59 +469,59 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, e events.Event) {
 		sv.ManipStart(Rotate, es.SelectedNamesString())
 	}
 	dv := math32.FromPoint(e.PrevDelta()) // not from start but just current delta: adding to control points
-	pt := es.DragSelectStartBBox.Min
-	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
+	pt := es.DragStartBBox.Min
+	ctr := es.DragStartBBox.Min.Add(es.DragStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
 	switch sp {
 	case SpUpL:
-		es.DragSelectCurrentBBox.Min.SetAdd(dv)
-		dy = es.DragSelectStartBBox.Min.Y - es.DragSelectCurrentBBox.Min.Y
-		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
-		pt.X = es.DragSelectStartBBox.Max.X
+		es.DragBBox.Min.SetAdd(dv)
+		dy = es.DragStartBBox.Min.Y - es.DragBBox.Min.Y
+		dx = es.DragStartBBox.Max.X - es.DragBBox.Min.X
+		pt.X = es.DragStartBBox.Max.X
 	case SpUpC:
-		es.DragSelectCurrentBBox.Min.Y += dv.Y
-		es.DragSelectCurrentBBox.Max.X += dv.X
-		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
-		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
+		es.DragBBox.Min.Y += dv.Y
+		es.DragBBox.Max.X += dv.X
+		dy = es.DragBBox.Min.Y - es.DragStartBBox.Min.Y
+		dx = es.DragBBox.Max.X - es.DragStartBBox.Min.X
 		pt = ctr
 	case SpUpR:
-		es.DragSelectCurrentBBox.Min.Y += dv.Y
-		es.DragSelectCurrentBBox.Max.X += dv.X
-		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
-		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
-		pt = es.DragSelectStartBBox.Min
+		es.DragBBox.Min.Y += dv.Y
+		es.DragBBox.Max.X += dv.X
+		dy = es.DragBBox.Min.Y - es.DragStartBBox.Min.Y
+		dx = es.DragBBox.Max.X - es.DragStartBBox.Min.X
+		pt = es.DragStartBBox.Min
 	case SpDnL:
-		es.DragSelectCurrentBBox.Min.X += dv.X
-		es.DragSelectCurrentBBox.Max.Y += dv.Y
-		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
-		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
-		pt = es.DragSelectStartBBox.Max
+		es.DragBBox.Min.X += dv.X
+		es.DragBBox.Max.Y += dv.Y
+		dy = es.DragStartBBox.Max.Y - es.DragBBox.Max.Y
+		dx = es.DragStartBBox.Max.X - es.DragBBox.Min.X
+		pt = es.DragStartBBox.Max
 	case SpDnC:
-		es.DragSelectCurrentBBox.Max.SetAdd(dv)
-		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
-		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
+		es.DragBBox.Max.SetAdd(dv)
+		dy = es.DragBBox.Max.Y - es.DragStartBBox.Max.Y
+		dx = es.DragBBox.Max.X - es.DragStartBBox.Min.X
 		pt = ctr
 	case SpDnR:
-		es.DragSelectCurrentBBox.Max.SetAdd(dv)
-		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
-		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
-		pt.X = es.DragSelectStartBBox.Min.X
-		pt.Y = es.DragSelectStartBBox.Max.Y
+		es.DragBBox.Max.SetAdd(dv)
+		dy = es.DragBBox.Max.Y - es.DragStartBBox.Max.Y
+		dx = es.DragBBox.Max.X - es.DragStartBBox.Min.X
+		pt.X = es.DragStartBBox.Min.X
+		pt.Y = es.DragStartBBox.Max.Y
 	case SpLfM:
-		es.DragSelectCurrentBBox.Min.X += dv.X
-		es.DragSelectCurrentBBox.Max.Y += dv.Y
-		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
-		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
+		es.DragBBox.Min.X += dv.X
+		es.DragBBox.Max.Y += dv.Y
+		dy = es.DragStartBBox.Max.Y - es.DragBBox.Max.Y
+		dx = es.DragStartBBox.Max.X - es.DragBBox.Min.X
 		pt = ctr
 	case SpRtM:
-		es.DragSelectCurrentBBox.Max.SetAdd(dv)
-		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
-		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
+		es.DragBBox.Max.SetAdd(dv)
+		dy = es.DragBBox.Max.Y - es.DragStartBBox.Max.Y
+		dx = es.DragBBox.Max.X - es.DragStartBBox.Min.X
 		pt = ctr
 	}
 	ang := math32.Atan2(dy, dx)
 	if !e.HasAnyModifier(key.Shift) {
-		ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
+		ang = SnapToIncr(math32.RadToDeg(ang), 0, 15)
 	}
 	ang = math32.DegToRad(ang)
 	del := math32.Vector2{}
@@ -545,13 +530,6 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, e events.Event) {
 		svg.BitCopyFrom(itm, ss.InitState)
 		xf := itm.AsNodeBase().DeltaTransform(del, sc, ang, pt)
 		itm.ApplyTransform(sv.SVG, xf)
-		// if strings.HasPrefix(es.Action.String(), "New") {
-		// 	sv.SVG.GradientUpdateNodePoints(itm, "fill")
-		// 	sv.SVG.GradientUpdateNodePoints(itm, "stroke")
-		// }
 	}
-
-	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
-	// sv.setSelSpritePos()
 	sv.UpdateView()
 }

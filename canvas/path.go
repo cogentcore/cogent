@@ -237,7 +237,7 @@ func (sv *SVG) UpdateLineAddSprite() {
 	ept := pn.TEnd.ToPoint()
 	sp := sv.Sprite(SpLineAdd, SpNone, 0, ept, nil)
 	sp.Properties["lastPoint"] = ept
-	sv.SetSpritePos(sp, es.DrawCurPos.X, es.DrawCurPos.Y)
+	sv.SetSpritePos(sp, es.DrawSnapPos.X, es.DrawSnapPos.Y)
 }
 
 func InactivateNodePoint(sprites *core.Sprites, i int) {
@@ -267,13 +267,30 @@ func (sv *SVG) RemoveNodeSprites() {
 	sprites.Unlock()
 }
 
+// DrawPoint updates the DrawPos and DrawSnapPos from event position.
+// Returns the DrawSnapPos, which is the point to use for drawing.
+func (sv *SVG) DrawPoint(e events.Event) image.Point {
+	es := sv.EditState()
+	spt := math32.FromPoint(es.DrawStartPos)
+	mpt := math32.FromPoint(e.Pos())
+	if e.HasAnyModifier(key.Control) {
+		mpt, _ = sv.ConstrainPoint(spt, mpt)
+	}
+	es.DrawPos = mpt.ToPointRound()
+	es.DrawSnapPos = es.DrawPos
+	if Settings.SnapNodes {
+		es.DrawSnapPos = sv.SnapPoint(mpt).ToPointRound()
+	}
+	return es.DrawSnapPos
+}
+
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
 func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(NodeMove, es.ActivePath.Name)
-	es.DragConstrainPoint = true
-	spt, _, _ := sv.DragDelta(e)
+	es.ConstrainPoint = true
+	spt, _, _ := sv.DragDelta(e, true)
 	dv := math32.FromPoint(e.PrevDelta())
 
 	pointOnly := e.HasAnyModifier(key.Alt)
@@ -311,8 +328,8 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(CtrlMove, es.ActivePath.Name)
 
-	es.DragConstrainPoint = true
-	spt, _, _ := sv.DragDelta(e)
+	es.ConstrainPoint = true
+	spt, _, _ := sv.DragDelta(e, true)
 	dv := math32.FromPoint(e.PrevDelta())
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
 

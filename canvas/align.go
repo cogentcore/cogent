@@ -123,7 +123,7 @@ func (sv *SVG) alignAnchorBBox(aa AlignAnchors) (math32.Box2, svg.Node) {
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
 	case AlignSelectBox:
-		bb = es.DragSelectCurrentBBox
+		bb = es.DragBBox
 	}
 	// bb = bb.Sub(svoff)
 	return bb, an

@@ -42,7 +42,7 @@ type SettingsData struct { //types:add
 	SnapGrid bool `default:"true"`
 
 	// snap positions and sizes to line up with other elements
-	SnapGuide bool `default:"true"`
+	SnapAlign bool `default:"true"`
 
 	// snap node movements to align with guides
 	SnapNodes bool `default:"true"`
@@ -58,7 +58,7 @@ func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
 	se.GridDisp = true
 	se.SnapGrid = true
-	se.SnapGuide = true
+	se.SnapAlign = true
 	se.SnapNodes = true
 	se.SnapTol = 3
 	se.MetaData = true
