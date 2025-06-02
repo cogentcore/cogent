@@ -34,10 +34,6 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 * figure out alternatives to modifier keys for for ipad.
 
-* selection based on more detailed contains logic: should be in tdewolff canvas somewhere?
-
-* add group / ungroup to context menu (conditional on selection n etc).
-
 * implement the full transform panel for numerical rotate, scale etc.
 
 * dropper = grab style from containsnode, apply to selection -- don't affect selection!

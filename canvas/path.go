@@ -130,7 +130,7 @@ func (sv *SVG) UpdateNodeSprites() {
 					return
 				}
 				es.NodeSelectAction(i, e.SelectMode())
-				sv.NeedsRender()
+				sv.UpdateView()
 			})
 			sp.OnSlideStart(func(e events.Event) {
 				if es.Tool == BezierTool {
@@ -197,25 +197,27 @@ func (sv *SVG) UpdateNodeSprites() {
 				sv.UpdateLineAddSprite()
 			}
 		} else {
-			switch pn.Cmd {
-			case SpQuadTo:
-				sp1 := sv.Sprite(SpNodeCtrl, SpQuad1, i, ept, func(sp *core.Sprite) {
-					ctrlEvents(sp, i, SpQuad1)
-				})
-				sp1.Properties["nodePoint"] = ept
-				sv.SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
-			case SpCubeTo:
-				spt := pn.TStart.ToPoint()
-				sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, spt, func(sp *core.Sprite) {
-					ctrlEvents(sp, i, SpCube1)
-				})
-				sp1.Properties["nodePoint"] = spt
-				sv.SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
-				sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
-					ctrlEvents(sp, i, SpCube2)
-				})
-				sp2.Properties["nodePoint"] = ept
-				sv.SetSpritePos(sp2, int(pn.TCp2.X), int(pn.TCp2.Y))
+			if _, isSel := es.NodeSelect[i]; isSel {
+				switch pn.Cmd {
+				case SpQuadTo:
+					sp1 := sv.Sprite(SpNodeCtrl, SpQuad1, i, ept, func(sp *core.Sprite) {
+						ctrlEvents(sp, i, SpQuad1)
+					})
+					sp1.Properties["nodePoint"] = ept
+					sv.SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+				case SpCubeTo:
+					spt := pn.TStart.ToPoint()
+					sp1 := sv.Sprite(SpNodeCtrl, SpCube1, i, spt, func(sp *core.Sprite) {
+						ctrlEvents(sp, i, SpCube1)
+					})
+					sp1.Properties["nodePoint"] = spt
+					sv.SetSpritePos(sp1, int(pn.TCp1.X), int(pn.TCp1.Y))
+					sp2 := sv.Sprite(SpNodeCtrl, SpCube2, i, ept, func(sp *core.Sprite) {
+						ctrlEvents(sp, i, SpCube2)
+					})
+					sp2.Properties["nodePoint"] = ept
+					sv.SetSpritePos(sp2, int(pn.TCp2.X), int(pn.TCp2.Y))
+				}
 			}
 		}
 	}
@@ -353,6 +355,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 	sprites := sv.SpritesNolock()
 	path := es.ActivePath
 	pn := es.PathNodesOrig[pidx]
+	_, isSel := es.NodeSelect[pidx]
 	end := dxf.MulVector2AsPoint(pn.End)
 	switch pn.Cmd {
 	case SpMoveTo, SpLineTo, SpClose:
@@ -361,7 +364,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 	case SpQuadTo:
 		path.Data[pn.Index+3] = end.X
 		path.Data[pn.Index+4] = end.Y
-		if !pointOnly {
+		if !pointOnly && isSel {
 			cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 			path.Data[pn.Index+1] = cp1.X
 			path.Data[pn.Index+2] = cp1.Y
@@ -371,7 +374,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 	case SpCubeTo:
 		path.Data[pn.Index+5] = end.X
 		path.Data[pn.Index+6] = end.Y
-		if !pointOnly {
+		if !pointOnly && isSel {
 			cp2 := dxf.MulVector2AsPoint(pn.Cp2)
 			path.Data[pn.Index+3] = cp2.X
 			path.Data[pn.Index+4] = cp2.Y
@@ -380,7 +383,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 		}
 		// todo: arc
 	}
-	if pointOnly || pidx+1 >= len(es.PathNodes) {
+	if pointOnly || !isSel || pidx+1 >= len(es.PathNodes) {
 		return
 	}
 	// update next node control point b/c it uses start which is this guy

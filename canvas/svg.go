@@ -585,6 +585,7 @@ func (sv *SVG) contextMenu(m *core.Scene) {
 
 func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
 	cv := sv.Canvas
+	es := sv.EditState()
 	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(nd)
 	})
@@ -604,6 +605,23 @@ func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
 		SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 
 	core.NewSeparator(m)
+
+	added := false
+	if len(es.Selected) > 1 {
+		added = true
+		core.NewFuncButton(m).SetFunc(cv.SelectGroup).SetText("Group").
+			SetIcon(cicons.SelGroup).SetShortcut("Command+G")
+	} else {
+		if _, isgp := nd.(*svg.Group); isgp {
+			added = true
+			core.NewFuncButton(m).SetFunc(cv.SelectUnGroup).SetText("Ungroup").
+				SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
+		}
+	}
+
+	if added {
+		core.NewSeparator(m)
+	}
 
 	core.NewFuncButton(m).SetFunc(cv.SelectRotateLeft).SetText("").
 		SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
