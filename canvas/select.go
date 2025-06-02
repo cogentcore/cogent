@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint/ppath/intersect"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -583,10 +584,10 @@ func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 	return rval
 }
 
-// SelectContainsPoint finds the first node whose BBox contains the given
-// point in scene coordinates; nil if none.  If leavesOnly is set then only nodes that have no
-// nodes (leaves, terminal nodes) will be considered.
-// if excludeSel, any leaf nodes that are within the current edit selection are
+// SelectContainsPoint finds the first node that contains the given
+// point in scene coordinates; nil if none. If leavesOnly is set then only nodes
+// that have no nodes (leaves, terminal nodes) will be considered.
+// If excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
 	ptv := math32.FromPoint(pt)
@@ -628,7 +629,17 @@ func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) 
 				return tree.Break
 			}
 		}
-		if nb.BBox.ContainsPoint(ptv) {
+		if !nb.BBox.ContainsPoint(ptv) {
+			return tree.Continue
+		}
+		p, isPath := n.(*svg.Path)
+		if !isPath {
+			rval = n
+			return tree.Break
+		}
+		xf := p.ParentTransform(true).Inverse()
+		pxf := xf.MulVector2AsPoint(ptv)
+		if intersect.Contains(p.Data, pxf.X, pxf.Y, p.Paint.Fill.Rule) {
 			rval = n
 			return tree.Break
 		}
