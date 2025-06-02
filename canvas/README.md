@@ -1,6 +1,6 @@
 ![alt tag](cmd/canvas/icon.svg)
 
-Cogent Canvas is a SVG vector drawing program, with basic capabilities similar to [Inkscape](https://inkscape.org), although it currently lacks many of the more advanced features. The native file format is SVG.
+Cogent Canvas is an SVG-based vector drawing program, with basic capabilities similar to [Inkscape](https://inkscape.org), although it currently lacks many of the more advanced features (see [TODO](#todo) list below for plans). The native file format is SVG, with optional Inkscape-based metadata to encode advanced style properties.
 
 The Canvas interface is designed to make the high-frequency operations obvious and easy to access, and compared to Inkscape or Adobe Illustrator, it should generally be easier to use by a naive user. It also provides a full tree view into the underlying SVG structure, so you can easily directly manipulate it.
 
@@ -30,23 +30,39 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 * June, 2025: full basic functionality now in place, including drawing new paths and editing path control points.
 
-# TODO:
+## TODO
 
-* figure out alternatives to modifier keys for for ipad.
+### Simpler, near term
 
-* implement the full transform panel for numerical rotate, scale etc.
+* ArcTo support in node editor, and arc tool.
 
-* dropper = grab style from containsnode, apply to selection -- don't affect selection!
+* Gradient editor edits gradient control points.
 
-* svg.Node ToPath -- convert any node to a path.
+* Figure out alternatives to modifier keys for for ipad.
 
-* add distribute to Align
+* Transform panel for numerical rotate, scale etc.
 
-* better ways of managing Text with multiple tspan elements.
+* Dropper = grab style from containing node, apply to selection -- don't affect selection!
 
-* implement clip mask in `core.SVG`.
+* Convert shape nodes to path: add `svg.Node` ToPath.
 
-* import svg -- same as marker (copy paste is now working across drawings, so that is good).
+* Align panel: add distribute function.
+
+* Better ways of managing Text with multiple tspan elements: styles for tspan, generate full Text and spans from a rich text source with line wrapping and HTML markup -- need bidirectional support to / from existing tspans etc.
+
+* Clip mask in `core.SVG` finally.
+
+* Import svg -- same as marker (copy/paste is now working across drawings, so that is good).
+
+* Path effects menu / chooser and add calls to the various existing ppath `intersect` and `stroke` functions.
+
+### Longer term
+
+* More natural drawing modes like freehand and calligraphy.
+
+* More advanced path effects.
+
+* More advanced drawing tools like grids, connected diagram elements (key!), etc.
 
 ## Links
 

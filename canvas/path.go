@@ -368,8 +368,10 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 			path.Data[pn.Index+1] = cp1.X
 			path.Data[pn.Index+2] = cp1.Y
-			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx))
-			sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
+			sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx))
+			if ok {
+				sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
+			}
 		}
 	case SpCubeTo:
 		path.Data[pn.Index+5] = end.X
@@ -378,8 +380,10 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp2 := dxf.MulVector2AsPoint(pn.Cp2)
 			path.Data[pn.Index+3] = cp2.X
 			path.Data[pn.Index+4] = cp2.Y
-			sp2, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx))
-			sv.SetSpritePos(sp2, int(pn.TCp2.X+dv.X), int(pn.TCp2.Y+dv.Y))
+			sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx))
+			if ok {
+				sv.SetSpritePos(sp2, int(pn.TCp2.X+dv.X), int(pn.TCp2.Y+dv.Y))
+			}
 		}
 		// todo: arc
 	}
@@ -395,9 +399,10 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 	cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 	path.Data[pn.Index+1] = cp1.X
 	path.Data[pn.Index+2] = cp1.Y
-	sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, pidx))
-	sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
-
+	sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, pidx))
+	if ok {
+		sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
+	}
 }
 
 // PathCtrlMove moves given node control point index by given delta transform.
