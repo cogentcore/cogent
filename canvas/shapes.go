@@ -68,9 +68,10 @@ func NewSVGElement[T tree.NodeValue](sv *SVG, useTree bool) *T {
 func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	minsz := float32(10)
 	es := sv.EditState()
-	dv := math32.FromPoint(end.Sub(start))
+	st := sv.SnapPoint(math32.FromPoint(start))
+	ed := sv.SnapPoint(math32.FromPoint(end))
+	dv := ed.Sub(st)
 	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
-		// fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
 	sv.ManipStart(NewElement, types.For[T]().IDName)
@@ -79,7 +80,7 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	snb := sn.AsNodeBase()
 
 	xfi := sv.Root().Paint.Transform.Inverse()
-	pos := xfi.MulVector2AsPoint(math32.FromPoint(start))
+	pos := xfi.MulVector2AsPoint(st)
 	sn.SetNodePos(pos)
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
 	sz = xfi.MulVector2AsVector(sz)

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/reflectx"
@@ -181,6 +182,7 @@ func (sv *SVG) Init() {
 				es.ActivePath = NewSVGElement[svg.Path](sv, false)
 				newPt = true
 				es.DrawStartPos = pt
+				sv.GatherAlignPoints()
 			}
 			switch {
 			case newPt:
@@ -380,9 +382,9 @@ func (sv *SVG) UpdateView() {
 	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
 	sv.UpdateNodeSprites()
+	sv.Restyle()
 	sv.NeedsRender()
 	sv.SetFocus()
-	sv.Restyle()
 }
 
 // SpritesNolock returns the [core.Sprites] without locking.
@@ -396,22 +398,6 @@ func (sv *SVG) SpritesLock() *core.Sprites {
 	sprites.Lock()
 	return sprites
 }
-
-/*
-func (sv *SVG) MouseHover() {
-	sv.ConnectEvent(oswin.MouseHoverEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
-		me := d.(*mouse.HoverEvent)
-		me.SetHandled()
-		ssvg := recv.Embed(KiT_SVG).(*SVG)
-		obj := ssvg.FirstContainingPoint(me.Where, true)
-		if obj != nil {
-			pos := me.Where
-			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name)
-			core.PopupTooltip(obj.Name, pos.X, pos.Y, sv.ViewportSafe(), ttxt)
-		}
-	})
-}
-*/
 
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
@@ -595,23 +581,35 @@ func (sv *SVG) contextMenu(m *core.Scene) {
 }
 
 func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
+	cv := sv.Canvas
 	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(nd)
 	})
 	core.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
-		sv.Canvas.SelectNodeInTree(nd, events.SelectOne)
+		cv.SelectNodeInTree(nd, events.SelectOne)
 	})
 
 	core.NewSeparator(m)
 
-	core.NewFuncButton(m).SetFunc(sv.Canvas.DuplicateSelected).
+	core.NewFuncButton(m).SetFunc(cv.DuplicateSelected).
 		SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.CopySelected).
+	core.NewFuncButton(m).SetFunc(cv.CopySelected).
 		SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.CutSelected).
+	core.NewFuncButton(m).SetFunc(cv.CutSelected).
 		SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
+	core.NewFuncButton(m).SetFunc(cv.PasteClip).
 		SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+
+	core.NewSeparator(m)
+
+	core.NewFuncButton(m).SetFunc(cv.SelectRotateLeft).SetText("").
+		SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
+	core.NewFuncButton(m).SetFunc(cv.SelectRotateRight).SetText("").
+		SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
+	core.NewFuncButton(m).SetFunc(cv.SelectFlipHorizontal).SetText("").
+		SetIcon(cicons.SelFlipHoriz)
+	core.NewFuncButton(m).SetFunc(cv.SelectFlipVertical).SetText("").
+		SetIcon(cicons.SelFlipVert)
 }
 
 //////// Undo
@@ -691,7 +689,6 @@ func (sv *SVG) UpdateGridPixels() {
 	}
 	tl := math32.Vec2(tx, ty)
 	sv.GridOffset = tl
-	fmt.Println("grid:", sv.Grid, sv.GridPixels, sv.GridOffset)
 }
 
 // RenderGrid renders the background grid

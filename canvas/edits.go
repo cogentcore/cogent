@@ -101,7 +101,7 @@ type EditState struct {
 	DragSnapBBox math32.Box2
 
 	// potential points of alignment for dragging
-	AlignPts [BBoxPointsN][]math32.Vector2
+	AlignPoints [BBoxPointsN][]math32.Vector2
 
 	// number of current node sprites in use
 	NNodeSprites int

@@ -279,7 +279,10 @@ func (sv *SVG) DrawPoint(e events.Event) image.Point {
 	es.DrawPos = mpt.ToPointRound()
 	es.DrawSnapPos = es.DrawPos
 	if Settings.SnapNodes {
+		sprites := sv.SpritesLock()
+		sv.InactivateSprites(SpAlignMatch)
 		es.DrawSnapPos = sv.SnapPoint(mpt).ToPointRound()
+		sprites.Unlock()
 	}
 	return es.DrawSnapPos
 }

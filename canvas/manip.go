@@ -30,8 +30,7 @@ func (sv *SVG) ManipStart(act Actions, data string) {
 // sprites must already be locked.
 func (sv *SVG) ManipStartInDrag(act Actions, data string) {
 	es := sv.EditState()
-	sprites := sv.SpritesNolock()
-	InactivateSprites(sprites, SpAlignMatch)
+	sv.InactivateSprites(SpAlignMatch)
 	if !es.InAction() {
 		sv.ManipStart(act, data)
 		sv.GatherAlignPoints()
@@ -41,13 +40,13 @@ func (sv *SVG) ManipStartInDrag(act Actions, data string) {
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVG) ManipDone() {
 	sprites := sv.SpritesLock()
-	InactivateSprites(sprites, SpAlignMatch)
+	sv.InactivateSprites(SpAlignMatch)
 	es := sv.EditState()
 	switch {
 	case es.Action == BoxSelect:
 		bbox := math32.Box2{Min: math32.FromPoint(es.DragStartPos), Max: math32.FromPoint(es.DragPos)}
 		bbox = bbox.Canon()
-		InactivateSprites(sprites, SpRubberBand)
+		sv.InactivateSprites(SpRubberBand)
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod
@@ -107,7 +106,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	var clPts [2][]BBoxPoints
 	var clVals [2][]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
-		pts := es.AlignPts[ap]
+		pts := es.AlignPoints[ap]
 		dim := ap.Dim()
 		for _, pt := range pts {
 			pv := pt.Dim(dim)
@@ -169,7 +168,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	var bbval [2]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
 		bbp := ap.PointBox(rawbb)
-		pts := es.AlignPts[ap]
+		pts := es.AlignPoints[ap]
 		dim := ap.Dim()
 		for _, pt := range pts {
 			pv := pt.Dim(dim)

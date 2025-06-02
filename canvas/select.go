@@ -41,17 +41,24 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.Spinner) {
 		if cv.SVG != nil {
-			core.Bind(&cv.SVG.Grid, w) // todo: need a better soln
+			core.Bind(&cv.SVG.Grid, w)
 		}
 		w.Min = 0.01
 		w.Step = 1
 		w.Styler(func(s *styles.Style) {
-			s.Min.X.Ch(4)
+			s.Max.X.Ch(5)
 		})
 		w.Updater(func() {
-			if cv.SVG != nil {
-				cv.SVG.UpdateGridPixels()
+			if cv.SVG == nil {
+				return
 			}
+			if w.ValueUpdate == nil {
+				core.Bind(&cv.SVG.Grid, w) // was nil before
+				fmt.Println("bind")
+			}
+		})
+		w.OnChange(func(e events.Event) {
+			cv.SVG.UpdateView()
 		})
 		w.SetTooltip("Grid spacing in the ViewBox units of the drawing. Saved if metadata is on.")
 	})
@@ -146,8 +153,8 @@ func (sv *SVG) UpdateSelect() {
 func (sv *SVG) RemoveSelSprites() {
 	sv.NeedsRender()
 	sprites := sv.SpritesLock()
-	InactivateSprites(sprites, SpReshapeBBox)
-	InactivateSprites(sprites, SpSelBBox)
+	sv.InactivateSprites(SpReshapeBBox)
+	sv.InactivateSprites(SpSelBBox)
 	es := sv.EditState()
 	es.NSelectSprites = 0
 	sprites.Unlock()

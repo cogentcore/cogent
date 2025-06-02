@@ -211,7 +211,8 @@ func (sv *SVG) SetSpritePos(sp *core.Sprite, x, y int) {
 }
 
 // InactivateSprites inactivates sprites of given type; must be locked.
-func InactivateSprites(sprites *core.Sprites, typ Sprites) {
+func (sv *SVG) InactivateSprites(typ Sprites) {
+	sprites := sv.SpritesNolock()
 	sprites.Do(func(sl *core.SpriteList) {
 		for _, sp := range sl.Values {
 			if sp == nil {
@@ -225,6 +226,13 @@ func InactivateSprites(sprites *core.Sprites, typ Sprites) {
 
 	})
 	sprites.SetModifiedLocked()
+}
+
+// InactivateAlignSprites inactivates align sprites, doing lock, unlock
+func (sv *SVG) InactivateAlignSprites() {
+	sprites := sv.SpritesLock()
+	sv.InactivateSprites(SpAlignMatch)
+	sprites.Unlock()
 }
 
 ////////  Sprite rendering
