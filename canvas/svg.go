@@ -216,6 +216,9 @@ func (sv *SVG) Init() {
 			es.SelectAction(sob, events.SelectOne, e.Pos())
 			es.ActivePath = es.FirstSelectedPath()
 			es.SelectedToRecents()
+			if es.ActivePath != nil {
+				es.PathNodesOrig = sv.PathNodes(es.ActivePath)
+			}
 			sv.UpdateNodeSprites()
 			sv.Canvas.UpdateTabs()
 		}

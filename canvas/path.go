@@ -261,6 +261,7 @@ func (sv *SVG) RemoveNodeSprites() {
 	es.NNodeSprites = 0
 	es.PathNodes = nil
 	es.ActivePath = nil
+	es.PathNodesOrig = nil
 	es.CtrlDragIndex = -1
 	es.NodeHover = -1
 	es.CtrlHover = -1
@@ -293,14 +294,13 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(NodeMove, es.ActivePath.Name)
 	es.ConstrainPoint = true
-	spt, _, _ := sv.DragDelta(e, true)
-	dv := math32.FromPoint(e.PrevDelta())
+	spt, _, dv := sv.DragDelta(e, true)
 
 	pointOnly := e.HasAnyModifier(key.Alt)
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
 
 	for i, _ := range es.NodeSelect {
-		sv.PathNodeMove(es.ActivePath, es.PathNodes, i, pointOnly, dv, dxf)
+		sv.PathNodeMove(i, pointOnly, dv, dxf)
 		pn := es.PathNodes[i]
 		nwc := pn.TEnd.Add(dv).ToPoint()
 		spnm := SpriteName(SpNodePoint, SpNone, i)
@@ -348,9 +348,11 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 
 // PathNodeMove moves given node index by given delta transform.
 // pointOnly = true moves just the end point, otherwise all move.
-func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, pointOnly bool, dv math32.Vector2, dxf math32.Matrix2) {
+func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf math32.Matrix2) {
+	es := sv.EditState()
 	sprites := sv.SpritesNolock()
-	pn := pts[pidx]
+	path := es.ActivePath
+	pn := es.PathNodesOrig[pidx]
 	end := dxf.MulVector2AsPoint(pn.End)
 	switch pn.Cmd {
 	case SpMoveTo, SpLineTo, SpClose:
@@ -378,12 +380,12 @@ func (sv *SVG) PathNodeMove(path *svg.Path, pts []*PathNode, pidx int, pointOnly
 		}
 		// todo: arc
 	}
-	if pointOnly || pidx+1 >= len(pts) {
+	if pointOnly || pidx+1 >= len(es.PathNodes) {
 		return
 	}
 	// update next node control point b/c it uses start which is this guy
 	pidx++
-	pn = pts[pidx]
+	pn = es.PathNodesOrig[pidx]
 	if pn.Cmd != SpCubeTo {
 		return
 	}

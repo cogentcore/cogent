@@ -112,6 +112,9 @@ type EditState struct {
 	// current path node points
 	PathNodes []*PathNode
 
+	// original, pre-manipulation copy of current path node points
+	PathNodesOrig []*PathNode
+
 	// selected path nodes
 	NodeSelect map[int]struct{}
 
@@ -142,6 +145,8 @@ func (es *EditState) Init(cv *Canvas) {
 	es.ActData = ""
 	es.CurLayer = ""
 	es.ActivePath = nil
+	es.PathNodes = nil
+	es.PathNodesOrig = nil
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false

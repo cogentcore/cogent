@@ -54,7 +54,6 @@ func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
 			}
 			if w.ValueUpdate == nil {
 				core.Bind(&cv.SVG.Grid, w) // was nil before
-				fmt.Println("bind")
 			}
 		})
 		w.OnChange(func(e events.Event) {
