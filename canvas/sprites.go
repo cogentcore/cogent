@@ -240,7 +240,7 @@ func (sv *SVG) InactivateAlignSprites() {
 const (
 	HandleSpriteDp  = 12
 	HandleSizeMin   = 12
-	HandleBorderMin = 2
+	HandleBorderMin = 1
 )
 
 // HandleSpriteSize returns the bounding box and rect draw coords
@@ -255,10 +255,10 @@ func (sv *SVG) HandleSpriteSize(scale float32, pos image.Point) (bb image.Rectan
 	un.ToDots(&sv.Styles.UnitContext)
 	sz := math32.Ceil(scale * un.Dots)
 	sz = max(sz, HandleSizeMin)
-	bsz := max(sz/6, HandleBorderMin)
+	bsz := max(math32.Ceil(sz/12), HandleBorderMin)
 	bb = image.Rectangle{Min: pos, Max: pos.Add(image.Pt(int(sz), int(sz)))}
 	fp := math32.FromPoint(pos).AddScalar(bsz)
-	rdraw = math32.Box2{Min: fp.AddScalar(bsz), Max: fp.AddScalar(sz).SubScalar(bsz)}
+	rdraw = math32.Box2{Min: fp, Max: fp.AddScalar(sz).SubScalar(2 * bsz)}
 	return
 }
 
@@ -270,6 +270,7 @@ func (sv *SVG) DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) func(pc *paint.
 		if sv.Geom.ContentBBox.Intersect(bb) == (image.Rectangle{}) {
 			return
 		}
+		pc.BlitBox(math32.FromPoint(bb.Min), math32.FromPoint(bb.Size()), colors.Scheme.Surface)
 		pc.BlitBox(rdraw.Min, rdraw.Size(), colors.Scheme.Primary.Base)
 	}
 }
@@ -392,7 +393,7 @@ func (sv *SVG) DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 		pc.Stroke.Width.Dp(SpriteLineWidth)
-		pc.Stroke.Color = colors.Uniform(colors.Aqua)
+		pc.Stroke.Color = colors.Uniform(colors.Turquoise)
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 	}
