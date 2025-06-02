@@ -62,17 +62,6 @@ func (sv *SVG) Init() {
 		sv.SVG.TextShaper = sv.Scene.TextShaper()
 		s.StateLayer = 0 // always focused..
 	})
-	sv.FinalStyler(func(s *styles.Style) {
-		es := sv.EditState()
-		sv.Styles.Cursor = cursors.Arrow
-		switch {
-		case es.Tool == BezierTool:
-			sv.Styles.Cursor = cursors.Crosshair
-		case es.Action == Move || es.Action == Reshape:
-			// fmt.Println("move")
-			sv.Styles.Cursor = cursors.Move
-		}
-	})
 	sv.OnKeyChord(func(e events.Event) {
 		es := sv.EditState()
 		kc := e.KeyChord()
@@ -224,6 +213,7 @@ func (sv *SVG) Init() {
 		}
 	})
 	sv.On(events.MouseMove, func(e events.Event) {
+		sv.Styles.Cursor = cursors.Arrow // default
 		es := sv.EditState()
 		if es.Tool == BezierTool {
 			sv.DrawPoint(e)
@@ -385,7 +375,6 @@ func (sv *SVG) UpdateView() {
 	sv.SVG.UpdateBBoxes() // needs this to be updated
 	sv.UpdateSelSprites()
 	sv.UpdateNodeSprites()
-	sv.Restyle()
 	sv.NeedsRender()
 	sv.SetFocus()
 }

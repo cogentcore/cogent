@@ -11,6 +11,7 @@ import (
 
 	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
@@ -139,8 +140,12 @@ func (sv *SVG) UpdateNodeSprites() {
 				}
 				if len(es.NodeSelect) == 0 {
 					es.SelectNode(i)
+				} else if !e.HasAnyModifier(key.Shift, key.Meta) && len(es.NodeSelect) == 1 && !es.NodeIsSelected(i) {
+					es.ResetSelectedNodes()
+					es.SelectNode(i)
 				}
 				es.DragNodeStart(e.Pos())
+				sv.Styles.Cursor = cursors.Move
 				sv.NeedsRender()
 				e.SetHandled()
 			})
@@ -150,10 +155,12 @@ func (sv *SVG) UpdateNodeSprites() {
 					return
 				}
 				sv.SpriteNodeDrag(i, e)
+				sv.Styles.Cursor = cursors.Move
 				e.SetHandled()
 			})
 			sp.OnSlideStop(func(e events.Event) {
 				if es.Tool == BezierTool {
+					sv.InactivateAlignSprites()
 					e.SetHandled()
 					return
 				}
@@ -178,10 +185,12 @@ func (sv *SVG) UpdateNodeSprites() {
 			sp.OnSlideStart(func(e events.Event) {
 				es.DragCtrlStart(e.Pos(), i, ctyp)
 				sv.NeedsRender()
+				sv.Styles.Cursor = cursors.Move
 				e.SetHandled()
 			})
 			sp.OnSlideMove(func(e events.Event) {
 				sv.SpriteCtrlDrag(i, ctyp, e)
+				sv.Styles.Cursor = cursors.Move
 				e.SetHandled()
 			})
 			sp.OnSlideStop(func(e events.Event) {
@@ -311,11 +320,13 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 
 		switch pn.Cmd {
 		case SpQuadTo:
-			sp1, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
-			sp1.Properties["nodePoint"] = nwc
+			if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, i)); ok {
+				sp1.Properties["nodePoint"] = nwc
+			}
 		case SpCubeTo:
-			sp2, _ := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, i))
-			sp2.Properties["nodePoint"] = nwc
+			if sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, i)); ok {
+				sp2.Properties["nodePoint"] = nwc
+			}
 		}
 		// next node is using us as a start
 		if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, i+1)); ok {
@@ -368,8 +379,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 			path.Data[pn.Index+1] = cp1.X
 			path.Data[pn.Index+2] = cp1.Y
-			sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx))
-			if ok {
+			if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx)); ok {
 				sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
 			}
 		}
@@ -380,8 +390,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp2 := dxf.MulVector2AsPoint(pn.Cp2)
 			path.Data[pn.Index+3] = cp2.X
 			path.Data[pn.Index+4] = cp2.Y
-			sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx))
-			if ok {
+			if sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx)); ok {
 				sv.SetSpritePos(sp2, int(pn.TCp2.X+dv.X), int(pn.TCp2.Y+dv.Y))
 			}
 		}

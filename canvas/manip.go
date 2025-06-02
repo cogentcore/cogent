@@ -9,6 +9,7 @@ import (
 	"image"
 	"math"
 
+	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
@@ -58,6 +59,7 @@ func (sv *SVG) ManipDone() {
 	}
 	es.DragReset()
 	sprites.Unlock()
+	sv.Styles.Cursor = cursors.Arrow
 	es.ActDone()
 	sv.UpdateSelect()
 	es.DragSelStart(es.DragStartPos) // capture final state as new start
@@ -316,6 +318,7 @@ func (sv *SVG) DragMove(e events.Event) {
 	es := sv.EditState()
 	sprites := sv.SpritesLock()
 	sv.ManipStartInDrag(Move, es.SelectedNamesString())
+	sv.Styles.Cursor = cursors.Move
 	es.ConstrainPoint = true
 	_, _, dv := sv.DragDelta(e, false)
 
@@ -386,31 +389,39 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	case SpUpL:
 		es.DragBBox.Min.SetAdd(dv)
 		es.DragSnapBBox.Min = sv.SnapPoint(es.DragBBox.Min)
+		sv.Styles.Cursor = cursors.ResizeNWSE
 	case SpUpC:
 		es.DragBBox.Min.Y += dv.Y
 		es.DragSnapBBox.Min.Y = sv.SnapPoint(es.DragBBox.Min).Y
+		sv.Styles.Cursor = cursors.ResizeNS
 	case SpUpR:
 		es.DragBBox.Min.Y += dv.Y
 		es.DragSnapBBox.Min.Y = sv.SnapPoint(es.DragBBox.Min).Y
 		es.DragBBox.Max.X += dv.X
 		es.DragSnapBBox.Max.X = sv.SnapPoint(es.DragBBox.Max).X
+		sv.Styles.Cursor = cursors.ResizeNESW
 	case SpDnL:
 		es.DragBBox.Min.X += dv.X
 		es.DragSnapBBox.Min.X = sv.SnapPoint(es.DragBBox.Min).X
 		es.DragBBox.Max.Y += dv.Y
 		es.DragSnapBBox.Max.Y = sv.SnapPoint(es.DragBBox.Max).Y
+		sv.Styles.Cursor = cursors.ResizeNESW
 	case SpDnC:
 		es.DragBBox.Max.Y += dv.Y
 		es.DragSnapBBox.Max.Y = sv.SnapPoint(es.DragBBox.Max).Y
+		sv.Styles.Cursor = cursors.ResizeNS
 	case SpDnR:
 		es.DragBBox.Max.SetAdd(dv)
 		es.DragSnapBBox.Max = sv.SnapPoint(es.DragBBox.Max)
+		sv.Styles.Cursor = cursors.ResizeNWSE
 	case SpLfM:
 		es.DragBBox.Min.X += dv.X
 		es.DragSnapBBox.Min.X = sv.SnapPoint(es.DragBBox.Min).X
+		sv.Styles.Cursor = cursors.ResizeEW
 	case SpRtM:
 		es.DragBBox.Max.X += dv.X
 		es.DragSnapBBox.Max.X = sv.SnapPoint(es.DragBBox.Max).X
+		sv.Styles.Cursor = cursors.ResizeEW
 	}
 
 	if diag {
