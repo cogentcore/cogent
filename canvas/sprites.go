@@ -392,7 +392,7 @@ func (sv *SVG) DrawAlignMatch(sp *core.Sprite, trgsz image.Point) func(pc *paint
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 		pc.Stroke.Width.Dp(SpriteLineWidth)
-		pc.Stroke.Color = colors.Scheme.Success.Container
+		pc.Stroke.Color = colors.Uniform(colors.Aqua)
 		pc.Line(bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
 		pc.Draw()
 	}

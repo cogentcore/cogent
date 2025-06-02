@@ -50,7 +50,7 @@ func (cv *Canvas) SetTool(tl Tools) {
 		cv.tools.Restyle()
 		return
 	}
-	if es.Tool == NodeTool {
+	if es.Tool != SelectTool && es.Tool != SelBoxTool {
 		es.ResetSelected()
 		es.ResetSelectedNodes()
 	}
