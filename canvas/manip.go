@@ -509,14 +509,18 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, e events.Event) {
 	ang := math32.Atan2(dy, dx)
 	if !e.HasAnyModifier(key.Shift) {
 		ang = SnapToIncr(math32.RadToDeg(ang), 0, 15)
+		ang = math32.DegToRad(ang)
 	}
-	ang = math32.DegToRad(ang)
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
 		svg.BitCopyFrom(itm, ss.InitState)
-		xf := itm.AsNodeBase().DeltaTransform(del, sc, ang, pt)
-		itm.ApplyTransform(sv.SVG, xf)
+		if ang != 0 {
+			xf := itm.AsNodeBase().DeltaTransform(del, sc, ang, pt)
+			itm.ApplyTransform(sv.SVG, xf)
+		} else {
+			itm.AsNodeBase().SetTransformProperty() // save original
+		}
 	}
 	sv.UpdateView()
 }
