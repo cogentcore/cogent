@@ -102,6 +102,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapAlign {
 		return snpt
 	}
+	// closest points per X, Y dim
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
 	var clVals [2][]math32.Vector2
@@ -116,7 +117,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 				clDst[dim] = dst
 				clPts[dim] = []BBoxPoints{ap}
 				clVals[dim] = []math32.Vector2{pt}
-			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
+			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 { // equivalent points
 				clPts[dim] = append(clPts[dim], ap)
 				clVals[dim] = append(clVals[dim], pt)
 			}
@@ -130,7 +131,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 		}
 		bv := rawpt.Dim(dim)
 		sval, snap := SnapToPoint(bv, clVals[dim][0].Dim(dim))
-		if snap {
+		if !snap {
 			continue
 		}
 		snpt.SetDim(dim, sval)
@@ -162,6 +163,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	}
 	es := sv.EditState()
 	snapbb := rawbb
+	// closest points per X, Y dim
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
 	var clVals [2][]math32.Vector2
@@ -179,7 +181,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 				clPts[dim] = []BBoxPoints{ap}
 				clVals[dim] = []math32.Vector2{pt}
 				bbval[dim] = bbp
-			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
+			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 { // equivalent points
 				clPts[dim] = append(clPts[dim], ap)
 				clVals[dim] = append(clVals[dim], pt)
 			}
