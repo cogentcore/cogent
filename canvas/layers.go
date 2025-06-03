@@ -32,6 +32,7 @@ func (l *Layer) FromNode(k tree.Node) {
 // ToNode copies state / prop values to given node
 func (l *Layer) ToNode(n tree.Node) {
 	nb := n.AsTree()
+	nb.Name = l.Name
 	if l.Vis {
 		nb.Properties["style"] = ""
 		nb.Properties["display"] = "inline"
@@ -57,21 +58,35 @@ func (ly *Layers) SyncLayersFromSVG(sv *SVG) {
 	}
 }
 
-// SyncLayersToSVG deletes any layers in SVG that are not in our layers list.
+// UniqueNames ensures that our layers have unique names.
+func (ly *Layers) UniqueNames() {
+	nl := len(*ly)
+	for i, l := range *ly {
+		for j := i + 1; j < nl; j++ {
+			lj := (*ly)[j]
+			if l.Name == lj.Name {
+				l.Name = fmt.Sprintf("Layer%d", i)
+				lj.Name = fmt.Sprintf("Layer%d", j)
+			}
+		}
+	}
+}
+
+// SyncLayersToSVG updates properties of layers based on our settings.
 func (ly *Layers) SyncLayersToSVG(sv *SVG) {
+	ly.UniqueNames()
 	root := sv.Root()
-	nc := len(root.Children)
-	for i := nc - 1; i >= 0; i-- {
-		n := root.Child(i)
+	li := 0
+	nl := len(*ly)
+	for _, n := range root.Children {
 		if !NodeIsLayer(n) {
 			continue
 		}
-		li := ly.LayerIndexByName(n.AsTree().Name)
-		if li < 0 {
-			root.DeleteChildAt(i)
-			continue
+		if li >= nl {
+			break
 		}
 		(*ly)[li].ToNode(n)
+		li++
 	}
 }
 
@@ -102,9 +117,14 @@ func (cv *Canvas) SyncLayersFromSVG() {
 	cv.EditState.Layers.SyncLayersFromSVG(sv)
 }
 
-func (cv *Canvas) SyncLayersToSVG() {
+// Synchronizes layer list with current SVG structure: use the tree editor
+// to rearrange layers, and then hit this button to update the layer list here.
+func (cv *Canvas) SyncLayers() { //types:add
 	sv := cv.SVG
 	cv.EditState.Layers.SyncLayersToSVG(sv)
+	cv.EditState.Layers.SyncLayersFromSVG(sv)
+	cv.UpdateLayers()
+	cv.UpdateTree()
 }
 
 func (cv *Canvas) UpdateLayers() {
@@ -154,8 +174,9 @@ func (cv *Canvas) AddLayer() { //types:add
 		cv.SetCurLayer(l1.AsTree().Name)
 	} else {
 		l1 := svg.NewGroup()
+		l1.SetName(fmt.Sprintf("Layer%d", nl))
+		tree.SetUniqueNameIfDuplicate(svr, l1)
 		svr.InsertChild(l1, si+nl)
-		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
 		l1.AsTree().SetProperty("groupmode", "layer")
 		cv.SetCurLayer(l1.AsTree().Name)
 	}
@@ -163,8 +184,7 @@ func (cv *Canvas) AddLayer() { //types:add
 	cv.tree.Update()
 }
 
-/////////////////////////////////////////////////////////////////
-//  Node
+////////  Node
 
 // NodeIsLayer returns true if given node is a layer
 func NodeIsLayer(kn tree.Node) bool {

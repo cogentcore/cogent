@@ -182,7 +182,7 @@ func (sv *SVG) UngroupSingletons() {
 			}
 		}
 		par := nb.Parent.(svg.Node).AsNodeBase()
-		if par.NumChildren() != 1 || par.Parent == nil {
+		if par.NumChildren() != 1 || par.Parent == nil || NodeIsLayer(par) {
 			return tree.Continue
 		}
 		singles = append(singles, n)
@@ -209,7 +209,7 @@ func (sv *SVG) UngroupSingletons() {
 func (sv *SVG) RemoveEmptyGroups() {
 	var empties []svg.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This {
+		if n == sv.Root().This || NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if nb.HasChildren() {

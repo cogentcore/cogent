@@ -133,14 +133,19 @@ func (cv *Canvas) Init() {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
-				tree.AddChild(w, func(w *core.FuncButton) {
-					w.SetFunc(cv.AddLayer)
+				tree.AddChild(w, func(w *core.Toolbar) {
+					tree.AddChild(w, func(w *core.FuncButton) {
+						w.SetFunc(cv.AddLayer)
+					})
+					tree.AddChild(w, func(w *core.FuncButton) {
+						w.SetFunc(cv.SyncLayers).SetText("Sync")
+					})
 				})
 				tree.AddChildAt(w, "layers", func(w *core.Table) {
 					w.ShowIndexes = true
 					cv.layers = w
 					w.Styler(func(s *styles.Style) {
-						s.Max.Y.Em(10)
+						s.Max.Y.Em(12)
 					})
 					w.SetSlice(&cv.EditState.Layers)
 					w.OnSelect(func(e events.Event) {
@@ -148,8 +153,7 @@ func (cv *Canvas) Init() {
 						cv.tree.Resync()
 					})
 					w.OnChange(func(e events.Event) {
-						cv.SyncLayersToSVG()
-						cv.UpdateTree()
+						cv.SyncLayers()
 					})
 				})
 				tree.AddChildAt(w, "tree-defs", func(w *core.Frame) {
