@@ -103,12 +103,8 @@ func (sv *SVG) DistributeProps() {
 		if nb.HasChildren() {
 			return tree.Continue
 		}
-		if txt, istxt := n.(*svg.Text); istxt { // no tspans
-			if txt.Text != "" {
-				if _, istxt := txt.Parent.(*svg.Text); istxt {
-					return tree.Break
-				}
-			}
+		if _, istxt := n.(*svg.Text); istxt { // no text
+			return tree.Break
 		}
 		if nb.Properties == nil {
 			nb.Properties = make(map[string]any)
@@ -150,6 +146,9 @@ func (sv *SVG) DistributeProps() {
 		}
 		if NodeIsLayer(n) {
 			return tree.Continue
+		}
+		if _, istxt := n.(*svg.Text); istxt { // no text
+			return tree.Break
 		}
 		if nb.Properties == nil {
 			return tree.Continue

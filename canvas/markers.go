@@ -435,10 +435,10 @@ var StandardMarkersMap = map[string]string{
     </marker>`,
 
 	"Arrow1Mstart": `<marker style="overflow:visible" id="Arrow1Mstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Mstart">
-      <path transform="scale(0.4) translate(10,0)" style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
+      <path transform="scale(0.4) translate(10,0)" style="fill-rule:nonzero;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
     </marker>`,
 	"Arrow1Mend": `<marker style="overflow:visible;" id="Arrow1Mend" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Mend">
-      <path transform="scale(0.4) rotate(180) translate(10,0)" style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
+      <path transform="scale(0.4) rotate(180) translate(10,0)" style="fill-rule:nonzero;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
     </marker>`,
 
 	"Arrow1Sstart": `<marker style="overflow:visible" id="Arrow1Sstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Sstart">

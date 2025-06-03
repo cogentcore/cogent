@@ -600,6 +600,7 @@ func NewWindow(fnm string) *Canvas {
 				winm = appnm + dfnm
 				cv.OpenDrawingFile(core.Filename(path))
 				b.SetTitle(winm)
+				cv.UpdateAll()
 			} else {
 				cv.EditState.Init(cv)
 			}
