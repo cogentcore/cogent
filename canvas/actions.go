@@ -14,6 +14,7 @@ const (
 	BoxSelect
 	SetStrokeColor
 	SetFillColor
+	SetOpacity
 	NewElement
 	NewText
 	NewPath

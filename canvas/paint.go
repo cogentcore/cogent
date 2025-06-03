@@ -5,6 +5,7 @@
 package canvas
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"strings"
@@ -361,6 +362,38 @@ func (pv *PaintSetter) Init() {
 
 		tree.AddChild(w, func(w *core.Stretch) {})
 	})
+	tree.AddChildAt(pv, "opacity", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Direction = styles.Row
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetText("Opacity: ").Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
+			})
+		})
+		tree.AddChild(w, func(w *core.Slider) {
+			core.Bind(&pstyle.Opacity, w)
+			w.SetMin(0).SetMax(1).SetStep(0.05)
+			w.SetTooltip("Global opacity applied to both stroke and fill")
+			w.HandleValueOnInput()
+			w.OnInput(func(e events.Event) {
+				pv.Canvas.SetOpacity(fmt.Sprintf("%g", pstyle.Opacity), false) // not final
+			})
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.SetOpacity(fmt.Sprintf("%g", pstyle.Opacity), true) // final
+			})
+			w.Styler(func(s *styles.Style) {
+				w.ValueColor = nil
+				g := gradient.NewLinear()
+				for c := float32(0); c <= 1; c += 0.05 {
+					gc := colors.WithAF32(colors.Black, c)
+					g.AddStop(gc, c)
+				}
+				s.Background = g
+			})
+		})
+	})
+
 }
 
 func (pv *PaintSetter) PaintTypeStack(pt PaintTypes) int {
@@ -571,6 +604,16 @@ func (cv *Canvas) SetFillColor(fp string, final bool) {
 		})
 }
 
+// SetOpacity sets the global opacity for selected items.
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetOpacity(sp string, final bool) {
+	cv.setPropsOnSelectedInput(SetOpacity, sp, final,
+		func(nd svg.Node) {
+			nd.AsNodeBase().Properties["opacity"] = sp
+		})
+}
+
 // UpdateFromNode updates the current settings based on the values in the given Paint
 // Style and properties from node (node can be nil)
 func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
@@ -615,6 +658,7 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	case PaintLinear, PaintRadial:
 		pv.SelectFillGrad()
 	}
+	pv.PaintStyle.Opacity = ps.Opacity
 	pv.Update()
 }
 
