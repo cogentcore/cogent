@@ -273,6 +273,18 @@ func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node 
 	return sls
 }
 
+// FirstSelected returns the first selected node of any type.
+func (es *EditState) FirstSelected() svg.Node {
+	if (es.Tool == NodeTool || es.Tool == BezierTool) && es.ActivePath != nil {
+		return es.ActivePath
+	}
+	if !es.HasSelected() {
+		return nil
+	}
+	sls := es.SelectedList(true)
+	return sls[0]
+}
+
 // FirstSelectedNode returns the first selected node, that is not a Group
 // (recurses into groups)
 func (es *EditState) FirstSelectedNode() svg.Node {

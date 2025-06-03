@@ -81,9 +81,16 @@ func (ts *TextStyle) TextProperties() map[string]any {
 	styles.SetRichText(sty, tsty, &ts.Font, &ts.Text, clr, ts.Opacity)
 	if ts.Stroke != colors.Transparent {
 		sty.SetStrokeColor(ts.Stroke)
+	} else {
+		sty.SetStrokeColor(nil)
 	}
 	tps := map[string]any{}
 	tsty.ToProperties(sty, tps)
+	delete(tps, "select-color")
+	delete(tps, "highlight-color")
+	if ts.Stroke == colors.Transparent { // need to explicitly set to none
+		tps["stroke-color"] = "none"
+	}
 	return tps
 }
 
@@ -130,10 +137,9 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	styles.SetFromRichText(&txt.Paint.Font, &txt.Paint.Text, &ts.Font, &ts.Text)
 	ts.Color = colors.AsRGBA(colors.ToUniform(txt.Paint.Fill.Color)) // this is where it goes
 	ts.Opacity = txt.Paint.Opacity
-	if txt.Paint.HasStroke() {
-		ts.Stroke = colors.AsRGBA(colors.ToUniform(txt.Paint.Stroke.Color))
+	if sc := txt.Paint.Font.StrokeColor(); sc != nil {
+		ts.Stroke = colors.AsRGBA(sc)
 	}
-
 	ts.Canvas.UpdateText()
 }
 

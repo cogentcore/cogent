@@ -93,8 +93,10 @@ func (pv *PaintSetter) Init() {
 						pv.StrokeStops = pv.Canvas.DefaultGradient()
 					}
 					pv.SelectStrokeGrad()
+					pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
+				} else {
+					pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeProp())
 				}
-				pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
 				pv.curStrokeType = pv.StrokeType
 				pv.Update()
 			})
@@ -107,6 +109,7 @@ func (pv *PaintSetter) Init() {
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetText("Width:  ").Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
 				s.Align.Items = styles.Center
 			})
 		})
@@ -254,11 +257,13 @@ func (pv *PaintSetter) Init() {
 			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
+					pv.UpdateStrokeOpacity()
 					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not final
 				}
 			})
 			w.OnChange(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
+					pv.UpdateStrokeOpacity()
 					pv.Canvas.SetStrokeColor(pv.StrokeProp(), true) // final
 				}
 			})
@@ -300,8 +305,10 @@ func (pv *PaintSetter) Init() {
 						pv.FillStops = pv.Canvas.DefaultGradient()
 					}
 					pv.SelectFillGrad()
+					pv.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
+				} else {
+					pv.SetFill(pv.curFillType, pv.FillType, pv.FillProp())
 				}
-				pv.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
 				pv.curFillType = pv.FillType
 				pv.Update()
 			})
@@ -323,11 +330,13 @@ func (pv *PaintSetter) Init() {
 			w.HandleValueOnInput()
 			w.OnInput(func(e events.Event) {
 				if pv.FillType == PaintSolid {
+					pv.UpdateFillOpacity()
 					pv.Canvas.SetFillColor(pv.FillProp(), false) // not final
 				}
 			})
 			w.OnChange(func(e events.Event) {
 				if pv.FillType == PaintSolid {
+					pv.UpdateFillOpacity()
 					pv.Canvas.SetFillColor(pv.FillProp(), true) // final
 				}
 			})
@@ -365,14 +374,37 @@ func (pv *PaintSetter) PaintTypeStack(pt PaintTypes) int {
 	return st
 }
 
+// OpacityFromColor extracts the opacity as a 0-1 float from given uniform color-as-image.
+func OpacityFromColor(img image.Image) float32 {
+	return float32(colors.ToUniform(img).A) / 255
+}
+
+// ColorWithOpacity returns a uniform color-as-image with given opacity.
+func ColorWithOpacity(img image.Image, opacity float32) image.Image {
+	return colors.Uniform(colors.ApplyOpacity(colors.ToUniform(img), opacity))
+}
+
+func (pv *PaintSetter) UpdateStrokeOpacity() {
+	pv.PaintStyle.Stroke.Opacity = OpacityFromColor(pv.PaintStyle.Stroke.Color)
+}
+
+func (pv *PaintSetter) UpdateFillOpacity() {
+	pv.PaintStyle.Fill.Opacity = OpacityFromColor(pv.PaintStyle.Fill.Color)
+}
+
+// SetStrokeOpacity sets stroke opacity
+func (pv *PaintSetter) SetStrokeOpacity(nd svg.Node) {
+	nd.AsNodeBase().SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+}
+
 // SetOtherStrokeProps sets opacity and stroke width properties
 func (pv *PaintSetter) SetOtherStrokeProps(nd svg.Node) {
 	if !pv.IsStrokeOn() {
 		return
 	}
 	nb := nd.AsNodeBase()
-	nb.SetProperty("stroke-width", pv.PaintStyle.Stroke.Width.String())
-	nb.SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+	pv.SetStrokeOpacity(nd)
+	nb.SetProperty("strodke-width", pv.PaintStyle.Stroke.Width.String())
 	nb.SetProperty("stroke-linecap", pv.PaintStyle.Stroke.Cap.String())
 	nb.SetProperty("stroke-linejoin", pv.PaintStyle.Stroke.Join.String())
 }
@@ -449,6 +481,9 @@ func (pv *PaintSetter) SetStroke(prev, pt PaintTypes, sp string) {
 	cv := pv.Canvas
 	cv.setPropsOnSelected("SetStroke", sp, func(nd svg.Node) {
 		pv.SetColorNode(nd, "stroke", prev, pt, sp)
+		if pv.StrokeType == PaintSolid {
+			pv.SetStrokeOpacity(nd)
+		}
 	})
 }
 
@@ -457,11 +492,12 @@ func (pv *PaintSetter) SetStroke(prev, pt PaintTypes, sp string) {
 // followed by a final [events.Change] event (final = true)
 func (cv *Canvas) SetStrokeColor(sp string, final bool) {
 	cv.setPropsOnSelectedInput(SetStrokeColor, sp, final,
-		func(itm svg.Node) {
-			p := itm.AsTree().Properties["stroke"]
+		func(nd svg.Node) {
+			p := nd.AsTree().Properties["stroke"]
 			if p != nil {
-				itm.AsNodeBase().SetColorProperties("stroke", sp)
-				cv.UpdateMarkerColors(itm)
+				nd.AsNodeBase().SetColorProperties("stroke", sp)
+				cv.PaintSetter().SetStrokeOpacity(nd)
+				cv.UpdateMarkerColors(nd)
 			}
 		})
 }
@@ -530,6 +566,7 @@ func (cv *Canvas) SetFillColor(fp string, final bool) {
 			p := nd.AsTree().Properties["fill"]
 			if p != nil {
 				nd.AsNodeBase().SetColorProperties("fill", fp)
+				cv.PaintSetter().SetFillOpacity(nd)
 			}
 		})
 }
@@ -543,7 +580,8 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.SetStrokeStack(pv.StrokeType)
 	switch pv.StrokeType {
 	case PaintSolid:
-		pv.PaintStyle.Stroke.Color = ps.Stroke.Color
+		pv.PaintStyle.Stroke.Color = ColorWithOpacity(ps.Stroke.Color, ps.Stroke.Opacity)
+		pv.PaintStyle.Stroke.Opacity = ps.Stroke.Opacity
 	case PaintLinear, PaintRadial:
 		pv.SelectStrokeGrad()
 	}
@@ -572,7 +610,8 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.SetFillStack(pv.FillType)
 	switch pv.FillType {
 	case PaintSolid:
-		pv.PaintStyle.Fill.Color = ps.Fill.Color
+		pv.PaintStyle.Fill.Color = ColorWithOpacity(ps.Fill.Color, ps.Fill.Opacity)
+		pv.PaintStyle.Fill.Opacity = ps.Fill.Opacity
 	case PaintLinear, PaintRadial:
 		pv.SelectFillGrad()
 	}

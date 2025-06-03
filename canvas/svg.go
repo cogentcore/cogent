@@ -56,7 +56,7 @@ func (sv *SVG) Init() {
 	sv.Grid = Settings.Size.Grid
 	sv.AddContextMenu(sv.contextMenu)
 	sv.Styler(func(s *styles.Style) {
-		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended)
+		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended, abilities.DoubleClickable)
 		s.ObjectFit = styles.FitNone
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
 		sv.SVG.TextShaper = sv.Scene.TextShaper()
@@ -338,6 +338,22 @@ func (sv *SVG) Init() {
 		sv.SVG.ZoomAt(se.Pos(), del)
 		sv.UpdateView()
 	})
+	sv.On(events.DoubleClick, func(e events.Event) {
+		es := sv.EditState()
+		isSelTool := (es.Tool == SelectTool) || ToolDoesBasicSelect(es.Tool)
+		if !isSelTool {
+			return
+		}
+		itm := es.FirstSelected()
+		if itm == nil {
+			itm = sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+		}
+		if itm == nil {
+			return
+		}
+		sv.EditNode(itm)
+		sv.Canvas.SelectNodeInTree(itm, events.SelectOne)
+	})
 }
 
 func (sv *SVG) SizeFinal() {
@@ -552,24 +568,14 @@ func (sv *SVG) EditNode(n tree.Node) { //types:add
 }
 
 func (sv *SVG) contextMenu(m *core.Scene) {
-	var itm tree.Node
 	es := sv.EditState()
-	if es.ActivePath != nil {
-		itm = es.ActivePath.AsTree().This
-	} else {
-		sl := sv.EditState().SelectedList(false)
-		if len(sl) > 0 {
-			itm = sl[0]
-		}
-	}
-
-	if itm == nil {
-		core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
-			SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	itm := es.FirstSelected()
+	if itm != nil {
+		sv.contextMenuNode(m, itm)
 		return
 	}
-
-	sv.contextMenuNode(m, itm)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).
+		SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 func (sv *SVG) contextMenuNode(m *core.Scene, nd tree.Node) {
