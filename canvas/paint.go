@@ -83,7 +83,7 @@ func (pv *PaintSetter) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Stroke paint:</b>")
+			w.SetText("<b>Stroke:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.StrokeType, w)
@@ -293,9 +293,10 @@ func (pv *PaintSetter) Init() {
 	tree.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
+			s.CenterAll()
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Fill paint:</b>")
+			w.SetText("<b>Fill:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.FillType, w)
@@ -312,6 +313,14 @@ func (pv *PaintSetter) Init() {
 				}
 				pv.curFillType = pv.FillType
 				pv.Update()
+			})
+		})
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Fill.Rule, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsFillOn() {
+					pv.Canvas.SetFillProperty("fill-rule", pstyle.Fill.Rule.String())
+				}
 			})
 		})
 	})
@@ -430,8 +439,8 @@ func (pv *PaintSetter) SetStrokeOpacity(nd svg.Node) {
 	nd.AsNodeBase().SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
 }
 
-// SetOtherStrokeProps sets opacity and stroke width properties
-func (pv *PaintSetter) SetOtherStrokeProps(nd svg.Node) {
+// SetStrokeOthers sets opacity and stroke width properties
+func (pv *PaintSetter) SetStrokeOthers(nd svg.Node) {
 	if !pv.IsStrokeOn() {
 		return
 	}
@@ -442,11 +451,12 @@ func (pv *PaintSetter) SetOtherStrokeProps(nd svg.Node) {
 	nb.SetProperty("stroke-linejoin", pv.PaintStyle.Stroke.Join.String())
 }
 
-func (pv *PaintSetter) SetFillOpacity(nd svg.Node) {
+func (pv *PaintSetter) SetFillOthers(nd svg.Node) {
 	if !pv.IsFillOn() {
 		return
 	}
 	nd.AsNodeBase().SetProperty("fill-opacity", pv.PaintStyle.Fill.Opacity)
+	nd.AsNodeBase().SetProperty("fill-rule", pv.PaintStyle.Fill.Rule.String())
 }
 
 // SetProperties sets the properties for given node according to current settings
@@ -455,10 +465,10 @@ func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
 		cv.SetMarkerProperties(pv.MarkerProperties())
-		pv.SetOtherStrokeProps(nd)
+		pv.SetStrokeOthers(nd)
 	}
 	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
-	pv.SetFillOpacity(nd)
+	pv.SetFillOthers(nd)
 }
 
 func (pv *PaintSetter) SetStrokeStack(pt PaintTypes) {
@@ -477,9 +487,9 @@ func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintType
 
 	others := func() {
 		if prop == "stroke" {
-			pv.SetOtherStrokeProps(nd)
+			pv.SetStrokeOthers(nd)
 		} else {
-			pv.SetFillOpacity(nd)
+			pv.SetFillOthers(nd)
 		}
 	}
 
@@ -599,9 +609,19 @@ func (cv *Canvas) SetFillColor(fp string, final bool) {
 			p := nd.AsTree().Properties["fill"]
 			if p != nil {
 				nd.AsNodeBase().SetColorProperties("fill", fp)
-				cv.PaintSetter().SetFillOpacity(nd)
+				cv.PaintSetter().SetFillOthers(nd)
 			}
 		})
+}
+
+// SetFillProperty sets given property only if fill.color is non-nil.
+func (cv *Canvas) SetFillProperty(prop, wp string) {
+	cv.setPropsOnSelected(prop, wp, func(nd svg.Node) {
+		g := nd.AsNodeBase()
+		if g.Paint.Fill.Color != nil {
+			g.SetProperty(prop, wp)
+		}
+	})
 }
 
 // SetOpacity sets the global opacity for selected items.
@@ -655,6 +675,7 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	case PaintSolid:
 		pv.PaintStyle.Fill.Color = ColorWithOpacity(ps.Fill.Color, ps.Fill.Opacity)
 		pv.PaintStyle.Fill.Opacity = ps.Fill.Opacity
+		pv.PaintStyle.Fill.Rule = ps.Fill.Rule
 	case PaintLinear, PaintRadial:
 		pv.SelectFillGrad()
 	}
