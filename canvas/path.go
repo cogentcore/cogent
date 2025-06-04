@@ -145,6 +145,7 @@ func (sv *SVG) UpdateNodeSprites() {
 					es.SelectNode(i)
 				}
 				es.DragNodeStart(e.Pos())
+				es.PathNodesOrig = sv.PathNodes(es.ActivePath)
 				sv.Styles.Cursor = cursors.Move
 				sv.NeedsRender()
 				e.SetHandled()
@@ -184,6 +185,7 @@ func (sv *SVG) UpdateNodeSprites() {
 			})
 			sp.OnSlideStart(func(e events.Event) {
 				es.DragCtrlStart(e.Pos(), i, ctyp)
+				es.PathNodesOrig = sv.PathNodes(es.ActivePath)
 				sv.NeedsRender()
 				sv.Styles.Cursor = cursors.Move
 				e.SetHandled()
@@ -345,11 +347,10 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 	sv.ManipStartInDrag(CtrlMove, es.ActivePath.Name)
 
 	es.ConstrainPoint = true
-	spt, _, _ := sv.DragDelta(e, true)
-	dv := math32.FromPoint(e.PrevDelta())
+	spt, _, dv := sv.DragDelta(e, true)
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
 
-	pos := sv.PathCtrlMove(es.ActivePath, es.PathNodes, idx, ctyp, dxf)
+	pos := sv.PathCtrlMove(idx, ctyp, dxf)
 	nwc := pos.Add(dv)
 	spnm := SpriteName(SpNodeCtrl, ctyp, idx)
 	sp, _ := sprites.SpriteByNameLocked(spnm)
@@ -416,8 +417,10 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 
 // PathCtrlMove moves given node control point index by given delta transform.
 // returns scene position of given point.
-func (sv *SVG) PathCtrlMove(path *svg.Path, pts []*PathNode, pidx int, ctyp Sprites, dxf math32.Matrix2) math32.Vector2 {
-	pn := pts[pidx]
+func (sv *SVG) PathCtrlMove(pidx int, ctyp Sprites, dxf math32.Matrix2) math32.Vector2 {
+	es := sv.EditState()
+	path := es.ActivePath
+	pn := es.PathNodesOrig[pidx]
 	switch ctyp {
 	case SpQuad1, SpCube1:
 		cp1 := dxf.MulVector2AsPoint(pn.Cp1)
