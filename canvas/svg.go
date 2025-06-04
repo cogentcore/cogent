@@ -258,11 +258,7 @@ func (sv *SVG) Init() {
 
 		if e.HasAnyModifier(key.Shift) {
 			e.SetHandled()
-			del := math32.FromPoint(e.PrevDelta()).MulScalar(max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01))
-			if sv.SVG.Scale > 0 {
-				del.SetDivScalar(min(1, sv.SVG.Scale))
-			}
-			sv.SVG.Translate.SetAdd(del)
+			sv.SVG.Translate.SetAdd(math32.FromPoint(e.PrevDelta()))
 			sv.UpdateView()
 			return
 		}
@@ -327,12 +323,7 @@ func (sv *SVG) Init() {
 	sv.On(events.Scroll, func(e events.Event) {
 		e.SetHandled()
 		se := e.(*events.MouseScroll)
-		del := 0.01 * se.Delta.Y * max(sv.SVG.Root.ViewBox.Size.X/1280, 0.01)
-		if sv.SVG.Scale > 0 {
-			del /= max(1, sv.SVG.Scale)
-		}
-		del = math32.Clamp(del, -0.1, 0.1)
-		sv.SVG.ZoomAt(se.Pos(), del)
+		sv.SVG.ZoomAtScroll(se.Delta.Y, se.Pos())
 		sv.UpdateView()
 	})
 	sv.On(events.DoubleClick, func(e events.Event) {
