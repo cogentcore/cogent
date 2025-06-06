@@ -1,0 +1,33 @@
+<svg
+  width="210"
+  height="297"
+  viewBox="0 0 368 272"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+    id="namedview7"
+    style="inkscape:current-layer:layer1;inkscape:zoom:1;window-width:1943;window-height:939;inkscape:cx:0;inkscape:cy:0;showpageshadow:2;inkscape:document-units:px;window-y:1175;deskcolor:#d1d1d1;window-x:4;window-maximized:0;">
+    <inkscape:grid
+      id="grid356"
+      style="spacingx:16;spacingy:16;type:xygrid;units:px;" />
+  </sodipodi:namedview>
+  <g
+    id="layer1"
+    style="groupmode:layer;display:inline;"
+    inkscape:groupmode="layer"
+    style="display:inline" />
+  <path
+    id="path236"
+    style="stroke:#000000;stroke-opacity:1;stroke-width:1px;fill:none;nodetypes:cczcc;"
+    d="M49.81116 130.9217L66.05011 141.9157C78.60746 118.8939 54.42756 98.80808 86.60712 97.81618C113.7716 101.0772 80.30559 144.7907 110.6525 142.0002L125.8932 138.3911" />
+  <path
+    id="path346"
+    style="stroke-linecap:round;stroke-linejoin:arc-clip;stroke-miterlimit:1.0;stroke-width:1px;fill:none;stroke:red;"
+    d="M354.2449 249.111L336.715 271.0909Q290.6949 256.0909 259.715 235.6911Q246.6649 237.141 239.5449 237.141Q200.2549 237.141 175.3349 208.4711Q155.6671 178.7547 153.9231 135.6275Q150.4349 88.031 175.6049 60.08099Q200.7849 32.141 242.7149 32.141Q285.4349 32.141 310.8049 60.021Q336.1849 87.911 336.1849 134.841Q336.1849 201.811 285.025 228.1911Q317.585 242.8011 354.2449 249.111zM306.3849 135.8311Q306.3849 96.25095 289.775 74.69099Q273.1649 53.141 242.5849 53.141Q213.3049 53.141 196.6949 74.76099Q180.0849 96.39095 180.0849 134.641Q180.0849 172.891 196.6949 194.5211Q213.3049 216.141 242.5849 216.141Q272.5049 216.141 289.4449 194.841Q306.3849 173.5511 306.3849 135.8311z" />
+  <path
+    id="path3249"
+    style="stroke-opacity:1;stroke-width:1px;fill:none;stroke:#000000;"
+    d="M35.17219 162.7736L64.41419 178.3148L78.78003 152.9357L100.8133 180.7687L123.3072 154.3896L144.7786 183.2226" />
+</svg>
