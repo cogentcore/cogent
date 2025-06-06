@@ -32,6 +32,13 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 ## TODO
 
+Bugs:
+
+* gradients being lost on dupe
+
+* getting Dp units re-emerging somehow
+
+
 ### Simpler, near term
 
 * ArcTo support in node editor, and arc tool.

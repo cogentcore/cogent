@@ -222,10 +222,8 @@ func (cv *Canvas) OpenDrawingFile(fnm core.Filename) error {
 	errors.Log(os.Chdir(fdir))
 	cv.EditState.Init(cv)
 	cv.EditState.Gradients = sv.Gradients()
-	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
-	sv.DistributeProps()
-	sv.UngroupSingletons()
-	sv.RemoveEmptyGroups()
+	sv.SVG.GatherIDs()   // also ensures uniqueness, key for json saving
+	sv.OpenFileCleanup() // in props.go
 	sv.ReadMetaData()
 	return err
 }

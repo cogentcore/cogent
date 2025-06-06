@@ -82,6 +82,14 @@ func (cv *Canvas) setPropsOnSelectedInput(act Actions, data string, final bool, 
 
 ////////  SVG misc utils
 
+// OpenFileCleanup cleans up various aspects of SVG files for editing.
+func (sv *SVG) OpenFileCleanup() {
+	sv.DistributeProps()
+	sv.UngroupSingletons()
+	sv.RemoveEmptyGroups()
+	sv.CleanupInkscapeText()
+}
+
 // DistributeProps distributes properties into leaf nodes
 // from groups. Putting properties on groups is not good
 // for editing.
@@ -228,4 +236,32 @@ func (sv *SVG) RemoveEmptyGroups() {
 		par := nb.Parent.(svg.Node).AsNodeBase()
 		par.DeleteChild(n)
 	}
+}
+
+// CleanupInkscapeText fixes the inkscape text properties which are excessive and bad.
+func (sv *SVG) CleanupInkscapeText() {
+	root := sv.Root()
+
+	del := []string{"font-variant:normal", "letter-spacing:normal", "stroke:none", "word-spacing:normal", "text-transform:none", "block-progression:tb", "fill-opacity:1", "enable-background:accumulate", "font-family:Arial", "text-decoration:none", "text-anchor:start", "stroke-width:1px", "display:inline", "-inkscape-font-specification:Arial", "direction:ltr", "writing-mode:lr-tb", "font-weight:normal", "font-style:normal", "text-indent:0", "space:preserve", "line-height:normal", "marker:none", "font-stretch:normal", "fill-rule:nonzero", "visibility:visible", "overflow:visible", "text-align:start", "fill:#000000", "stroke-color:none"}
+
+	svg.SVGWalkDownNoDefs(root, func(n svg.Node, nb *svg.NodeBase) bool {
+		_, istxt := n.(*svg.Text)
+		if !istxt {
+			return tree.Continue
+		}
+		if nb.Properties == nil {
+			return tree.Continue
+		}
+		for _, ds := range del {
+			ip := strings.Index(ds, ":")
+			key := ds[:ip]
+			val := ds[ip+1:]
+			if pv, ok := nb.Properties[key]; ok {
+				if pv == val {
+					delete(nb.Properties, key)
+				}
+			}
+		}
+		return tree.Continue
+	})
 }
