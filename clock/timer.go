@@ -29,6 +29,9 @@ type Timer struct {
 	// Paused is whether the timer is currently paused.
 	Paused bool
 
+	// Name is the user-set name of the timer.
+	Name string
+
 	// durationPaused is how much total time the timer has been paused.
 	durationPaused time.Duration
 
@@ -117,6 +120,10 @@ func (tm *Timer) Init() {
 				tm.Update()
 			})
 		})
+	})
+	tree.AddChild(tm, func(w *core.TextField) {
+		core.Bind(&tm.Name, w)
+		w.SetPlaceholder("Name").SetType(core.TextFieldOutlined)
 	})
 }
 
