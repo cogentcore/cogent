@@ -30,10 +30,17 @@ func clock(ts *core.Tabs) {
 	cl.Styler(func(s *styles.Style) {
 		s.CenterAll()
 	})
-	core.NewText(cl).SetType(core.TextHeadlineMedium).
-		SetText(time.Now().Format("Monday, January 2"))
-	core.NewText(cl).SetType(core.TextDisplayLarge).
-		SetText(time.Now().Format("3:04 PM"))
+	date := core.NewText(cl).SetType(core.TextHeadlineMedium)
+	date.Updater(func() {
+		date.SetText(time.Now().Format("Monday, January 2"))
+	})
+	tm := core.NewText(cl).SetType(core.TextDisplayLarge)
+	tm.Updater(func() {
+		tm.SetText(time.Now().Format("3:04:05 PM"))
+	})
+	tm.Animate(func(a *core.Animation) {
+		tm.UpdateRender()
+	})
 }
 
 type timer struct {
