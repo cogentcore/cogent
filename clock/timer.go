@@ -20,8 +20,8 @@ type Timer struct {
 	// Duration is the total duration of the timer.
 	Duration time.Duration
 
-	// Remaining is the remaining time on the timer.
-	Remaining time.Duration `set:"-"`
+	// Start is when the timer was started.
+	Start time.Time
 }
 
 func (tm *Timer) Init() {
@@ -34,7 +34,8 @@ func (tm *Timer) Init() {
 	tree.AddChild(tm, func(w *core.Text) {
 		w.SetType(core.TextHeadlineMedium)
 		w.Updater(func() {
-			w.SetText(tm.Remaining.String())
+			remaining := tm.Duration - time.Since(tm.Start)
+			w.SetText(remaining.String())
 		})
 		w.Animate(func(a *core.Animation) {
 			w.UpdateRender()
@@ -48,6 +49,7 @@ func (cl *Clock) timerTab() {
 	core.Bind(&trd, core.NewDurationInput(tab))
 	start := core.NewButton(tab).SetText("Start")
 	start.OnClick(func(e events.Event) {
-		NewTimer(tab).SetDuration(trd)
+		NewTimer(tab).SetDuration(trd).SetStart(time.Now())
+		tab.Update()
 	})
 }
