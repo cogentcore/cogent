@@ -49,13 +49,6 @@ func (cl *Clock) clockTab() {
 	})
 }
 
-func (cl *Clock) timerTab() {
-	tab, _ := cl.NewTab("Timers")
-	trd := 15 * time.Minute
-	core.NewValue(&trd, "", tab)
-	core.NewButton(tab).SetText("Start")
-}
-
 func (cl *Clock) stopwatchTab() {
 	tab, _ := cl.NewTab("Stopwatches")
 	core.NewButton(tab).SetText("Start")
