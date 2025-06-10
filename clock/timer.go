@@ -7,9 +7,11 @@ package clock
 import (
 	"time"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 )
 
@@ -29,16 +31,21 @@ func (tm *Timer) Init() {
 	tm.Styler(func(s *styles.Style) {
 		s.CenterAll()
 		s.Direction = styles.Column
+		s.Background = colors.Scheme.SurfaceContainer
+		s.Border.Radius = styles.BorderRadiusLarge
+		s.Min.Set(units.Em(15))
+		s.Padding.Set(units.Em(2))
 	})
 
 	tree.AddChild(tm, func(w *core.Text) {
-		w.SetType(core.TextHeadlineMedium)
+		w.SetType(core.TextHeadlineLarge)
 		w.Updater(func() {
 			remaining := tm.Duration - time.Since(tm.Start)
+			remaining = remaining.Round(time.Second)
 			w.SetText(remaining.String())
 		})
 		w.Animate(func(a *core.Animation) {
-			w.UpdateRender()
+			w.Update() // TODO: optimize?
 		})
 	})
 }
