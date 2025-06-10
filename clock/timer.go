@@ -34,6 +34,11 @@ type Timer struct {
 
 	// pausedAt is the time when the timer was last paused.
 	pausedAt time.Time
+
+	pauseButton *core.Button
+
+	// done is whether the timer has completed.
+	done bool
 }
 
 func (tm *Timer) Init() {
@@ -52,7 +57,12 @@ func (tm *Timer) Init() {
 		w.Updater(func() {
 			remaining := tm.Duration - time.Since(tm.Start) + tm.durationPaused
 			remaining = remaining.Round(time.Second)
+			remaining = max(remaining, 0)
 			w.SetText(remaining.String())
+			if remaining == 0 && !tm.done {
+				tm.done = true
+				tm.pauseButton.Send(events.Click)
+			}
 		})
 		w.Animate(func(a *core.Animation) {
 			if tm.Paused {
@@ -63,8 +73,10 @@ func (tm *Timer) Init() {
 	})
 	tree.AddChild(tm, func(w *core.Frame) {
 		tree.AddChild(w, func(w *core.Button) {
+			tm.pauseButton = w
 			w.SetType(core.ButtonTonal)
 			w.Updater(func() {
+				w.SetEnabled(!tm.done)
 				if tm.Paused {
 					w.SetIcon(icons.PlayArrowFill).SetTooltip("Resume")
 				} else {
@@ -101,6 +113,7 @@ func (tm *Timer) Init() {
 				tm.Start = time.Now()
 				tm.durationPaused = 0
 				tm.pausedAt = time.Now()
+				tm.done = false
 				tm.Update()
 			})
 		})
