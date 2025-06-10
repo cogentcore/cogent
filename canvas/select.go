@@ -632,8 +632,9 @@ func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) 
 		if !nb.BBox.ContainsPoint(ptv) {
 			return tree.Continue
 		}
+		sz := nb.BBox.Size()
 		p, isPath := n.(*svg.Path)
-		if !isPath {
+		if !isPath || sz.X < 12 || sz.Y < 12 { // small bbox footprint paths are too hard to hit
 			rval = n
 			return tree.Break
 		}

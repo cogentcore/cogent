@@ -242,7 +242,7 @@ func (sv *SVG) RemoveEmptyGroups() {
 func (sv *SVG) CleanupInkscapeText() {
 	root := sv.Root()
 
-	del := []string{"font-variant:normal", "letter-spacing:normal", "stroke:none", "word-spacing:normal", "text-transform:none", "block-progression:tb", "fill-opacity:1", "enable-background:accumulate", "font-family:Arial", "text-decoration:none", "text-anchor:start", "stroke-width:1px", "display:inline", "-inkscape-font-specification:Arial", "direction:ltr", "writing-mode:lr-tb", "font-weight:normal", "font-style:normal", "text-indent:0", "space:preserve", "line-height:normal", "marker:none", "font-stretch:normal", "fill-rule:nonzero", "visibility:visible", "overflow:visible", "text-align:start", "fill:#000000", "stroke-color:none"}
+	del := []string{"font-variant:normal", "letter-spacing:normal", "letter-spacing:0px", "stroke:none", "word-spacing:normal", "word-spacing:0px", "text-transform:none", "block-progression:tb", "fill-opacity:1", "enable-background:accumulate", "font-family:Arial", "text-decoration:none", "text-anchor:start", "stroke-width:1px", "display:inline", "-inkscape-font-specification:Arial", "direction:ltr", "writing-mode:lr-tb", "font-weight:normal", "font-style:normal", "text-indent:0", "space:preserve", "line-height:normal", "marker:none", "font-stretch:normal", "fill-rule:nonzero", "visibility:visible", "overflow:visible", "text-align:start", "fill:#000000", "stroke-color:none", "linespacing:125%"}
 
 	svg.SVGWalkDownNoDefs(root, func(n svg.Node, nb *svg.NodeBase) bool {
 		_, istxt := n.(*svg.Text)

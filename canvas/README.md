@@ -30,14 +30,19 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 * June, 2025: full basic functionality now in place, including drawing new paths and editing path control points.
 
+## Tips
+
+* Use layers! Incredibly useful for toggling editability and visibility of whole sets of elements. It is best to make the layers at the start and add as you go. Click on the layer to set which layer new elements are made in by default (duplicates always go into the same layer as the original).
+
 ## TODO
 
 Bugs:
 
-* gradients being lost on dupe
+* gradients being lost on dupe, and must be moved above whoever is referencing it!
 
 * getting Dp units re-emerging somehow
 
+* Put all shortcuts in svg keyboard action switch so they always operate (e.g., text gets rid of the select menu -- need to figure out a better solution for that too).
 
 ### Simpler, near term
 
@@ -55,7 +60,7 @@ Bugs:
 
 * Align panel: add distribute function.
 
-* Better ways of managing Text with multiple tspan elements: styles for tspan, generate full Text and spans from a rich text source with line wrapping and HTML markup -- need bidirectional support to / from existing tspans etc.
+* Better ways of managing Text with multiple tspan elements: styles for tspan, generate full Text and spans from a rich text source with line wrapping and HTML markup -- need bidirectional support to / from existing tspans etc. Basic pos movement of sub-tspan would be useful.
 
 * Clip mask in `core.SVG` finally.
 

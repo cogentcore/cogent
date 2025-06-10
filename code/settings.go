@@ -342,7 +342,7 @@ func (cv *Code) ApplySettings() {
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
-	core.UpdateAll() // drives full rebuild
+	// core.UpdateAll() // note: this is not necessary and is very slow
 }
 
 func (cv *Code) ApplySplitsSettings(sv *core.Splits) {
