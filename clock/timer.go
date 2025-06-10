@@ -28,6 +28,12 @@ type Timer struct {
 
 	// Paused is whether the timer is currently paused.
 	Paused bool
+
+	// durationPaused is how much total time the timer has been paused.
+	durationPaused time.Duration
+
+	// pausedAt is the time when the timer was last paused.
+	pausedAt time.Time
 }
 
 func (tm *Timer) Init() {
@@ -44,7 +50,7 @@ func (tm *Timer) Init() {
 	tree.AddChild(tm, func(w *core.Text) {
 		w.SetType(core.TextHeadlineLarge)
 		w.Updater(func() {
-			remaining := tm.Duration - time.Since(tm.Start)
+			remaining := tm.Duration - time.Since(tm.Start) + tm.durationPaused
 			remaining = remaining.Round(time.Second)
 			w.SetText(remaining.String())
 		})
@@ -76,6 +82,11 @@ func (tm *Timer) Init() {
 			})
 			w.OnClick(func(e events.Event) {
 				tm.Paused = !tm.Paused
+				if tm.Paused {
+					tm.pausedAt = time.Now()
+				} else {
+					tm.durationPaused += time.Since(tm.pausedAt)
+				}
 				w.Update()
 			})
 		})
