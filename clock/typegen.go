@@ -3,6 +3,8 @@
 package clock
 
 import (
+	"time"
+
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -11,3 +13,13 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/clock.Clock", IDN
 
 // NewClock returns a new [Clock] with the given optional parent:
 func NewClock(parent ...tree.Node) *Clock { return tree.New[Clock](parent...) }
+
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/clock.Timer", IDName: "timer", Doc: "Timer is a timer that can be paused, resumed, reset, and removed.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Duration", Doc: "Duration is the total duration of the timer."}, {Name: "Remaining", Doc: "Remaining is the remaining time on the timer."}}})
+
+// NewTimer returns a new [Timer] with the given optional parent:
+// Timer is a timer that can be paused, resumed, reset, and removed.
+func NewTimer(parent ...tree.Node) *Timer { return tree.New[Timer](parent...) }
+
+// SetDuration sets the [Timer.Duration]:
+// Duration is the total duration of the timer.
+func (t *Timer) SetDuration(v time.Duration) *Timer { t.Duration = v; return t }
