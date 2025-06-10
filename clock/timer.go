@@ -98,8 +98,15 @@ func (cl *Clock) timerTab() {
 	trd := 15 * time.Minute
 	core.Bind(&trd, core.NewDurationInput(tab))
 	start := core.NewButton(tab).SetText("Start")
+
+	grid := core.NewFrame(tab)
+	grid.Styler(func(s *styles.Style) {
+		s.Wrap = true
+		s.Grow.Set(1, 1)
+	})
+
 	start.OnClick(func(e events.Event) {
-		NewTimer(tab).SetDuration(trd).SetStart(time.Now())
-		tab.Update()
+		NewTimer(grid).SetDuration(trd).SetStart(time.Now())
+		grid.Update()
 	})
 }
