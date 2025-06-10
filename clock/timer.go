@@ -10,6 +10,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
@@ -24,6 +25,9 @@ type Timer struct {
 
 	// Start is when the timer was started.
 	Start time.Time
+
+	// Paused is whether the timer is currently paused.
+	Paused bool
 }
 
 func (tm *Timer) Init() {
@@ -45,7 +49,35 @@ func (tm *Timer) Init() {
 			w.SetText(remaining.String())
 		})
 		w.Animate(func(a *core.Animation) {
+			if tm.Paused {
+				return
+			}
 			w.Update() // TODO: optimize?
+		})
+	})
+	tree.AddChild(tm, func(w *core.Frame) {
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetType(core.ButtonTonal)
+			w.Updater(func() {
+				if tm.Paused {
+					w.SetIcon(icons.PlayArrowFill).SetTooltip("Resume")
+				} else {
+					w.SetIcon(icons.PauseFill).SetTooltip("Pause")
+				}
+			})
+			w.Styler(func(s *styles.Style) {
+				if tm.Paused {
+					s.Color = colors.Scheme.Success.Base
+					s.Background = colors.Scheme.Success.Container
+				} else {
+					s.Color = colors.Scheme.Warn.Base
+					s.Background = colors.Scheme.Warn.Container
+				}
+			})
+			w.OnClick(func(e events.Event) {
+				tm.Paused = !tm.Paused
+				w.Update()
+			})
 		})
 	})
 }
