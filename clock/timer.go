@@ -87,7 +87,21 @@ func (tm *Timer) Init() {
 				} else {
 					tm.durationPaused += time.Since(tm.pausedAt)
 				}
-				w.Update()
+				tm.Update()
+			})
+		})
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetType(core.ButtonTonal)
+			w.Styler(func(s *styles.Style) {
+				s.Color = colors.Scheme.Error.Base
+				s.Background = colors.Scheme.Error.Container
+			})
+			w.SetIcon(icons.Refresh).SetTooltip("Reset")
+			w.OnClick(func(e events.Event) {
+				tm.Start = time.Now()
+				tm.durationPaused = 0
+				tm.pausedAt = time.Now()
+				tm.Update()
 			})
 		})
 	})
