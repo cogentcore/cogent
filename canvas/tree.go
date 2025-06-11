@@ -280,7 +280,11 @@ func (cv *Canvas) DuplicateSelected() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("DuplicateSelected", "")
 	for _, tr := range tvl {
-		tr.AsCoreTree().Duplicate()
+		ctr := tr.AsCoreTree()
+		ctr.Duplicate()
+		idx := ctr.IndexInParent()
+		nw := ctr.Parent.AsTree().Child(idx + 1).(core.Treer).AsCoreTree()
+		sv.SVG.GradientDuplicateNode(nw.SyncNode.(svg.Node))
 	}
 	cv.SetStatus("Duplicated selected items")
 	cv.ChangeMade()

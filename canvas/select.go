@@ -30,6 +30,11 @@ func (cv *Canvas) selectEnabledStyler(w core.Widget) {
 
 // MakeSelectToolbar adds the select toolbar to the given plan.
 func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
+	if cv.EditState.Tool == TextTool || cv.EditState.SelectIsText {
+		cv.MakeTextToolbar(p)
+		tree.Add(p, func(w *core.Separator) {})
+	}
+
 	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapAlign, w)
 		w.SetText("Snap align")

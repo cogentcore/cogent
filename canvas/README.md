@@ -38,11 +38,7 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 Bugs:
 
-* gradients being lost on dupe, and must be moved above whoever is referencing it!
-
 * getting Dp units re-emerging somehow
-
-* Put all shortcuts in svg keyboard action switch so they always operate (e.g., text gets rid of the select menu -- need to figure out a better solution for that too).
 
 ### Simpler, near term
 
