@@ -289,6 +289,7 @@ func (cv *Canvas) DuplicateSelected() { //types:add
 	cv.SetStatus("Duplicated selected items")
 	cv.ChangeMade()
 	sv.UpdateView()
+	cv.UpdateTree() // defs update
 }
 
 // CopySelected copies selected items in SVG view, using Tree methods.

@@ -142,11 +142,11 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	if typ == SpReshapeBBox {
 		sp, ok = sprites.Final.AtTry(spnm)
 	} else {
-		sp, ok = sprites.SpriteByNameLocked(spnm)
+		sp, ok = sprites.SpriteByNameNoLock(spnm)
 	}
 	if ok {
 		sp.Active = true
-		sprites.SetModifiedLocked()
+		sprites.SetModifiedNoLock()
 		return sp
 	}
 	sp = core.NewSprite(spnm, nil)
@@ -180,7 +180,7 @@ func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func
 	case final:
 		sprites.Final.Add(sp.Name, sp)
 	default:
-		sprites.AddLocked(sp)
+		sprites.AddNoLock(sp)
 	}
 	return sp
 }
@@ -225,7 +225,7 @@ func (sv *SVG) InactivateSprites(typ Sprites) {
 		}
 
 	})
-	sprites.SetModifiedLocked()
+	sprites.SetModifiedNoLock()
 }
 
 // InactivateAlignSprites inactivates align sprites, doing lock, unlock

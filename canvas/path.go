@@ -254,15 +254,15 @@ func (sv *SVG) UpdateLineAddSprite() {
 }
 
 func InactivateNodePoint(sprites *core.Sprites, i int) {
-	sprites.InactivateSpriteLocked(SpriteName(SpNodePoint, SpNone, i))
+	sprites.InactivateSpriteNoLock(SpriteName(SpNodePoint, SpNone, i))
 	InactivateNodeCtrls(sprites, i)
 }
 
 func InactivateNodeCtrls(sprites *core.Sprites, i int) {
-	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpQuad1, i))
-	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube1, i))
-	sprites.InactivateSpriteLocked(SpriteName(SpNodeCtrl, SpCube2, i))
-	sprites.InactivateSpriteLocked(SpriteName(SpLineAdd, SpNone, 0))
+	sprites.InactivateSpriteNoLock(SpriteName(SpNodeCtrl, SpQuad1, i))
+	sprites.InactivateSpriteNoLock(SpriteName(SpNodeCtrl, SpCube1, i))
+	sprites.InactivateSpriteNoLock(SpriteName(SpNodeCtrl, SpCube2, i))
+	sprites.InactivateSpriteNoLock(SpriteName(SpLineAdd, SpNone, 0))
 }
 
 func (sv *SVG) RemoveNodeSprites() {
@@ -317,21 +317,21 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 		pn := es.PathNodes[i]
 		nwc := pn.TEnd.Add(dv).ToPoint()
 		spnm := SpriteName(SpNodePoint, SpNone, i)
-		sp, _ := sprites.SpriteByNameLocked(spnm)
+		sp, _ := sprites.SpriteByNameNoLock(spnm)
 		sv.SetSpritePos(sp, nwc.X, nwc.Y)
 
 		switch pn.Cmd {
 		case SpQuadTo:
-			if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, i)); ok {
+			if sp1, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpQuad1, i)); ok {
 				sp1.Properties["nodePoint"] = nwc
 			}
 		case SpCubeTo:
-			if sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, i)); ok {
+			if sp2, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpCube2, i)); ok {
 				sp2.Properties["nodePoint"] = nwc
 			}
 		}
 		// next node is using us as a start
-		if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, i+1)); ok {
+		if sp1, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpCube1, i+1)); ok {
 			sp1.Properties["nodePoint"] = nwc
 		}
 	}
@@ -353,7 +353,7 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 	pos := sv.PathCtrlMove(idx, ctyp, dxf)
 	nwc := pos.Add(dv)
 	spnm := SpriteName(SpNodeCtrl, ctyp, idx)
-	sp, _ := sprites.SpriteByNameLocked(spnm)
+	sp, _ := sprites.SpriteByNameNoLock(spnm)
 	sv.SetSpritePos(sp, int(nwc.X), int(nwc.Y))
 
 	sprites.Unlock()
@@ -380,7 +380,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 			path.Data[pn.Index+1] = cp1.X
 			path.Data[pn.Index+2] = cp1.Y
-			if sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpQuad1, pidx)); ok {
+			if sp1, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpQuad1, pidx)); ok {
 				sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
 			}
 		}
@@ -391,7 +391,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 			cp2 := dxf.MulVector2AsPoint(pn.Cp2)
 			path.Data[pn.Index+3] = cp2.X
 			path.Data[pn.Index+4] = cp2.Y
-			if sp2, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube2, pidx)); ok {
+			if sp2, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpCube2, pidx)); ok {
 				sv.SetSpritePos(sp2, int(pn.TCp2.X+dv.X), int(pn.TCp2.Y+dv.Y))
 			}
 		}
@@ -409,7 +409,7 @@ func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf mat
 	cp1 := dxf.MulVector2AsPoint(pn.Cp1)
 	path.Data[pn.Index+1] = cp1.X
 	path.Data[pn.Index+2] = cp1.Y
-	sp1, ok := sprites.SpriteByNameLocked(SpriteName(SpNodeCtrl, SpCube1, pidx))
+	sp1, ok := sprites.SpriteByNameNoLock(SpriteName(SpNodeCtrl, SpCube1, pidx))
 	if ok {
 		sv.SetSpritePos(sp1, int(pn.TCp1.X+dv.X), int(pn.TCp1.Y+dv.Y))
 	}
