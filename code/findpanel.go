@@ -404,6 +404,7 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	tres := &res[resultIndex]
 	fv.HighlightFinds(tve, ftv, tres, find)
 	tv.SetCursorTarget(reg.Start)
+	tv.SetState(true, states.Focused) // key for actually updating cursor position
 	fv.NeedsRender()
 	return true
 }

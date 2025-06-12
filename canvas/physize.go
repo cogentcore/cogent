@@ -11,46 +11,46 @@ import (
 	"cogentcore.org/core/styles/units"
 )
 
-// PhysSize specifies the physical size of the drawing, when making a new one
-type PhysSize struct { //types:add
+// PhysicalSize specifies the physical size of the drawing, when making a new one
+type PhysicalSize struct { //types:add
 
 	// select a standard size -- this will set units and size
-	StandardSize StandardSizes
+	StandardSize StandardSizes `default:"Img1280x720"`
 
 	// for standard size, use first number as width, second as height
-	Portrait bool
+	Portrait bool `default:"false"`
 
 	// default units to use, e.g., in line widths etc
-	Units units.Units
+	Units units.Units `default:"px"`
 
 	// drawing size, in Units
 	Size math32.Vector2
 
 	// grid spacing, in units of ViewBox size
-	Grid float32
+	Grid float32 `default:"32"`
 }
 
-func (ps *PhysSize) Defaults() {
+func (ps *PhysicalSize) Defaults() {
 	ps.StandardSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
-	ps.Grid = 48
+	ps.Grid = 32
 }
 
-func (ps *PhysSize) Update() {
+func (ps *PhysicalSize) Update() {
 	if ps.StandardSize != CustomSize {
 		ps.SetToStandardSize()
 	}
 }
 
 // SetStandardSize sets drawing to a standard size
-func (ps *PhysSize) SetStandardSize(std StandardSizes) error {
+func (ps *PhysicalSize) SetStandardSize(std StandardSizes) error {
 	ps.StandardSize = std
 	return ps.SetToStandardSize()
 }
 
 // SetToStandardSize sets drawing to the current standard size value
-func (ps *PhysSize) SetToStandardSize() error {
+func (ps *PhysicalSize) SetToStandardSize() error {
 	ssv, has := StandardSizesMap[ps.StandardSize]
 	if !has {
 		return fmt.Errorf("StdSize: %v not found in StdSizesMap", ps.StandardSize)
@@ -62,16 +62,16 @@ func (ps *PhysSize) SetToStandardSize() error {
 }
 
 // SetFromSVG sets from svg
-func (ps *PhysSize) SetFromSVG(sv *SVG) {
-	ps.Size.X = sv.SVG.PhysicalWidth.Value
+func (ps *PhysicalSize) SetFromSVG(sv *SVG) {
+	root := sv.Root()
+	ps.Size = root.ViewBox.Size
 	ps.Units = sv.SVG.PhysicalWidth.Unit
-	ps.Size.Y = sv.SVG.PhysicalHeight.Value
 	ps.Grid = sv.Grid
 	ps.StandardSize = MatchStandardSize(ps.Size.X, ps.Size.Y, ps.Units)
 }
 
 // SetToSVG sets svg from us
-func (ps *PhysSize) SetToSVG(sv *SVG) {
+func (ps *PhysicalSize) SetToSVG(sv *SVG) {
 	sv.SVG.PhysicalWidth.Set(ps.Size.X, ps.Units)
 	sv.SVG.PhysicalHeight.Set(ps.Size.Y, ps.Units)
 	sv.Root().ViewBox.Size = ps.Size
