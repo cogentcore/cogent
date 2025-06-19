@@ -1,6 +1,6 @@
 ![alt tag](cmd/canvas/icon.svg)
 
-Cogent Canvas is an SVG-based vector drawing program, with basic capabilities similar to [Inkscape](https://inkscape.org), although it currently lacks many of the more advanced features (see [TODO](#todo) list below for plans). The native file format is SVG, with optional Inkscape-based metadata to encode advanced style properties.
+[Cogent Canvas](https://cogentcore.org/cogent/canvas) is an SVG-based vector drawing program, with basic capabilities similar to [Inkscape](https://inkscape.org), although it currently lacks many of the more advanced features (see [TODO](#todo) list below for plans). The native file format is SVG, with optional Inkscape-based metadata to encode advanced style properties.
 
 The Canvas interface is designed to make the high-frequency operations obvious and easy to access, and compared to Inkscape or Adobe Illustrator, it should generally be easier to use by a naive user. It also provides a full tree view into the underlying SVG structure, so you can easily directly manipulate it.
 
@@ -14,7 +14,7 @@ Because it is written in [Cogent Core](https://cogentcore.org), it also runs on 
 
 ## Install
 
-The simple Go install command should work:
+You can use the [deployed web version](https://cogentcore.org/cogent/canvas). You can also use the simple Go install command:
 
 ```bash
 $ go install cogentcore.org/cogent/canvas/cmd/canvas@main
