@@ -79,7 +79,7 @@ func (cv *Canvas) MakeTools(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetIcon(cicons.Rubberband).SetShortcut("B")
+		w.SetIcon(icons.Select).SetShortcut("B")
 		w.SetTooltip("Select by dragging a box around items")
 		w.OnClick(func(e events.Event) {
 			cv.SetTool(SelBoxTool)

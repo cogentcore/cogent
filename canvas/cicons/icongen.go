@@ -47,8 +47,6 @@ var (
 	NodeSmooth icons.Icon
 	//go:embed node-symmetric.svg
 	NodeSymmetric icons.Icon
-	//go:embed rubberband.svg
-	Rubberband icons.Icon
 	//go:embed sel-flip-horiz.svg
 	SelFlipHoriz icons.Icon
 	//go:embed sel-flip-vert.svg
