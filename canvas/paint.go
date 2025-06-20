@@ -441,7 +441,7 @@ func (pv *PaintSetter) SetStrokeOthers(nd svg.Node) {
 	}
 	nb := nd.AsNodeBase()
 	pv.SetStrokeOpacity(nd)
-	nb.SetProperty("strodke-width", pv.PaintStyle.Stroke.Width.String())
+	nb.SetProperty("stroke-width", pv.PaintStyle.Stroke.Width.String())
 	nb.SetProperty("stroke-linecap", pv.PaintStyle.Stroke.Cap.String())
 	nb.SetProperty("stroke-linejoin", pv.PaintStyle.Stroke.Join.String())
 }

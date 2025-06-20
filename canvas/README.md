@@ -40,10 +40,6 @@ Bugs:
 
 * images in svg are not clipping to bounds -- renderer should do this in pimage.
 
-* new bezier line is not getting line width (reverts to 1Dp), but is getting other settings
-
-* getting Dp units re-emerging somehow
-
 * still getting zero slider not sending change in setting a black color
 
 ### Simpler, near term
