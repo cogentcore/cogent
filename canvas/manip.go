@@ -286,7 +286,7 @@ func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 // between BBox Min - Max. typs are corresponding bounding box sources.
 // sprites must already be locked.
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
-	sv.SpritesNolock()
+	sv.SpritesNoLock()
 	sz := min(len(pts), 8)
 	for i := 0; i < sz; i++ {
 		pt := pts[i].Canon()

@@ -421,11 +421,6 @@ func OpacityFromColor(img image.Image) float32 {
 	return float32(colors.ToUniform(img).A) / 255
 }
 
-// ColorWithOpacity returns a uniform color-as-image with given opacity.
-func ColorWithOpacity(img image.Image, opacity float32) image.Image {
-	return colors.Uniform(colors.ApplyOpacity(colors.ToUniform(img), opacity))
-}
-
 func (pv *PaintSetter) UpdateStrokeOpacity() {
 	pv.PaintStyle.Stroke.Opacity = OpacityFromColor(pv.PaintStyle.Stroke.Color)
 }
@@ -643,7 +638,7 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.SetStrokeStack(pv.StrokeType)
 	switch pv.StrokeType {
 	case PaintSolid:
-		pv.PaintStyle.Stroke.Color = ColorWithOpacity(ps.Stroke.Color, ps.Stroke.Opacity)
+		pv.PaintStyle.Stroke.Color = gradient.ApplyOpacity(ps.Stroke.Color, ps.Stroke.Opacity)
 		pv.PaintStyle.Stroke.Opacity = ps.Stroke.Opacity
 	case PaintLinear, PaintRadial:
 		pv.SelectStrokeGrad()
@@ -673,7 +668,7 @@ func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
 	pv.SetFillStack(pv.FillType)
 	switch pv.FillType {
 	case PaintSolid:
-		pv.PaintStyle.Fill.Color = ColorWithOpacity(ps.Fill.Color, ps.Fill.Opacity)
+		pv.PaintStyle.Fill.Color = gradient.ApplyOpacity(ps.Fill.Color, ps.Fill.Opacity)
 		pv.PaintStyle.Fill.Opacity = ps.Fill.Opacity
 		pv.PaintStyle.Fill.Rule = ps.Fill.Rule
 	case PaintLinear, PaintRadial:

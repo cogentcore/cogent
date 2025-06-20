@@ -364,7 +364,7 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 // pointOnly = true moves just the end point, otherwise all move.
 func (sv *SVG) PathNodeMove(pidx int, pointOnly bool, dv math32.Vector2, dxf math32.Matrix2) {
 	es := sv.EditState()
-	sprites := sv.SpritesNolock()
+	sprites := sv.SpritesNoLock()
 	path := es.ActivePath
 	pn := es.PathNodesOrig[pidx]
 	_, isSel := es.NodeSelect[pidx]

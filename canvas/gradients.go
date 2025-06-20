@@ -88,8 +88,8 @@ type Gradient struct { //types:add
 	// Icon of gradient, auto generated to display each gradient.
 	Icon icons.Icon `edit:"-" table:"no-header" icon-width:"4"`
 
-	// Id is the name of gradient.
-	Id string `edit:"-" width:"6"`
+	// ID is the name of gradient.
+	ID string `edit:"-" width:"6"`
 
 	// Name is the full name of gradient as SVG element.
 	Name string `display:"-"`
@@ -119,7 +119,7 @@ func (gr *Gradient) Validate() {
 // Updates our gradient from svg gradient
 func (gr *Gradient) UpdateFromGrad(g *svg.Gradient) {
 	_, id := svg.SplitNameIDDig(g.Name)
-	gr.Id = fmt.Sprintf("%d", id)
+	gr.ID = fmt.Sprintf("%d", id)
 	gr.Name = g.Name
 	if g.Grad == nil {
 		gr.Stops = nil
@@ -134,7 +134,7 @@ func (gr *Gradient) UpdateFromGrad(g *svg.Gradient) {
 func (gr *Gradient) UpdateToGrad(g *svg.Gradient) {
 	gr.Validate()
 	_, id := svg.SplitNameIDDig(g.Name) // we always need to sync to id & name though
-	gr.Id = fmt.Sprintf("%d", id)
+	gr.ID = fmt.Sprintf("%d", id)
 	gr.Name = g.Name
 	if g.Grad == nil {
 		if strings.HasPrefix(gr.Name, "radial") {

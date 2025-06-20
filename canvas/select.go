@@ -222,7 +222,7 @@ func (sv *SVG) setSelSpritePos() {
 		return
 	}
 
-	sprites := sv.SpritesNolock()
+	sprites := sv.SpritesNoLock()
 	for si := es.NSelectSprites; si < nsel; si++ {
 		for i := SpUpL; i <= SpRtM; i++ {
 			spnm := SpriteName(SpSelBBox, i, si)

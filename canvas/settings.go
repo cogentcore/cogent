@@ -122,7 +122,7 @@ var (
 func OpenSplits() {
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
-	if !errors.Ignore1(fsx.FileExists(pnm)) {
+	if !errors.Log1(fsx.FileExists(pnm)) {
 		return
 	}
 	jsonx.Open(&Splits, pnm)

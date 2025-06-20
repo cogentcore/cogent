@@ -134,7 +134,7 @@ func SpriteByName(ctx core.Widget, typ, subtyp Sprites, idx int) (*core.Sprite, 
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes).  Init function is called on new sprites.
 func (sv *SVG) Sprite(typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
-	sprites := sv.SpritesNolock()
+	sprites := sv.SpritesNoLock()
 	es := sv.EditState()
 	spnm := SpriteName(typ, subtyp, idx)
 	var sp *core.Sprite
@@ -212,7 +212,7 @@ func (sv *SVG) SetSpritePos(sp *core.Sprite, x, y int) {
 
 // InactivateSprites inactivates sprites of given type; must be locked.
 func (sv *SVG) InactivateSprites(typ Sprites) {
-	sprites := sv.SpritesNolock()
+	sprites := sv.SpritesNoLock()
 	sprites.Do(func(sl *core.SpriteList) {
 		for _, sp := range sl.Values {
 			if sp == nil {

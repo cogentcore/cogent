@@ -383,14 +383,14 @@ func (sv *SVG) UpdateView() {
 	sv.SetFocus()
 }
 
-// SpritesNolock returns the [core.Sprites] without locking.
-func (sv *SVG) SpritesNolock() *core.Sprites {
+// SpritesNoLock returns the [core.Sprites] without locking.
+func (sv *SVG) SpritesNoLock() *core.Sprites {
 	return &sv.Scene.Stage.Sprites
 }
 
 // SpritesLock returns the [core.Sprites] under mutex lock.
 func (sv *SVG) SpritesLock() *core.Sprites {
-	sprites := sv.SpritesNolock()
+	sprites := sv.SpritesNoLock()
 	sprites.Lock()
 	return sprites
 }
