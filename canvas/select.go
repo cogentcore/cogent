@@ -553,7 +553,6 @@ func (cv *Canvas) SelectSetHeight(ht float32) {
 // within the given BBox. SVG version excludes layer groups.
 func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
-	var curlay tree.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
 		if n == sv.Root().This {
 			return tree.Continue
@@ -573,15 +572,12 @@ func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 		}
 		nl := NodeParentLayer(n)
 		if nl != nil {
-			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
+			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return tree.Break
 			}
 		}
 		if bbox.ContainsBox(nb.BBox) {
 			rval = append(rval, n)
-			if curlay == nil && nl != nil {
-				curlay = nl
-			}
 			return tree.Break // don't go into groups!
 		}
 		return tree.Continue

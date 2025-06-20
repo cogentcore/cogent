@@ -11,7 +11,6 @@ import (
 
 	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -626,7 +625,7 @@ func (sv *SVG) UndoSave(action, data string) {
 	}
 	es.Changed = true
 	b := &bytes.Buffer{}
-	errors.Log(jsonx.Write(sv.Root(), b))
+	errors.Log(sv.SVG.WriteXML(b, false))
 	bs := strings.Split(b.String(), "\n")
 	es.Undos.Save(action, data, bs)
 }
@@ -635,7 +634,7 @@ func (sv *SVG) UndoSave(action, data string) {
 func (sv *SVG) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	errors.Log(jsonx.Write(sv.Root(), b))
+	errors.Log(sv.SVG.WriteXML(b, false))
 	bs := strings.Split(b.String(), "\n")
 	es.Undos.SaveReplace(action, data, bs)
 }
@@ -647,7 +646,7 @@ func (sv *SVG) Undo() string {
 	es.ResetSelectedNodes()
 	if es.Undos.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		errors.Log(jsonx.Write(sv.Root(), b))
+		errors.Log(sv.SVG.WriteXML(b, false))
 		bs := strings.Split(b.String(), "\n")
 		es.Undos.SaveUndoStart(bs)
 	}
@@ -657,7 +656,7 @@ func (sv *SVG) Undo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	errors.Log(jsonx.Read(sv.Root(), b))
+	errors.Log(sv.SVG.ReadXML(b))
 	sv.UpdateSelect()
 	return act
 }
@@ -673,7 +672,7 @@ func (sv *SVG) Redo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	errors.Log(jsonx.Read(sv.Root(), b))
+	errors.Log(sv.SVG.ReadXML(b))
 	sv.UpdateSelect()
 	return act
 }
