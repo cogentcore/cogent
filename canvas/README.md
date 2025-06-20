@@ -38,7 +38,18 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 Bugs:
 
+* rubberband not selecting across layer groups -- major issue
+
+* images in svg are not clipping to bounds -- renderer should do this in pimage.
+
+* new bezier line is not getting line width (reverts to 1Dp), but is getting other settings
+
 * getting Dp units re-emerging somehow
+
+* still getting zero slider not sending change in setting a black color
+
+* couldn't change 3rd point to round in fig_deepfsa_net_3step.svg prior context curve
+
 
 ### Simpler, near term
 
