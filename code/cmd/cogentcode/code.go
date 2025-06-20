@@ -24,7 +24,7 @@ func main() {
 	errors.Log(core.LoadAllSettings())
 
 	// note: comment this out when printing out debug messages involving components of code itself!
-	// InitConsole(lfnm)
+	InitConsole(lfnm)
 
 	var path string
 	var proj string

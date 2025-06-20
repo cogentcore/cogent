@@ -6,16 +6,16 @@ import (
 	"cogentcore.org/core/enums"
 )
 
-var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 
 // ActionsN is the highest valid value for type Actions, plus one.
-const ActionsN Actions = 10
+const ActionsN Actions = 13
 
-var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9}
+var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `SetOpacity`: 7, `NewElement`: 8, `NewText`: 9, `NewPath`: 10, `NodeMove`: 11, `CtrlMove`: 12}
 
-var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``}
+var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``}
 
-var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`}
+var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `SetOpacity`, 8: `NewElement`, 9: `NewText`, 10: `NewPath`, 11: `NodeMove`, 12: `CtrlMove`}
 
 // String returns the string representation of this Actions value.
 func (i Actions) String() string { return enums.String(i, _ActionsMap) }
@@ -172,6 +172,65 @@ func (i *BBoxPoints) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "BBoxPoints")
 }
 
+var _canvasFlagsValues = []canvasFlags{0}
+
+// canvasFlagsN is the highest valid value for type canvasFlags, plus one.
+const canvasFlagsN canvasFlags = 1
+
+var _canvasFlagsValueMap = map[string]canvasFlags{`AutoSaving`: 0}
+
+var _canvasFlagsDescMap = map[canvasFlags]string{0: `canvasAutoSaving is true if auto-saving.`}
+
+var _canvasFlagsMap = map[canvasFlags]string{0: `AutoSaving`}
+
+// String returns the string representation of this canvasFlags value.
+func (i canvasFlags) String() string { return enums.BitFlagString(i, _canvasFlagsValues) }
+
+// BitIndexString returns the string representation of this canvasFlags value
+// if it is a bit index value (typically an enum constant), and
+// not an actual bit flag value.
+func (i canvasFlags) BitIndexString() string { return enums.String(i, _canvasFlagsMap) }
+
+// SetString sets the canvasFlags value from its string representation,
+// and returns an error if the string is invalid.
+func (i *canvasFlags) SetString(s string) error { *i = 0; return i.SetStringOr(s) }
+
+// SetStringOr sets the canvasFlags value from its string representation
+// while preserving any bit flags already set, and returns an
+// error if the string is invalid.
+func (i *canvasFlags) SetStringOr(s string) error {
+	return enums.SetStringOr(i, s, _canvasFlagsValueMap, "canvasFlags")
+}
+
+// Int64 returns the canvasFlags value as an int64.
+func (i canvasFlags) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the canvasFlags value from an int64.
+func (i *canvasFlags) SetInt64(in int64) { *i = canvasFlags(in) }
+
+// Desc returns the description of the canvasFlags value.
+func (i canvasFlags) Desc() string { return enums.Desc(i, _canvasFlagsDescMap) }
+
+// canvasFlagsValues returns all possible values for the type canvasFlags.
+func canvasFlagsValues() []canvasFlags { return _canvasFlagsValues }
+
+// Values returns all possible values for the type canvasFlags.
+func (i canvasFlags) Values() []enums.Enum { return enums.Values(_canvasFlagsValues) }
+
+// HasFlag returns whether these bit flags have the given bit flag set.
+func (i *canvasFlags) HasFlag(f enums.BitFlag) bool { return enums.HasFlag((*int64)(i), f) }
+
+// SetFlag sets the value of the given flags in these flags to the given value.
+func (i *canvasFlags) SetFlag(on bool, f ...enums.BitFlag) { enums.SetFlag((*int64)(i), on, f...) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i canvasFlags) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *canvasFlags) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "canvasFlags")
+}
+
 var _MarkerColorsValues = []MarkerColors{0, 1, 2}
 
 // MarkerColorsN is the highest valid value for type MarkerColors, plus one.
@@ -301,16 +360,16 @@ func (i *StandardSizes) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "StandardSizes")
 }
 
-var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}
 
 // SpritesN is the highest valid value for type Sprites, plus one.
-const SpritesN Sprites = 15
+const SpritesN Sprites = 27
 
-var _SpritesValueMap = map[string]Sprites{`SpUnk`: 0, `SpReshapeBBox`: 1, `SpSelBBox`: 2, `SpNodePoint`: 3, `SpNodeCtrl`: 4, `SpRubberBand`: 5, `SpAlignMatch`: 6, `SpBBoxUpL`: 7, `SpBBoxUpC`: 8, `SpBBoxUpR`: 9, `SpBBoxDnL`: 10, `SpBBoxDnC`: 11, `SpBBoxDnR`: 12, `SpBBoxLfM`: 13, `SpBBoxRtM`: 14}
+var _SpritesValueMap = map[string]Sprites{`none`: 0, `reshape-b-box`: 1, `sel-b-box`: 2, `node-point`: 3, `node-ctrl`: 4, `rubber-band`: 5, `align-match`: 6, `line-add`: 7, `up-l`: 8, `up-c`: 9, `up-r`: 10, `dn-l`: 11, `dn-c`: 12, `dn-r`: 13, `lf-m`: 14, `rt-m`: 15, `move-to`: 16, `line-to`: 17, `cube-to`: 18, `quad-to`: 19, `arc-to`: 20, `close`: 21, `start`: 22, `end`: 23, `quad1`: 24, `cube1`: 25, `cube2`: 26}
 
-var _SpritesDescMap = map[Sprites]string{0: `SpUnk is an unknown sprite type`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable sel box subtyp = UpC, LfM, RtM, DnC for sides`, 6: `SpAlignMatch is an alignment match (n of these), subtyp is actually BBoxPoints so we just hack cast that`, 7: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``}
+var _SpritesDescMap = map[Sprites]string{0: `SpNone is used for subtypes`, 1: `SpReshapeBBox is a reshape bbox -- the overall active selection BBox for active manipulation`, 2: `SpSelBBox is a selection bounding box -- display only`, 3: `SpNodePoint is a main coordinate point for path node`, 4: `SpNodeCtrl is a control coordinate point for path node`, 5: `SpRubberBand is the draggable selection box`, 6: `SpAlignMatch is an alignment match (n of these),`, 7: `SpLineAdd is preview of new line to add`, 8: `Sprite bounding boxes are set as a &#34;bbox&#34; property on sprites`, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``, 15: ``, 16: `Node points`, 17: ``, 18: ``, 19: ``, 20: ``, 21: ``, 22: ``, 23: ``, 24: ``, 25: ``, 26: ``}
 
-var _SpritesMap = map[Sprites]string{0: `SpUnk`, 1: `SpReshapeBBox`, 2: `SpSelBBox`, 3: `SpNodePoint`, 4: `SpNodeCtrl`, 5: `SpRubberBand`, 6: `SpAlignMatch`, 7: `SpBBoxUpL`, 8: `SpBBoxUpC`, 9: `SpBBoxUpR`, 10: `SpBBoxDnL`, 11: `SpBBoxDnC`, 12: `SpBBoxDnR`, 13: `SpBBoxLfM`, 14: `SpBBoxRtM`}
+var _SpritesMap = map[Sprites]string{0: `none`, 1: `reshape-b-box`, 2: `sel-b-box`, 3: `node-point`, 4: `node-ctrl`, 5: `rubber-band`, 6: `align-match`, 7: `line-add`, 8: `up-l`, 9: `up-c`, 10: `up-r`, 11: `dn-l`, 12: `dn-c`, 13: `dn-r`, 14: `lf-m`, 15: `rt-m`, 16: `move-to`, 17: `line-to`, 18: `cube-to`, 19: `quad-to`, 20: `arc-to`, 21: `close`, 22: `start`, 23: `end`, 24: `quad1`, 25: `cube1`, 26: `cube2`}
 
 // String returns the string representation of this Sprites value.
 func (i Sprites) String() string { return enums.String(i, _SpritesMap) }
@@ -342,16 +401,16 @@ func (i Sprites) MarshalText() ([]byte, error) { return []byte(i.String()), nil 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *Sprites) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Sprites") }
 
-var _ToolsValues = []Tools{0, 1, 2, 3, 4, 5}
+var _ToolsValues = []Tools{0, 1, 2, 3, 4, 5, 6}
 
 // ToolsN is the highest valid value for type Tools, plus one.
-const ToolsN Tools = 6
+const ToolsN Tools = 7
 
-var _ToolsValueMap = map[string]Tools{`SelectTool`: 0, `NodeTool`: 1, `RectTool`: 2, `EllipseTool`: 3, `BezierTool`: 4, `TextTool`: 5}
+var _ToolsValueMap = map[string]Tools{`SelectTool`: 0, `SelBoxTool`: 1, `NodeTool`: 2, `RectTool`: 3, `EllipseTool`: 4, `BezierTool`: 5, `TextTool`: 6}
 
-var _ToolsDescMap = map[Tools]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``}
+var _ToolsDescMap = map[Tools]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``}
 
-var _ToolsMap = map[Tools]string{0: `SelectTool`, 1: `NodeTool`, 2: `RectTool`, 3: `EllipseTool`, 4: `BezierTool`, 5: `TextTool`}
+var _ToolsMap = map[Tools]string{0: `SelectTool`, 1: `SelBoxTool`, 2: `NodeTool`, 3: `RectTool`, 4: `EllipseTool`, 5: `BezierTool`, 6: `TextTool`}
 
 // String returns the string representation of this Tools value.
 func (i Tools) String() string { return enums.String(i, _ToolsMap) }

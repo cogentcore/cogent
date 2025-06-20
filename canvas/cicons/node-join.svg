@@ -1,0 +1,66 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs
+    id="defs" />
+  <sodipodi:namedview
+    id="namedview468"
+    style="inkscape:current-layer:;inkscape:cx:0;inkscape:cy:0;inkscape:zoom:1;inkscape:document-units:px;">
+    <inkscape:grid
+      id="grid896"
+      style="spacingx:16;spacingy:16;type:xygrid;units:px;" />
+  </sodipodi:namedview>
+  <style
+    id="css529" />
+  <style
+    id="css2" />
+  <sodipodi:namedview
+    id="namedview"
+    style="window-maximized:1;window-width:1858;cx:10.98376;gridtolerance:10;current-layer:svg1;cy:16.069573;zoom:31.678384;guidetolerance:10;objecttolerance:10;window-y:-8;window-x:54;document-rotation:0;window-height:1177;showgrid:true;">
+    <inkscape:grid
+      id="grid"
+      style="type:xygrid;" />
+  </sodipodi:namedview>
+  <g
+    id="node-join"
+    transform="translate(-438,-558.36218)">
+    <path
+      id="path3630"
+      style="opacity:0;fill:none;connector-curvature:0;"
+      d="M438 558.3622H454V574.3622H438z" />
+    <path
+      id="path3632"
+      style="opacity:1;connector-curvature:0;"
+      d="M440 558.3622H444V562.3622H440z" />
+    <path
+      id="path19498"
+      style="opacity:1;connector-curvature:0;"
+      d="M448 558.3622H452V562.3622H448z" />
+    <path
+      id="path19520"
+      style="opacity:1;connector-curvature:0;"
+      transform="translate(0,512.3622)"
+      d="M438 59H454V60H438z" />
+    <path
+      id="path19524"
+      style="opacity:1;connector-curvature:0;"
+      d="M438 559.3622H441V560.3622H438z" />
+    <path
+      id="path19526"
+      style="opacity:1;connector-curvature:0;"
+      d="M451 559.3622H454V560.3622H451z" />
+  </g>
+  <path
+    id="path1662"
+    style="opacity:1;fill:#000000;stroke-width:0.864555;connector-curvature:0;fill-opacity:1;"
+    d="M6 12.26269H10V16H6z" />
+  <path
+    id="path19516"
+    style="connector-curvature:0;opacity:1;"
+    d="M7 5.0117H9V8.0117H11L8 11L5 8.0117H7z" />
+</svg>
