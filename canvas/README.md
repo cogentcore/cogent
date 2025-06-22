@@ -1,100 +1,81 @@
-![alt tag](logo/grid-icon.png)
+![alt tag](cmd/canvas/icon.svg)
 
-Cogent Canvas is a Cogent Core based SVG vector drawing program, with design based on Inkscape.
+[Cogent Canvas](https://cogentcore.org/cogent/canvas) is an SVG-based vector drawing program, with basic capabilities similar to [Inkscape](https://inkscape.org), although it currently lacks many of the more advanced features (see [TODO](#todo) list below for plans). The native file format is SVG, with optional Inkscape-based metadata to encode advanced style properties.
 
-# Behavior
+The Canvas interface is designed to make the high-frequency operations obvious and easy to access, and compared to Inkscape or Adobe Illustrator, it should generally be easier to use by a naive user. It also provides a full tree view into the underlying SVG structure, so you can easily directly manipulate it.
 
-* multiple select actions keep doing down even inside groups, so it is easy to operate inside groups but group is the "default"
+Because it is written in [Cogent Core](https://cogentcore.org), it also runs on the web and mobile devices.
 
-* Alt on control knobs -> rotate instead of clicking again to get rotation knobs -- this is compatible with above and better :)
+## Behavior
 
-# Install
+* Multiple select actions keep doing down even inside groups, and you can always perform operations on elements inside groups, so you don't need to ungroup and re-group.
 
-The simple Go install command should work:
+* To support the above behavior, you need to hold down the `Alt` key on control knobs to rotate, whereas Inkscape uses further clicking to switch between move and rotate.
+
+## Install
+
+You can use the [deployed web version](https://cogentcore.org/cogent/canvas). You can also use the simple Go install command:
 
 ```bash
 $ go install cogentcore.org/cogent/canvas/cmd/canvas@main
 ```
 
-Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
+Exporting to PDF currently depends on [Inkscape](https://inkscape.org). On the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
 
 ```bash
 $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 ```
 
-# Design
+## Status
 
-Similar to inkscape in overall layout, and read / write inkscape compatible SVG files.
+* June, 2025: full basic functionality now in place, including drawing new paths and editing path control points.
 
-* Main horiz toolbar(s) across top -- top one is static, bottom one is dynamic based on selection / tool mode.
+## Tips
 
-* Left vert toolbar with drawing tools
+* Use layers! Incredibly useful for toggling editability and visibility of whole sets of elements. It is best to make the layers at the start and add as you go. Click on the layer to set which layer new elements are made in by default (duplicates always go into the same layer as the original).
 
-* Left panel with drawing structure.  This is just like GiEditor tree -- provides direct access as needed.  In particular this provides layer-level organization -- always have a layer group by default, and can drag items into different layers, and also have view and freeze flags on layers.  usu only show layer level, and selection there determines which layer things are added to!
+## TODO
 
-* Main middle panel with drawing.  Grid underlay is a separate image that is drawn first, updated with any changes.
+Bugs:
 
-* Right tab panel with all the controls, just like gide in terms of tab & Inkscape overall. tabs are easier to find vs. inkscape.
+* images in svg are not clipping to bounds -- renderer should do this in pimage.
 
-* code in main grid package provides all the editors for right tabs.
+* still getting zero slider not sending change in setting a black color
 
-# Status
+### Simpler, near term
 
-Basic functionality now in place:
+* ArcTo support in node editor, and arc tool.
 
-* create: rect, ellipse, line, text, import image
+* Gradient editor edits gradient control points.
 
-* full basic paint settings (gradients, markers, etc), and text properties, editing
+* Figure out alternatives to modifier keys for for ipad.
 
-* dynamic guide alignment, Align panel
+* Transform panel for numerical rotate, scale etc.
 
-* basic node editor -- can move the main points, not the extra control points
+* Dropper = grab style from containing node, apply to selection -- don't affect selection!
 
-* full undo / redo for everything.
+* Convert shape nodes to path: add `svg.Node` ToPath.
 
-* Settings 
+* Align panel: add distribute function.
 
-# TODO:
+* Better ways of managing Text with multiple tspan elements: styles for tspan, generate full Text and spans from a rich text source with line wrapping and HTML markup -- need bidirectional support to / from existing tspans etc. Basic pos movement of sub-tspan would be useful.
 
-* double-click on text brings up text bar and text panel
+* Clip mask in `core.SVG` finally.
 
-* add more layer logic -- if layers, everything should be in a layer?
+* Import svg -- same as marker (copy/paste is now working across drawings, so that is good).
 
-* import svg -- same as marker
+* Path effects menu / chooser and add calls to the various existing ppath `intersect` and `stroke` functions.
 
-* add group / ungroup to context menu (conditional on selection n etc)
+### Longer term
 
-* implement the full transform panel
+* More natural drawing modes like freehand and calligraphy.
 
-* render gradient icons
+* More advanced path effects.
 
-* show selected path node in diff color..  red?  node sel map
+* More advanced drawing tools like grids, connected diagram elements (key!), etc.
 
-* rest of line properties -- easy
+## Links
 
-* dropper = grab style from containsnode, apply to selection -- don't affect selection!
-
-* svg.Node ToPath -- convert any node to a path
-* node editor -- big job but needed for making basic bezier curves..
-
-* esc aborts new el drag
-
-* add distribute to Align
-
-* svg.Text align Center, etc affects different tspans within overall text block
-* Text edit panel -- finish toolbar
-
-* cut / paste not updating tree reliably.  more tree update debugging fun!
-
-* use grid itself to render all new icons!
-
-* figure out mask clipping eventually.
-
-
-# LINKS
-
-Inkscape special flags
-
-https://wiki.inkscape.org/wiki/index.php/Inkscape_SVG_vs._plain_SVG
+* Inkscape special flags: https://wiki.inkscape.org/wiki/index.php/Inkscape_SVG_vs._plain_SVG
 
 

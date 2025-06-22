@@ -12,7 +12,8 @@ import (
 )
 
 func main() {
-	ofs := core.TheApp.OpenFiles()
+	ofs := core.TheApp.OpenFiles() // note: on mac, this doesn't happen in time here
+	// so you need to check in the OnShow for the first window and open then.
 
 	var fnms []string
 	if len(ofs) > 0 {

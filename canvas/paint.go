@@ -6,19 +6,24 @@ package canvas
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"strings"
 
 	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
-// PaintView provides editing of basic Stroke and Fill painting parameters
+// PaintSetter provides setting of basic Stroke and Fill painting parameters
 // for selected items
-type PaintView struct {
+type PaintSetter struct {
 	core.Frame
 
 	// Active styles
@@ -41,21 +46,36 @@ type PaintView struct {
 
 	curStrokeType PaintTypes
 	curFillType   PaintTypes
+
+	strokeStack *core.Frame
+	fillStack   *core.Frame
+
+	markerStart, markerMid, markerEnd                *core.Chooser
+	markerStartColor, markerMidColor, markerEndColor *core.Chooser
+
+	dashes *core.Chooser
+
+	strokeGrads, fillGrads *core.Table
 }
 
-func (pv *PaintView) Init() {
+func (pv *PaintSetter) Init() {
 	pv.Frame.Init()
 	pv.StrokeType = PaintSolid
 	pv.FillType = PaintSolid
 	pv.curStrokeType = pv.StrokeType
 	pv.curFillType = pv.FillType
-	pv.PaintStyle = Settings.ShapeStyle
+	pv.PaintStyle.Defaults()
+	pv.PaintStyle.Stroke.Color = colors.Uniform(color.Black) // default is off
+	pv.PaintStyle.Stroke.Width.Px(1)                         // dp is not understood by svg..
 
 	DashIconsInit()
 	MarkerIconsInit()
 
+	pstyle := &pv.PaintStyle
+
 	pv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(0, 1)
 	})
 
 	tree.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
@@ -63,18 +83,21 @@ func (pv *PaintView) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Stroke paint:</b>")
+			w.SetText("<b>Stroke:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.StrokeType, w)
 			w.OnChange(func(e events.Event) {
+				pv.SetStrokeStack(pv.StrokeType)
 				if pv.StrokeType == PaintLinear || pv.StrokeType == PaintRadial {
 					if pv.StrokeStops == "" {
 						pv.StrokeStops = pv.Canvas.DefaultGradient()
 					}
 					pv.SelectStrokeGrad()
+					pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
+				} else {
+					pv.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeProp())
 				}
-				pv.Canvas.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
 				pv.curStrokeType = pv.StrokeType
 				pv.Update()
 			})
@@ -87,42 +110,61 @@ func (pv *PaintView) Init() {
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetText("Width:  ").Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
 				s.Align.Items = styles.Center
 			})
 		})
 		tree.AddChild(w, func(w *core.Spinner) {
-			core.Bind(&pv.PaintStyle.Stroke.Width.Value, w)
+			core.Bind(&pstyle.Stroke.Width.Value, w)
 			w.SetMin(0).SetStep(0.05)
 			w.OnChange(func(e events.Event) {
+				pstyle.ToDots()
 				if pv.IsStrokeOn() {
-					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp(), false)
+					pv.Canvas.SetStrokeProperty("stroke-width", pstyle.Stroke.Width.String())
 				}
 			})
 		})
 
-		// uncb.SetCurrentIndex(int(Settings.Size.Units))
 		tree.AddChild(w, func(w *core.Chooser) {
-			core.Bind(&pv.PaintStyle.Stroke.Width.Unit, w)
+			core.Bind(&pstyle.Stroke.Width.Unit, w)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
-					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp(), false)
+					pv.Canvas.SetStrokeProperty("stroke-width", pstyle.Stroke.Width.String())
 				}
 			})
 		})
 
-		// core.NewSpace(wr, "sp1").Styler(func(s *styles.Style) {
-		// 	s.Min.X.Ch(5)
-		// })
-
 		tree.AddChild(w, func(w *core.Chooser) {
-			// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
-			// dshcb.SetProp("width", units.NewCh(15))
+			pv.dashes = w
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.X.Em(3)
+			})
+			w.SetItems(AllDashItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetDashProperties(pv.StrokeDashProp())
 				}
 			})
 		})
+
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Stroke.Cap, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Canvas.SetStrokeProperty("stroke-linecap", pstyle.Stroke.Cap.String())
+				}
+			})
+		})
+
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Stroke.Join, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Canvas.SetStrokeProperty("stroke-linejoin", pstyle.Stroke.Join.String())
+				}
+			})
+		})
+
 	})
 
 	tree.AddChildAt(pv, "stroke-markers", func(w *core.Frame) {
@@ -130,8 +172,11 @@ func (pv *PaintView) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start
-			// mscb.SetProp("width", units.NewCh(20))
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			pv.markerStart = w
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.Set(units.Em(3), units.Em(2))
+			})
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -139,8 +184,8 @@ func (pv *PaintView) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // start-color
+			pv.markerStartColor = w
 			w.SetEnum(MarkerColorsN)
-			// mscc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -151,8 +196,11 @@ func (pv *PaintView) Init() {
 		tree.AddChild(w, func(w *core.Separator) {})
 
 		tree.AddChild(w, func(w *core.Chooser) { // mid
-			// mscb.SetProp("width", units.NewCh(20))
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			pv.markerMid = w
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.Set(units.Em(3), units.Em(2))
+			})
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -160,8 +208,8 @@ func (pv *PaintView) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // mid-color
+			pv.markerMidColor = w
 			w.SetEnum(MarkerColorsN)
-			// mmcc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -172,8 +220,11 @@ func (pv *PaintView) Init() {
 		tree.AddChild(w, func(w *core.Separator) {})
 
 		tree.AddChild(w, func(w *core.Chooser) { // end
-			// mscb.SetProp("width", units.NewCh(20))
-			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			pv.markerEnd = w
+			w.Styler(func(s *styles.Style) {
+				s.IconSize.Set(units.Em(3), units.Em(2))
+			})
+			w.SetItems(AllMarkerItems...)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -181,8 +232,8 @@ func (pv *PaintView) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) { // end-color
+			pv.markerEndColor = w
 			w.SetEnum(MarkerColorsN)
-			// mscc.SetProp("width", units.NewCh(5))
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetMarkerProperties(pv.MarkerProperties())
@@ -191,45 +242,49 @@ func (pv *PaintView) Init() {
 		})
 	})
 
-	////////////////////////////////
-	// stroke stack
+	//////// stroke stack
 
 	tree.AddChildAt(pv, "stroke-stack", func(w *core.Frame) {
+		pv.strokeStack = w
 		w.StackTop = 1
-		// ss.StackTopOnly = true
 		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Stacked
-		})
-		// ss.StackTopOnly = true
-		w.Updater(func() {
-			w.StackTop = int(pv.StrokeType)
+			s.Grow.Set(0, 1)
 		})
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.Stroke.Color, w)
+			core.Bind(&pstyle.Stroke.Color, w)
+			w.HandleValueOnInput()
+			w.OnInput(func(e events.Event) {
+				if pv.StrokeType == PaintSolid {
+					pv.UpdateStrokeOpacity()
+					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not final
+				}
+			})
 			w.OnChange(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
-					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not manip
+					pv.UpdateStrokeOpacity()
+					pv.Canvas.SetStrokeColor(pv.StrokeProp(), true) // final
 				}
 			})
 		})
 
-		tree.AddChild(w, func(w *core.Table) { // "stroke-grad"
-			// sg.SetProp("index", true)
-			// sg.SetProp("toolbar", true)
-			// sg.SelectedIndex = -1
+		tree.AddChild(w, func(w *core.Table) {
+			pv.strokeGrads = w
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
-			// todo: bindselect
-			// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	if sig == int64(core.WidgetSelected) {
-			// 		svv, _ := send.(*core.Table)
-			// 		if svv.SelectedIndex >= 0 {
-			// 			pv.StrokeStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-			// 			pv.Vector.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
-			// 		}
-			// 	}
-			// })
+			w.OnSelect(func(e events.Event) {
+				pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+				pv.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+			})
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.UpdateGradients()
+				if w.SelectedIndex >= 0 {
+					pv.StrokeStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+					pv.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops)
+				}
+				w.Update()
+			})
 		})
 	})
 
@@ -238,493 +293,429 @@ func (pv *PaintView) Init() {
 	tree.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
+			s.CenterAll()
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Fill paint:</b>")
+			w.SetText("<b>Fill:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.FillType, w)
 			w.OnChange(func(e events.Event) {
+				pv.SetFillStack(pv.FillType)
 				if pv.FillType == PaintLinear || pv.FillType == PaintRadial {
 					if pv.FillStops == "" {
 						pv.FillStops = pv.Canvas.DefaultGradient()
 					}
 					pv.SelectFillGrad()
+					pv.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
+				} else {
+					pv.SetFill(pv.curFillType, pv.FillType, pv.FillProp())
 				}
-				pv.Canvas.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
 				pv.curFillType = pv.FillType
 				pv.Update()
+			})
+		})
+		tree.AddChild(w, func(w *core.Chooser) {
+			core.Bind(&pstyle.Fill.Rule, w)
+			w.OnChange(func(e events.Event) {
+				if pv.IsFillOn() {
+					pv.Canvas.SetFillProperty("fill-rule", pstyle.Fill.Rule.String())
+				}
 			})
 		})
 	})
 
 	tree.AddChildAt(pv, "fill-stack", func(w *core.Frame) {
+		pv.fillStack = w
 		w.StackTop = 1
-		// fs.StackTopOnly = true
 		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Stacked
-		})
-		w.Updater(func() {
-			w.StackTop = int(pv.FillType)
+			s.Grow.Set(0, 1)
 		})
 
-		tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
+		tree.AddChild(w, func(w *core.Frame) {})
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.Fill.Color, w)
+			core.Bind(&pstyle.Fill.Color, w)
+			w.HandleValueOnInput()
+			w.OnInput(func(e events.Event) {
+				if pv.FillType == PaintSolid {
+					pv.UpdateFillOpacity()
+					pv.Canvas.SetFillColor(pv.FillProp(), false) // not final
+				}
+			})
 			w.OnChange(func(e events.Event) {
 				if pv.FillType == PaintSolid {
-					pv.Canvas.SetFillColor(pv.FillProp(), false) // not manip
+					pv.UpdateFillOpacity()
+					pv.Canvas.SetFillColor(pv.FillProp(), true) // final
 				}
 			})
 		})
 
-		tree.AddChild(w, func(w *core.Table) { // "fill-grad"
-			// sg.SetProp("index", true)
-			// sg.SetProp("toolbar", true)
-			// sg.SelectedIndex = -1
+		tree.AddChild(w, func(w *core.Table) {
+			pv.fillGrads = w
 			w.SetSlice(&pv.Canvas.EditState.Gradients)
-			// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	if sig == int64(core.WidgetSelected) {
-			// 		svv, _ := send.(*core.Table)
-			// 		if svv.SelectedIndex >= 0 {
-			// 			pv.FillStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-			// 			pv.Vector.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
-			// 		}
-			// 	}
-			// })
-			// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-			// 	// svv, _ := send.(*core.Table)
-			// 	if sig == int64(core.ListDeleted) { // not clear what we can do here
-			// 	} else {
-			// 		pv.Vector.UpdateGradients()
-			// 	}
-			// })
-			// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-			// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-			// 	// svv, _ := send.(*core.Table)
-			// 	pv.Vector.UpdateGradients()
-			// })
+			w.OnSelect(func(e events.Event) {
+				pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+				pv.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+			})
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.UpdateGradients()
+				if w.SelectedIndex >= 0 {
+					pv.FillStops = pv.Canvas.EditState.Gradients[w.SelectedIndex].Name
+					pv.SetFill(pv.FillType, pv.FillType, pv.FillStops)
+				}
+				w.Update()
+			})
 		})
 
 		tree.AddChild(w, func(w *core.Stretch) {})
 	})
+	tree.AddChildAt(pv, "opacity", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Direction = styles.Row
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetText("Opacity: ").Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
+			})
+		})
+		tree.AddChild(w, func(w *core.Slider) {
+			core.Bind(&pstyle.Opacity, w)
+			w.SetMin(0).SetMax(1).SetStep(0.05)
+			w.SetTooltip("Global opacity applied to both stroke and fill")
+			w.HandleValueOnInput()
+			w.OnInput(func(e events.Event) {
+				pv.Canvas.SetOpacity(fmt.Sprintf("%g", pstyle.Opacity), false) // not final
+			})
+			w.OnChange(func(e events.Event) {
+				pv.Canvas.SetOpacity(fmt.Sprintf("%g", pstyle.Opacity), true) // final
+			})
+			w.Styler(func(s *styles.Style) {
+				w.ValueColor = nil
+				g := gradient.NewLinear()
+				for c := float32(0); c <= 1; c += 0.05 {
+					gc := colors.WithAF32(colors.Black, c)
+					g.AddStop(gc, c)
+				}
+				s.Background = g
+			})
+		})
+	})
+
 }
 
-/////////////////////////////////////////////////////////////////////////
-//  Actions
-
-// ManipAction manages all the updating etc associated with performing an action
-// that includes an ongoing manipulation with a final non-manip update.
-// runs given function to actually do the update.
-func (vv *Canvas) ManipAction(act Actions, data string, manip bool, fun func(sii svg.Node)) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	// update := false
-	actStart := false
-	finalAct := false
-	if !manip && es.InAction() {
-		finalAct = true
+func (pv *PaintSetter) PaintTypeStack(pt PaintTypes) int {
+	st := 0
+	switch pt {
+	case PaintSolid:
+		st = 1
+	case PaintLinear, PaintRadial:
+		st = 2
 	}
-	if manip && !es.InAction() {
-		manip = false
-		actStart = true
-		es.ActStart(act, data)
-		es.ActUnlock()
-	}
-	if !manip {
-		if !finalAct {
-			sv.UndoSave(act.String(), data)
-		}
-		// update = sv.UpdateStart()
-	}
-	for itm := range es.Selected {
-		vv.ManipActionFun(itm, fun)
-	}
-	if !manip {
-		// sv.UpdateEnd(update)
-		if !actStart {
-			es.ActDone()
-			vv.ChangeMade()
-		}
-	} else {
-		go sv.RenderSVG()
-	}
+	return st
 }
 
-func (vv *Canvas) ManipActionFun(sii svg.Node, fun func(itm svg.Node)) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			vv.ManipActionFun(kid.(svg.Node), fun)
-		}
+// OpacityFromColor extracts the opacity as a 0-1 float from given uniform color-as-image.
+func OpacityFromColor(img image.Image) float32 {
+	return float32(colors.ToUniform(img).A) / 255
+}
+
+func (pv *PaintSetter) UpdateStrokeOpacity() {
+	pv.PaintStyle.Stroke.Opacity = OpacityFromColor(pv.PaintStyle.Stroke.Color)
+}
+
+func (pv *PaintSetter) UpdateFillOpacity() {
+	pv.PaintStyle.Fill.Opacity = OpacityFromColor(pv.PaintStyle.Fill.Color)
+}
+
+// SetStrokeOpacity sets stroke opacity
+func (pv *PaintSetter) SetStrokeOpacity(nd svg.Node) {
+	nd.AsNodeBase().SetProperty("stroke-opacity", pv.PaintStyle.Stroke.Opacity)
+}
+
+// SetStrokeOthers sets opacity and stroke width properties
+func (pv *PaintSetter) SetStrokeOthers(nd svg.Node) {
+	if !pv.IsStrokeOn() {
 		return
 	}
-	fun(sii)
+	nb := nd.AsNodeBase()
+	pv.SetStrokeOpacity(nd)
+	nb.SetProperty("stroke-width", pv.PaintStyle.Stroke.Width.String())
+	nb.SetProperty("stroke-linecap", pv.PaintStyle.Stroke.Cap.String())
+	nb.SetProperty("stroke-linejoin", pv.PaintStyle.Stroke.Join.String())
+}
+
+func (pv *PaintSetter) SetFillOthers(nd svg.Node) {
+	if !pv.IsFillOn() {
+		return
+	}
+	nd.AsNodeBase().SetProperty("fill-opacity", pv.PaintStyle.Fill.Opacity)
+	nd.AsNodeBase().SetProperty("fill-rule", pv.PaintStyle.Fill.Rule.String())
+}
+
+// SetProperties sets the properties for given node according to current settings
+func (pv *PaintSetter) SetProperties(nd svg.Node) {
+	cv := pv.Canvas
+	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
+	if pv.IsStrokeOn() {
+		cv.SetMarkerProperties(pv.MarkerProperties())
+		pv.SetStrokeOthers(nd)
+	}
+	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
+	pv.SetFillOthers(nd)
+}
+
+func (pv *PaintSetter) SetStrokeStack(pt PaintTypes) {
+	pv.strokeStack.StackTop = pv.PaintTypeStack(pt)
+}
+
+func (pv *PaintSetter) SetFillStack(pt PaintTypes) {
+	pv.fillStack.StackTop = pv.PaintTypeStack(pt)
 }
 
 // SetColorNode sets the color properties of Node
 // based on previous and current PaintType
-func (vv *Canvas) SetColorNode(sii svg.Node, prop string, prev, pt PaintTypes, sp string) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			vv.SetColorNode(kid.(svg.Node), prop, prev, pt, sp)
+func (pv *PaintSetter) SetColorNode(nd svg.Node, prop string, prev, pt PaintTypes, sp string) {
+	cv := pv.Canvas
+	sv := cv.SSVG()
+
+	others := func() {
+		if prop == "stroke" {
+			pv.SetStrokeOthers(nd)
+		} else {
+			pv.SetFillOthers(nd)
 		}
-		return
 	}
-	switch pt {
-	// case PaintLinear:
-	// 	svg.UpdateNodeGradientProp(sii, prop, false, sp)
-	// case PaintRadial:
-	// 	svg.UpdateNodeGradientProp(sii, prop, true, sp)
-	default:
-		if prev == PaintLinear || prev == PaintRadial {
-			pstr := reflectx.ToString(sii.AsTree().Properties[prop])
-			_ = pstr
-			// svg.DeleteNodeGradient(sii, pstr)
+
+	setPropsNode(nd, func(nd svg.Node) {
+		switch pt {
+		case PaintLinear:
+			sv.GradientUpdateNodeProp(nd, prop, false, sp)
+			others()
+		case PaintRadial:
+			sv.GradientUpdateNodeProp(nd, prop, true, sp)
+			others()
+		default:
+			if prev == PaintLinear || prev == PaintRadial {
+				pstr := reflectx.ToString(nd.AsTree().Properties[prop])
+				sv.GradientDeleteForNode(nd, pstr)
+			}
+			if pt == PaintOff {
+				nd.AsNodeBase().SetColorProperties(prop, "none")
+			} else {
+				nd.AsNodeBase().SetColorProperties(prop, sp)
+				others()
+			}
 		}
-		sii.AsNodeBase().SetColorProperties(prop, sp)
-	}
-	vv.UpdateMarkerColors(sii)
+	})
+	cv.UpdateMarkerColors(nd)
+	cv.UpdateTree()
 }
 
 // SetStroke sets the stroke properties of selected items
 // based on previous and current PaintType
-func (vv *Canvas) SetStroke(prev, pt PaintTypes, sp string) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	sv.UndoSave("SetStroke", sp)
-	for itm := range es.Selected {
-		vv.SetColorNode(itm, "stroke", prev, pt, sp)
-	}
-	vv.ChangeMade()
-}
-
-// SetStrokeWidthNode sets the stroke width of Node
-func (vv *Canvas) SetStrokeWidthNode(sii svg.Node, wp string) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			vv.SetStrokeWidthNode(kid.(svg.Node), wp)
+func (pv *PaintSetter) SetStroke(prev, pt PaintTypes, sp string) {
+	cv := pv.Canvas
+	cv.setPropsOnSelected("SetStroke", sp, func(nd svg.Node) {
+		pv.SetColorNode(nd, "stroke", prev, pt, sp)
+		if pv.StrokeType == PaintSolid {
+			pv.SetStrokeOpacity(nd)
 		}
-		return
-	}
-	g := sii.AsNodeBase()
-	if g.Paint.Stroke.Color != nil {
-		g.SetProperty("stroke-width", wp)
-	}
-}
-
-// SetStrokeWidth sets the stroke width property for selected items
-// manip means currently being manipulated -- don't save undo.
-func (vv *Canvas) SetStrokeWidth(wp string, manip bool) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	if !manip {
-		sv.UndoSave("SetStrokeWidth", wp)
-	}
-	for itm := range es.Selected {
-		vv.SetStrokeWidthNode(itm, wp)
-	}
-	if !manip {
-		vv.ChangeMade()
-	} else {
-		go sv.RenderSVG()
-	}
+	})
 }
 
 // SetStrokeColor sets the stroke color for selected items.
-// manip means currently being manipulated -- don't save undo.
-func (vv *Canvas) SetStrokeColor(sp string, manip bool) {
-	vv.ManipAction(SetStrokeColor, sp, manip,
-		func(itm svg.Node) {
-			p := itm.AsTree().Properties["stroke"]
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetStrokeColor(sp string, final bool) {
+	cv.setPropsOnSelectedInput(SetStrokeColor, sp, final,
+		func(nd svg.Node) {
+			p := nd.AsTree().Properties["stroke"]
 			if p != nil {
-				itm.AsNodeBase().SetColorProperties("stroke", sp)
-				vv.UpdateMarkerColors(itm)
+				nd.AsNodeBase().SetColorProperties("stroke", sp)
+				cv.PaintSetter().SetStrokeOpacity(nd)
+				cv.UpdateMarkerColors(nd)
 			}
 		})
 }
 
-// SetMarkerNode sets the marker properties of Node.
-func (vv *Canvas) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc, ec MarkerColors) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			vv.SetMarkerNode(kid.(svg.Node), start, mid, end, sc, mc, ec)
+// SetStrokeProperty sets given property only if stroke.color is non-nil.
+func (cv *Canvas) SetStrokeProperty(prop, wp string) {
+	cv.setPropsOnSelected(prop, wp, func(nd svg.Node) {
+		g := nd.AsNodeBase()
+		if g.Paint.Stroke.Color != nil {
+			g.SetProperty(prop, wp)
 		}
-		return
-	}
-	sv := vv.SVG()
-	MarkerSetProp(sv.SVG, sii, "marker-start", start, sc)
-	MarkerSetProp(sv.SVG, sii, "marker-mid", mid, mc)
-	MarkerSetProp(sv.SVG, sii, "marker-end", end, ec)
+	})
 }
 
 // SetMarkerProperties sets the marker properties
-func (vv *Canvas) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	sv.UndoSave("SetMarkerProperties", start+" "+mid+" "+end)
-	for itm := range es.Selected {
-		vv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
-	}
-	vv.ChangeMade()
+func (cv *Canvas) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
+	sv := cv.SVG.SVG
+	cv.setPropsOnSelected("SetMarkerProperties", start+" "+mid+" "+end, func(nd svg.Node) {
+		MarkerSetProp(sv, nd, "marker-start", start, sc)
+		MarkerSetProp(sv, nd, "marker-mid", mid, mc)
+		MarkerSetProp(sv, nd, "marker-end", end, ec)
+	})
 }
 
 // UpdateMarkerColors updates the marker colors, when setting fill or stroke
-func (vv *Canvas) UpdateMarkerColors(sii svg.Node) {
-	if sii == nil {
+func (cv *Canvas) UpdateMarkerColors(nd svg.Node) {
+	if nd == nil {
 		return
 	}
-	sv := vv.SVG()
-	MarkerUpdateColorProp(sv.SVG, sii, "marker-start")
-	MarkerUpdateColorProp(sv.SVG, sii, "marker-mid")
-	MarkerUpdateColorProp(sv.SVG, sii, "marker-end")
+	sv := cv.SVG
+	MarkerUpdateColorProp(sv.SVG, nd, "marker-start")
+	MarkerUpdateColorProp(sv.SVG, nd, "marker-mid")
+	MarkerUpdateColorProp(sv.SVG, nd, "marker-end")
 }
 
 // SetDashNode sets the stroke-dasharray property of Node.
 // multiplies dash values by the line width in dots.
-func (vv *Canvas) SetDashNode(sii svg.Node, dary []float64) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Children {
-			vv.SetDashNode(kid.(svg.Node), dary)
+func (cv *Canvas) SetDashProperties(dary []float64) {
+	cv.setPropsOnSelected("SetDashProperties", "", func(nd svg.Node) {
+		g := nd.AsNodeBase()
+		if len(dary) == 0 {
+			delete(g.Properties, "stroke-dasharray")
+			return
 		}
-		return
-	}
-	if len(dary) == 0 {
-		delete(sii.AsTree().Properties, "stroke-dasharray")
-		return
-	}
-	g := sii.AsNodeBase()
-	mary := DashMulWidth(float64(g.Paint.Stroke.Width.Dots), dary)
-	ds := DashString(mary)
-	sii.AsTree().Properties["stroke-dasharray"] = ds
-}
-
-// SetDashProperties sets the dash properties
-func (vv *Canvas) SetDashProperties(dary []float64) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	sv.UndoSave("SetDashProperties", "")
-	// update := sv.UpdateStart()
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		vv.SetDashNode(itm, dary)
-	}
-	// sv.UpdateEnd(update)
-	vv.ChangeMade()
+		mary := DashMulWidth(float64(g.Paint.Stroke.Width.Dots), dary)
+		ds := DashString(mary)
+		g.Properties["stroke-dasharray"] = ds
+	})
 }
 
 // SetFill sets the fill properties of selected items
 // based on previous and current PaintType
-func (vv *Canvas) SetFill(prev, pt PaintTypes, fp string) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	sv.UndoSave("SetFill", fp)
-	// update := sv.UpdateStart()
-	// sv.SetFullReRender()
-	for itm := range es.Selected {
-		vv.SetColorNode(itm, "fill", prev, pt, fp)
-	}
-	// sv.UpdateEnd(update)
-	vv.ChangeMade()
+func (pv *PaintSetter) SetFill(prev, pt PaintTypes, fp string) {
+	cv := pv.Canvas
+	cv.setPropsOnSelected("SetFill", fp, func(nd svg.Node) {
+		pv.SetColorNode(nd, "fill", prev, pt, fp)
+	})
 }
 
-// SetFillColor sets the fill color for selected items
-// manip means currently being manipulated -- don't save undo.
-func (vv *Canvas) SetFillColor(fp string, manip bool) {
-	vv.ManipAction(SetFillColor, fp, manip,
-		func(itm svg.Node) {
-			p := itm.AsTree().Properties["fill"]
+// SetFillColor sets the fill color for selected items,
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetFillColor(fp string, final bool) {
+	cv.setPropsOnSelectedInput(SetFillColor, fp, final,
+		func(nd svg.Node) {
+			p := nd.AsTree().Properties["fill"]
 			if p != nil {
-				itm.AsNodeBase().SetColorProperties("fill", fp)
-				vv.UpdateMarkerColors(itm)
+				nd.AsNodeBase().SetColorProperties("fill", fp)
+				cv.PaintSetter().SetFillOthers(nd)
 			}
 		})
 }
 
-// DefaultGradient returns the default gradient to use for setting stops
-func (vv *Canvas) DefaultGradient() string {
-	es := &vv.EditState
-	sv := vv.SVG()
-	if len(vv.EditState.Gradients) == 0 {
-		es.ConfigDefaultGradient()
-		sv.UpdateGradients(es.Gradients)
-	}
-	return es.Gradients[0].Name
+// SetFillProperty sets given property only if fill.color is non-nil.
+func (cv *Canvas) SetFillProperty(prop, wp string) {
+	cv.setPropsOnSelected(prop, wp, func(nd svg.Node) {
+		g := nd.AsNodeBase()
+		if g.Paint.Fill.Color != nil {
+			g.SetProperty(prop, wp)
+		}
+	})
 }
 
-// UpdateGradients updates gradients from EditState
-func (vv *Canvas) UpdateGradients() {
-	es := &vv.EditState
-	sv := vv.SVG()
-	// update := sv.UpdateStart()
-	sv.UpdateGradients(es.Gradients)
-	// sv.UpdateEnd(update)
+// SetOpacity sets the global opacity for selected items.
+// which can be done dynamically (for [events.Input] events, final = false,
+// followed by a final [events.Change] event (final = true)
+func (cv *Canvas) SetOpacity(sp string, final bool) {
+	cv.setPropsOnSelectedInput(SetOpacity, sp, final,
+		func(nd svg.Node) {
+			nd.AsNodeBase().Properties["opacity"] = sp
+		})
 }
 
-///////////////////////////////////////////////////////////////
-//  PaintView
+// UpdateFromNode updates the current settings based on the values in the given Paint
+// Style and properties from node (node can be nil)
+func (pv *PaintSetter) UpdateFromNode(ps *styles.Paint, nd svg.Node) {
+	pv.StrokeType, pv.StrokeStops = pv.GetPaintType(nd, ps.Stroke.Color, "stroke")
+	pv.FillType, pv.FillStops = pv.GetPaintType(nd, ps.Fill.Color, "fill")
 
-// Update updates the current settings based on the values in the given Paint and
-// properties from node (node can be nil)
-/*
-func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
-	update := pv.UpdateStart()
-	defer pv.UpdateEnd(update)
-
-	pv.StrokeType, pv.StrokeStops = pv.DecodeType(kn, &pc.Stroke.Color, "stroke")
-	pv.FillType, pv.FillStops = pv.DecodeType(kn, &pc.Fill.Color, "fill")
-
-	es := &pv.Vector.EditState
-	grl := &es.Gradients
-
-	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*core.ButtonBox)
-	spt.SelectItem(int(pv.StrokeType))
-
-	ss := pv.StrokeStack()
-
+	pv.SetStrokeStack(pv.StrokeType)
 	switch pv.StrokeType {
 	case PaintSolid:
-		if ss.StackTop != 1 {
-			ss.SetFullReRender()
-		}
-		ss.StackTop = 1
-		sc := ss.ChildByName("stroke-clr", 1).(*core.ColorPicker)
-		sc.SetColor(pc.Stroke.Color.Color)
+		pv.PaintStyle.Stroke.Color = gradient.ApplyOpacity(ps.Stroke.Color, ps.Stroke.Opacity)
+		pv.PaintStyle.Stroke.Opacity = ps.Stroke.Opacity
 	case PaintLinear, PaintRadial:
-		if ss.StackTop != 2 {
-			ss.SetFullReRender()
-		}
-		ss.StackTop = 2
-		sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
-		sg.SetSlice(grl)
 		pv.SelectStrokeGrad()
-	default:
-		if ss.StackTop != 0 {
-			ss.SetFullReRender()
+	}
+
+	pv.PaintStyle.Stroke.Width = ps.Stroke.Width
+	pv.PaintStyle.Stroke.Dashes = ps.Stroke.Dashes
+	pv.PaintStyle.Stroke.Cap = ps.Stroke.Cap
+	pv.PaintStyle.Stroke.Join = ps.Stroke.Join
+
+	setMarker := func(ic, cc *core.Chooser, ms string, mc MarkerColors) {
+		if ms != "" {
+			ic.SetCurrentValue(ms)
+		} else {
+			ic.SetCurrentIndex(0)
 		}
-		ss.StackTop = 0
+		cc.SetCurrentValue(mc)
 	}
 
-	wr := pv.ChildByName("stroke-width", 2)
-	wsb := wr.ChildByName("width", 1).(*core.Spinner)
-	wsb.SetValue(pc.Stroke.Width.Val)
-	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
-	uncb.SetCurrentIndex(int(pc.Stroke.Width.Un))
+	ms, _, mc := MarkerFromNodeProp(nd, "marker-start")
+	setMarker(pv.markerStart, pv.markerStartColor, ms, mc)
+	ms, _, mc = MarkerFromNodeProp(nd, "marker-mid")
+	setMarker(pv.markerMid, pv.markerMidColor, ms, mc)
+	ms, _, mc = MarkerFromNodeProp(nd, "marker-end")
+	setMarker(pv.markerEnd, pv.markerEndColor, ms, mc)
 
-	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
-	nwdsh, dnm := DashMatchArray(float64(pc.Stroke.Width.Dots), pc.Stroke.Dashes)
-	if nwdsh {
-		dshcb.ItemsFromIconList(AllDashIcons, false, 0)
-	}
-	dshcb.SetCurVal(icons.Icon(dnm))
-
-	mkr := pv.ChildByName("stroke-markers", 3)
-
-	ms, _, mc := MarkerFromNodeProp(kn, "marker-start")
-	mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
-	mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
-	if ms != "" {
-		mscb.SetCurVal(MarkerNameToIcon(ms))
-		mscc.SetCurrentIndex(int(mc))
-	} else {
-		mscb.SetCurrentIndex(0)
-		mscc.SetCurrentIndex(0)
-	}
-	ms, _, mc = MarkerFromNodeProp(kn, "marker-mid")
-	mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
-	mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
-	if ms != "" {
-		mmcb.SetCurVal(MarkerNameToIcon(ms))
-		mmcc.SetCurrentIndex(int(mc))
-	} else {
-		mmcb.SetCurrentIndex(0)
-		mmcc.SetCurrentIndex(0)
-	}
-	ms, _, mc = MarkerFromNodeProp(kn, "marker-end")
-	mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
-	mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
-	if ms != "" {
-		mecb.SetCurVal(MarkerNameToIcon(ms))
-		mecc.SetCurrentIndex(int(mc))
-	} else {
-		mecb.SetCurrentIndex(0)
-		mecc.SetCurrentIndex(0)
-	}
-
-	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*core.ButtonBox)
-	fpt.SelectItem(int(pv.FillType))
-
-	fs := pv.FillStack()
-
+	pv.SetFillStack(pv.FillType)
 	switch pv.FillType {
 	case PaintSolid:
-		if fs.StackTop != 1 {
-			fs.SetFullReRender()
-		}
-		fs.StackTop = 1
-		fc := fs.ChildByName("fill-clr", 1).(*core.ColorPicker)
-		fc.SetColor(pc.Fill.Color.Color)
+		pv.PaintStyle.Fill.Color = gradient.ApplyOpacity(ps.Fill.Color, ps.Fill.Opacity)
+		pv.PaintStyle.Fill.Opacity = ps.Fill.Opacity
+		pv.PaintStyle.Fill.Rule = ps.Fill.Rule
 	case PaintLinear, PaintRadial:
-		if fs.StackTop != 2 {
-			fs.SetFullReRender()
-		}
-		fs.StackTop = 2
-		fg := fs.ChildByName("fill-grad", 1).(*core.Table)
-		if fg.Slice != grl {
-			pv.SetFullReRender()
-		}
-		fg.SetSlice(grl)
 		pv.SelectFillGrad()
-	default:
-		if fs.StackTop != 0 {
-			fs.SetFullReRender()
-		}
-		fs.StackTop = 0
 	}
+	pv.PaintStyle.Opacity = ps.Opacity
+	pv.Update()
 }
-*/
 
-/*
 // GradStopsName returns the stopsname for gradient from url
-func (pv *PaintView) GradStopsName(gii core.Node2D, url string) string {
-	gr := svg.GradientByName(gii, url)
+func (pv *PaintSetter) GradStopsName(nd svg.Node, url string) string {
+	gr := pv.Canvas.SSVG().GradientByName(nd, url)
 	if gr == nil {
 		return ""
 	}
 	if gr.StopsName != "" {
 		return gr.StopsName
 	}
-	return gr.Nm
+	return gr.Name
 }
-*/
 
-/*
-// DecodeType decodes the paint type from paint and properties
+// GetPaintType decodes the paint type from paint and properties
 // also returns the name of the gradient if using one.
-func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) (PaintTypes, string) {
+func (pv *PaintSetter) GetPaintType(nd svg.Node, clr image.Image, prop string) (PaintTypes, string) {
 	pstr := ""
-	var gii core.Node2D
-	if kn != nil {
-		pstr = reflectx.ToString(kn.Prop(prop))
-		gii = kn.(core.Node2D)
+	if nd != nil {
+		pv := nd.AsNodeBase().Properties[prop]
+		pstr = reflectx.ToString(pv)
 	}
 	ptyp := PaintSolid
 	grnm := ""
+	lg, islg := clr.(*gradient.Linear)
+	rg, isrg := clr.(*gradient.Radial)
 	switch {
 	case pstr == "inherit":
 		ptyp = PaintInherit
-	case pstr == "none" || cs.IsNil():
+	case pstr == "none" || clr == nil:
 		ptyp = PaintOff
-	case strings.HasPrefix(pstr, "url(#linear") || (cs.Gradient != nil && !cs.Gradient.IsRadial):
+	case strings.HasPrefix(pstr, "url(#linear") || (islg && lg != nil):
 		ptyp = PaintLinear
-		if gii != nil {
-			grnm = pv.GradStopsName(gii, pstr)
+		if nd != nil {
+			grnm = pv.GradStopsName(nd, pstr)
 		}
-	case strings.HasPrefix(pstr, "url(#radial") || (cs.Gradient != nil && cs.Gradient.IsRadial):
+	case strings.HasPrefix(pstr, "url(#radial") || (isrg && rg != nil):
 		ptyp = PaintRadial
-		if gii != nil {
-			grnm = pv.GradStopsName(gii, pstr)
+		if nd != nil {
+			grnm = pv.GradStopsName(nd, pstr)
 		}
 	default:
 		ptyp = PaintSolid
@@ -738,46 +729,41 @@ func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) 
 	}
 	return ptyp, grnm
 }
-*/
 
-func (pv *PaintView) SelectStrokeGrad() {
-	// todo:
-	// es := &pv.Vector.EditState
-	// grl := &es.Gradients
-	// ss := pv.StrokeStack()
-	// sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
-	// sg.UnselectAllIndexes()
-	// for i, g := range *grl {
-	// 	if g.Name == pv.StrokeStops {
-	// 		sg.SelectIndex(i)
-	// 		break
-	// 	}
-	// }
+func (pv *PaintSetter) SelectStrokeGrad() {
+	es := &pv.Canvas.EditState
+	grl := &es.Gradients
+	sg := pv.strokeGrads
+	sg.ResetSelectedIndexes()
+	for i, g := range *grl {
+		if g.Name == pv.StrokeStops {
+			sg.SelectIndex(i)
+			break
+		}
+	}
 }
 
-func (pv *PaintView) SelectFillGrad() {
-	// todo:
-	// es := &pv.Vector.EditState
-	// grl := &es.Gradients
-	// fs := pv.FillStack()
-	// fg := fs.ChildByName("fill-grad", 1).(*core.Table)
-	// fg.UnselectAllIndexes()
-	// for i, g := range *grl {
-	// 	if g.Name == pv.FillStops {
-	// 		fg.SelectIndex(i)
-	// 		break
-	// 	}
-	// }
+func (pv *PaintSetter) SelectFillGrad() {
+	es := &pv.Canvas.EditState
+	grl := &es.Gradients
+	sg := pv.fillGrads
+	sg.ResetSelectedIndexes()
+	for i, g := range *grl {
+		if g.Name == pv.FillStops {
+			sg.SelectIndex(i)
+			break
+		}
+	}
 }
 
 // StrokeProp returns the stroke property string according to current settings
-func (pv *PaintView) StrokeProp() string {
-	// ss := pv.StrokeStack()
+func (pv *PaintSetter) StrokeProp() string {
 	switch pv.StrokeType {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Stroke.Color))
+		// opacity handled separately: always report colors as pure
+		return colors.AsHex(colors.WithA(colors.ToUniform(pv.PaintStyle.Stroke.Color), 255))
 	case PaintLinear:
 		return pv.StrokeStops
 	case PaintRadial:
@@ -790,71 +776,48 @@ func (pv *PaintView) StrokeProp() string {
 
 // MarkerProp returns the marker property string according to current settings
 // along with color type to set.
-func (pv *PaintView) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
-	// mkr := pv.ChildByName("stroke-markers", 3)
-	//
-	// mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
-	// mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
-	// start = IconToMarkerName(mscb.CurVal)
-	// sc = MarkerColors(mscc.CurrentIndex)
-	//
-	// mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
-	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
-	// mid = IconToMarkerName(mmcb.CurVal)
-	// mc = MarkerColors(mmcc.CurrentIndex)
-	//
-	// mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
-	// mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
-	// end = IconToMarkerName(mecb.CurVal)
-	// ec = MarkerColors(mecc.CurrentIndex)
-
+func (pv *PaintSetter) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
+	start = pv.markerStart.CurrentItem.Value.(string)
+	sc = pv.markerStartColor.CurrentItem.Value.(MarkerColors)
+	mid = pv.markerMid.CurrentItem.Value.(string)
+	mc = pv.markerMidColor.CurrentItem.Value.(MarkerColors)
+	end = pv.markerEnd.CurrentItem.Value.(string)
+	ec = pv.markerEndColor.CurrentItem.Value.(MarkerColors)
 	return
 }
 
 // IsStrokeOn returns true if stroke is active
-func (pv *PaintView) IsStrokeOn() bool {
+func (pv *PaintSetter) IsStrokeOn() bool {
 	return pv.StrokeType >= PaintSolid && pv.StrokeType < PaintInherit
-}
-
-// StrokeWidthProp returns stroke-width property
-func (pv *PaintView) StrokeWidthProp() string {
-	unnm := pv.PaintStyle.Stroke.Width.Unit.String()
-	return fmt.Sprintf("%g%s", pv.PaintStyle.Stroke.Width.Value, unnm)
 }
 
 // StrokeDashProp returns stroke-dasharray property as an array (nil = none)
 // these values need to be multiplied by line widths for each item.
-func (pv *PaintView) StrokeDashProp() []float64 {
-	// todo: need type for dashes
-	// wr := pv.ChildByName("stroke-width", 2)
-	// dshcb := wr.AsTree().ChildByName("dashes", 3).(*core.Chooser)
-	// if dshcb.CurrentIndex == 0 {
-	// 	return nil
-	// }
-	// dnm := reflectx.ToString(dshcb.CurrentItem.Value)
-	// if dnm == "" {
-	// 	return nil
-	// }
-	// dary, ok := AllDashesMap[dnm]
-	// if !ok {
-	// 	return nil
-	// }
-	// return dary
-	return nil
+func (pv *PaintSetter) StrokeDashProp() []float64 {
+	if pv.dashes.CurrentIndex == 0 {
+		return nil
+	}
+	dnm := pv.dashes.CurrentItem.Value.(string)
+	dary, ok := AllDashesMap[dnm]
+	if !ok {
+		return nil
+	}
+	return dary
 }
 
 // IsFillOn returns true if Fill is active
-func (pv *PaintView) IsFillOn() bool {
+func (pv *PaintSetter) IsFillOn() bool {
 	return pv.FillType >= PaintSolid && pv.FillType < PaintInherit
 }
 
 // FillProp returns the fill property string according to current settings
-func (pv *PaintView) FillProp() string {
+func (pv *PaintSetter) FillProp() string {
 	switch pv.FillType {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Fill.Color))
+		// opacity handled separately: always report colors as pure
+		return colors.AsHex(colors.WithA(colors.ToUniform(pv.PaintStyle.Fill.Color), 255))
 	case PaintLinear:
 		return pv.FillStops
 	case PaintRadial:
@@ -863,17 +826,6 @@ func (pv *PaintView) FillProp() string {
 		return "inherit"
 	}
 	return "none"
-}
-
-// SetProperties sets the properties for given node according to current settings
-func (pv *PaintView) SetProperties(sii svg.Node) {
-	pv.Canvas.SetColorNode(sii, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
-	if pv.IsStrokeOn() {
-		sii.AsTree().Properties["stroke-width"] = pv.StrokeWidthProp()
-		start, mid, end, sc, mc, ec := pv.MarkerProperties()
-		pv.Canvas.SetMarkerNode(sii, start, mid, end, sc, mc, ec)
-	}
-	pv.Canvas.SetColorNode(sii, "fill", pv.FillType, pv.FillType, pv.FillProp())
 }
 
 type PaintTypes int32 //enums:enum -trim-prefix Paint

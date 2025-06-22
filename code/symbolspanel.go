@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/text/parse/syms"
@@ -376,13 +377,13 @@ func (st *SymTree) Init() {
 		s.Gap.X.Em(0.4)
 	})
 	tree.AddChildInit(st.Parts, "branch", func(w *core.Switch) {
-		w.SetIconOn(st.IconOpen).SetIconOff(st.IconClosed).SetIconIndeterminate(st.SymNode().GetIcon())
-		tree.AddChildInit(w, "stack", func(w *core.Frame) {
-			tree.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
-				w.Styler(func(s *styles.Style) {
-					s.Min.Set(units.Em(1))
-				})
-			})
+		w.Updater(func() {
+			w.SetIconOn(st.IconOpen).SetIconOff(st.IconClosed).SetIconIndeterminate(st.SymNode().GetIcon())
+		})
+		w.Styler(func(s *styles.Style) {
+			if s.Is(states.Indeterminate) {
+				s.IconSize.Set(units.Em(1))
+			}
 		})
 	})
 }

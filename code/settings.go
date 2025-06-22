@@ -286,14 +286,14 @@ var (
 	SavedPathsFilename = "saved-paths.json"
 )
 
-// SavePaths saves the active SavedPaths to prefs dir
+// SavePaths saves the active SavedPaths to settings dir
 func SavePaths() {
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	RecentPaths.Save(pnm)
 }
 
-// OpenPaths loads the active SavedPaths from prefs dir
+// OpenPaths loads the active SavedPaths from settings dir
 func OpenPaths() {
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
@@ -342,7 +342,7 @@ func (cv *Code) ApplySettings() {
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
-	core.UpdateAll() // drives full rebuild
+	// core.UpdateAll() // note: this is not necessary and is very slow
 }
 
 func (cv *Code) ApplySplitsSettings(sv *core.Splits) {
@@ -359,7 +359,7 @@ func (cv *Code) ApplySplitsSettings(sv *core.Splits) {
 func (cv *Code) ApplySettingsAction() {
 	cv.ApplySettings()
 	cv.SplitsSetView(cv.Settings.SplitName)
-	cv.SetStatus("Applied prefs")
+	cv.SetStatus("Applied settings")
 }
 
 // EditProjectSettings allows editing of project settings (settings specific to this project)
@@ -394,7 +394,7 @@ func (cv *Code) SplitsSetView(split SplitName) { //types:add
 }
 
 // SplitsSave saves current splitter settings to named splitter settings under
-// existing name, and saves to prefs file
+// existing name, and saves to settings file
 func (cv *Code) SplitsSave(split SplitName) { //types:add
 	sv := cv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
@@ -405,7 +405,7 @@ func (cv *Code) SplitsSave(split SplitName) { //types:add
 }
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
-// saves to prefs file
+// saves to settings file
 func (cv *Code) SplitsSaveAs(name, desc string) { //types:add
 	sv := cv.Splits()
 	tabUnder := len(sv.Tiles) == 2

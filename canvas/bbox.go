@@ -5,8 +5,6 @@
 package canvas
 
 import (
-	"image"
-
 	"cogentcore.org/core/math32"
 )
 
@@ -21,26 +19,6 @@ const (
 	BBMiddle
 	BBBottom
 )
-
-// ValueRect returns the relevant value for a given bounding box
-// as an image.Rectangle
-func (ev BBoxPoints) ValueRect(bb image.Rectangle) float32 {
-	switch ev {
-	case BBLeft:
-		return float32(bb.Min.X)
-	case BBCenter:
-		return 0.5 * float32(bb.Min.X+bb.Max.X)
-	case BBRight:
-		return float32(bb.Max.X)
-	case BBTop:
-		return float32(bb.Min.Y)
-	case BBMiddle:
-		return 0.5 * float32(bb.Min.Y+bb.Max.Y)
-	case BBBottom:
-		return float32(bb.Max.Y)
-	}
-	return 0
-}
 
 // ValueBox returns the relevant value for a given bounding box as a
 // math32.Box2
@@ -95,42 +73,28 @@ func (ev BBoxPoints) Dim() math32.Dims {
 // control point.
 func ReshapeBBoxPoints(reshape Sprites) (bbX, bbY BBoxPoints) {
 	switch reshape {
-	case SpBBoxUpL:
+	case SpUpL:
 		return BBLeft, BBTop
-	case SpBBoxUpC:
+	case SpUpC:
 		return BBCenter, BBTop
-	case SpBBoxUpR:
+	case SpUpR:
 		return BBRight, BBTop
-	case SpBBoxDnL:
+	case SpDnL:
 		return BBLeft, BBBottom
-	case SpBBoxDnC:
+	case SpDnC:
 		return BBCenter, BBBottom
-	case SpBBoxDnR:
+	case SpDnR:
 		return BBRight, BBBottom
-	case SpBBoxLfM:
+	case SpLfM:
 		return BBLeft, BBMiddle
-	case SpBBoxRtM:
+	case SpRtM:
 		return BBRight, BBMiddle
 	}
 	return
 }
 
-// PointRect returns the relevant point for a given bounding box, where
-// relevant dimension is from ValRect and other is midpoint -- for drawing lines.
-// BBox is an image.Rectangle
-func (ev BBoxPoints) PointRect(bb image.Rectangle) math32.Vector2 {
-	val := ev.ValueRect(bb)
-	switch ev {
-	case BBLeft, BBCenter, BBRight:
-		return math32.Vec2(val, 0.5*float32(bb.Min.Y+bb.Max.Y))
-	default:
-		return math32.Vec2(0.5*float32(bb.Min.X+bb.Max.X), val)
-	}
-}
-
 // PointBox returns the relevant point for a given bounding box, where
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
-// BBox is an image.Rectangle
 func (ev BBoxPoints) PointBox(bb math32.Box2) math32.Vector2 {
 	val := ev.ValueBox(bb)
 	switch ev {

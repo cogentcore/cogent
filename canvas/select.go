@@ -14,86 +14,114 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint/ppath/intersect"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
-// InitSelectButton sets the given widget to only be enabled when
+// selectEnabledStyler sets the given widget to only be enabled when
 // there is an item selected.
-func (vc *Canvas) InitSelectButton(w core.Widget) {
+func (cv *Canvas) selectEnabledStyler(w core.Widget) {
 	w.AsWidget().FirstStyler(func(s *styles.Style) {
-		s.SetEnabled(vc.EditState.HasSelected())
+		s.SetEnabled(cv.EditState.HasSelected())
 	})
 }
 
 // MakeSelectToolbar adds the select toolbar to the given plan.
-func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
+func (cv *Canvas) MakeSelectToolbar(p *tree.Plan) {
+	if cv.EditState.Tool == TextTool || cv.EditState.SelectIsText {
+		cv.MakeTextToolbar(p)
+		tree.Add(p, func(w *core.Separator) {})
+	}
+
+	tree.Add(p, func(w *core.Switch) {
+		core.Bind(&Settings.SnapAlign, w)
+		w.SetText("Snap align")
+		w.SetTooltip("Snap to align with other elements in the scene, as indicated")
+	})
 	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGrid, w)
 		w.SetText("Snap grid")
-		w.SetTooltip("Whether to snap movement and sizing of selection to the grid")
+		w.SetTooltip("Snap to the grid (edit grid in settings)")
 	})
-	tree.Add(p, func(w *core.Switch) {
-		core.Bind(&Settings.SnapGuide, w)
-		w.SetText("Snap guide")
-		w.SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
-	})
-	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
-	})
-	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
+	tree.Add(p, func(w *core.Spinner) {
+		if cv.SVG != nil {
+			core.Bind(&cv.SVG.Grid, w)
+		}
+		w.Min = 0.01
+		w.Step = 1
+		w.Styler(func(s *styles.Style) {
+			s.Max.X.Ch(5)
+		})
+		w.Updater(func() {
+			if cv.SVG == nil {
+				return
+			}
+			if w.ValueUpdate == nil {
+				core.Bind(&cv.SVG.Grid, w) // was nil before
+			}
+		})
+		w.OnChange(func(e events.Event) {
+			cv.SVG.UpdateView()
+		})
+		w.SetTooltip("Grid spacing in the ViewBox units of the drawing. Saved if metadata is on.")
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLower).SetText("").SetIcon(cicons.SelLower)
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
 	})
 	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("X: ")
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
 	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
+	})
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectLower).SetText("").SetIcon(cicons.SelLower)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		cv.selectEnabledStyler(w)
+		w.SetFunc(cv.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
+	})
+	tree.Add(p, func(w *core.Separator) {})
+	// tree.Add(p, func(w *core.Text) {
+	// 	w.SetText("X: ")
+	// })
 	// TODO(config):
-	// core.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
-	// 	gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
+	// core.NewValue(tb, &gv.EditState.DragSnapBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+	// 	gv.SelectSetXPos(gv.EditState.DragSnapBBox.Min.X)
 	// })
 
-	tree.Add(p, func(w *core.Text) {
-		w.SetText("Y: ")
-	})
+	// tree.Add(p, func(w *core.Text) {
+	// 	w.SetText("Y: ")
+	// })
 	// py := core.NewSpinner(tb).SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	// py.OnChange(func(e events.Event) {
 	// 	// gv.SelectSetYPos(py.Value)
@@ -112,27 +140,11 @@ func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	// })
 }
 
-// UpdateSelectToolbar updates the select toolbar based on current selection
-func (vc *Canvas) UpdateSelectToolbar() {
-	// tb := vc.SelectToolbar()
-	// tb.NeedsRender()
-	// tb.Update()
-	// es := &gv.EditState
-	// if !es.HasSelected() {
-	// 	return
-	// }
-	// sz := es.DragSelEffBBox.Size()
-	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
-	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
-}
-
 // UpdateSelect should be called whenever selection changes
 func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()
 	sv.Canvas.UpdateTabs()
-	sv.Canvas.UpdateSelectToolbar()
+	sv.Canvas.UpdateModalToolbar()
 	if es.Tool == NodeTool {
 		sv.UpdateNodeSprites()
 		sv.RemoveSelSprites()
@@ -144,29 +156,34 @@ func (sv *SVG) UpdateSelect() {
 }
 
 func (sv *SVG) RemoveSelSprites() {
-	InactivateSprites(sv, SpReshapeBBox)
-	InactivateSprites(sv, SpSelBBox)
+	sv.NeedsRender()
+	sprites := sv.SpritesLock()
+	sv.InactivateSprites(SpReshapeBBox)
+	sv.InactivateSprites(SpSelBBox)
 	es := sv.EditState()
 	es.NSelectSprites = 0
+	sprites.Unlock()
 }
 
 func (sv *SVG) UpdateSelSprites() {
+	sv.NeedsRender()
 	es := sv.EditState()
 	es.UpdateSelectBBox()
 	if !es.HasSelected() {
 		sv.RemoveSelSprites()
 		return
 	}
-
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		Sprite(sv, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
+	sprites := sv.SpritesLock()
+	sv.setSelSpritePos()
+	for i := SpUpL; i <= SpRtM; i++ {
+		sv.Sprite(SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
 			sp.OnSlideStart(func(e events.Event) {
 				es.DragSelStart(e.Pos())
 				e.SetHandled()
 			})
 			sp.OnSlideMove(func(e events.Event) {
 				if e.HasAnyModifier(key.Alt) {
-					sv.SpriteRotateDrag(i, e.PrevDelta())
+					sv.SpriteRotateDrag(i, e)
 				} else {
 					sv.SpriteReshapeDrag(i, e)
 				}
@@ -179,10 +196,12 @@ func (sv *SVG) UpdateSelSprites() {
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
-	sv.SetSelSpritePos()
+	sprites.Unlock()
 }
 
-func (sv *SVG) SetSelSpritePos() {
+// setSelSpritePos sets the selection sprites positions.
+// only called by SetBBoxSpritePos.
+func (sv *SVG) setSelSpritePos() {
 	es := sv.EditState()
 	nsel := es.NSelectSprites
 
@@ -192,98 +211,67 @@ func (sv *SVG) SetSelSpritePos() {
 		sl := es.SelectedList(false)
 		for si, sii := range sl {
 			sn := sii.AsNodeBase()
-			if sn.BBox.Size() == image.ZP {
+			if sn.BBox.Size() == (math32.Vector2{}) {
 				continue
 			}
-			bb := math32.Box2{}
-			bb.SetFromRect(sn.BBox)
+			bb := sn.BBox
 			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
 			nbox++
 		}
 		es.NSelectSprites = nbox
+		return
 	}
 
-	sprites := &sv.Scene.Stage.Sprites
+	sprites := sv.SpritesNoLock()
 	for si := es.NSelectSprites; si < nsel; si++ {
-		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+		for i := SpUpL; i <= SpRtM; i++ {
 			spnm := SpriteName(SpSelBBox, i, si)
-			sprites.InactivateSprite(spnm)
+			sprites.InactivateSpriteNoLock(spnm)
 		}
 	}
 }
 
-// SetBBoxSpritePos sets positions of given type of sprites
+// SetBBoxSpritePos sets positions of given type of sprites.
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
-	bbox.Min.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
-	bbox.Max.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
-
-	_, spsz := HandleSpriteSize(1)
-	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
-	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		sp := Sprite(sv, typ, i, idx, image.ZP, nil)
+	spbb, _ := sv.HandleSpriteSize(1, image.Point{})
+	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spbb.Dx())))
+	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spbb.Dy())))
+	bbi := bbox.ToRect()
+	for i := SpUpL; i <= SpRtM; i++ {
+		sp := sv.Sprite(typ, i, idx, image.ZP, nil)
 		switch i {
-		case SpBBoxUpL:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-		case SpBBoxUpC:
-			SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
-		case SpBBoxUpR:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-		case SpBBoxDnL:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-		case SpBBoxDnC:
-			SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
-		case SpBBoxDnR:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-		case SpBBoxLfM:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
-		case SpBBoxRtM:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
+		case SpUpL:
+			sv.SetSpritePos(sp, bbi.Min.X, bbi.Min.Y)
+		case SpUpC:
+			sv.SetSpritePos(sp, midX, bbi.Min.Y)
+		case SpUpR:
+			sv.SetSpritePos(sp, bbi.Max.X, bbi.Min.Y)
+		case SpDnL:
+			sv.SetSpritePos(sp, bbi.Min.X, bbi.Max.Y)
+		case SpDnC:
+			sv.SetSpritePos(sp, midX, bbi.Max.Y)
+		case SpDnR:
+			sv.SetSpritePos(sp, bbi.Max.X, bbi.Max.Y)
+		case SpLfM:
+			sv.SetSpritePos(sp, bbi.Min.X, midY)
+		case SpRtM:
+			sv.SetSpritePos(sp, bbi.Max.X, midY)
 		}
 	}
 }
-
-/*
-func (sv *SVG) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
-	win := sv.Vector.ParentWindow()
-	es := sv.EditState()
-	es.SelNoDrag = false
-	switch et {
-	case events.MouseEvent:
-		me := d.(*mouse.Event)
-		me.SetProcessed()
-		// fmt.Printf("click %s\n", sp)
-		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteName(SpReshapeBBox, sp, 0)
-			sv.EditState().DragSelStart(me.Where)
-			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
-		} else if me.Action == mouse.Release {
-			sv.ManipDone()
-		}
-	case events.MouseDragEvent:
-		me := d.(*mouse.DragEvent)
-		me.SetProcessed()
-		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
-		if me.HasAnyModifier(key.Alt) {
-			sv.SpriteRotateDrag(sp, me.Delta(), win)
-		} else {
-			sv.SpriteReshapeDrag(sp, win, me)
-		}
-	}
-}
-*/
 
 // SetRubberBand updates the rubber band position.
 func (sv *SVG) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
+	sprites := sv.SpritesLock()
 
 	if !es.InAction() {
 		es.ActStart(BoxSelect, fmt.Sprintf("%v", es.DragStartPos))
 		es.ActUnlock()
 	}
-	es.DragCurPos = cur
+	es.DragPos = cur
 
-	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragPos}
 	bbox = bbox.Canon()
 
 	sz := bbox.Size()
@@ -293,28 +281,23 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	rt := Sprite(sv, SpRubberBand, SpBBoxUpC, 0, sz, nil)
-	rb := Sprite(sv, SpRubberBand, SpBBoxDnC, 0, sz, nil)
-	rr := Sprite(sv, SpRubberBand, SpBBoxRtM, 0, sz, nil)
-	rl := Sprite(sv, SpRubberBand, SpBBoxLfM, 0, sz, nil)
-	SetSpritePos(rt, bbox.Min)
-	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
-	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	SetSpritePos(rl, bbox.Min)
+	sp := sv.Sprite(SpRubberBand, SpNone, 0, sz, nil)
+	sp.Properties["size"] = sz
+	sv.SetSpritePos(sp, bbox.Min.X, bbox.Min.Y)
 
+	sprites.Unlock()
 	sv.NeedsRender()
 }
 
-///////////////////////////////////////////////////////////////////////
-//   Actions
+////////   Actions
 
 // SelectGroup groups items together
-func (gv *Canvas) SelectGroup() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectGroup() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Group", es.SelectedNamesString())
 
 	sl := es.SelectedListDepth(sv, false) // ascending depth order
@@ -334,17 +317,17 @@ func (gv *Canvas) SelectGroup() { //types:add
 	es.ResetSelected()
 	es.Select(ng)
 
-	gv.UpdateAll()
-	gv.ChangeMade()
+	cv.UpdateAll()
+	cv.ChangeMade()
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *Canvas) SelectUnGroup() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectUnGroup() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("UnGroup", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
@@ -366,223 +349,210 @@ func (gv *Canvas) SelectUnGroup() { //types:add
 			}
 		}
 	}
-	gv.UpdateAll()
-	gv.ChangeMade()
+	sv.RemoveEmptyGroups()
+	cv.UpdateAll()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectRotate(deg float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectRotate(deg float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
-	svoff := sv.Geom.ContentBBox.Min
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.FromPoint(sng.BBox.Size())
-		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
-		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
+		sz := sng.BBox.Size()
+		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, rot, ctr))
 	}
-	sv.UpdateView(true)
-	gv.ChangeMade()
+	sv.UpdateView()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectScale(scx, scy float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectScale(scx, scy float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
-	svoff := sv.Geom.ContentBBox.Min
 	del := math32.Vector2{}
 	sc := math32.Vec2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.FromPoint(sng.BBox.Size())
-		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
-		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
+		sz := sng.BBox.Size()
+		ctr := sng.BBox.Min.Add(sz.MulScalar(.5))
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, ctr))
 	}
-	sv.UpdateView(true)
-	gv.ChangeMade()
+	sv.UpdateView()
+	cv.ChangeMade()
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *Canvas) SelectRotateLeft() { //types:add
-	gv.SelectRotate(-90)
+func (cv *Canvas) SelectRotateLeft() { //types:add
+	cv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *Canvas) SelectRotateRight() { //types:add
-	gv.SelectRotate(90)
+func (cv *Canvas) SelectRotateRight() { //types:add
+	cv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *Canvas) SelectFlipHorizontal() { //types:add
-	gv.SelectScale(-1, 1)
+func (cv *Canvas) SelectFlipHorizontal() { //types:add
+	cv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *Canvas) SelectFlipVertical() { //types:add
-	gv.SelectScale(1, -1)
+func (cv *Canvas) SelectFlipVertical() { //types:add
+	cv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *Canvas) SelectRaiseTop() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectRaiseTop() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("RaiseTop", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, len(pt.Children)-1)
 	}
-	gv.UpdateDisp()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.UpdateTree()
+	cv.ChangeMade()
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *Canvas) SelectRaise() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectRaise() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Raise", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		if ci < parent.AsTree().NumChildren()-1 {
 			pt := parent.AsTree()
 			pt.Children = slicesx.Move(pt.Children, ci, ci+1)
 		}
 	}
-	gv.UpdateDisp()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.UpdateTree()
+	cv.ChangeMade()
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *Canvas) SelectLowerBottom() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectLowerBottom() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("LowerBottom", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
 		pt.Children = slicesx.Move(pt.Children, ci, 0)
 	}
-	gv.UpdateDisp()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.UpdateTree()
+	cv.ChangeMade()
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *Canvas) SelectLower() { //types:add
-	es := &gv.EditState
+func (cv *Canvas) SelectLower() { //types:add
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("Lower", es.SelectedNamesString())
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This) {
-			continue
-		}
 		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
 			pt := parent.AsTree()
 			pt.Children = slicesx.Move(pt.Children, ci, ci-1)
 		}
 	}
-	gv.UpdateDisp()
-	gv.ChangeMade()
+	cv.UpdateSVG()
+	cv.UpdateTree()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetXPos(xp float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetXPos(xp float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("MoveToX", fmt.Sprintf("%g", xp))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetYPos(yp float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetYPos(yp float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("MoveToY", fmt.Sprintf("%g", yp))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetWidth(wd float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetWidth(wd float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("SetWidth", fmt.Sprintf("%g", wd))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-func (gv *Canvas) SelectSetHeight(ht float32) {
-	es := &gv.EditState
+func (cv *Canvas) SelectSetHeight(ht float32) {
+	es := &cv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := cv.SVG
 	sv.UndoSave("SetHeight", fmt.Sprintf("%g", ht))
 	// todo
-	gv.ChangeMade()
+	cv.ChangeMade()
 }
 
-///////////////////////////////////////////////////////////////////////
-//   Select tree traversal
+////////   Select tree traversal
 
 // SelectWithinBBox returns a list of all nodes whose BBox is fully contained
 // within the given BBox. SVG version excludes layer groups.
-func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
+func (sv *SVG) SelectWithinBBox(bbox math32.Box2, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
-	var curlay tree.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
 		if n == sv.Root().This {
 			return tree.Continue
@@ -600,20 +570,14 @@ func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Nod
 				}
 			}
 		}
-		if nb.Paint.Off {
-			return tree.Break
-		}
 		nl := NodeParentLayer(n)
 		if nl != nil {
-			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
+			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return tree.Break
 			}
 		}
-		if nb.BBox.In(bbox) {
+		if bbox.ContainsBox(nb.BBox) {
 			rval = append(rval, n)
-			if curlay == nil && nl != nil {
-				curlay = nl
-			}
 			return tree.Break // don't go into groups!
 		}
 		return tree.Continue
@@ -621,14 +585,13 @@ func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Nod
 	return rval
 }
 
-// SelectContainsPoint finds the first node whose BBox contains the given
-// point in scene coordinates; nil if none.  If leavesOnly is set then only nodes that have no
-// nodes (leaves, terminal nodes) will be considered.
-// if leavesOnly, only terminal leaves (no children) are included
-// if excludeSel, any leaf nodes that are within the current edit selection are
+// SelectContainsPoint finds the first node that contains the given
+// point in scene coordinates; nil if none. If leavesOnly is set then only nodes
+// that have no nodes (leaves, terminal nodes) will be considered.
+// If excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
-	pt = pt.Sub(sv.Geom.ContentBBox.Min)
+	ptv := math32.FromPoint(pt)
 	es := sv.EditState()
 	var curlay tree.Node
 	fn := es.FirstSelectedNode()
@@ -661,16 +624,24 @@ func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) 
 				return tree.Continue
 			}
 		}
-		if nb.Paint.Off {
-			return tree.Break
-		}
 		nl := NodeParentLayer(n)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return tree.Break
 			}
 		}
-		if pt.In(nb.BBox) {
+		if !nb.BBox.ContainsPoint(ptv) {
+			return tree.Continue
+		}
+		sz := nb.BBox.Size()
+		p, isPath := n.(*svg.Path)
+		if !isPath || sz.X < 12 || sz.Y < 12 { // small bbox footprint paths are too hard to hit
+			rval = n
+			return tree.Break
+		}
+		xf := p.ParentTransform(true).Inverse()
+		pxf := xf.MulVector2AsPoint(ptv)
+		if intersect.Contains(p.Data, pxf.X, pxf.Y, p.Paint.Fill.Rule) {
 			rval = n
 			return tree.Break
 		}

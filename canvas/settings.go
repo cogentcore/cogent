@@ -5,20 +5,19 @@
 package canvas
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/iox/tomlx"
-	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/styles"
 )
 
 func init() {
 	core.TheApp.SetName("Cogent Canvas")
 	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
-	// OpenIcons()
 }
 
 // Settings are the overall Code settings
@@ -34,69 +33,38 @@ type SettingsData struct { //types:add
 	core.SettingsBase
 
 	// default physical size, when app is started without opening a file
-	Size PhysSize
-
-	// default shape styles
-	ShapeStyle styles.Paint
-
-	// default text styles
-	TextStyle styles.Paint
-
-	// default line styles
-	PathStyle styles.Paint
-
-	// default line styles
-	LineStyle styles.Paint
+	Size PhysicalSize `display:"add-fields"`
 
 	// turns on the grid display
-	GridDisp bool
+	ShowGrid bool `default:"true"`
 
-	// snap positions and sizes to underlying grid
-	SnapGrid bool
+	// snap to grid intervals.
+	SnapGrid bool `default:"true"`
 
-	// snap positions and sizes to line up with other elements
-	SnapGuide bool
+	// snap to align with other elements.
+	SnapAlign bool `default:"true"`
 
-	// snap node movements to align with guides
-	SnapNodes bool
+	// snap individual path nodes using snap settings, while drawing and editing nodes.
+	SnapNodes bool `default:"true"`
 
-	// number of screen pixels around target point (in either direction) to snap
-	SnapTol int `min:"1"`
+	// zone of attraction around a potential snapping point (grid, align) where
+	// snapping happens. Small values here allow a reasonable balance of snapping
+	// and non-snapping, while larger values produce more visible and strong snapping
+	// constraints.
+	SnapZone int `min:"1" default:"3"`
 
-	// named-split config in use for configuring the splitters
-	SplitName SplitName
-
-	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
-	EnvVars map[string]string
+	// enables saving of metadata about the image (in inkscape-compatible format)
+	MetaData bool
 }
 
 func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
-	se.ShapeStyle.Defaults()
-	// se.ShapeStyle.Font.Family = string(core.AppearanceSettings.Font)
-	// se.ShapeStyle.Font.Size = 1
-	se.ShapeStyle.Fill.Color = colors.Scheme.OnSurface
-	se.TextStyle.Defaults()
-	// se.TextStyle.Font.Family = string(core.AppearanceSettings.Font)
-	// se.TextStyle.Font.Size.Dp(16)
-	se.TextStyle.Fill.Color = colors.Scheme.OnSurface
-	se.PathStyle.Defaults()
-	// se.PathStyle.Font.Family = string(core.AppearanceSettings.Font)
-	// se.PathStyle.Font.Size.Dp(16)
-	se.PathStyle.Stroke.Color = colors.Scheme.OnSurface
-	se.LineStyle.Defaults()
-	// se.LineStyle.Font.Family = string(core.AppearanceSettings.Font)
-	// se.LineStyle.Font.Size.Dp(16)
-	se.LineStyle.Stroke.Color = colors.Scheme.OnSurface
-	se.GridDisp = true
-	se.SnapTol = 3
+	se.ShowGrid = true
 	se.SnapGrid = true
-	se.SnapGuide = true
+	se.SnapAlign = true
 	se.SnapNodes = true
-	home := core.SystemSettings.User.HomeDir
-	se.EnvVars = map[string]string{
-		"PATH": home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
-	}
+	se.SnapZone = 3
+	se.MetaData = true
 }
 
 func (se *SettingsData) Update() {
@@ -104,21 +72,65 @@ func (se *SettingsData) Update() {
 }
 
 func (se *SettingsData) Save() error {
+	SavePaths()
+	SaveSplits()
 	return tomlx.Save(se, se.Filename())
 }
 
 func (se *SettingsData) Open() error {
+	OpenPaths()
+	OpenSplits()
 	return tomlx.Open(se, se.Filename())
 }
 
-// Apply settings updates things according with settings
-func (se *SettingsData) Apply() { //types:add
-	for k, v := range se.EnvVars {
-		os.Setenv(k, v)
-	}
+////////  Recents
+
+var (
+	// RecentPaths is a slice of recent file paths
+	RecentPaths core.FilePaths
+
+	// SavedPathsFilename is the name of the saved file paths file in Cogent Code data directory
+	SavedPathsFilename = "saved-paths.json"
+)
+
+// SavePaths saves the active SavedPaths to settings dir
+func SavePaths() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SavedPathsFilename)
+	RecentPaths.Save(pnm)
 }
 
-// EditSplits opens the SplitsView editor to customize saved splitter settings
-func (se *SettingsData) EditSplits() {
-	SplitsView(&AvailableSplits)
+// OpenPaths loads the active SavedPaths from settings dir
+func OpenPaths() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SavedPathsFilename)
+	RecentPaths.Open(pnm)
+}
+
+////////   Splits
+
+var (
+	// Splits are the proportions for main window splits, saved and loaded
+	Splits = [3]float32{0.15, 0.60, 0.25}
+
+	// SplitsSettingsFilename is the name of the settings file in App prefs
+	// directory for saving / loading the current splits
+	SplitsSettingsFilename = "splits-settings.json"
+)
+
+// OpenSplits opens last saved splits from settings file.
+func OpenSplits() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
+	if !errors.Log1(fsx.FileExists(pnm)) {
+		return
+	}
+	jsonx.Open(&Splits, pnm)
+}
+
+// SaveSplits saves named splits to a json-formatted file.
+func SaveSplits() {
+	pdir := core.TheApp.AppDataDir()
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
+	jsonx.Save(&Splits, pnm)
 }

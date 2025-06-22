@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/reflectx"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
@@ -221,26 +222,30 @@ const (
 	MarkerCust
 )
 
-//////////////////////////////////////////////////////////////////////////
-//  AllMarkers Collection
+////////  AllMarkers Collection
 
-// AllMarkersXMLMap contains all of the available Markers as XML
-// source.  It is initialized from StdMarkersMap
-var AllMarkersXMLMap map[string]string
+var (
+	// AllMarkersXMLMap contains all of the available Markers as XML
+	// source.  It is initialized from StdMarkersMap
+	AllMarkersXMLMap map[string]string
 
-// AllMarkersSVGMap contains all of the available Markers
-// as *svg.Marker elements that have been converted from
-// the XML source.
-var AllMarkersSVGMap map[string]*svg.Marker
+	// AllMarkersSVGMap contains all of the available Markers
+	// as *svg.Marker elements that have been converted from
+	// the XML source.
+	AllMarkersSVGMap map[string]*svg.Marker
 
-// AllMarkerNames contains all of the available marker names.
-// it is initialized from StdMarkerNames.
-var AllMarkerNames []string
+	// AllMarkerNames contains all of the available marker names.
+	// it is initialized from StdMarkerNames.
+	AllMarkerNames []string
 
-// AllMarkerIcons contains all of the available marker names as
-// Icons -- for chooser.  All names have marker- prefix in addition
-// to regular marker names.
-var AllMarkerIcons []icons.Icon
+	// AllMarkerItems contains all of the available marker names for chooser.
+	// All names have marker- prefix in addition to regular marker names.
+	AllMarkerItems []core.ChooserItem
+
+	// markerIconsInited records whether the dashes have been initialized into
+	// Icons for use in selectors: see MarkerIconsInit()
+	markerIconsInited = false
+)
 
 func init() {
 	AllMarkersXMLMap = make(map[string]string, len(StandardMarkersMap))
@@ -260,68 +265,71 @@ func MarkerNameToIcon(nm string) icons.Icon {
 	return icons.Icon("marker-" + nm)
 }
 
-// MarkerIconsInited records whether the dashes have been initialized into
-// Icons for use in selectors: see MarkerIconsInit()
-var MarkerIconsInited = false
-
 // MarkerIconsInit ensures that the markers have been turned into icons
 // for selectors, with marker- preix.  Call this after startup,
 // when configuring a gui element that needs it.
 // It also initializes the AllMarkersSVGMap.
 func MarkerIconsInit() {
-	if MarkerIconsInited {
+	if markerIconsInited {
 		return
-	}
-
-	AllMarkerIcons = make([]icons.Icon, len(AllMarkerNames))
-	for i, v := range AllMarkerNames {
-		AllMarkerIcons[i] = icons.Icon("marker-" + v)
 	}
 
 	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
 
-	// for k, v := range AllMarkersXMLMap {
-	// 	empty := true
-	// 	if v != "" {
-	// 		mk := NewMarkerFromXML(k, v)
-	// 		if mk == nil { // badness
-	// 			continue
-	// 		}
-	// 		empty = false
-	// 		AllMarkersSVGMap[k] = mk
-	// 	}
-	// 	ic := &core.Icon{}
-	// 	ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
-	// 	ic.Styles.Min.X.Ch(6)
-	// 	ic.Styles.Min.Y.Em(2)
-	// 	ic.SVG.Root.ViewBox.Size = math32.Vec2(1, 1)
-	// 	var p *svg.Path
-	// 	lk := strings.ToLower(k)
-	// 	start := true
-	// 	switch {
-	// 	case empty:
-	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
-	// 	case strings.Contains(lk, "end"):
-	// 		start = false
-	// 		p = svg.NewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
-	// 	case strings.Contains(lk, "start"):
-	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
-	// 	default:
-	// 		p = svg.NewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
-	// 	}
-	// 	p.SetProp("stroke-width", units.Pw(5))
-	// 	if !empty {
-	// 		mk := NewMarker(&ic.SVG, k, 0)
-	// 		MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
-	// 		if start {
-	// 			p.SetProp("marker-start", svg.NameToURL(k))
-	// 		} else {
-	// 			p.SetProp("marker-end", svg.NameToURL(k))
-	// 		}
-	// 	}
-	// 	// svg.CurIconSet[ic.Nm] = ic
-	// }
-	MarkerIconsInited = true
+	for _, nm := range StandardMarkerNames {
+		src := AllMarkersXMLMap[nm]
+		empty := true
+		if src != "" {
+			mk := NewMarkerFromXML(nm, src)
+			if mk == nil { // badness
+				continue
+			}
+			empty = false
+			AllMarkersSVGMap[nm] = mk
+		}
+		sv := svg.NewSVG(math32.Vec2(128, 128))
+		sv.Root.ViewBox.Size = math32.Vec2(12, 12)
+		var p *svg.Path
+		lnm := strings.ToLower(nm)
+		start := true
+		switch {
+		case empty:
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 3 6 L 9 6")
+		case strings.Contains(lnm, "end"):
+			start = false
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 1 6 L 11 6")
+		case strings.Contains(lnm, "start"):
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 1 6 L 11 6")
+		default:
+			p = svg.NewPath(sv.Root)
+			p.SetData("M 6 6 L 7 6")
+		}
+		p.SetProperty("stroke-width", "1dp")
+		p.SetProperty("stroke", "#000000")
+		if !empty {
+			mk := NewMarker(sv, nm, 0)
+			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
+			if start {
+				p.SetProperty("marker-start", svg.NameToURL(nm))
+			} else {
+				p.SetProperty("marker-end", svg.NameToURL(nm))
+			}
+		}
+		icstr := icons.Icon(sv.XMLString())
+		chi := core.ChooserItem{Value: nm, Icon: icstr, Text: " "}
+		AllMarkerItems = append(AllMarkerItems, chi)
+
+		// debugging:
+		// os.MkdirAll("markers_svg", 0777)
+		// os.MkdirAll("markers_png", 0777)
+		// sv.SaveXML(filepath.Join("markers_svg", nm+".svg"))
+		// sv.SaveImage(filepath.Join("markers_png", nm+".png"))
+	}
+
+	markerIconsInited = true
 }
 
 //////////////////////////////////////////////////
@@ -427,10 +435,10 @@ var StandardMarkersMap = map[string]string{
     </marker>`,
 
 	"Arrow1Mstart": `<marker style="overflow:visible" id="Arrow1Mstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Mstart">
-      <path transform="scale(0.4) translate(10,0)" style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
+      <path transform="scale(0.4) translate(10,0)" style="fill-rule:nonzero;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
     </marker>`,
 	"Arrow1Mend": `<marker style="overflow:visible;" id="Arrow1Mend" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Mend">
-      <path transform="scale(0.4) rotate(180) translate(10,0)" style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
+      <path transform="scale(0.4) rotate(180) translate(10,0)" style="fill-rule:nonzero;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>
     </marker>`,
 
 	"Arrow1Sstart": `<marker style="overflow:visible" id="Arrow1Sstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Sstart">

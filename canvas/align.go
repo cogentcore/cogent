@@ -5,8 +5,6 @@
 package canvas
 
 import (
-	"image"
-
 	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -66,55 +64,55 @@ func (av *AlignView) Init() {
 			tree.AddChildAt(w, al.String(), func(w *core.Button) {
 				w.SetIcon(AlignIcons[al]).SetType(core.ButtonTonal).SetTooltip(al.Desc())
 				w.OnClick(func(e events.Event) {
-					av.Canvas.Align(av.Anchor, al)
+					av.Canvas.SVG.Align(av.Anchor, al)
 				})
 			})
 		}
 	})
 }
 
-/////////////////////////////////////////////////////////////////////////
-//  Actions
+////////  Actions
 
-func (vv *Canvas) Align(aa AlignAnchors, al Aligns) {
+func (sv *SVG) Align(aa AlignAnchors, al Aligns) {
 	astr := al.String()
 	switch al {
 	case AlignRightAnchor:
-		vv.AlignMaxAnchor(aa, math32.X, astr)
+		sv.AlignMaxAnchor(aa, math32.X, astr)
 	case AlignLeft:
-		vv.AlignMin(aa, math32.X, astr)
+		sv.AlignMin(aa, math32.X, astr)
 	case AlignCenter:
-		vv.AlignCenter(aa, math32.X, astr)
+		sv.AlignCenter(aa, math32.X, astr)
 	case AlignRight:
-		vv.AlignMax(aa, math32.X, astr)
+		sv.AlignMax(aa, math32.X, astr)
 	case AlignLeftAnchor:
-		vv.AlignMinAnchor(aa, math32.X, astr)
+		sv.AlignMinAnchor(aa, math32.X, astr)
 	case AlignBaselineHoriz:
-		vv.AlignMin(aa, math32.X, astr) // todo: should be baseline, not min
+		sv.AlignMin(aa, math32.X, astr) // todo: should be baseline, not min
 
 	case AlignBottomAnchor:
-		vv.AlignMaxAnchor(aa, math32.Y, astr)
+		sv.AlignMaxAnchor(aa, math32.Y, astr)
 	case AlignTop:
-		vv.AlignMin(aa, math32.Y, astr)
+		sv.AlignMin(aa, math32.Y, astr)
 	case AlignMiddle:
-		vv.AlignCenter(aa, math32.Y, astr)
+		sv.AlignCenter(aa, math32.Y, astr)
 	case AlignBottom:
-		vv.AlignMax(aa, math32.Y, astr)
+		sv.AlignMax(aa, math32.Y, astr)
 	case AlignTopAnchor:
-		vv.AlignMinAnchor(aa, math32.Y, astr)
+		sv.AlignMinAnchor(aa, math32.Y, astr)
 	case AlignBaselineVert:
-		vv.AlignMin(aa, math32.Y, astr) // todo: should be baseline, not min
+		sv.AlignMin(aa, math32.Y, astr) // todo: should be baseline, not min
 	}
+	sv.Canvas.ChangeMade()
+	sv.UpdateView()
 }
 
-// AlignAnchorBBox returns the bounding box for given type of align anchor
+// alignAnchorBBox returns the bounding box for given type of align anchor
 // and the anchor node if non-nil
-func (vv *Canvas) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
-	es := &vv.EditState
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
+func (sv *SVG) alignAnchorBBox(aa AlignAnchors) (math32.Box2, svg.Node) {
+	es := sv.EditState()
+	// svoff := sv.Root().BBox.Min
 	var an svg.Node
-	var bb image.Rectangle
+	var bb math32.Box2
 	switch aa {
 	case AlignFirst:
 		sl := es.SelectedList(false)
@@ -125,123 +123,78 @@ func (vv *Canvas) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
 	case AlignSelectBox:
-		bb = image.Rectangle{Min: es.DragSelectCurrentBBox.Min.ToPointFloor(), Max: es.DragSelectCurrentBBox.Max.ToPointCeil()}
+		bb = es.DragBBox
 	}
-	bb = bb.Sub(svoff)
+	// bb = bb.Sub(svoff)
 	return bb, an
 }
 
+// alignImpl does alignment
+func (sv *SVG) alignImpl(apos math32.Vector2, an svg.Node, useMax bool, dim math32.Dims, act string) {
+	es := sv.EditState()
+	if !es.HasSelected() {
+		return
+	}
+	sv.UndoSave(act, es.SelectedNamesString())
+	sc := math32.Vec2(1, 1)
+	odim := math32.OtherDim(dim)
+	for sn := range es.Selected {
+		if sn == an {
+			continue
+		}
+		sng := sn.AsNodeBase()
+		bb := sng.BBox
+		var del math32.Vector2
+		if useMax {
+			del = apos.Sub(bb.Max)
+		} else {
+			del = apos.Sub(bb.Min)
+		}
+		del.SetDim(odim, 0)
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, bb.Min))
+	}
+}
+
 // AlignMin aligns to min coordinate (Left, Top) in bbox
-func (vv *Canvas) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
-	es := &vv.EditState
-	if !es.HasSelected() {
+func (sv *SVG) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
+	if !sv.EditState().HasSelected() {
 		return
 	}
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
-	sv.UndoSave(act, es.SelectedNamesString())
-	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.Vec2(1, 1)
-	odim := math32.OtherDim(dim)
-	for sn := range es.Selected {
-		if sn == an {
-			continue
-		}
-		sng := sn.AsNodeBase()
-		bb := sng.BBox.Sub(svoff)
-		del := math32.FromPoint(abb.Min.Sub(bb.Min))
-		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
-	}
-	sv.UpdateView(true)
-	vv.ChangeMade()
+	abb, an := sv.alignAnchorBBox(aa)
+	sv.alignImpl(abb.Min, an, false, dim, act)
 }
 
-func (vv *Canvas) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
-	es := &vv.EditState
-	if !es.HasSelected() {
+func (sv *SVG) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+	if !sv.EditState().HasSelected() {
 		return
 	}
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
-	sv.UndoSave(act, es.SelectedNamesString())
-	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.Vec2(1, 1)
-	odim := math32.OtherDim(dim)
-	for sn := range es.Selected {
-		if sn == an {
-			continue
-		}
-		sng := sn.AsNodeBase()
-		bb := sng.BBox.Sub(svoff)
-		del := math32.FromPoint(abb.Max.Sub(bb.Min))
-		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
-	}
-	sv.UpdateView(true)
-	vv.ChangeMade()
+	abb, an := sv.alignAnchorBBox(aa)
+	sv.alignImpl(abb.Max, an, false, dim, act)
 }
 
-func (vv *Canvas) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
-	es := &vv.EditState
-	if !es.HasSelected() {
+func (sv *SVG) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
+	if !sv.EditState().HasSelected() {
 		return
 	}
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
-	sv.UndoSave(act, es.SelectedNamesString())
-	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.Vec2(1, 1)
-	odim := math32.OtherDim(dim)
-	for sn := range es.Selected {
-		if sn == an {
-			continue
-		}
-		sng := sn.AsNodeBase()
-		bb := sng.BBox.Sub(svoff)
-		del := math32.FromPoint(abb.Max.Sub(bb.Max))
-		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
-	}
-	sv.UpdateView(true)
-	vv.ChangeMade()
+	abb, an := sv.alignAnchorBBox(aa)
+	sv.alignImpl(abb.Max, an, true, dim, act)
 }
 
-func (vv *Canvas) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
-	es := &vv.EditState
-	if !es.HasSelected() {
+func (sv *SVG) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+	if !sv.EditState().HasSelected() {
 		return
 	}
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
-	sv.UndoSave(act, es.SelectedNamesString())
-	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.Vec2(1, 1)
-	odim := math32.OtherDim(dim)
-	for sn := range es.Selected {
-		if sn == an {
-			continue
-		}
-		sng := sn.AsNodeBase()
-		bb := sng.BBox.Sub(svoff)
-		del := math32.FromPoint(abb.Min.Sub(bb.Max))
-		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
-	}
-	sv.UpdateView(true)
-	vv.ChangeMade()
+	abb, an := sv.alignAnchorBBox(aa)
+	sv.alignImpl(abb.Min, an, true, dim, act)
 }
 
-func (vv *Canvas) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
-	es := &vv.EditState
+func (sv *SVG) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
+	es := sv.EditState()
 	if !es.HasSelected() {
 		return
 	}
-	sv := vv.SVG()
-	svoff := sv.Root().BBox.Min
-	sv.UndoSave(act, es.SelectedNamesString())
-	abb, an := vv.AlignAnchorBBox(aa)
-	ctr := math32.FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
+	abb, an := sv.alignAnchorBBox(aa)
+	ctr := abb.Min.Add(abb.Max).MulScalar(0.5)
 	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
@@ -249,40 +202,32 @@ func (vv *Canvas) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 			continue
 		}
 		sng := sn.AsNodeBase()
-		bb := sng.BBox.Sub(svoff)
-		nctr := math32.FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
+		bb := sng.BBox // .Sub(svoff)
+		nctr := bb.Min.Add(bb.Max).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
+		sn.ApplyTransform(sv.SVG, sng.DeltaTransform(del, sc, 0, bb.Min))
 	}
-	sv.UpdateView(true)
-	vv.ChangeMade()
+	sv.UpdateView()
+	sv.Canvas.ChangeMade()
 }
 
 // GatherAlignPoints gets all the potential points of alignment for objects not
 // in selection group
 func (sv *SVG) GatherAlignPoints() {
 	es := sv.EditState()
-	if !es.HasSelected() {
-		return
-	}
-
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
-		es.AlignPts[ap] = make([]math32.Vector2, 0)
+		es.AlignPoints[ap] = make([]math32.Vector2, 0)
 	}
-
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root() {
-			return tree.Continue
-		}
-		if NodeIsLayer(n) {
+		if n == sv.Root() || NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if _, issel := es.Selected[n]; issel {
 			return tree.Break // go no further into kids
 		}
 		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			es.AlignPts[ap] = append(es.AlignPts[ap], ap.PointRect(nb.BBox))
+			es.AlignPoints[ap] = append(es.AlignPoints[ap], ap.PointBox(nb.BBox))
 		}
 		return tree.Continue
 	})
