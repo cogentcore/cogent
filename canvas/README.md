@@ -36,12 +36,6 @@ $ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 
 ## TODO
 
-Bugs:
-
-* images in svg are not clipping to bounds -- renderer should do this in pimage.
-
-* still getting zero slider not sending change in setting a black color
-
 ### Simpler, near term
 
 * ArcTo support in node editor, and arc tool.

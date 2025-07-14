@@ -192,7 +192,7 @@ func (cv *Code) Init() {
 		tree.AddChildAt(w, "sb-text", func(w *core.Text) {
 			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
 			w.Styler(func(s *styles.Style) {
-				s.Min.X.Ch(200) // todo: should use Pw(100) -- need that to work
+				s.Min.X.Ch(80) // todo: should use Pw(100) -- need that to work
 				s.Min.Y.Em(1.0)
 				s.Text.TabSize = 4
 			})
