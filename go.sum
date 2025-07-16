@@ -1,5 +1,5 @@
-cogentcore.org/core v0.3.12-0.20250619214718-68bb6b4c1b52 h1:gBs0+Yl+A+12xmxtW8bFAuoXRF88pgstPfwS5r6jgyc=
-cogentcore.org/core v0.3.12-0.20250619214718-68bb6b4c1b52/go.mod h1:A82XMVcq3XOiG9TpT+rt7/iYD5Eu87bxxmTk8O7F4cM=
+cogentcore.org/core v0.3.12 h1:wniqGY3wB+xDcJ3KfobR7VutWeiZafSQkjnbOW4nAXQ=
+cogentcore.org/core v0.3.12/go.mod h1:Bwg3msVxqnfwvmQjpyJbyHMeox3UAcBcBitkGEdSYSE=
 cogentcore.org/lab v0.1.1 h1:OyMgM9efChIM0jrq0QwvYFQZyJ5e19PCmJgwGCnofps=
 cogentcore.org/lab v0.1.1/go.mod h1:0LIS8bOxh7Mq99aH9zhDHRC+5luHESsz8aiFG0ZlLe0=
 github.com/Bios-Marcel/wastebasket/v2 v2.0.3 h1:TkoDPcSqluhLGE+EssHu7UGmLgUEkWg7kNyHyyJ3Q9g=
@@ -46,8 +46,8 @@ github.com/cogentcore/readline v0.1.3 h1:tYmjP3XHvsGwhsDLkAp+vBhkERmLFENZfftyPOR
 github.com/cogentcore/readline v0.1.3/go.mod h1:IHVtJHSKXspK7CMg3OC/bbPEXxO++dFlug/vsPktvas=
 github.com/cogentcore/webgpu v0.23.0 h1:hrjnnuDZAPSRsqBjQAsJOyg2COGztIkBbxL87r0Q9KE=
 github.com/cogentcore/webgpu v0.23.0/go.mod h1:ciqaxChrmRRMU1SnI5OE12Cn3QWvOKO+e5nSy+N9S1o=
-github.com/cogentcore/yaegi v0.0.0-20240724064145-e32a03faad56 h1:Fz1uHiFCHnijFcMXzn36KLamcx5q4pxoR5rKCrcXIcQ=
-github.com/cogentcore/yaegi v0.0.0-20240724064145-e32a03faad56/go.mod h1:+MGpZ0srBmeJ7aaOLTdVss8WLolt0/y/plVHLpxgd3A=
+github.com/cogentcore/yaegi v0.0.0-20250622201820-b7838bdd95eb h1:vXYqPLO36pRyyk1cVILVlk+slDI+Q7N4bgeWlh1sjA0=
+github.com/cogentcore/yaegi v0.0.0-20250622201820-b7838bdd95eb/go.mod h1:+MGpZ0srBmeJ7aaOLTdVss8WLolt0/y/plVHLpxgd3A=
 github.com/corentings/chess/v2 v2.0.8 h1:QWsd8AD+7aUwCWPEVLZ5K/nQrztkCQnYaBqSLDHLgzA=
 github.com/corentings/chess/v2 v2.0.8/go.mod h1:JhWYDbjY81/7NECXrLzz4g2r9taaMEXvyqS4gYZciVE=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
