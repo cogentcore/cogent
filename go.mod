@@ -3,14 +3,14 @@ module cogentcore.org/cogent
 go 1.23.4
 
 require (
-	cogentcore.org/core v0.3.12-0.20250619214718-68bb6b4c1b52
-	cogentcore.org/lab v0.1.1
+	cogentcore.org/core v0.3.12
+	cogentcore.org/lab v0.1.2
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/cogentcore/yaegi v0.0.0-20240724064145-e32a03faad56
+	github.com/cogentcore/yaegi v0.0.0-20250622201820-b7838bdd95eb
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
@@ -78,15 +78,15 @@ require (
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/image v0.25.0 // indirect
-	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
-	golang.org/x/tools v0.29.0 // indirect
+	golang.org/x/mod v0.25.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/tools v0.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
