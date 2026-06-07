@@ -161,7 +161,7 @@ func (tv *Tree) LayerToggleLock() { //types:add
 		tv.LayerClearCurrent()
 		np = "true"
 	}
-	sn.AsTree().Properties["insensitive"] = np
+	sn.AsTree().SetProperty("insensitive", np)
 	cv.UpdateLayers()
 }
 
@@ -176,7 +176,7 @@ func (tv *Tree) LayerToggleVis() { //types:add
 	} else {
 		np = "display:inline"
 	}
-	sn.AsTree().Properties["style"] = np
+	sn.AsTree().SetProperty("style", np)
 	cv.UpdateLayers()
 }
 

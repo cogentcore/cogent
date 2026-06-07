@@ -129,7 +129,7 @@ func (sv *SVG) DistributeProps() {
 					}
 					if _, has := nb.Properties[k]; !has {
 						gotSome = true
-						nb.Properties[k] = v
+						nb.SetProperty(k, v)
 					}
 				}
 			}
