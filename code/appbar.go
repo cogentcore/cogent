@@ -5,6 +5,8 @@
 package code
 
 import (
+	"image"
+
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -32,7 +34,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Separator) {})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
+		w.SetText("Open recent").SetMenu(func(m *core.Scene, pos image.Point) {
 			for _, rp := range RecentPaths {
 				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
 					cv.OpenRecent(core.Filename(rp))
@@ -120,13 +122,13 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Command").SetShortcut(KeyExecCmd.Chord())
-		w.SetMenu(func(m *core.Scene) {
+		w.SetMenu(func(m *core.Scene, pos image.Point) {
 			ec := ExecCmds(cv)
 			for _, cc := range ec {
 				cc := cc
 				cat := cc[0]
 				icon := CommandIcons[cat]
-				core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene) {
+				core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene, pos image.Point) {
 					nc := len(cc)
 					for i := 1; i < nc; i++ {
 						cm := cc[i]
@@ -143,9 +145,9 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Separator) {})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Splits").SetMenu(func(m *core.Scene) {
+		w.SetText("Splits").SetMenu(func(m *core.Scene, pos image.Point) {
 			core.NewButton(m).SetText("Set view").
-				SetMenu(func(mm *core.Scene) {
+				SetMenu(func(mm *core.Scene, pos image.Point) {
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
 						mb := core.NewButton(mm).SetText(sp)
@@ -158,7 +160,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 					}
 				})
 			core.NewFuncButton(m).SetFunc(cv.SplitsSaveAs).SetText("Save as").SetIcon(icons.SaveAs)
-			core.NewButton(m).SetText("Save").SetIcon(icons.Save).SetMenu(func(mm *core.Scene) {
+			core.NewButton(m).SetText("Save").SetIcon(icons.Save).SetMenu(func(mm *core.Scene, pos image.Point) {
 				for _, sp := range AvailableSplitNames {
 					sn := SplitName(sp)
 					mb := core.NewButton(mm).SetText(sp)
@@ -175,8 +177,8 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 	})
 }
 
-func (cv *Code) OverflowMenu(m *core.Scene) {
-	core.NewButton(m).SetText("File").SetMenu(func(m *core.Scene) {
+func (cv *Code) OverflowMenu(m *core.Scene, pos image.Point) {
+	core.NewButton(m).SetText("File").SetMenu(func(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(cv.NewProject).SetIcon(icons.NewWindow).SetKey(keymap.New)
 		core.NewFuncButton(m).SetFunc(cv.NewFile).SetText("New file").SetIcon(icons.NewWindow)
 
@@ -200,7 +202,7 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 
 	})
 
-	core.NewButton(m).SetText("Edit").SetMenu(func(m *core.Scene) {
+	core.NewButton(m).SetText("Edit").SetMenu(func(m *core.Scene, pos image.Point) {
 		core.NewButton(m).SetText("Paste history").SetIcon(icons.Paste).
 			SetKey(keymap.PasteHist)
 
@@ -244,7 +246,7 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 		core.NewFuncButton(m).SetFunc(cv.SpacesToTabs).SetIcon(icons.TabMove)
 	})
 
-	core.NewButton(m).SetText("View").SetMenu(func(m *core.Scene) {
+	core.NewButton(m).SetText("View").SetMenu(func(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(cv.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
 			SetShortcut(KeyPrevPanel.Chord())
 		core.NewFuncButton(m).SetFunc(cv.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
@@ -259,7 +261,7 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 		core.NewFuncButton(m).SetFunc(cv.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
 	})
 
-	core.NewButton(m).SetText("Command").SetMenu(func(m *core.Scene) {
+	core.NewButton(m).SetText("Command").SetMenu(func(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(cv.DebugAttach).SetText("Debug attach").SetIcon(icons.Debug)
 		core.NewFuncButton(m).SetFunc(cv.VCSUpdateAll).SetText("VCS update all").SetIcon(icons.Update)
 

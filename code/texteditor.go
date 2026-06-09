@@ -188,7 +188,7 @@ func ConfigOutputTextEditor(ed *textcore.Editor) {
 }
 
 // ContextMenu builds the text editor context menu
-func (ed *TextEditor) ContextMenu(m *core.Scene) {
+func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 	core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
 		SetKey(keymap.Copy).SetState(!ed.HasSelection(), states.Disabled).
 		OnClick(func(e events.Event) {
@@ -219,7 +219,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
 	if fn != nil {
 		fn.SelectEvent(events.SelectOne)
-		fn.VCSContextMenu(m)
+		fn.VCSContextMenu(m, pos)
 	}
 
 	if ed.Code.CurDebug() != nil {

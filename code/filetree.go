@@ -5,6 +5,7 @@
 package code
 
 import (
+	"image"
 	"log"
 	"path/filepath"
 
@@ -90,7 +91,7 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	}
 }
 
-func (fn *FileNode) ContextMenu(m *core.Scene) {
+func (fn *FileNode) ContextMenu(m *core.Scene, pos image.Point) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
 		core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).

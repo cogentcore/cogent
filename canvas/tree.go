@@ -6,6 +6,7 @@ package canvas
 
 import (
 	"fmt"
+	"image"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/colors"
@@ -180,7 +181,7 @@ func (tv *Tree) LayerToggleVis() { //types:add
 	cv.UpdateLayers()
 }
 
-func (tv *Tree) contextMenu(m *core.Scene) {
+func (tv *Tree) contextMenu(m *core.Scene, pos image.Point) {
 	sn := tv.SyncNode
 	tri := tv.This.(core.Treer)
 	isLay := NodeIsLayer(sn)

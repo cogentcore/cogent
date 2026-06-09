@@ -7,6 +7,7 @@ package canvas
 import (
 	"bytes"
 	"fmt"
+	"image"
 	"strings"
 
 	"cogentcore.org/cogent/canvas/cicons"
@@ -554,7 +555,7 @@ func (sv *SVG) EditNode(n tree.Node) { //types:add
 	d.RunWindowDialog(sv)
 }
 
-func (sv *SVG) contextMenu(m *core.Scene) {
+func (sv *SVG) contextMenu(m *core.Scene, pos image.Point) {
 	es := sv.EditState()
 	itm := es.FirstSelected()
 	if itm != nil {

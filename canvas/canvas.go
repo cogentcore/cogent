@@ -445,14 +445,14 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 			})
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
+		w.SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene, pos image.Point) {
 			core.NewFuncButton(m).SetFunc(cv.PromptPhysicalSize).SetText("Set size").SetIcon(icons.FormatSize)
 			core.NewFuncButton(m).SetFunc(cv.ResizeToContents).SetIcon(icons.Resize)
 		})
 	})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
+		w.SetText("Open recent").SetMenu(func(m *core.Scene, pos image.Point) {
 			for _, rp := range RecentPaths {
 				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
 					cv.OpenDrawingCheck(core.Filename(rp))
@@ -478,7 +478,7 @@ func (cv *Canvas) MakeToolbar(p *tree.Plan) {
 	})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
+		w.SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene, pos image.Point) {
 			core.NewFuncButton(m).SetFunc(cv.ExportPNG).SetIcon(icons.Image)
 			core.NewFuncButton(m).SetFunc(cv.ExportPDF).SetIcon(icons.PictureAsPdf)
 		})
