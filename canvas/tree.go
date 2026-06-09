@@ -6,6 +6,7 @@ package canvas
 
 import (
 	"fmt"
+	"image"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/colors"
@@ -161,7 +162,7 @@ func (tv *Tree) LayerToggleLock() { //types:add
 		tv.LayerClearCurrent()
 		np = "true"
 	}
-	sn.AsTree().Properties["insensitive"] = np
+	sn.AsTree().SetProperty("insensitive", np)
 	cv.UpdateLayers()
 }
 
@@ -176,11 +177,11 @@ func (tv *Tree) LayerToggleVis() { //types:add
 	} else {
 		np = "display:inline"
 	}
-	sn.AsTree().Properties["style"] = np
+	sn.AsTree().SetProperty("style", np)
 	cv.UpdateLayers()
 }
 
-func (tv *Tree) contextMenu(m *core.Scene) {
+func (tv *Tree) contextMenu(m *core.Scene, pos image.Point) {
 	sn := tv.SyncNode
 	tri := tv.This.(core.Treer)
 	isLay := NodeIsLayer(sn)

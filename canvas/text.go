@@ -68,7 +68,7 @@ func (cv *Canvas) SetTextProperties(tps map[string]any) {
 	cv.setPropsOnSelected("SetTextProperties", "", func(nd svg.Node) {
 		nb := nd.AsNodeBase()
 		for k, v := range tps {
-			nb.Properties[k] = v
+			nb.SetProperty(k, v)
 		}
 	})
 }

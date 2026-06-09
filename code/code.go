@@ -9,6 +9,7 @@ package code
 
 import (
 	"fmt"
+	"image"
 	"io/fs"
 	"log"
 	"log/slog"
@@ -223,7 +224,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 0)
 			})
-			w.Menu = func(m *core.Scene) {
+			w.Menu = func(m *core.Scene, pos image.Point) {
 				cv.EditorButtonMenu(i, m)
 			}
 			w.OnClick(func(e events.Event) {

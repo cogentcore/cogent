@@ -34,13 +34,13 @@ func (l *Layer) ToNode(n tree.Node) {
 	nb := n.AsTree()
 	nb.Name = l.Name
 	if l.Vis {
-		nb.Properties["style"] = ""
-		nb.Properties["display"] = "inline"
+		nb.SetProperty("style", "")
+		nb.SetProperty("display", "inline")
 	} else {
-		nb.Properties["style"] = "display:none"
-		nb.Properties["display"] = "none"
+		nb.SetProperty("style", "display:none")
+		nb.SetProperty("display", "none")
 	}
-	nb.Properties["insensitive"] = l.Lock
+	nb.SetProperty("insensitive", l.Lock)
 }
 
 // Layers is the list of all layers

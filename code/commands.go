@@ -7,6 +7,7 @@ package code
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"log"
 	"os"
 	"os/exec"
@@ -804,18 +805,18 @@ func (cm *Commands) ViewStandard() { //types:add
 var CustomCommandsChanged = false
 
 // CommandMenuLines returns a menu function for commands for Lines.
-func (cv *Code) CommandMenuLines(ln *lines.Lines) func(mm *core.Scene) {
+func (cv *Code) CommandMenuLines(ln *lines.Lines) func(mm *core.Scene, pos image.Point) {
 	return cv.CommandMenu(ln.FileInfo().Known, GetVCSRepo(ln), ln.Filename())
 }
 
 // CommandMenuFileNode returns a menu function for commands for FileNode.
-func (cv *Code) CommandMenuFileNode(fn *filetree.Node) func(mm *core.Scene) {
+func (cv *Code) CommandMenuFileNode(fn *filetree.Node) func(mm *core.Scene, pos image.Point) {
 	repo, _ := fn.Repo()
 	return cv.CommandMenu(fn.Info.Known, repo, string(fn.Filepath))
 }
 
 // CommandMenu returns a menu function for commands for given language and vcs name
-func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) func(mm *core.Scene) {
+func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) func(mm *core.Scene, pos image.Point) {
 	vcstype := cv.VersionControl()
 	if repo != nil {
 		vcstype = repo.Type()
@@ -826,7 +827,7 @@ func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) fu
 	if hsz > 0 {
 		lastCmd = string((cv.CmdHistory)[hsz-1])
 	}
-	return func(mm *core.Scene) {
+	return func(mm *core.Scene, pos image.Point) {
 		for _, cc := range cmds {
 			cc := cc
 			n := len(cc)
@@ -836,7 +837,7 @@ func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) fu
 			cmdCat := cc[0]
 			icon := CommandIcons[cmdCat]
 			cb := core.NewButton(mm).SetText(cmdCat).SetType(core.ButtonMenu).SetIcon(icon)
-			cb.SetMenu(func(m *core.Scene) {
+			cb.SetMenu(func(m *core.Scene, pos image.Point) {
 				for ii := 1; ii < n; ii++ {
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
