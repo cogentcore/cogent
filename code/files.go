@@ -282,6 +282,9 @@ func (cv *Code) RevertActiveView() { //types:add
 // CloseActiveView closes the buffer associated with active view.
 func (cv *Code) CloseActiveView() { //types:add
 	tv := cv.ActiveEditor()
+	if tv.Lines == nil {
+		return
+	}
 	fpath := tv.Lines.Filename()
 	tv.Close(func(canceled bool) {
 		if canceled {

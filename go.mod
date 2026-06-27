@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.25.6
 
 require (
-	cogentcore.org/core v0.3.36-0.20260612144634-1bad52409d9d
-	cogentcore.org/lab v0.1.13
+	cogentcore.org/core v0.3.36
+	cogentcore.org/lab v0.1.15
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.23.0
@@ -28,7 +28,6 @@ require (
 )
 
 require (
-	codeberg.org/go-pdf/fpdf v0.11.0 // indirect
 	github.com/Bios-Marcel/wastebasket/v2 v2.0.3 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/adrg/strutil v0.3.1 // indirect
@@ -46,7 +45,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/ericchiang/css v1.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1.0.20260406072232-3ac4aa2bb164 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -94,7 +92,4 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/knuth v0.5.4 // indirect
-	modernc.org/token v1.1.0 // indirect
-	star-tex.org/x/tex v0.7.1 // indirect
 )
