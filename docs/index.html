@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cogent Apps</title>
+  <meta name="description"
+    content="Apps built with Cogent Core, a cross-platform framework for building powerful, fast, elegant 2D and 3D apps" />
+  <meta property="og:title" content="Cogent Apps" />
+  <meta property="og:description"
+    content="Apps built with Cogent Core, a cross-platform framework for building powerful, fast, elegant 2D and 3D apps" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/cogent/icons/512.png" />
+  <meta property="og:site_name" content="Cogent Apps" />
+  <!-- Go import vanity URL: makes cogentcore.org/cogent[/...] resolvable by the go command. -->
+  <meta name="go-import" content="cogentcore.org/cogent git https://github.com/cogentcore/cogent">
+  <meta name="go-source"
+    content="cogentcore.org/cogent https://github.com/cogentcore/cogent https://github.com/cogentcore/cogent/tree/main{/dir} https://github.com/cogentcore/cogent/blob/main{/dir}/{file}#L{line}">
+  <link rel="icon" type="image/svg+xml" href="/cogent/icon.svg" />
+  <link rel="apple-touch-icon" href="/cogent/icons/192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --link: #005bc0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121316;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --link: #adc6ff;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 4rem 1.5rem;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans', system-ui, sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    main {
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 1.5rem;
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+      font-weight: 700;
+    }
+
+    ul {
+      margin: 0 0 2rem;
+      padding-left: 1.25rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      font-size: 1.125rem;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Cogent Apps</h1>
+    <ul>
+      <li><a href="https://cogentcore.org/cogent/code" target="_blank" rel="noopener noreferrer">Cogent Code</a></li>
+      <li><a href="https://cogentcore.org/cogent/canvas" target="_blank" rel="noopener noreferrer">Cogent Canvas</a></li>
+      <li><a href="https://cogentcore.org/cogent/chess" target="_blank" rel="noopener noreferrer">Cogent Chess</a></li>
+      <li><a href="https://cogentcore.org/cogent/marbles" target="_blank" rel="noopener noreferrer">Cogent Marbles</a></li>
+    </ul>
+    <p>See other Cogent Apps at <a href="https://github.com/cogentcore/cogent" target="_blank" rel="noopener noreferrer">github.com/cogentcore/cogent</a></p>
+  </main>
+</body>
+
+</html>
