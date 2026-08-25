@@ -42,8 +42,8 @@ jobs:
       - name: Install Core
         run: go install cogentcore.org/core@main && core setup
 
-      - name: Build Docs
-        run: core build web -dir docs -o static -vanity-url cogentcore.org/cogent -github-vanity-repository cogentcore/cogent
+      - name: Copy landing page
+        run: mkdir -p static && cp -r docs/. static/ && cp docs/index.html static/404.html
 
       - name: Build Code
         run: core build web -dir code/cmd/cogentcode -o static/code
