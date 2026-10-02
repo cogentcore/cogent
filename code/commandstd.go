@@ -238,9 +238,9 @@ var StandardCommands = Commands{
 		Desc: "git diff -- see changes since last checkin",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
-			Args: []string{"diff"}}},
+			Args: []string{"diff", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm, Hilight: fileinfo.Diff},
+		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm, Hilight: fileinfo.Diff},
 
 	{Cat: "Git", Name: "Log",
 		Desc: "git log",
