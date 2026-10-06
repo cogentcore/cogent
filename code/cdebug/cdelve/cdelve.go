@@ -644,7 +644,8 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*cdebug.Frame, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.Stacktrace(int64(goroutineID), depth, api.StacktraceSimple, nil)
+	// note: second 0 is "skip" arg
+	ds, err := gd.dlv.Stacktrace(int64(goroutineID), depth, 0, api.StacktraceSimple, nil)
 	gd.LogErr(err)
 	return gd.cvtStack(ds, goroutineID), err
 }
