@@ -481,8 +481,7 @@ func cursorWordPos(tv *TextEditor) (textpos.Pos, bool) {
 }
 
 // GotoDefinition jumps to the definition of the symbol at the cursor,
-// using the active language backend. The request runs on the UI
-// goroutine with a bounded timeout, like the symbols panel lookups.
+// using the active language backend.
 func (cv *Code) GotoDefinition() { //types:add
 	tv := cv.ActiveEditor()
 	if tv == nil || tv.Lines == nil {
@@ -519,7 +518,6 @@ func (cv *Code) GotoDefinition() { //types:add
 
 // FindReferences lists all references to the symbol at the cursor,
 // using the active language backend, in a menu for selection.
-// The request runs on the UI goroutine with a bounded timeout.
 func (cv *Code) FindReferences() { //types:add
 	tv := cv.ActiveEditor()
 	if tv == nil || tv.Lines == nil {

@@ -109,9 +109,7 @@ type Code struct {
 }
 
 func init() {
-	// TODO(URLHandler):
-	// core.URLHandler = URLHandler
-	// paint.TextLinkHandler = TextLinkHandler
+	highlighting.UseParse = true
 }
 
 func (cv *Code) Init() {
