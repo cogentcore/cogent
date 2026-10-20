@@ -1,7 +1,7 @@
 codeberg.org/go-pdf/fpdf v0.11.1 h1:U8+coOTDVLxHIXZgGvkfQEi/q0hYHYvEHFuGNX2GzGs=
 codeberg.org/go-pdf/fpdf v0.11.1/go.mod h1:Y0DGRAdZ0OmnZPvjbMp/1bYxmIPxm0ws4tfoPOc4LjU=
-cogentcore.org/core v0.3.46-0.20261017105241-627c0c862160 h1:eLxxQAghA0iuBypTGwHUCexZS9xTRDxAHaiazH72hZM=
-cogentcore.org/core v0.3.46-0.20261017105241-627c0c862160/go.mod h1:BLYMvZ/ieOkjmqaIpwgQsi3hnCfAH+RrO0hB0ZYi4PU=
+cogentcore.org/core v0.3.46-0.20261020165441-3a79b2ae9dd1 h1:Wbo1yxsgtAwZddABybVKLbgMXgRMIebCS8hwz5Ofs8A=
+cogentcore.org/core v0.3.46-0.20261020165441-3a79b2ae9dd1/go.mod h1:BLYMvZ/ieOkjmqaIpwgQsi3hnCfAH+RrO0hB0ZYi4PU=
 cogentcore.org/lab v0.1.21 h1:vBzNENSI056/X+HLq40WeiwCG/YFNZ2jjlWleQterWQ=
 cogentcore.org/lab v0.1.21/go.mod h1:AJSeWrudsH2XgASuPEknGw+ZL9ABWcMzy2vgAU5UQVg=
 git.sr.ht/~sbinet/overlayfs v0.1.1 h1:HvCHXT1cs8RMSjNLQXxPPosB2hgR3tRC8RniH0f3ESg=
