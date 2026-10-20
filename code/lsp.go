@@ -43,33 +43,37 @@ type LangService struct {
 	// in settings.
 	lspB *lsp.Backend
 
-	// parseB is the built-in parse system backend.
-	parseB *lang.ParseBackend
-
 	mu        sync.Mutex
 	debounce  map[string]*time.Timer // filename -> pending didChange
 	prevDiags map[string][]tagPos    // filename -> currently tagged regions
-	hover     hoverCache
+
+	// diagStatus is a short status-bar summary of diagnostics per file,
+	// used by [Code.UpdateStatusText] when generating the official status
+	// line, which it regenerates from scratch on every cursor movement.
+	diagStatus map[string]string
+
+	hover hoverCache
 
 	quit chan struct{}
 }
 
 // tagPos records one diagnostic tag applied to a buffer,
-// for later removal.
+// for later removal, and for showing the message on hover.
 type tagPos struct {
 	line int
 	st   int
 	ed   int
+	msg  string
+	sev  string // "error", "warning", etc
 }
 
 // hoverCache is a simple single-entry cache for hover docs,
-// which are requested asynchronously and displayed on next tooltip.
+// which avoids re-querying the server for the same word.
 type hoverCache struct {
-	valid   bool
-	time    time.Time
-	key     hoverKey
-	text    string
-	pending hoverKey
+	valid bool
+	time  time.Time
+	key   hoverKey
+	text  string
 }
 
 type hoverKey struct {
@@ -88,12 +92,12 @@ const changeDelay = 250 * time.Millisecond
 // NewLangService returns a new language service for given Code window.
 func NewLangService(cv *Code) *LangService {
 	ls := &LangService{
-		cv:        cv,
-		lspB:      lsp.NewBackend(Settings.LSExecs),
-		parseB:    &lang.ParseBackend{},
-		debounce:  make(map[string]*time.Timer),
-		prevDiags: make(map[string][]tagPos),
-		quit:      make(chan struct{}),
+		cv:         cv,
+		lspB:       lsp.NewBackend(Settings.LSExecs),
+		debounce:   make(map[string]*time.Timer),
+		prevDiags:  make(map[string][]tagPos),
+		diagStatus: make(map[string]string),
+		quit:       make(chan struct{}),
 	}
 	ls.lspB.RootFunc = func(fpath string) string {
 		root := string(cv.Settings.ProjectRoot)
@@ -109,21 +113,13 @@ func NewLangService(cv *Code) *LangService {
 // LSP returns the language server backend, for registry access etc.
 func (ls *LangService) LSP() *lsp.Backend { return ls.lspB }
 
-// backendFor returns the backend to use for the given buffer,
-// based on the LangBackend setting and language support:
-// LSP is used when selected and a language server is available for
-// the file, otherwise the parse system is used as a fallback.
-func (ls *LangService) backendFor(ln *lines.Lines) lang.Backend {
-	if ls.cv.Settings.LangBackend == LangBackendLSP && ls.lspB.Supported(ln) {
-		return ls.lspB
-	}
-	return ls.parseB
-}
-
-// LSPActive returns whether the LSP backend is being used
-// for the given buffer.
+// LSPActive returns whether the language server backend is being used
+// for the given buffer: the LSP backend must be selected in settings and
+// a server must be registered for the file's language. Otherwise, the
+// built-in parse system provides whatever features it can through the
+// standard editor machinery.
 func (ls *LangService) LSPActive(ln *lines.Lines) bool {
-	return ls.backendFor(ln) == ls.lspB
+	return ls.cv.Settings.LangBackend == LangBackendLSP && ls.lspB.Supported(ln)
 }
 
 // Stop halts all language servers and ends the diagnostics loop.
@@ -152,8 +148,7 @@ func (ls *LangService) Activated(tv *TextEditor) {
 	if ln == nil {
 		return
 	}
-	b := ls.backendFor(ln)
-	if b != ls.lspB {
+	if !ls.LSPActive(ln) {
 		return // textcore.UpdateNewFile already set up parse completers
 	}
 	ls.lspB.Open(ln)
@@ -236,7 +231,9 @@ func (ls *LangService) Change(ln *lines.Lines) {
 		delete(ls.debounce, ln.Filename())
 	}
 	ls.mu.Unlock()
-	ls.backendFor(ln).Change(ln)
+	if ls.LSPActive(ln) {
+		ls.lspB.Change(ln)
+	}
 }
 
 // Saved should be called after a file has been saved.
@@ -245,7 +242,9 @@ func (ls *LangService) Saved(ln *lines.Lines) {
 		return
 	}
 	ls.Change(ln)
-	ls.backendFor(ln).Save(ln)
+	if ls.LSPActive(ln) {
+		ls.lspB.Save(ln)
+	}
 }
 
 // Closed should be called when a file is closed in the editor.
@@ -298,19 +297,63 @@ func (ls *LangService) consumeDiags() {
 			// the async markup in the lines package itself):
 			ls.applyDiags(ln, fd.Diags)
 			nerr, nwarn := countDiags(fd.Diags)
+			summary := diagSummary(ls.lspB.Name(), nerr, nwarn)
+			ls.mu.Lock()
+			if summary == "" {
+				delete(ls.diagStatus, fd.Filename)
+			} else {
+				ls.diagStatus[fd.Filename] = summary
+			}
+			ls.mu.Unlock()
+			if ls.cv.Scene == nil {
+				continue // not attached to a shown window: tagging is done
+			}
 			ls.cv.AsyncLock()
 			tv, _, hasTv := ls.cv.EditorForLines(ln)
 			if hasTv && tv != nil {
 				tv.NeedsRender()
 			}
-			if nerr+nwarn > 0 {
-				ls.cv.SetStatus(fmt.Sprintf("%s: %d errors, %d warnings in %s", ls.lspB.Name(), nerr, nwarn, filepath.Base(fd.Filename)))
-			} else {
-				ls.cv.SetStatus(fmt.Sprintf("%s: no problems in %s", ls.lspB.Name(), filepath.Base(fd.Filename)))
-			}
+			// the official status line is generated by UpdateStatusText,
+			// which picks up the diagStatus summary for this file:
+			ls.cv.UpdateStatusText()
 			ls.cv.AsyncUnlock()
 		}
 	}
+}
+
+// diagSummary returns a short status-bar summary of diagnostics,
+// or "" if there are no errors or warnings.
+func diagSummary(name string, nerr, nwarn int) string {
+	var ps []string
+	if nerr > 0 {
+		ps = append(ps, fmt.Sprintf("%d error%s", nerr, plural(nerr)))
+	}
+	if nwarn > 0 {
+		ps = append(ps, fmt.Sprintf("%d warning%s", nwarn, plural(nwarn)))
+	}
+	if len(ps) == 0 {
+		return ""
+	}
+	return name + ": " + strings.Join(ps, ", ")
+}
+
+func plural(n int) string {
+	if n > 1 {
+		return "s"
+	}
+	return ""
+}
+
+// DiagStatusMsg returns the current status-bar summary of diagnostics
+// for the given buffer, or "" if none. Called from UpdateStatusText
+// when regenerating the official status line.
+func (ls *LangService) DiagStatusMsg(ln *lines.Lines) string {
+	if ln == nil {
+		return ""
+	}
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	return ls.diagStatus[ln.Filename()]
 }
 
 func countDiags(diags []lang.Diagnostic) (nerr, nwarn int) {
@@ -368,13 +411,26 @@ func (ls *LangService) applyDiags(ln *lines.Lines, diags []lang.Diagnostic) {
 		st := max(0, d.Region.Start.Char)
 		ed := min(ln.LineLen(lnum), max(st+1, d.Region.End.Char))
 		ln.AddTag(lnum, st, ed, token.Error)
-		cur = append(cur, tagPos{line: lnum, st: st, ed: ed})
+		cur = append(cur, tagPos{line: lnum, st: st, ed: ed, msg: d.Msg, sev: diagWord(d.Severity)})
 	}
 	if len(cur) > 0 {
 		ls.mu.Lock()
 		ls.prevDiags[fname] = cur
 		ls.mu.Unlock()
 	}
+}
+
+// diagWord returns a lowercase word for the severity, for hover text.
+func diagWord(s lang.DiagSeverity) string {
+	switch s {
+	case lang.DiagErr:
+		return "error"
+	case lang.DiagWarn:
+		return "warning"
+	case lang.DiagInfo:
+		return "info"
+	}
+	return "hint"
 }
 
 // clearDiags removes all diagnostic tags previously applied to buffer.
@@ -384,6 +440,7 @@ func (ls *LangService) clearDiags(ln *lines.Lines) {
 	ls.mu.Lock()
 	prev := ls.prevDiags[fname]
 	delete(ls.prevDiags, fname)
+	delete(ls.diagStatus, fname)
 	ls.mu.Unlock()
 	done := make(map[int]bool)
 	for _, p := range prev {
@@ -410,8 +467,11 @@ func (ls *LangService) clearDiags(ln *lines.Lines) {
 ////////   Hover
 
 // HoverAt returns hover documentation for the word at the given
-// position, using a short-lived cache: the request runs asynchronously,
-// and the docs appear when the tooltip re-requests while still hovering.
+// position, using a short-lived cache. The request runs synchronously
+// on the UI goroutine with the server's bounded quick timeout: tooltips
+// are generated once, at LongHoverStart, so there is no second request
+// that an async result could arrive on. Any diagnostic message tagged
+// at that position is included first, from the local record.
 func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	ln := tv.Lines
 	if ln == nil || !ls.LSPActive(ln) {
@@ -420,37 +480,56 @@ func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	if !ln.IsValidLine(pos.Line) {
 		return ""
 	}
+	diag := ls.diagAt(ln, pos)
 	key := hoverKey{fname: ln.Filename(), line: pos.Line, char: pos.Char}
 	ls.mu.Lock()
 	hc := &ls.hover
 	if hc.valid && hc.key == key && time.Since(hc.time) < hoverCacheTime {
 		txt := hc.text
 		ls.mu.Unlock()
-		return txt
+		return joinHover(diag, txt)
 	}
-	if hc.pending == key {
-		ls.mu.Unlock()
-		return ""
-	}
-	hc.pending = key
-	hc.valid = false
 	ls.mu.Unlock()
 
-	b := ls.backendFor(ln)
-	go func() {
-		txt := b.Hover(ln, pos)
-		ls.mu.Lock()
-		hc := &ls.hover
-		if hc.pending == key {
-			hc.pending = hoverKey{}
-			hc.key = key
-			hc.text = txt
-			hc.time = time.Now()
-			hc.valid = true
+	txt := ls.lspB.Hover(ln, pos)
+
+	ls.mu.Lock()
+	hc = &ls.hover
+	hc.key = key
+	hc.text = txt
+	hc.time = time.Now()
+	hc.valid = true
+	ls.mu.Unlock()
+	return joinHover(diag, txt)
+}
+
+// diagAt returns the formatted message of any diagnostic currently
+// tagged at the given position, or "" if none. The end is inclusive
+// since hover positions are often the word-end position, which matches
+// the exclusive end of the diagnostic region.
+func (ls *LangService) diagAt(ln *lines.Lines, pos textpos.Pos) string {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	for _, p := range ls.prevDiags[ln.Filename()] {
+		if p.line == pos.Line && pos.Char >= p.st && pos.Char <= p.ed {
+			if p.sev == "" {
+				return p.msg
+			}
+			return p.sev + ": " + p.msg
 		}
-		ls.mu.Unlock()
-	}()
+	}
 	return ""
+}
+
+// joinHover combines a diagnostic message with symbol docs.
+func joinHover(diag, docs string) string {
+	switch {
+	case diag == "":
+		return docs
+	case docs == "":
+		return diag
+	}
+	return diag + "\n\n" + docs
 }
 
 ////////   Editor commands
@@ -496,7 +575,7 @@ func (cv *Code) GotoDefinition() { //types:add
 		cv.SetStatus("Goto definition: requires an LSP language server for this file")
 		return
 	}
-	b := cv.LangSvc().backendFor(ln)
+	b := cv.LangSvc().lspB
 	cv.SetStatus("Goto definition...")
 	locs := b.Definition(ln, pos)
 	switch len(locs) {
@@ -532,7 +611,7 @@ func (cv *Code) FindReferences() { //types:add
 		cv.SetStatus("Find references: requires an LSP language server for this file")
 		return
 	}
-	b := cv.LangSvc().backendFor(ln)
+	b := cv.LangSvc().lspB
 	cv.SetStatus("Finding references...")
 	locs := b.References(ln, pos)
 	if len(locs) == 0 {
@@ -558,8 +637,7 @@ func (cv *Code) LangFormat() { //types:add
 	}
 	ln := tv.Lines
 	ls := cv.LangSvc()
-	b := ls.backendFor(ln)
-	if b == ls.parseB {
+	if !ls.LSPActive(ln) {
 		cv.SetStatus("Format: no formatting backend for this file -- try the goimports command")
 		return
 	}
@@ -568,7 +646,7 @@ func (cv *Code) LangFormat() { //types:add
 	// FindReferences: b.Format applies edits with self-locking Lines
 	// methods, and the server round trip is bounded by its own timeout,
 	// so we never block the render loop under AsyncLock to do this.
-	ok := b.Format(ln)
+	ok := ls.lspB.Format(ln)
 	if ok {
 		ls.Change(ln) // keep server in sync with new text
 		if ed, _, has := cv.EditorForLines(ln); has && ed != nil {
@@ -624,7 +702,7 @@ func (cv *Code) WorkspaceSymbolPrompt() { //types:add
 		cv.SetStatus("Workspace symbols: requires an LSP language server for this file")
 		return
 	}
-	b := cv.LangSvc().backendFor(ln)
+	b := cv.LangSvc().lspB
 	d := core.NewBody("Workspace Symbols")
 	lst := core.NewChooser(d)
 	tf := core.NewTextField(d).SetPlaceholder("symbol name to search")

@@ -6,12 +6,15 @@ package code
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
 
@@ -200,4 +203,175 @@ func TestInputUnknownLangNoop(t *testing.T) {
 		t.Error("LSPActive true for unsupported language")
 	}
 	ls.Closed(ln) // must be safe with nothing tracked
+}
+
+// waitCode polls cond until true or fails after the timeout, for
+// conditions satisfied by asynchronous goroutines (non-blocking conds).
+func waitCode(t *testing.T, d time.Duration, desc string, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(d)
+	for time.Now().Before(deadline) {
+		if cond() {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for: %s", desc)
+}
+
+// TestDiagsFlowWithGopls runs the full editor diagnostic pipeline
+// against a real gopls server: Open -> publishDiagnostics -> consumeDiags
+// -> applyDiags tags the buffer; then fix the code -> Change -> tags
+// cleared. This is the end-to-end regression test for "typing garbage
+// flags nothing" at the service layer (the pixel-level visibility of
+// token.Error is checked separately by TestErrorTagRenderVisible).
+func TestDiagsFlowWithGopls(t *testing.T) {
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	demoPath := filepath.Join(tmp, "demo.go")
+	badSrc := "package demo\n\nfunc Demo() {\n\tx := undefinedThing()\n\t_ = x\n}\n"
+	if err := os.WriteFile(demoPath, []byte(badSrc), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOWORK", "off")
+
+	cv := NewCode()
+	ls := NewLangService(cv)
+	defer ls.Stop()
+
+	ln := lines.NewLines()
+	ln.SetFilename(demoPath)
+	ln.SetText([]byte(badSrc))
+	cv.OpenFiles.Add(ln) // so consumeDiags can resolve the file
+
+	ls.lspB.Open(ln) // what Activated does for the active editor
+
+	waitCode(t, 60*time.Second, "error diagnostic tagged on line 3", func() bool {
+		return errTagCount(ln, 3) > 0
+	})
+	waitCode(t, 10*time.Second, "status-bar summary stored", func() bool {
+		return strings.Contains(ls.DiagStatusMsg(ln), "1 error")
+	})
+	ls.mu.Lock()
+	var msg string
+	for _, p := range ls.prevDiags[demoPath] {
+		msg = p.sev + ": " + p.msg
+	}
+	ls.mu.Unlock()
+	if !strings.Contains(msg, "undefinedThing") {
+		t.Errorf("recorded diagnostic message %q does not mention undefinedThing", msg)
+	}
+
+	fixed := "package demo\n\nfunc Demo() {\n}\n"
+	ln.SetText([]byte(fixed))
+	ls.Change(ln)
+	waitCode(t, 60*time.Second, "diagnostic tags cleared after fix", func() bool {
+		return errTagCount(ln, 3) == 0
+	})
+	waitCode(t, 10*time.Second, "status-bar summary cleared after fix", func() bool {
+		return ls.DiagStatusMsg(ln) == ""
+	})
+}
+
+func TestDiagAt(t *testing.T) {
+	cv := NewCode()
+	ls := NewLangService(cv)
+	defer ls.Stop()
+	ln := codeTestLines(t)
+
+	ls.mu.Lock()
+	ls.prevDiags[ln.Filename()] = []tagPos{
+		{line: 2, st: 8, ed: 17, msg: "undefined: undefined", sev: "error"},
+	}
+	ls.mu.Unlock()
+
+	if got := ls.diagAt(ln, textpos.Pos{Line: 2, Char: 10}); got != "error: undefined: undefined" {
+		t.Errorf("diagAt in region: %q", got)
+	}
+	// hover positions are often the word-end position, which equals the
+	// exclusive end of the diagnostic region: must still match:
+	if got := ls.diagAt(ln, textpos.Pos{Line: 2, Char: 17}); got != "error: undefined: undefined" {
+		t.Errorf("diagAt at region end: %q", got)
+	}
+	if got := ls.diagAt(ln, textpos.Pos{Line: 2, Char: 18}); got != "" {
+		t.Errorf("diagAt past region end: %q", got)
+	}
+	if got := ls.diagAt(ln, textpos.Pos{Line: 2, Char: 0}); got != "" {
+		t.Errorf("diagAt outside region: %q", got)
+	}
+	if got := ls.diagAt(ln, textpos.Pos{Line: 0, Char: 0}); got != "" {
+		t.Errorf("diagAt other line: %q", got)
+	}
+	if got := joinHover("error: bad", "docs here"); got != "error: bad\n\ndocs here" {
+		t.Errorf("joinHover both: %q", got)
+	}
+	if got := joinHover("", "docs"); got != "docs" || joinHover("err", "") != "err" {
+		t.Error("joinHover single-sided failed")
+	}
+	if got := diagSummary("gopls", 1, 0); got != "gopls: 1 error" {
+		t.Errorf("diagSummary singular: %q", got)
+	}
+	if got := diagSummary("gopls", 2, 3); got != "gopls: 2 errors, 3 warnings" {
+		t.Errorf("diagSummary plural: %q", got)
+	}
+	if got := diagSummary("gopls", 0, 0); got != "" {
+		t.Errorf("diagSummary none: %q", got)
+	}
+}
+
+// TestErrorTagRenderVisible verifies the tag->rich-decoration plumbing:
+// two Lines buffers with identical text and highlighting, one with a
+// token.Error diagnostic tag, must produce different laid-out rich text
+// (the dotted underline from highlighting.Properties for token.Error).
+// This is what makes diagnostics visible to the user.
+func TestErrorTagRenderVisible(t *testing.T) {
+	const src = "some undefined symbol here\n"
+
+	mk := func(tag bool) (lines.Lines, int) {
+		ln, vid := lines.NewLinesFromBytes("test.go", 80, []byte(src))
+		ln.Highlighter.StyleName = "default"
+		ln.Highlighter.Init(ln.FileInfo(), nil)
+		if !ln.Highlighter.Has {
+			t.Skip("no highlighting available for test setup")
+		}
+		if tag {
+			ln.AddTag(0, 5, 23, token.Error)
+		}
+		ln.MarkupLines(0, 0)
+		return *ln, vid
+	}
+
+	plain, pvid := mk(false)
+	tagged, tvid := mk(true)
+
+	pt := plain.ViewMarkupLine(pvid, 0)
+	tt := tagged.ViewMarkupLine(tvid, 0)
+	if pt.String() == tt.String() {
+		t.Fatalf("token.Error tag has no effect on rich markup: %q\n"+
+			"diagnostics would not be flagged visually", tt.String())
+	}
+	nDeco := 0
+	for si := 0; si < tt.NumSpans(); si++ {
+		st, rr := tt.Span(si)
+		if len(rr) > 0 && st.Decoration.HasFlag(rich.DottedUnderline) {
+			nDeco++
+		}
+	}
+	if nDeco == 0 {
+		t.Fatalf("token.Error span carries no dotted-underline decoration: %q\n"+
+			"diagnostics would not be flagged visually (check highlighting.Properties / MarkupLineRich)",
+			tt.String())
+	}
+	// plain text must not be decorated:
+	for si := 0; si < pt.NumSpans(); si++ {
+		st, rr := pt.Span(si)
+		if len(rr) > 0 && st.Decoration.HasFlag(rich.DottedUnderline) {
+			t.Errorf("plain markup unexpectedly decorated at span %d", si)
+		}
+	}
 }

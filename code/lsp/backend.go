@@ -23,8 +23,8 @@ import (
 	"cogentcore.org/cogent/code/lang"
 )
 
-// Backend is a [lang.Backend] that drives external language servers
-// (gopls and others) over the [LSP] protocol, using a [Server] process
+// Backend drives external language servers (gopls and others) over the
+// [LSP] protocol, using a [Server] process
 // for each language-server / workspace-root combination that is needed.
 //
 // Unlike the parse system, the language servers run out-of-process and
@@ -62,7 +62,7 @@ type docRef struct {
 	fname  string // raw filename from the buffer, as the editor knows it
 }
 
-// NewBackend returns a new [lang.Backend] driven by language servers,
+// NewBackend returns a new Backend driven by language servers,
 // using the given executable path overrides (server ID -> path),
 // which can be nil to use the standard PATH lookup.
 func NewBackend(execPaths map[string]string) *Backend {
@@ -74,9 +74,6 @@ func NewBackend(execPaths map[string]string) *Backend {
 		diags:   make(chan lang.FileDiags, 64),
 	}
 }
-
-// compile-time check that we implement the interface:
-var _ lang.Backend = (*Backend)(nil)
 
 // Name returns the name of this backend: "lsp"
 func (b *Backend) Name() string { return "lsp" }

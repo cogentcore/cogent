@@ -241,7 +241,10 @@ func (sv *SymbolsPanel) OpenFile() {
 func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) bool {
 	cv := sv.Code
 	ln := cv.ActiveEditor().Lines
-	b := cv.LangSvc().backendFor(ln)
+	if !cv.LangSvc().LSPActive(ln) {
+		return false
+	}
+	b := cv.LangSvc().lspB
 	var sl []lang.Symbol
 	if pkgScope {
 		sl = b.WorkspaceSymbols(ln, sv.Match)

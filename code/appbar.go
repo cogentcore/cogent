@@ -329,8 +329,7 @@ func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 		return
 	}
 	if cv.LangSvc().LSPActive(tv.Lines) {
-		b := cv.LangSvc().backendFor(tv.Lines)
-		sl := b.WorkspaceSymbols(tv.Lines, "")
+		sl := cv.LangSvc().lspB.WorkspaceSymbols(tv.Lines, "")
 		*items = append(*items, langSymItems(cv, sl)...)
 		return
 	}

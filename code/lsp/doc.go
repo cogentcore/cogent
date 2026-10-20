@@ -15,8 +15,7 @@
 // subset of the protocol directly:
 // https://microsoft.github.io/language-server-protocol/specification
 //
-// The [Backend] type implements the [lang.Backend] interface from
-// cogentcore.org/cogent/code/lang, providing diagnostics, completions,
+// The [Backend] type provides diagnostics, completions,
 // hover docs, definitions, references, symbols, and formatting for any
 // language with an available server in the [Registry]
 // (gopls for Go, and others by default).

@@ -2,18 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package lang defines a backend-neutral interface for the language
-// services used by the Cogent Code editor: diagnostics, completions,
-// hover docs, definitions, references, symbols, and formatting.
+// Package lang defines backend-neutral data types for the language
+// services used by the Cogent Code editor: diagnostics, locations,
+// and symbols, with positions in editor-native units (0-based lines,
+// rune offsets within lines).
 //
-// The interface can be implemented either by an external language
-// server accessed over the [LSP] protocol (see the
-// [cogentcore.org/cogent/code/lsp] sub-package, which drives gopls and
-// other language servers), or by the built-in [parse] system (see the
-// ParseBackend in this package). The parse implementation returns zero
-// values for everything it does not currently implement, so editors can
-// use either backend through the same API.
+// These types are produced by the [cogentcore.org/cogent/code/lsp]
+// sub-package, which drives gopls and other external language servers
+// over the [LSP] protocol, and consumed by the editor without any
+// dependency on the protocol-specific representations.
 //
 // [LSP]: https://microsoft.github.io/language-server-protocol/specification
-// [parse]: https://pkg.go.dev/cogentcore.org/core/text/parse
 package lang

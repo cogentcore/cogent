@@ -68,6 +68,11 @@ type Code struct {
 	// the last status update message
 	StatusMessage string
 
+	// statusTime is when StatusMessage was last set; it remains in the
+	// regenerated status line for a short interval before the routine
+	// cursor-movement updates take over again.
+	statusTime time.Time
+
 	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
 	LastSaveTStamp time.Time `set:"-" json:"-"`
 

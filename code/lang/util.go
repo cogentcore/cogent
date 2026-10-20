@@ -4,25 +4,6 @@
 
 package lang
 
-import (
-	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/text/textpos"
-)
-
-// WordAt returns the word at the given position in the buffer,
-// for backends that need the word without referencing a language.
-func WordAt(ln *lines.Lines, pos textpos.Pos) string {
-	if ln == nil || !ln.IsValidLine(pos.Line) {
-		return ""
-	}
-	reg := ln.WordAt(pos)
-	line := ln.Line(reg.Start.Line)
-	if reg.Start.Line != reg.End.Line || reg.End.Char > len(line) || reg.Start.Char > reg.End.Char {
-		return ""
-	}
-	return string(line[reg.Start.Char:reg.End.Char])
-}
-
 // RuneToUTF16 converts a rune offset within the given line of text
 // into a UTF-16 code unit offset, as used by the [LSP] protocol.
 // It clamps to the length of the line.
