@@ -19,6 +19,7 @@ import (
 	"cogentcore.org/core/text/token"
 
 	"cogentcore.org/cogent/code/lang"
+	"cogentcore.org/cogent/code/lsp"
 )
 
 // these tests exercise the diagnostic tagging paths without a shown
@@ -332,7 +333,7 @@ func TestDiagAt(t *testing.T) {
 func TestErrorTagRenderVisible(t *testing.T) {
 	const src = "some undefined symbol here\n"
 
-	mk := func(tag bool) (lines.Lines, int) {
+	mk := func(tag bool) (*lines.Lines, int) {
 		ln, vid := lines.NewLinesFromBytes("test.go", 80, []byte(src))
 		ln.Highlighter.StyleName = "default"
 		ln.Highlighter.Init(ln.FileInfo(), nil)
@@ -343,7 +344,7 @@ func TestErrorTagRenderVisible(t *testing.T) {
 			ln.AddTag(0, 5, 23, token.Error)
 		}
 		ln.MarkupLines(0, 0)
-		return *ln, vid
+		return ln, vid
 	}
 
 	plain, pvid := mk(false)
@@ -373,5 +374,40 @@ func TestErrorTagRenderVisible(t *testing.T) {
 		if len(rr) > 0 && st.Decoration.HasFlag(rich.DottedUnderline) {
 			t.Errorf("plain markup unexpectedly decorated at span %d", si)
 		}
+	}
+}
+
+// TestRenameResults verifies the grouping of rename edit previews into
+// search.Results for the Find panel.
+func TestRenameResults(t *testing.T) {
+	prev := []*lsp.EditPreview{
+		{Filename: "/x/a.go", Region: textpos.Region{Start: textpos.Pos{Line: 2, Char: 4}, End: textpos.Pos{Line: 2, Char: 10}}, Old: "smileX", New: "happy", LineText: "var smileX = 1"},
+		{Filename: "/x/a.go", Region: textpos.Region{Start: textpos.Pos{Line: 3, Char: 8}, End: textpos.Pos{Line: 3, Char: 14}}, Old: "smileX", New: "happy", LineText: "var y = smileX"},
+		{Filename: "/x/b.go", Region: textpos.Region{Start: textpos.Pos{Line: 2, Char: 8}, End: textpos.Pos{Line: 2, Char: 14}}, Old: "smileX", New: "happy", LineText: "var q = smileX"},
+	}
+	res := renameResults(prev)
+	if len(res) != 2 {
+		t.Fatalf("groups = %d, want 2", len(res))
+	}
+	if res[0].Filepath != "/x/a.go" || res[0].Count != 2 || len(res[0].Matches) != 2 {
+		t.Errorf("group a: %+v", res[0])
+	}
+	if res[1].Filepath != "/x/b.go" || res[1].Count != 1 {
+		t.Errorf("group b: %+v", res[1])
+	}
+	m := res[0].Matches[0]
+	if m.TextMatch.Start != 4 || m.TextMatch.End != 10 {
+		t.Errorf("TextMatch = %v, want {4 10}", m.TextMatch)
+	}
+	if string(m.Text) != "var smileX = 1" {
+		t.Errorf("Text = %q", string(m.Text))
+	}
+	// multi-line region clamps to end of first line:
+	prev2 := []*lsp.EditPreview{
+		{Filename: "/x/c.go", Region: textpos.Region{Start: textpos.Pos{Line: 1, Char: 3}, End: textpos.Pos{Line: 2, Char: 5}}, Old: "a\nb", New: "x", LineText: "foo bar"},
+	}
+	r2 := renameResults(prev2)
+	if len(r2) != 1 || r2[0].Matches[0].TextMatch.End != 7 {
+		t.Errorf("multiline clamp: %+v", r2)
 	}
 }

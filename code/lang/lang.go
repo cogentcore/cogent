@@ -68,6 +68,28 @@ type Location struct {
 	Region textpos.Region
 }
 
+// TextEdit is a replacement of the text in a region with NewText.
+// An empty NewText means a pure deletion of the region.
+type TextEdit struct {
+
+	// region of text to replace, using 0-based lines and rune positions
+	Region textpos.Region
+
+	// new text to insert (empty = delete the region)
+	NewText string
+}
+
+// FileEdits are text edits to apply to a single file,
+// as part of a workspace-wide edit such as a symbol rename.
+type FileEdits struct {
+
+	// full path of the file
+	Filename string
+
+	// edits to apply, in any order
+	Edits []TextEdit
+}
+
 // Symbol represents a named language symbol: function, variable, type, etc.
 // It corresponds to the LSP DocumentSymbol / SymbolInformation structures,
 // and the [syms.Symbol] type used by the parse system.

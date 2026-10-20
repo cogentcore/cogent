@@ -70,8 +70,18 @@ type Server struct {
 	// It must be set before calling [Start].
 	Diags func(uri DocumentURI, diags []Diagnostic)
 
+	// ApplyEdit receives server-initiated workspace edit requests
+	// (workspace/applyEdit), if set. It must be set before calling
+	// [Start]. It returns whether the edit was applied, and a reason
+	// if not.
+	ApplyEdit func(we WorkspaceEdit) (applied bool, reason string)
+
 	// reg is the registry used to find the executable.
 	reg *Registry
+
+	// info is the server-provided name and version,
+	// from the initialize response, available after Ready.
+	info *ClientInfo
 
 	conn *Conn
 	cmd  *exec.Cmd
@@ -100,6 +110,21 @@ func (s *Server) Ready() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.state == stateReady
+}
+
+// Info returns the server-provided name and version
+// from the initialize response, or nil if not yet initialized.
+func (s *Server) Info() *ClientInfo {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.info
+}
+
+// Caps returns the server capabilities from the initialize response.
+func (s *Server) Caps() ServerCapabilities {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.caps
 }
 
 // Err returns any startup or initialization error.
@@ -212,6 +237,7 @@ func (s *Server) initialize(ctx context.Context) error {
 	}
 	s.mu.Lock()
 	s.caps = res.Capabilities
+	s.info = res.ServerInfo
 	s.mu.Unlock()
 	if err := s.conn.Notify("initialized", &struct{}{}); err != nil {
 		return fmt.Errorf("initialized: %w", err)
@@ -235,7 +261,8 @@ func (s *Server) InitParams() *InitializeParams {
 		Trace:                 "off",
 	}
 	params.Capabilities.Workspace = &WorkspaceClientCapabilities{
-		ApplyEdit:        false, // we do not yet apply workspace edits
+		ApplyEdit:        true,
+		WorkspaceEdit:    &WorkspaceEditCapability{DocumentChanges: true},
 		Configuration:    true,
 		WorkspaceFolders: true,
 	}
@@ -261,6 +288,7 @@ func (s *Server) InitParams() *InitializeParams {
 		},
 		WorkspaceSymbol: &WorkspaceSymbolClientCapability{},
 		Formatting:      &FormattingClientCapability{},
+		Rename:          &RenameClientCapability{PrepareSupport: true, HonorsChangeAnnotations: true},
 	}
 	params.Capabilities.TextDoc = td
 	return params
@@ -523,6 +551,98 @@ func (s *Server) References(posParams *ReferenceParams) ([]Location, error) {
 	return locs, nil
 }
 
+// supportsPrepareRename reports whether the server advertised
+// prepareProvider in its renameProvider capability.
+func (s *Server) supportsPrepareRename() bool {
+	s.mu.Lock()
+	raw := s.caps.RenameProvider
+	s.mu.Unlock()
+	if len(raw) == 0 || string(raw) == "null" || string(raw) == "false" {
+		return false
+	}
+	if string(raw) == "true" {
+		return false // plain capability: rename without prepare support
+	}
+	var rp struct {
+		PrepareProvider bool `json:"prepareProvider"`
+	}
+	json.Unmarshal(raw, &rp)
+	return rp.PrepareProvider
+}
+
+// PrepareRename sends a textDocument/prepareRename request, checking
+// whether the symbol at the position can be renamed. It returns the
+// valid rename range and a suggested placeholder name, which can be
+// empty. ok is false if the symbol cannot be renamed at that position.
+// err is a method-not-found [RPCError] if the server lacks the feature.
+func (s *Server) PrepareRename(posParams *PrepareRenameParams) (rng *Range, placeholder string, ok bool, err error) {
+	var raw json.RawMessage
+	ctx, cancel := context.WithTimeout(context.Background(), quickCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/prepareRename", posParams, &raw); err != nil {
+		return nil, "", false, err
+	}
+	return parsePrepareRename(raw)
+}
+
+// parsePrepareRename parses the prepareRename result, which can be
+// null (not renameable), a Range, a PrepareRenameResult {range,
+// placeholder}, or a MarkupRange {range, markup}.
+func parsePrepareRename(raw json.RawMessage) (rng *Range, placeholder string, ok bool, err error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, "", false, nil
+	}
+	var obj struct {
+		Start       json.RawMessage `json:"start"`
+		Range       json.RawMessage `json:"range"`
+		Placeholder string          `json:"placeholder"`
+	}
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, "", false, fmt.Errorf("lsp: bad prepareRename result: %w", err)
+	}
+	switch {
+	case len(obj.Start) > 0: // plain Range
+		var r Range
+		if err := json.Unmarshal(raw, &r); err != nil {
+			return nil, "", false, fmt.Errorf("lsp: bad prepareRename result: %w", err)
+		}
+		return &r, obj.Placeholder, true, nil
+	case len(obj.Range) > 0: // wrapped in "range" field
+		var r Range
+		if err := json.Unmarshal(obj.Range, &r); err != nil {
+			return nil, "", false, fmt.Errorf("lsp: bad prepareRename result: %w", err)
+		}
+		return &r, obj.Placeholder, true, nil
+	}
+	return nil, "", false, nil
+}
+
+// Rename sends a textDocument/rename request, returning the resulting
+// workspace edit, or nil if there is nothing to change.
+func (s *Server) Rename(params *RenameParams) (*WorkspaceEdit, error) {
+	var raw json.RawMessage
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/rename", params, &raw); err != nil {
+		return nil, err
+	}
+	if Verbose && len(raw) > 0 {
+		dbg := string(raw)
+		if len(dbg) > 600 {
+			dbg = dbg[:600] + "..."
+		}
+		log.Printf("lsp: %s: rename raw: %s\n", s.Cfg.ID, dbg)
+	}
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var we WorkspaceEdit
+	if err := json.Unmarshal(raw, &we); err != nil {
+		return nil, fmt.Errorf("lsp: bad rename result: %w", err)
+	}
+	return &we, nil
+}
+
 // DocumentSymbol sends a textDocument/documentSymbol request,
 // returning hierarchical symbols if the server supports them,
 // converting the flat form otherwise.
@@ -617,7 +737,15 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 		// no action items for now
 		return nil, nil
 	case "workspace/applyEdit":
-		return &ApplyWorkspaceEditResult{Applied: false, FailureReason: clientName + " does not yet apply workspace edits from language servers"}, nil
+		var ap ApplyWorkspaceEditParams
+		if err := json.Unmarshal(params, &ap); err != nil {
+			return nil, &RPCError{Code: http.StatusBadRequest, Message: err.Error()}
+		}
+		if s.ApplyEdit == nil {
+			return &ApplyWorkspaceEditResult{Applied: false, FailureReason: clientName + " cannot apply workspace edits right now"}, nil
+		}
+		applied, reason := s.ApplyEdit(ap.Edit)
+		return &ApplyWorkspaceEditResult{Applied: applied, FailureReason: reason}, nil
 	default:
 		return nil, &RPCError{Code: http.StatusNotImplemented, Message: "method not handled: " + method}
 	}

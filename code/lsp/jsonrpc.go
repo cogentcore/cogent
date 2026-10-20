@@ -25,6 +25,11 @@ type RPCError struct {
 }
 
 func (re *RPCError) Error() string {
+	// gopls and others use code 0 for plain user-facing failure
+	// messages, where the code number is noise:
+	if re.Code == 0 {
+		return "lsp: " + re.Message
+	}
 	return fmt.Sprintf("lsp: rpc error %d: %s", re.Code, re.Message)
 }
 

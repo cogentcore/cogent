@@ -11,7 +11,8 @@
 // found via standard project marker files (go.mod, package.json, etc)
 // relative to each file. Position queries retry briefly after the
 // server is ready, to absorb null responses from ongoing package
-// loading. Exit status is 0 on success (clean check, or results found)
+// loading. The rename command writes files; use -n to preview.
+// Exit status is 0 on success (clean check, or results found)
 // and 1 for problems found, no results, or errors.
 package main
 
@@ -22,6 +23,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -44,6 +46,9 @@ type Config struct {
 
 	// rewrite files in place (format command)
 	Write bool `flag:"write,w"`
+
+	// preview changes without writing any files (rename command)
+	DryRun bool `flag:"dry-run,n"`
 
 	// overall wait for language server startup and responses,
 	// as a Go duration string like 30s or 2m
@@ -264,6 +269,95 @@ func Format(c *Config) error {
 	return nil
 }
 
+// Rename renames the symbol at FILE:LINE:COL to NEWNAME across the
+// workspace, rewriting the affected files. Use -n to preview the
+// per-file edit counts without writing anything.
+func Rename(c *Config) error {
+	setup()
+	if len(c.Args) != 2 {
+		return fmt.Errorf("rename needs FILE:LINE:COL and NEWNAME arguments")
+	}
+	deadline, err := c.deadline()
+	if err != nil {
+		return err
+	}
+	path, pos, err := parseLoc(c.Args[0])
+	if err != nil {
+		return err
+	}
+	newName := c.Args[1]
+	b := lsp.NewBackend(nil)
+	defer b.Stop()
+	ln, ok := openReady(b, path, deadline)
+	if !ok {
+		return fmt.Errorf("language server not available for %s", path)
+	}
+	if c.DryRun {
+		we, err := b.RenameEdits(ln, pos, newName)
+		if err != nil {
+			return err
+		}
+		if we == nil {
+			return fmt.Errorf("nothing to rename at %s", c.Args[0])
+		}
+		for _, f := range editCounts(we) {
+			fmt.Printf("%s: %d edit(s)\n", f.Filename, len(f.Edits))
+		}
+		return nil
+	}
+	out, err := b.Rename(ln, pos, newName)
+	if err != nil {
+		return err
+	}
+	target := cliNormalize(path)
+	for _, f := range out {
+		fmt.Printf("%s: %d edit(s)\n", f.Filename, len(f.Edits))
+		// the target file was edited in memory (it is open in this
+		// session, so the backend does not write it): write it out:
+		if cliNormalize(f.Filename) == target {
+			if err := os.WriteFile(path, []byte(ln.String()), 0644); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// editCounts converts a workspace edit into per-file counts, for a
+// dry-run report, without applying anything.
+func editCounts(we *lsp.WorkspaceEdit) []lang.FileEdits {
+	counts := map[string]int{}
+	for u, es := range we.Changes {
+		counts[lsp.DocumentURI(u).Path()] += len(es)
+	}
+	for _, de := range we.DocumentChanges {
+		n := len(de.Edits)
+		if de.Edit != nil {
+			n++
+		}
+		counts[de.TextDocument.URI.Path()] += n
+	}
+	var out []lang.FileEdits
+	for fname, n := range counts {
+		out = append(out, lang.FileEdits{Filename: fname, Edits: make([]lang.TextEdit, n)})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Filename < out[j].Filename })
+	return out
+}
+
+// cliNormalize canonicalizes a path for comparing whether two names
+// refer to the same file, resolving symlinks like /var -> /private/var.
+func cliNormalize(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return filepath.Clean(path)
+	}
+	if ev, err := filepath.EvalSymlinks(abs); err == nil {
+		return ev
+	}
+	return abs
+}
+
 // withPos handles the common setup for position-based commands:
 // parse FILE:LINE:COL, open the file, and wait for the server.
 func withPos(c *Config, fn func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos) error) error {
@@ -292,6 +386,8 @@ func withPos(c *Config, fn func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos
 func setup() {
 	if logx.UserLevel > slog.LevelInfo {
 		log.SetOutput(io.Discard)
+	} else {
+		lsp.Verbose = true
 	}
 }
 
@@ -405,5 +501,5 @@ func printSymbols(sl []lang.Symbol, indent int) {
 func main() { //types:skip
 	opts := cli.DefaultOptions("cogent-lsp", "Command-line access to language server features (gopls and other servers) via the Cogent LSP client, for shells, scripts, CI, and AI agents.")
 	opts.PrintSuccess = false
-	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format)
+	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename)
 }

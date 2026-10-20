@@ -22,6 +22,12 @@ var _ = types.AddFunc(&types.Func{Name: "main.Workspace", Doc: "Workspace search
 
 var _ = types.AddFunc(&types.Func{Name: "main.Format", Doc: "Format formats the given files, writing to stdout\nor rewriting them in place with the -w flag.", Args: []string{"c"}, Returns: []string{"error"}})
 
+var _ = types.AddFunc(&types.Func{Name: "main.Rename", Doc: "Rename renames the symbol at FILE:LINE:COL to NEWNAME across the\nworkspace, rewriting the affected files. Use -n to preview the\nper-file edit counts without writing anything.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.editCounts", Doc: "editCounts converts a workspace edit into per-file counts, for a\ndry-run report, without applying anything.", Args: []string{"we"}, Returns: []string{"FileEdits"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.cliNormalize", Doc: "cliNormalize canonicalizes a path for comparing whether two names\nrefer to the same file, resolving symlinks like /var -> /private/var.", Args: []string{"path"}, Returns: []string{"string"}})
+
 var _ = types.AddFunc(&types.Func{Name: "main.withPos", Doc: "withPos handles the common setup for position-based commands:\nparse FILE:LINE:COL, open the file, and wait for the server.", Args: []string{"c", "fn"}, Returns: []string{"error"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.setup", Doc: "setup silences the client's internal logging unless -v was given."})

@@ -6,6 +6,7 @@ package lsp
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -51,6 +52,7 @@ type Backend struct {
 	docs    map[string]*docRef        // filename -> current doc tracking
 	edits   map[string]*complete.Edit // pending completion edits, by Text
 	diags   chan lang.FileDiags
+	applies chan []lang.FileEdits
 	stopped bool
 }
 
@@ -72,6 +74,7 @@ func NewBackend(execPaths map[string]string) *Backend {
 		docs:    make(map[string]*docRef),
 		edits:   make(map[string]*complete.Edit),
 		diags:   make(chan lang.FileDiags, 64),
+		applies: make(chan []lang.FileEdits, 8),
 	}
 }
 
@@ -94,6 +97,7 @@ func (b *Backend) Stop() {
 	b.servers = make(map[string]*Server)
 	b.docs = make(map[string]*docRef)
 	close(b.diags)
+	close(b.applies)
 	b.mu.Unlock()
 	for _, srv := range servers {
 		srv.Shutdown()
@@ -102,6 +106,12 @@ func (b *Backend) Stop() {
 
 // Diagnostics returns the channel receiving diagnostics for open files.
 func (b *Backend) Diagnostics() <-chan lang.FileDiags { return b.diags }
+
+// AppliedEdits returns the channel receiving per-file notifications
+// for server-initiated workspace edits (workspace/applyEdit) that have
+// already been applied by the backend, so that the editor layer can
+// refresh the affected views.
+func (b *Backend) AppliedEdits() <-chan []lang.FileEdits { return b.applies }
 
 // serverKey is the caching key for a server config at a workspace root.
 func serverKey(cfg *ServerConfig, root string) string {
@@ -142,6 +152,7 @@ func (b *Backend) serverFor(ln *lines.Lines) (*Server, *docRef, bool) {
 	if !has {
 		srv = NewServer(b.Reg, cfg, root)
 		srv.Diags = b.handleDiags
+		srv.ApplyEdit = b.handleApplyEdit
 		b.servers[key] = srv
 		go func() {
 			if err := srv.Start(context.Background()); err != nil {
@@ -901,7 +912,17 @@ func (b *Backend) Format(ln *lines.Lines) bool {
 	if err != nil || len(edits) == 0 {
 		return false
 	}
-	// apply in reverse so earlier positions stay valid:
+	return applyTextEdits(ln, edits)
+}
+
+// applyTextEdits applies the given LSP edits to the buffer, in reverse
+// position order so earlier positions stay valid. It only uses
+// self-locking Lines methods, so it is safe from any goroutine
+// (not under ln.Lock). It returns whether any edits were applied.
+func applyTextEdits(ln *lines.Lines, edits []TextEdit) bool {
+	if len(edits) == 0 {
+		return false
+	}
 	sort.SliceStable(edits, func(i, j int) bool {
 		a, bi := edits[i].Range.Start, edits[j].Range.Start
 		if a.Line != bi.Line {
@@ -909,12 +930,294 @@ func (b *Backend) Format(ln *lines.Lines) bool {
 		}
 		return a.Character > bi.Character
 	})
+	did := false
 	for _, e := range edits {
 		r := regionFromLSP(ln, e.Range)
-		ln.DeleteText(r.Start, r.End)
+		if !ln.IsValidPos(r.Start) || !ln.IsValidPos(r.End) {
+			log.Printf("lsp: skipping edit at invalid position %v in %s\n", r.Start, ln.Filename())
+			continue
+		}
+		d := ln.DeleteText(r.Start, r.End)
+		var ins *textpos.Edit
 		if e.NewText != "" {
-			ln.InsertText(r.Start, []rune(e.NewText))
+			ins = ln.InsertText(r.Start, []rune(e.NewText))
+		}
+		if d != nil || ins != nil {
+			did = true
 		}
 	}
-	return true
+	return did
+}
+
+////////   Workspace edits and rename
+
+// handleApplyEdit implements server-initiated workspace/applyEdit
+// requests. Edits are applied synchronously: applying only uses
+// self-locking Lines methods and disk io, the same safety pattern as
+// diagnostics handling. Affected views are refreshed asynchronously
+// via the [Backend.AppliedEdits] channel.
+func (b *Backend) handleApplyEdit(we WorkspaceEdit) (bool, string) {
+	out := b.ApplyWorkspaceEdit(&we)
+	if len(out) == 0 {
+		return false, "no edits applied"
+	}
+	select {
+	case b.applies <- out:
+	default:
+		log.Printf("lsp: applyEdit refresh notification dropped: buffer full\n")
+	}
+	return true, ""
+}
+
+// pendingEdits is the normalized per-file group of LSP edits,
+// merged from the changes map and documentChanges shapes of a
+// WorkspaceEdit.
+type pendingEdits struct {
+	uri   DocumentURI
+	edits []TextEdit
+}
+
+// normalizeWE flattens a WorkspaceEdit into per-file edit groups,
+// merging entries for the same document across both the changes map
+// and the documentChanges array.
+func normalizeWE(we *WorkspaceEdit) []pendingEdits {
+	var ps []pendingEdits
+	seen := map[DocumentURI]int{}
+	add := func(uri DocumentURI, edits ...TextEdit) {
+		if i, has := seen[uri]; has {
+			ps[i].edits = append(ps[i].edits, edits...)
+			return
+		}
+		seen[uri] = len(ps)
+		ps = append(ps, pendingEdits{uri: uri, edits: edits})
+	}
+	for uri, es := range we.Changes {
+		add(DocumentURI(uri), es...)
+	}
+	for _, de := range we.DocumentChanges {
+		if de.Edit != nil {
+			add(de.TextDocument.URI, *de.Edit)
+		}
+		add(de.TextDocument.URI, de.Edits...)
+	}
+	return ps
+}
+
+// EditPreview is one proposed workspace edit, resolved against the
+// current contents of the target file, for review before applying.
+type EditPreview struct {
+
+	// Filename is the normalized path of the target file.
+	Filename string
+
+	// URI is the document uri the server used for this file.
+	URI DocumentURI
+
+	// Open indicates the file was open in a tracked editor buffer
+	// when the preview was computed.
+	Open bool
+
+	// Region is the target region in editor (rune) units,
+	// relative to the file contents at preview time. Set the Region
+	// Time to keep it valid across subsequent edits via AdjustRegion.
+	Region textpos.Region
+
+	// Old is the current text in the region, for display and for
+	// verifying the region before applying.
+	Old string
+
+	// New is the replacement text.
+	New string
+
+	// LineText is the text of the first line of the region,
+	// for display as context.
+	LineText string
+}
+
+// PreviewWorkspaceEdit converts a workspace edit into per-edit previews
+// resolved against current file contents, without applying anything.
+// It returns the previews sorted by filename and position.
+func (b *Backend) PreviewWorkspaceEdit(we *WorkspaceEdit) []*EditPreview {
+	if we == nil {
+		return nil
+	}
+	var out []*EditPreview
+	for _, p := range normalizeWE(we) {
+		if len(p.edits) == 0 {
+			continue
+		}
+		fname := p.uri.Path()
+		if fname == "" {
+			continue
+		}
+		norm := normalizePath(fname)
+		b.mu.Lock()
+		ref := b.docs[norm]
+		b.mu.Unlock()
+		open := ref != nil
+		var ln *lines.Lines
+		if open {
+			ln = ref.ln
+		} else {
+			content, err := os.ReadFile(fname)
+			if err != nil {
+				log.Printf("lsp: preview: %v\n", err)
+				continue
+			}
+			ln, _ = lines.NewLinesFromBytes(fname, 80, content)
+			if ln == nil {
+				log.Printf("lsp: preview: cannot parse %s\n", fname)
+				continue
+			}
+		}
+		for _, e := range p.edits {
+			r := regionFromLSP(ln, e.Range)
+			if !ln.IsValidPos(r.Start) || !ln.IsValidPos(r.End) {
+				log.Printf("lsp: preview: skipping edit at invalid position %v in %s\n", r.Start, fname)
+				continue
+			}
+			out = append(out, &EditPreview{
+				Filename: norm,
+				URI:      p.uri,
+				Open:     open,
+				Region:   r,
+				Old:      string(ln.Region(r.Start, r.End).ToBytes()),
+				New:      e.NewText,
+				LineText: string(ln.Line(r.Start.Line)),
+			})
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Filename != out[j].Filename {
+			return out[i].Filename < out[j].Filename
+		}
+		a, b := out[i].Region.Start, out[j].Region.Start
+		if a.Line != b.Line {
+			return a.Line < b.Line
+		}
+		return a.Char < b.Char
+	})
+	return out
+}
+
+// ApplyWorkspaceEdit applies a workspace edit from a language server:
+// to the live buffers for files that are open, and by rewriting the
+// files on disk otherwise (open buffers are left modified for the user
+// to save, as in other editors). It returns the edits actually applied,
+// per file, keyed by normalized filename.
+func (b *Backend) ApplyWorkspaceEdit(we *WorkspaceEdit) []lang.FileEdits {
+	if we == nil {
+		return nil
+	}
+	ps := normalizeWE(we)
+	var out []lang.FileEdits
+	for _, p := range ps {
+		if len(p.edits) == 0 {
+			continue
+		}
+		fname := p.uri.Path()
+		if fname == "" {
+			continue
+		}
+		b.mu.Lock()
+		ref := b.docs[normalizePath(fname)]
+		b.mu.Unlock()
+		if ref != nil {
+			edits := convertEdits(ref.ln, p.edits)
+			if applyTextEdits(ref.ln, p.edits) {
+				ref.srv.DidChange(p.uri, currentText(ref.ln))
+				log.Printf("lsp: applyEdit: %s: %d edits applied to open buffer\n", fname, len(edits))
+				out = append(out, lang.FileEdits{Filename: normalizePath(fname), Edits: edits})
+			}
+			continue
+		}
+		content, err := os.ReadFile(fname)
+		if err != nil {
+			log.Printf("lsp: applyEdit: %v\n", err)
+			continue
+		}
+		ln2, _ := lines.NewLinesFromBytes(fname, 80, content)
+		if ln2 == nil {
+			log.Printf("lsp: applyEdit: cannot parse %s\n", fname)
+			continue
+		}
+		edits := convertEdits(ln2, p.edits)
+		if !applyTextEdits(ln2, p.edits) {
+			continue
+		}
+		newTxt := ln2.String()
+		if err := os.WriteFile(fname, []byte(newTxt), 0644); err != nil {
+			log.Printf("lsp: applyEdit: %v\n", err)
+			continue
+		}
+		log.Printf("lsp: applyEdit: %s: %d edits written (%d->%d bytes)\n", fname, len(edits), len(content), len(newTxt))
+		out = append(out, lang.FileEdits{Filename: normalizePath(fname), Edits: edits})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Filename < out[j].Filename })
+	return out
+}
+
+// convertEdits converts LSP edits to editor units for the buffer.
+func convertEdits(ln *lines.Lines, edits []TextEdit) []lang.TextEdit {
+	out := make([]lang.TextEdit, 0, len(edits))
+	for _, e := range edits {
+		out = append(out, lang.TextEdit{Region: regionFromLSP(ln, e.Range), NewText: e.NewText})
+	}
+	return out
+}
+
+// RenameEdits requests the workspace edit for renaming the symbol at
+// pos to newName, validating with prepareRename first if the server
+// supports it. It returns nil if there is nothing to rename.
+func (b *Backend) RenameEdits(ln *lines.Lines, pos textpos.Pos, newName string) (*WorkspaceEdit, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, fmt.Errorf("language server not ready for %s", filepath.Base(ln.Filename()))
+	}
+	uri := DocumentURIfromFilename(ln.Filename())
+	srv.DidChange(uri, currentText(ln))
+	lpp := &TextDocumentPositionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Position:     toLSPPos(ln, pos),
+	}
+	if srv.supportsPrepareRename() {
+		_, _, ok, err := srv.PrepareRename(lpp)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			// prepareRename is advisory: it returns null both for
+			// genuinely non-renameable positions and for recoverable
+			// conditions such as package errors or symbols that are
+			// not yet analyzed. Ask rename itself, which answers with
+			// a specific reason on failure, rather than stopping here
+			// with a generic message.
+			log.Printf("lsp: prepareRename: nothing renameable at %v in %s; consulting rename\n",
+				pos, filepath.Base(ln.Filename()))
+		}
+	}
+	we, err := srv.Rename(&RenameParams{TextDocumentPositionParams: *lpp, NewName: newName})
+	if err != nil {
+		return nil, err
+	}
+	if we == nil {
+		return nil, fmt.Errorf("cannot rename the symbol at the cursor (nothing to rename)")
+	}
+	return we, nil
+}
+
+// Rename renames the symbol at pos to newName across the workspace,
+// applying the resulting edits to open buffers and files on disk
+// (see [Backend.ApplyWorkspaceEdit]). It returns the edits applied,
+// per file.
+func (b *Backend) Rename(ln *lines.Lines, pos textpos.Pos, newName string) ([]lang.FileEdits, error) {
+	we, err := b.RenameEdits(ln, pos, newName)
+	if err != nil {
+		return nil, err
+	}
+	out := b.ApplyWorkspaceEdit(we)
+	if len(out) == 0 {
+		return nil, fmt.Errorf("rename produced no edits")
+	}
+	return out, nil
 }

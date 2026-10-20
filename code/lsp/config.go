@@ -48,6 +48,65 @@ type ServerConfig struct {
 	// sent as the initializationOptions in the initialize request,
 	// and returned for workspace/configuration requests.
 	InitOptions map[string]any
+
+	// Optional marks an alternative server used only when a preferred
+	// server for the same languages is unavailable (e.g., pylsp after
+	// pyright). Bulk operations like installs skip these unless they
+	// are explicitly included.
+	Optional bool
+
+	// VersionArgs are the args to get the version of the executable,
+	// defaulting to --version.
+	VersionArgs []string
+
+	// Install describes how to install this language server
+	// on various platforms, for the lsp-server utility.
+	Install *InstallSpec
+}
+
+// InstallSpec describes how to install a language server:
+// one or more installer commands, in order of preference.
+// Any that require tools not available on the current platform
+// are skipped with manual instructions given instead.
+type InstallSpec struct {
+
+	// GoModule is the Go module to install via go install module@latest.
+	GoModule string
+
+	// Npm lists node packages to install via npm install -g,
+	// e.g., typescript-language-server and its typescript peer.
+	Npm []string
+
+	// Pip is a python package to install via pipx install
+	// (or pip install --user if pipx is not available).
+	Pip string
+
+	// Brew is a homebrew formula to install via brew install
+	// (macOS, and Linux brew installations).
+	Brew string
+
+	// Apt is a Debian / Ubuntu package to install via apt-get install,
+	// with sudo prepended when not running as root.
+	Apt string
+
+	// Docs is a URL with manual installation instructions,
+	// for platforms without automated methods.
+	Docs string
+}
+
+// InstallMethod is one concrete installer command, produced from
+// an [InstallSpec] for a given platform.
+type InstallMethod struct {
+
+	// Tool is the installer executable that must be available
+	// on the PATH, e.g., "go", "npm", "brew".
+	Tool string
+
+	// Args are the installer arguments.
+	Args []string
+
+	// Desc is a short human-readable description.
+	Desc string
 }
 
 // DefaultServers is the list of standard language server configurations,
@@ -71,6 +130,12 @@ var DefaultServers = []*ServerConfig{
 			"usePlaceholders":    true,
 			"staticcheck":        true,
 		},
+		Install: &InstallSpec{
+			GoModule: "golang.org/x/tools/gopls",
+			Brew:     "gopls",
+			Docs:     "https://github.com/golang/tools/tree/master/gopls",
+		},
+		VersionArgs: []string{"version"},
 	},
 	{
 		ID:          "typescript-language-server",
@@ -80,6 +145,11 @@ var DefaultServers = []*ServerConfig{
 		Langs:       []fileinfo.Known{fileinfo.TypeScript, fileinfo.JavaScript},
 		RootMarkers: []string{"tsconfig.json", "jsconfig.json", "package.json"},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Npm:  []string{"typescript-language-server", "typescript"},
+			Brew: "typescript-language-server",
+			Docs: "https://github.com/typescript-language-server/typescript-language-server",
+		},
 	},
 	{
 		ID:          "pyright-langserver",
@@ -89,14 +159,26 @@ var DefaultServers = []*ServerConfig{
 		Langs:       []fileinfo.Known{fileinfo.Python},
 		RootMarkers: []string{"pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "requirements.txt"},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Npm:  []string{"pyright"},
+			Pip:  "pyright",
+			Brew: "pyright",
+			Docs: "https://github.com/microsoft/pyright",
+		},
 	},
 	{
 		ID:          "pylsp",
-		Desc:        "Python LSP server (pip install pylsp)",
+		Desc:        "Python LSP server (alternative to pyright)",
 		Exec:        "pylsp",
 		Langs:       []fileinfo.Known{fileinfo.Python},
 		RootMarkers: []string{"pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "requirements.txt"},
 		InitOptions: map[string]any{},
+		Optional:    true,
+		Install: &InstallSpec{
+			Pip:  "python-lsp-server[all]",
+			Brew: "python-lsp-server",
+			Docs: "https://github.com/python-lsp/python-lsp-server",
+		},
 	},
 	{
 		ID:          "rust-analyzer",
@@ -105,6 +187,11 @@ var DefaultServers = []*ServerConfig{
 		Langs:       []fileinfo.Known{fileinfo.Rust},
 		RootMarkers: []string{"Cargo.toml"},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Brew: "rust-analyzer",
+			Apt:  "rust-analyzer",
+			Docs: "https://rust-analyzer.github.io/manual.html#installation",
+		},
 	},
 	{
 		ID:          "clangd",
@@ -113,6 +200,11 @@ var DefaultServers = []*ServerConfig{
 		Langs:       []fileinfo.Known{fileinfo.C},
 		RootMarkers: []string{"compile_commands.json"},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Brew: "clangd",
+			Apt:  "clangd",
+			Docs: "https://clangd.llvm.org/installation",
+		},
 	},
 	{
 		ID:          "bash-language-server",
@@ -121,6 +213,11 @@ var DefaultServers = []*ServerConfig{
 		Args:        []string{"start"},
 		Langs:       []fileinfo.Known{fileinfo.Bash},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Npm:  []string{"bash-language-server"},
+			Brew: "bash-language-server",
+			Docs: "https://github.com/bash-lsp/bash-language-server",
+		},
 	},
 	{
 		ID:          "vscode-json-language-server",
@@ -129,6 +226,10 @@ var DefaultServers = []*ServerConfig{
 		Args:        []string{"--stdio"},
 		Langs:       []fileinfo.Known{fileinfo.Json},
 		InitOptions: map[string]any{},
+		Install: &InstallSpec{
+			Npm:  []string{"vscode-langservers-extracted"},
+			Docs: "https://github.com/vuejs/vscode-languageserver-node",
+		},
 	},
 }
 

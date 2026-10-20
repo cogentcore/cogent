@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/text/parse/syms"
+	"cogentcore.org/core/text/search"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
@@ -284,6 +285,26 @@ func (ls *LangService) consumeDiags() {
 		select {
 		case <-ls.quit:
 			return
+		case fe, ok := <-ls.lspB.AppliedEdits():
+			if !ok {
+				return
+			}
+			// edits are already applied to the buffers and files by the
+			// backend; here we only refresh the affected views:
+			if ls.cv.Scene == nil {
+				continue
+			}
+			ls.cv.AsyncLock()
+			for _, f := range fe {
+				ln := ls.cv.GetOpenFile(f.Filename)
+				if ln == nil {
+					continue
+				}
+				if tv, _, hasTv := ls.cv.EditorForLines(ln); hasTv && tv != nil {
+					tv.NeedsRender()
+				}
+			}
+			ls.cv.AsyncUnlock()
 		case fd, ok := <-ls.lspB.Diagnostics():
 			if !ok {
 				return
@@ -656,6 +677,152 @@ func (cv *Code) LangFormat() { //types:add
 	} else {
 		cv.SetStatus("Format: no edits (or not supported yet by server)")
 	}
+}
+
+// wordAtCursor returns the word at the cursor for use as a rename
+// placeholder, preferring a single-line selection if one exists.
+// Returns "" if there is no word at the cursor.
+func wordAtCursor(tv *TextEditor) string {
+	ln := tv.Lines
+	if ln == nil {
+		return ""
+	}
+	if tv.HasSelection() {
+		r := tv.SelectRegion
+		if r.Start.Line == r.End.Line && r.End.Char > r.Start.Char {
+			return string(ln.Line(r.Start.Line)[r.Start.Char:r.End.Char])
+		}
+		return ""
+	}
+	pos := tv.CursorPos
+	if !ln.IsValidLine(pos.Line) {
+		return ""
+	}
+	if ln.IsWordEnd(pos) && pos.Char > 0 {
+		pos.Char-- // move inside the word so WordAt finds it
+	}
+	w := ln.WordAt(pos)
+	if w.Start.Line != pos.Line || w.End.Char <= w.Start.Char {
+		return ""
+	}
+	ed := min(w.End.Char, ln.LineLen(pos.Line))
+	if ed <= w.Start.Char {
+		return ""
+	}
+	return string(ln.Line(pos.Line)[w.Start.Char:ed])
+}
+
+// RenameSymbol prompts for a new name and renames the symbol at the
+// cursor across the workspace, using the language server. The proposed
+// edits are shown in the Find tab for review before applying: click a
+// result to jump to it, Replace for one at a time, or All for all
+// (open buffers are edited, unopened files are opened; save to write).
+func (cv *Code) RenameSymbol() { //types:add
+	tv := cv.ActiveEditor()
+	if tv == nil || tv.Lines == nil {
+		return
+	}
+	pos, ok := cursorWordPos(tv)
+	if !ok {
+		return
+	}
+	ln := tv.Lines
+	ls := cv.LangSvc()
+	if !ls.LSPActive(ln) {
+		cv.SetStatus("Rename: requires an LSP language server for this file")
+		return
+	}
+	word := wordAtCursor(tv)
+	if word == "" {
+		cv.SetStatus("Rename: no symbol at cursor")
+		return
+	}
+	d := core.NewBody("Rename " + word + " to")
+	tf := core.NewTextField(d).SetPlaceholder("new name")
+	tf.SetText(word)
+	d.AddBottomBar(func(bar *core.Frame) {
+		core.NewButton(bar).SetText("Rename").OnClick(func(e events.Event) {
+			newName := strings.TrimSpace(tf.Text())
+			d.Close()
+			if newName == "" || newName == word {
+				return
+			}
+			ls.previewRename(ln, pos, word, newName)
+		})
+	})
+	d.RunWindowDialog(tv)
+}
+
+// previewRename computes the workspace edits that rename the symbol at
+// pos to newName, and shows them in the Find tab for review: clicking
+// a result jumps to it, Replace applies one at a time, and All applies
+// them all (with confirmation). This reuses [FindPanel] in rename mode.
+func (ls *LangService) previewRename(ln *lines.Lines, pos textpos.Pos, old, newName string) {
+	cv := ls.cv
+	// synchronous, as for GotoDefinition: bounded server timeouts.
+	cv.SetStatus("Renaming " + old + "...")
+	we, err := ls.lspB.RenameEdits(ln, pos, newName)
+	if err != nil {
+		cv.SetStatus("Rename: " + err.Error())
+		return
+	}
+	prev := ls.lspB.PreviewWorkspaceEdit(we)
+	if len(prev) == 0 {
+		cv.SetStatus("Rename: nothing to rename")
+		return
+	}
+	tv := cv.Tabs()
+	if tv == nil {
+		cv.SetStatus("Rename: no tabs panel")
+		return
+	}
+	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
+	fv.UpdateTree()
+	fbuf, _ := cv.RecycleCmdBuf("Find")
+	ftv := fv.TextEditor()
+	ftv.SetLines(fbuf)
+	fv.Time = time.Now()
+	fv.Renaming = true
+	fv.Renamed = 0
+	fv.OnReplace = func(etv *TextEditor) {
+		ls.Change(etv.Lines) // keep the language server in sync
+	}
+	fp := &cv.Settings.Find
+	fp.Find = old
+	fp.Replace = newName
+	fp.IgnoreCase = false
+	res := renameResults(prev)
+	fv.ShowResults(res)
+	cv.FocusOnPanel(TabsIndex)
+	cv.SetStatus(fmt.Sprintf("Rename %s to %s: review %d edits in %d files -- Replace steps through, All applies", old, newName, len(prev), len(res)))
+}
+
+// renameResults converts rename edit previews into [search.Results]
+// for display and stepwise application in the Find panel. The previews
+// must be sorted by filename, as [lsp.Backend.PreviewWorkspaceEdit]
+// returns them, so that the matches group by file.
+func renameResults(prev []*lsp.EditPreview) []search.Results {
+	var res []search.Results
+	var cur *search.Results
+	for _, it := range prev {
+		if cur == nil || cur.Filepath != it.Filename {
+			res = append(res, search.Results{Filepath: it.Filename})
+			cur = &res[len(res)-1]
+		}
+		txt := []rune(it.LineText)
+		st := min(it.Region.Start.Char, len(txt))
+		ed := it.Region.End.Char
+		if it.Region.End.Line != it.Region.Start.Line || ed > len(txt) {
+			ed = len(txt) // multi-line region: show to end of first line
+		}
+		m := textpos.Match{Region: it.Region, Text: txt}
+		if st <= ed {
+			m.TextMatch = textpos.Range{Start: st, End: ed}
+		}
+		cur.Matches = append(cur.Matches, m)
+		cur.Count++
+	}
+	return res
 }
 
 // openLoc opens a file at the given location, selecting the region.

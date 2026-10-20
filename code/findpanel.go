@@ -89,6 +89,19 @@ type FindPanel struct {
 
 	// compiled regexp
 	Re *regexp.Regexp
+
+	// Renaming indicates this panel is showing proposed symbol rename
+	// edits from a language server, instead of search results:
+	// the Find string is the old name and Replace is the new name.
+	// Replace and All then apply the rename, one at a time or all.
+	Renaming bool `json:"-" xml:"-"`
+
+	// Renamed counts the rename edits applied in this session.
+	Renamed int `json:"-" xml:"-"`
+
+	// OnReplace, if set, is called after a replace is applied in a
+	// buffer, e.g. to sync a language server with the new text.
+	OnReplace func(tv *TextEditor) `json:"-" xml:"-"`
 }
 
 func (fv *FindPanel) Init() {
@@ -231,6 +244,11 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 // FindAction runs a new find with current params
 func (fv *FindPanel) FindAction() {
 	fp := fv.Params()
+	if fv.Renaming {
+		// results are proposed rename edits from the language server;
+		// a plain text search would not be equivalent.
+		return
+	}
 	if !fv.CompileRegexp() {
 		return
 	}
@@ -288,6 +306,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 	}
 	reg.Time.SetTime(fv.Time)
 	reg = tv.Lines.AdjustRegion(reg)
+	replaced := false
 	if !reg.IsNil() {
 		if fp.Regexp {
 			rg := tv.Lines.Region(reg.Start, reg.End)
@@ -298,6 +317,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 			// MatchCase only if doing IgnoreCase
 			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, fp.IgnoreCase)
 		}
+		replaced = true
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Line
@@ -306,24 +326,53 @@ func (fv *FindPanel) ReplaceAction() bool {
 		en := textpos.Pos{Line: ftvln, Char: len}
 		ftv.Lines.DeleteText(st, en)
 	}
+	if replaced {
+		if fv.OnReplace != nil {
+			fv.OnReplace(tv)
+		}
+		if fv.Renaming {
+			fv.Renamed++
+		}
+	}
 
 	tv.HighlightsReset()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
+	} else if fv.Renaming {
+		fv.finishRename()
 	}
 	fv.NeedsRender()
 	return ok
 }
 
+// finishRename ends a rename session: reports the result and restores
+// the panel to normal Find / Replace behavior.
+func (fv *FindPanel) finishRename() {
+	fp := fv.Params()
+	n := fv.Renamed
+	fv.Renaming = false
+	fv.Renamed = 0
+	fv.OnReplace = nil
+	fv.Code.SetStatus(fmt.Sprintf("Renamed %s to %s: %d edits applied", fp.Find, fp.Replace, n))
+}
+
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindPanel) ReplaceAllAction() {
-	d := core.NewBody("Confirm replace all")
-	core.NewText(d).SetType(core.TextSupporting).SetText("Are you sure you want to replace all?")
+	ttl := "Confirm replace all"
+	txt := "Are you sure you want to replace all?"
+	btn := "Replace all"
+	if fv.Renaming {
+		ttl = "Confirm rename all"
+		txt = fmt.Sprintf("Rename all %s to %s?", fv.Params().Find, fv.Params().Replace)
+		btn = "Rename all"
+	}
+	d := core.NewBody(ttl)
+	core.NewText(d).SetType(core.TextSupporting).SetText(txt)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
-		d.AddOK(bar).SetText("Replace all").OnClick(func(e events.Event) {
+		d.AddOK(bar).SetText(btn).OnClick(func(e events.Event) {
 			fv.ReplaceAll()
 		})
 	})
@@ -598,6 +647,10 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 
 	fbuf, _ := cv.RecycleCmdBuf("Find")
 	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
+	fv.Renaming = false
+	fv.Renamed = 0
+	// keep the language server in sync with replaced buffers:
+	fv.OnReplace = func(etv *TextEditor) { cv.LangSvc().Change(etv.Lines) }
 	fv.Time = time.Now()
 	fv.UpdateTree()
 	ftv := fv.TextEditor()
@@ -630,10 +683,10 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 		}
 		if regExp {
 			cnt, matches := atv.Lines.SearchRegexp(re)
-			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+			res = append(res, search.Results{Filepath: atv.Lines.Filename(), Count: cnt, Matches: matches})
 		} else {
 			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
-			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+			res = append(res, search.Results{Filepath: atv.Lines.Filename(), Count: cnt, Matches: matches})
 		}
 	}
 	if loc != File {

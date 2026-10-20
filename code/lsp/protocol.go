@@ -107,6 +107,16 @@ type TextDocumentPositionParams struct {
 	Position     Position               `json:"position"`
 }
 
+// RenameParams are the params for a textDocument/rename request.
+type RenameParams struct {
+	TextDocumentPositionParams
+	NewName string `json:"newName"`
+}
+
+// PrepareRenameParams are the params for a textDocument/prepareRename
+// request, which checks whether the symbol at a position can be renamed.
+type PrepareRenameParams = TextDocumentPositionParams
+
 ////////   Initialize
 
 // ClientInfo identifies the client to the server.
@@ -185,6 +195,7 @@ type TextDocumentClientCapab struct {
 	DocumentSymbol     *DocumentSymbolClientCapability  `json:"documentSymbol,omitempty"`
 	WorkspaceSymbol    *WorkspaceSymbolClientCapability `json:"workspaceSymbol,omitempty"`
 	Formatting         *FormattingClientCapability      `json:"formatting,omitempty"`
+	Rename             *RenameClientCapability          `json:"rename,omitempty"`
 }
 
 // TextDocumentSyncCapability declares text sync support.
@@ -253,6 +264,12 @@ type FormattingClientCapability struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// RenameClientCapability declares rename support.
+type RenameClientCapability struct {
+	PrepareSupport          bool `json:"prepareSupport,omitempty"`
+	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
+}
+
 // WorkspaceSymbolParams are the params for a workspace/symbol request.
 type WorkspaceSymbolParams struct {
 	Query string `json:"query"`
@@ -281,6 +298,7 @@ type ServerCapabilities struct {
 	DocumentSymbolProvider     rawJSON `json:"documentSymbolProvider,omitempty"`
 	WorkspaceSymbolProvider    rawJSON `json:"workspaceSymbolProvider,omitempty"`
 	DocumentFormattingProvider rawJSON `json:"documentFormattingProvider,omitempty"`
+	RenameProvider             rawJSON `json:"renameProvider,omitempty"`
 }
 
 // rawJSON holds raw JSON for union-typed protocol fields,
@@ -520,8 +538,21 @@ type FormattingOptions struct {
 }
 
 // WorkspaceEdit represents changes across multiple files.
+// Servers use either Changes (a map of URI to edits) or the more
+// expressive DocumentChanges (with explicit document versions).
 type WorkspaceEdit struct {
-	Changes map[string][]TextEdit `json:"changes,omitempty"`
+	Changes         map[string][]TextEdit `json:"changes,omitempty"`
+	DocumentChanges []DocumentEdit        `json:"documentChanges,omitempty"`
+}
+
+// DocumentEdit is an edit to specific versioned documents,
+// as used in WorkspaceEdit.DocumentChanges. The spec form has a
+// single Edit, but some servers (e.g. gopls) send multiple edits
+// per document in an Edits array instead.
+type DocumentEdit struct {
+	TextDocument VersionedTextDocumentIdentifier `json:"textDocument"`
+	Edit         *TextEdit                       `json:"edit,omitempty"`
+	Edits        []TextEdit                      `json:"edits,omitempty"`
 }
 
 ////////   Server -> client messages
@@ -613,10 +644,11 @@ func progressMessage(v rawJSON) string {
 	return obj.Message
 }
 
-// ApplyWorkspaceEditParams requests that the client apply an edit;
-// we do not currently support this, and always reject.
+// ApplyWorkspaceEditParams requests that the client apply an edit
+// sent by the server, e.g. as part of a refactoring.
 type ApplyWorkspaceEditParams struct {
-	Edit WorkspaceEdit `json:"edit"`
+	Edit  WorkspaceEdit `json:"edit"`
+	Label string        `json:"label,omitempty"`
 }
 
 // ApplyWorkspaceEditResult reports whether an edit was applied.

@@ -5,6 +5,7 @@
 package lsp
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -401,4 +402,319 @@ func TestBackendGoplsFlow(t *testing.T) {
 	})
 	b.Stop()
 	<-done
+}
+
+func TestParsePrepareRenameShapes(t *testing.T) {
+	// null and empty mean not renameable:
+	for _, raw := range []string{"null", ""} {
+		rng, ph, ok, err := parsePrepareRename(json.RawMessage(raw))
+		assert.NoError(t, err)
+		assert.False(t, ok)
+		assert.Nil(t, rng)
+		assert.Equal(t, "", ph)
+	}
+	// plain Range form:
+	rng, ph, ok, err := parsePrepareRename(json.RawMessage(
+		`{"start":{"line":4,"character":5},"end":{"line":4,"character":10}}`))
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, "", ph)
+	if assert.NotNil(t, rng) {
+		assert.Equal(t, 4, rng.Start.Line)
+		assert.Equal(t, 5, rng.Start.Character)
+		assert.Equal(t, 10, rng.End.Character)
+	}
+	// PrepareRenameResult form with placeholder:
+	rng, ph, ok, err = parsePrepareRename(json.RawMessage(
+		`{"range":{"start":{"line":1,"character":2},"end":{"line":1,"character":3}},"placeholder":"Greet"}`))
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, "Greet", ph)
+	if assert.NotNil(t, rng) {
+		assert.Equal(t, 1, rng.Start.Line)
+	}
+	// MarkupRange form: range parsed, no placeholder:
+	rng, ph, ok, err = parsePrepareRename(json.RawMessage(
+		`{"range":{"start":{"line":7,"character":0},"end":{"line":7,"character":4}},"markup":{"kind":"markdown","value":"x"}}`))
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	assert.Equal(t, "", ph)
+	if assert.NotNil(t, rng) {
+		assert.Equal(t, 7, rng.Start.Line)
+	}
+	// malformed:
+	_, _, _, err = parsePrepareRename(json.RawMessage(`{oops`))
+	assert.Error(t, err)
+}
+
+func TestApplyWorkspaceEdit(t *testing.T) {
+	dir := t.TempDir()
+	fa := filepath.Join(dir, "a.go")
+	fb := filepath.Join(dir, "b.go")
+	// b.go has an astral char before the target words on line 2, so the
+	// LSP (utf-16) positions differ from rune positions by one:
+	// quote(8) emoji(9,10) quote(11) space(12) +(13) space(14) smileX(15:20)
+	srcA := "package p\n\nvar smileX = 1\nvar y = smileX\n"
+	srcB := "package p\n\nvar q = \"\U0001F600\" + smileX\n\nvar z = smileX\n"
+	if err := os.WriteFile(fa, []byte(srcA), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fb, []byte(srcB), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	b := NewBackend(nil)
+	defer b.Stop()
+
+	// a.go is "open" against a never-started server: edits must land in
+	// the buffer only, not on disk:
+	ln := lines.NewLines()
+	ln.SetFilename(fa)
+	ln.SetText([]byte(srcA))
+	srv := NewServer(b.Reg, &ServerConfig{ID: "fake", Exec: "/does/not/exist"}, dir)
+	uriA := URIFromPath(fa)
+	uriB := URIFromPath(fb)
+	b.mu.Lock()
+	b.docs[normalizePath(fa)] = &docRef{ln: ln, srv: srv, langID: "go", fname: fa}
+	b.mu.Unlock()
+
+	we := &WorkspaceEdit{
+		Changes: map[string][]TextEdit{
+			string(uriA): {
+				{Range: Range{Start: Position{Line: 2, Character: 4}, End: Position{Line: 2, Character: 10}}, NewText: "happy"},
+				{Range: Range{Start: Position{Line: 3, Character: 8}, End: Position{Line: 3, Character: 14}}, NewText: "happy"},
+			},
+			string(uriB): {
+				{Range: Range{Start: Position{Line: 2, Character: 15}, End: Position{Line: 2, Character: 21}}, NewText: "happy"},
+			},
+		},
+		DocumentChanges: []DocumentEdit{
+			{
+				TextDocument: VersionedTextDocumentIdentifier{TextDocumentIdentifier: TextDocumentIdentifier{URI: uriB}, Version: 3},
+				Edits:        []TextEdit{{Range: Range{Start: Position{Line: 4, Character: 8}, End: Position{Line: 4, Character: 14}}, NewText: "happy"}},
+			},
+		},
+	}
+	out := b.ApplyWorkspaceEdit(we)
+	if assert.Len(t, out, 2) {
+		assert.Equal(t, normalizePath(fa), out[0].Filename)
+		assert.Equal(t, normalizePath(fb), out[1].Filename)
+		assert.Len(t, out[0].Edits, 2)
+		// edits for one file merge across Changes and DocumentChanges:
+		assert.Len(t, out[1].Edits, 2)
+	}
+
+	// open buffer updated in memory, left modified for the user to save:
+	assert.Equal(t, "package p\n\nvar happy = 1\nvar y = happy\n", ln.String())
+	gotA, err := os.ReadFile(fa)
+	if assert.NoError(t, err) {
+		assert.Equal(t, srcA, string(gotA), "open buffer must not be written to disk")
+	}
+	// closed file rewritten on disk, with the astral utf-16 offset handled:
+	gotB, err := os.ReadFile(fb)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "package p\n\nvar q = \"\U0001F600\" + happy\n\nvar z = happy\n", string(gotB))
+	}
+	// the server is notified of the new buffer text:
+	srv.mu.Lock()
+	ds := srv.docs[uriA]
+	srv.mu.Unlock()
+	if assert.NotNil(t, ds) {
+		assert.Equal(t, "package p\n\nvar happy = 1\nvar y = happy\n", ds.text)
+	}
+}
+
+func TestApplyEditNotification(t *testing.T) {
+	b := NewBackend(nil)
+	defer b.Stop()
+	dir := t.TempDir()
+	f := filepath.Join(dir, "c.go")
+	src := "package p\n\nvar old = 1\n"
+	if err := os.WriteFile(f, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	we := WorkspaceEdit{Changes: map[string][]TextEdit{
+		string(URIFromPath(f)): {{Range: Range{Start: Position{Line: 2, Character: 4}, End: Position{Line: 2, Character: 7}}, NewText: "new"}},
+	}}
+	applied, reason := b.handleApplyEdit(we)
+	assert.True(t, applied, reason)
+	select {
+	case fe := <-b.applies:
+		assert.Len(t, fe, 1)
+		assert.Equal(t, normalizePath(f), fe[0].Filename)
+	default:
+		t.Fatal("no AppliedEdits notification delivered")
+	}
+	// nothing to apply: rejected:
+	applied, _ = b.handleApplyEdit(WorkspaceEdit{})
+	assert.False(t, applied)
+}
+
+func TestBackendRenameGopls(t *testing.T) {
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	greetPath := filepath.Join(tmp, "greet.go")
+	usePath := filepath.Join(tmp, "use.go")
+	extraPath := filepath.Join(tmp, "extra.go")
+	srcGreet := "package demo\n\nfunc Greet(name string) string {\n\treturn name\n}\n"
+	srcUse := "package demo\n\nvar _ = Greet\n"
+	srcExtra := "package demo\n\nvar _ = Greet // never opened in the editor\n"
+	for f, src := range map[string]string{greetPath: srcGreet, usePath: srcUse, extraPath: srcExtra} {
+		if err := os.WriteFile(f, []byte(src), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("GOWORK", "off")
+
+	b := NewBackend(nil)
+	b.RootFunc = func(fpath string) string { return tmp }
+	defer b.Stop()
+
+	lnGreet := lines.NewLines()
+	lnGreet.SetFilename(greetPath)
+	lnGreet.SetText([]byte(srcGreet))
+	lnUse := lines.NewLines()
+	lnUse.SetFilename(usePath)
+	lnUse.SetText([]byte(srcUse))
+	if !b.Supported(lnGreet) {
+		t.Skip("no language server for Go found at runtime")
+	}
+	go func() {
+		for range b.Diagnostics() {
+		} // drain
+	}()
+	b.Open(lnGreet)
+	b.Open(lnUse)
+	waitUntil(t, 60*time.Second, "server ready", func() bool { return b.Ready(lnGreet) })
+
+	// gopls can answer null while it is still loading the package,
+	// so retry until the rename succeeds or the deadline passes:
+	var out []lang.FileEdits
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		var err error
+		guard(t, 30*time.Second, "Backend.Rename", func() {
+			out, err = b.Rename(lnGreet, textpos.Pos{Line: 2, Char: 6}, "Hello")
+		})
+		if err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("rename never succeeded: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	got := map[string]bool{}
+	for _, f := range out {
+		got[f.Filename] = true
+	}
+	assert.True(t, got[normalizePath(greetPath)], "greet.go missing from rename edits")
+	assert.True(t, got[normalizePath(usePath)], "use.go missing from rename edits")
+	assert.True(t, got[normalizePath(extraPath)], "unopened extra.go missing from rename edits")
+
+	// open buffers updated in memory:
+	assert.Contains(t, lnGreet.String(), "func Hello(name string)")
+	assert.NotContains(t, lnGreet.String(), "Greet")
+	assert.Contains(t, lnUse.String(), "var _ = Hello")
+
+	// open files stay unsaved on disk; the unopened file is rewritten:
+	dg, err := os.ReadFile(greetPath)
+	if assert.NoError(t, err) {
+		assert.Equal(t, srcGreet, string(dg))
+	}
+	de, err := os.ReadFile(extraPath)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "package demo\n\nvar _ = Hello // never opened in the editor\n", string(de))
+	}
+
+	// the server sees the renamed symbol in the synced buffer:
+	syms := b.Symbols(lnGreet)
+	found := false
+	for _, sy := range syms {
+		if sy.Name == "Hello" {
+			found = true
+		}
+	}
+	assert.True(t, found, "Hello not in document symbols after rename")
+
+	// rename at a non-identifier position must fail with a reason,
+	// via the advisory-prepareRename fallback to the rename request
+	// (analysis is warm at this point):
+	if _, err := b.RenameEdits(lnGreet, textpos.Pos{Line: 1, Char: 0}, "Nope"); err == nil {
+		t.Fatal("rename at empty line unexpectedly succeeded")
+	} else {
+		t.Logf("bad-position rename error: %v", err)
+	}
+}
+
+func TestPreviewWorkspaceEdit(t *testing.T) {
+	dir := t.TempDir()
+	fa := filepath.Join(dir, "a.go")
+	fb := filepath.Join(dir, "b.go")
+	srcA := "package p\n\nvar smileX = 1\nvar y = smileX\n"
+	srcB := "package p\n\nvar q = smileX\n"
+	if err := os.WriteFile(fa, []byte(srcA), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fb, []byte(srcB), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b := NewBackend(nil)
+	defer b.Stop()
+
+	ln := lines.NewLines()
+	ln.SetFilename(fa)
+	ln.SetText([]byte(srcA))
+	srv := NewServer(b.Reg, &ServerConfig{ID: "fake", Exec: "/does/not/exist"}, dir)
+	uriA := URIFromPath(fa)
+	uriB := URIFromPath(fb)
+	b.mu.Lock()
+	b.docs[normalizePath(fa)] = &docRef{ln: ln, srv: srv, langID: "go", fname: fa}
+	b.mu.Unlock()
+
+	we := &WorkspaceEdit{
+		Changes: map[string][]TextEdit{
+			string(uriA): {
+				{Range: Range{Start: Position{Line: 3, Character: 8}, End: Position{Line: 3, Character: 14}}, NewText: "happy"},
+				{Range: Range{Start: Position{Line: 2, Character: 4}, End: Position{Line: 2, Character: 10}}, NewText: "happy"},
+			},
+		},
+		DocumentChanges: []DocumentEdit{
+			{
+				TextDocument: VersionedTextDocumentIdentifier{TextDocumentIdentifier: TextDocumentIdentifier{URI: uriB}, Version: 2},
+				Edits:        []TextEdit{{Range: Range{Start: Position{Line: 2, Character: 8}, End: Position{Line: 2, Character: 14}}, NewText: "happy"}},
+			},
+		},
+	}
+	prev := b.PreviewWorkspaceEdit(we)
+	if assert.Len(t, prev, 3) {
+		// sorted by file, then position:
+		assert.Equal(t, normalizePath(fa), prev[0].Filename)
+		assert.Equal(t, 2, prev[0].Region.Start.Line)
+		assert.Equal(t, normalizePath(fa), prev[1].Filename)
+		assert.Equal(t, 3, prev[1].Region.Start.Line)
+		assert.Equal(t, normalizePath(fb), prev[2].Filename)
+
+		for _, pv := range prev {
+			assert.Equal(t, "smileX", pv.Old)
+			assert.Equal(t, "happy", pv.New)
+		}
+		assert.True(t, prev[0].Open, "a.go is open in a tracked buffer")
+		assert.False(t, prev[2].Open, "b.go is not open")
+		assert.Equal(t, "var smileX = 1", prev[0].LineText)
+		assert.Equal(t, "var y = smileX", prev[1].LineText)
+		assert.Equal(t, "var q = smileX", prev[2].LineText)
+	}
+	// nothing applied:
+	assert.Equal(t, srcA, ln.String())
+	gotB, err := os.ReadFile(fb)
+	if assert.NoError(t, err) {
+		assert.Equal(t, srcB, string(gotB))
+	}
 }
