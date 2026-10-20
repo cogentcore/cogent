@@ -24,6 +24,10 @@ var _ = types.AddFunc(&types.Func{Name: "main.Format", Doc: "Format formats the 
 
 var _ = types.AddFunc(&types.Func{Name: "main.Rename", Doc: "Rename renames the symbol at FILE:LINE:COL to NEWNAME across the\nworkspace, rewriting the affected files. Use -n to preview the\nper-file edit counts without writing anything.", Args: []string{"c"}, Returns: []string{"error"}})
 
+var _ = types.AddFunc(&types.Func{Name: "main.Actions", Doc: "Actions lists the quick fixes and refactorings the server offers at\nFILE:LINE:COL: organize imports, missing returns, error-check\nwrapping, typo fixes, extract function/variable, fill struct, etc.\nDiagnostics published for the file are sent as context, which is\nwhat turns the quick fixes on. With -a TITLE, applies the matching\naction and rewrites the affected files.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.pickAction", Doc: "pickAction finds the action whose title matches the given pattern:\nexact match first, then case-insensitive substring.", Args: []string{"acts", "pat"}, Returns: []string{"CodeAction"}})
+
 var _ = types.AddFunc(&types.Func{Name: "main.editCounts", Doc: "editCounts converts a workspace edit into per-file counts, for a\ndry-run report, without applying anything.", Args: []string{"we"}, Returns: []string{"FileEdits"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.cliNormalize", Doc: "cliNormalize canonicalizes a path for comparing whether two names\nrefer to the same file, resolving symlinks like /var -> /private/var.", Args: []string{"path"}, Returns: []string{"string"}})

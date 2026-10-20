@@ -55,6 +55,8 @@ const (
 	KeyBuildProject
 	// run overall project
 	KeyRunProject
+	// prompt for a quick fix or refactoring at the cursor (code actions)
+	KeyQuickFix
 )
 
 // StandardKeyMaps are the standard extended maps for Code
@@ -99,6 +101,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M": KeyBuildProject,
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -140,6 +143,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M": KeyBuildProject,
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -181,6 +185,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M": KeyBuildProject,
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 	{"LinuxStandard", "Standard Linux key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -224,6 +229,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M": KeyBuildProject,
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 	{"WindowsStandard", "Standard Windows key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -267,6 +273,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M": KeyBuildProject,
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -310,5 +317,6 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M": KeyBuildProject,
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
+		"Control+.":           KeyQuickFix,
 	}},
 }

@@ -6,6 +6,7 @@ package lsp
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -717,4 +718,162 @@ func TestPreviewWorkspaceEdit(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, srcB, string(gotB))
 	}
+}
+
+func TestParseCodeActions(t *testing.T) {
+	raw := json.RawMessage(`[
+		{"title":"Organize imports","kind":"source.organizeImports","isPreferred":true,"edit":{"changes":{}}},
+		{"title":"Remove unused import \"fmt\"","kind":"quickfix","diagnostics":[{"range":{"start":{"line":2,"character":7},"end":{"line":2,"character":12}},"severity":1,"message":"\"fmt\" imported and not used"}],"edit":{"changes":{}}},
+		{"title":"Fix all gopls-error codes","command":"gopls.fix_all","arguments":[{"file":"file:///tmp/x.go"}]},
+		{"title":"Extract function","kind":"refactor.extract.function","disabled":{"reason":"select an expression"}}
+	]`)
+	acts, err := parseCodeActions(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(acts) != 4 {
+		t.Fatalf("got %d actions, want 4", len(acts))
+	}
+	assert.Equal(t, "source.organizeImports", acts[0].Kind)
+	assert.True(t, acts[0].IsPreferred, "preferred not parsed")
+	assert.NotNil(t, acts[0].Edit, "inline edit not parsed")
+	assert.Equal(t, 1, len(acts[1].Diagnostics), "diagnostics not parsed")
+	assert.Equal(t, SeverityError, acts[1].Diagnostics[0].Severity)
+	// plain Command union item (LSP 3.8 legacy form):
+	assert.Equal(t, "command", acts[2].Kind)
+	if assert.NotNil(t, acts[2].Command) {
+		assert.Equal(t, "gopls.fix_all", acts[2].Command.Command)
+		assert.Equal(t, 1, len(acts[2].Command.Arguments))
+	}
+	// disabled action keeps its reason:
+	if assert.NotNil(t, acts[3].Disabled) {
+		assert.Equal(t, "select an expression", acts[3].Disabled.Reason)
+	}
+	// empty results:
+	for _, s := range []string{"null", ""} {
+		out, err := parseCodeActions(json.RawMessage(s))
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(out))
+	}
+}
+
+func TestCodeActionsGopls(t *testing.T) {
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	srcPath := filepath.Join(tmp, "main.go")
+	src := "package main\n\nimport \"fmt\"\n\nfunc Hello() string {\n\treturn \"hi\"\n}\n"
+	if err := os.WriteFile(srcPath, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOWORK", "off")
+
+	b := NewBackend(nil)
+	b.RootFunc = func(fpath string) string { return tmp }
+	defer b.Stop()
+
+	ln := lines.NewLines()
+	ln.SetFilename(srcPath)
+	ln.SetText([]byte(src))
+	if !b.Supported(ln) {
+		t.Skip("no language server for Go found at runtime")
+	}
+	// collect published diagnostics; quick fixes are keyed off these,
+	// so the code action context needs them:
+	var diags []lang.Diagnostic
+	deadline := time.Now().Add(60 * time.Second)
+	b.Open(ln)
+	for time.Now().Before(deadline) {
+		select {
+		case fd, ok := <-b.Diagnostics():
+			if !ok {
+				t.Fatal("diagnostics channel closed")
+			}
+			if normalizePath(fd.Filename) != normalizePath(srcPath) {
+				continue
+			}
+			if len(fd.Diags) > 0 {
+				diags = fd.Diags
+			}
+		case <-time.After(2 * time.Second):
+		}
+		if len(diags) > 0 {
+			break
+		}
+	}
+	if len(diags) == 0 {
+		t.Fatal("no diagnostics for unused import")
+	}
+	found := false
+	for _, d := range diags {
+		if strings.Contains(d.Msg, "not used") {
+			found = true
+		}
+	}
+	assert.True(t, found, "no unused-import diagnostic: %v", diags)
+
+	// region over the import path, as a cursor on fmt would give:
+	reg := textpos.Region{
+		Start: textpos.Pos{Line: 2, Char: 8},
+		End:   textpos.Pos{Line: 2, Char: 11},
+	}
+	var acts []CodeAction
+	err := fmt.Errorf("never queried")
+	for time.Now().Before(deadline) {
+		guard(t, 30*time.Second, "Backend.CodeActions", func() {
+			acts, err = b.CodeActions(ln, reg, diags)
+		})
+		if err == nil && len(acts) > 0 {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if err != nil || len(acts) == 0 {
+		t.Fatalf("no code actions offered: %v", err)
+	}
+	var titles []string
+	for _, ca := range acts {
+		titles = append(titles, ca.Kind+": "+ca.Title)
+	}
+	t.Logf("actions: %v", titles)
+	hasFix := false
+	for _, ca := range acts {
+		if strings.HasPrefix(ca.Kind, "quickfix") || strings.Contains(ca.Kind, "organizeImports") {
+			hasFix = true
+		}
+	}
+	assert.True(t, hasFix, "no quick fix / organize imports offered: %v", titles)
+
+	// apply the first actionable fix and verify the import goes away:
+	var sel *CodeAction
+	for i := range acts {
+		if acts[i].Disabled == nil && strings.HasPrefix(acts[i].Kind, "quickfix") {
+			sel = &acts[i]
+			break
+		}
+	}
+	if sel == nil {
+		for i := range acts {
+			if acts[i].Disabled == nil && strings.Contains(acts[i].Kind, "organizeImports") {
+				sel = &acts[i]
+				break
+			}
+		}
+	}
+	if sel == nil {
+		t.Fatalf("no appliable fix in %v", titles)
+	}
+	var out []lang.FileEdits
+	guard(t, 30*time.Second, "Backend.RunCodeAction", func() {
+		out, err = b.RunCodeAction(ln, sel)
+	})
+	if !assert.NoError(t, err, "RunCodeAction %q", sel.Title) {
+		t.Fatalf("could not apply %q", sel.Title)
+	}
+	assert.True(t, len(out) > 0, "no edits applied")
+	assert.NotContains(t, ln.String(), `"fmt"`, "unused import still present after fix %q", sel.Title)
 }

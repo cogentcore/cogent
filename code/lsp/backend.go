@@ -6,6 +6,7 @@ package lsp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -1218,6 +1219,120 @@ func (b *Backend) Rename(ln *lines.Lines, pos textpos.Pos, newName string) ([]la
 	out := b.ApplyWorkspaceEdit(we)
 	if len(out) == 0 {
 		return nil, fmt.Errorf("rename produced no edits")
+	}
+	return out, nil
+}
+
+////////   Code actions
+
+// toLSPRange converts an editor (rune) region to an LSP (utf-16) range
+// for the given buffer.
+func toLSPRange(ln *lines.Lines, reg textpos.Region) Range {
+	return Range{Start: toLSPPos(ln, reg.Start), End: toLSPPos(ln, reg.End)}
+}
+
+// sevToLSP converts an editor severity to the LSP diagnostic severity.
+func sevToLSP(s lang.DiagSeverity) DiagnosticSeverity {
+	switch s {
+	case lang.DiagWarn:
+		return SeverityWarning
+	case lang.DiagInfo:
+		return SeverityInformation
+	case lang.DiagHint:
+		return SeverityHint
+	}
+	return SeverityError
+}
+
+// toLSPDiags converts cached editor diagnostics into LSP form for the
+// code action context.
+func toLSPDiags(ln *lines.Lines, diags []lang.Diagnostic) []Diagnostic {
+	out := make([]Diagnostic, 0, len(diags))
+	for _, d := range diags {
+		ld := Diagnostic{
+			Range:    toLSPRange(ln, d.Region),
+			Severity: sevToLSP(d.Severity),
+			Code:     d.Code,
+			Source:   d.Source,
+		}
+		// Code can be numeric in the protocol; string is acceptable:
+		ld.Message = d.Msg
+		out = append(out, ld)
+	}
+	return out
+}
+
+// CodeActions returns the quick fixes and refactorings the server
+// offers for the given region. The cached diags are passed as context,
+// which is what enables the quick fixes: servers generally only offer
+// fixes for diagnostics included in the request.
+func (b *Backend) CodeActions(ln *lines.Lines, reg textpos.Region, diags []lang.Diagnostic) ([]CodeAction, error) {
+	return b.codeActions(ln, reg, diags, false)
+}
+
+// CodeActionsQuick is CodeActions with the short, latency-sensitive
+// timeout for hover and other interactive paths.
+func (b *Backend) CodeActionsQuick(ln *lines.Lines, reg textpos.Region, diags []lang.Diagnostic) ([]CodeAction, error) {
+	return b.codeActions(ln, reg, diags, true)
+}
+
+func (b *Backend) codeActions(ln *lines.Lines, reg textpos.Region, diags []lang.Diagnostic, quick bool) ([]CodeAction, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, fmt.Errorf("language server not ready for %s", filepath.Base(ln.Filename()))
+	}
+	if !srv.supportsCodeAction() {
+		return nil, nil
+	}
+	uri := DocumentURIfromFilename(ln.Filename())
+	srv.DidChange(uri, currentText(ln))
+	params := &CodeActionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Range:        toLSPRange(ln, reg),
+		Context: CodeActionContext{
+			Diagnostics: toLSPDiags(ln, diags),
+			TriggerKind: CodeActionTriggerInvoked,
+		},
+	}
+	if quick {
+		return srv.CodeActionQuick(params)
+	}
+	return srv.CodeAction(params)
+}
+
+// RunCodeAction applies a code action: inline edits directly, resolving
+// deferred edits via codeAction/resolve, and running the action's
+// command when it returns a WorkspaceEdit. The workspace edit is then
+// applied to open buffers and files on disk, as for renames
+// (see [Backend.ApplyWorkspaceEdit]). It returns the edits applied.
+func (b *Backend) RunCodeAction(ln *lines.Lines, ca *CodeAction) ([]lang.FileEdits, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, fmt.Errorf("language server not ready for %s", filepath.Base(ln.Filename()))
+	}
+	if ca.Edit == nil {
+		if err := srv.ResolveCodeAction(ca); err != nil {
+			log.Printf("lsp: codeAction resolve %q: %v\n", ca.Title, err)
+		}
+	}
+	if ca.Edit == nil && ca.Command != nil && ca.Command.Command != "" {
+		raw, err := srv.ExecuteCommand(ca.Command.Command, ca.Command.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("code action %q: %w", ca.Title, err)
+		}
+		if len(raw) > 0 && string(raw) != "null" {
+			var we WorkspaceEdit
+			if err := json.Unmarshal(raw, &we); err == nil {
+				ca.Edit = &we
+			}
+		}
+	}
+	if ca.Edit == nil {
+		return nil, fmt.Errorf("code action %q did not provide edits", ca.Title)
+	}
+	out := b.ApplyWorkspaceEdit(ca.Edit)
+	if len(out) == 0 {
+		return nil, fmt.Errorf("code action %q produced no edits", ca.Title)
 	}
 	return out, nil
 }

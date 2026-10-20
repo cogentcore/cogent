@@ -196,6 +196,7 @@ type TextDocumentClientCapab struct {
 	WorkspaceSymbol    *WorkspaceSymbolClientCapability `json:"workspaceSymbol,omitempty"`
 	Formatting         *FormattingClientCapability      `json:"formatting,omitempty"`
 	Rename             *RenameClientCapability          `json:"rename,omitempty"`
+	CodeAction         *CodeActionClientCapability      `json:"codeAction,omitempty"`
 }
 
 // TextDocumentSyncCapability declares text sync support.
@@ -299,6 +300,7 @@ type ServerCapabilities struct {
 	WorkspaceSymbolProvider    rawJSON `json:"workspaceSymbolProvider,omitempty"`
 	DocumentFormattingProvider rawJSON `json:"documentFormattingProvider,omitempty"`
 	RenameProvider             rawJSON `json:"renameProvider,omitempty"`
+	CodeActionProvider         rawJSON `json:"codeActionProvider,omitempty"`
 }
 
 // rawJSON holds raw JSON for union-typed protocol fields,
@@ -695,4 +697,104 @@ func markupFlatten(raw rawJSON) (string, string) {
 		return kind, sb.String()
 	}
 	return "", ""
+}
+
+////////   Code actions
+
+// Command is a simple command identifier with arguments, as used in
+// code actions and other results. Some servers return commands instead
+// of (or in addition to) workspace edits.
+type Command struct {
+
+	// Title is the human-readable title.
+	Title string `json:"title"`
+
+	// Command is the command identifier, e.g. "gopls.organize_imports".
+	Command string `json:"command"`
+
+	// Arguments are command-specific arguments.
+	Arguments []any `json:"arguments,omitempty"`
+}
+
+// CodeActionKindValueSet lists the action kinds the client understands.
+// Servers omit literal code action support unless this is declared.
+type CodeActionKindValueSet struct {
+	ValueSet []string `json:"valueSet"`
+}
+
+// CodeActionLiteralSupport declares kind-based code action support.
+type CodeActionLiteralSupport struct {
+	CodeActionKind CodeActionKindValueSet `json:"codeActionKind"`
+}
+
+// CodeActionClientCapability declares code action support.
+type CodeActionClientCapability struct {
+	DynamicRegistration      bool                      `json:"dynamicRegistration,omitempty"`
+	CodeActionLiteralSupport *CodeActionLiteralSupport `json:"codeActionLiteralSupport,omitempty"`
+	IsPreferredSupport       bool                      `json:"isPreferredSupport,omitempty"`
+	DataSupport              bool                      `json:"dataSupport,omitempty"`
+	ResolveSupport           *ResolveSupport           `json:"resolveSupport,omitempty"`
+}
+
+// Code action context trigger kinds.
+const (
+	// CodeActionTriggerInvoked means explicitly requested by the user.
+	CodeActionTriggerInvoked = 1
+
+	// CodeActionTriggerAutomatic means triggered by a keystroke or save.
+	CodeActionTriggerAutomatic = 2
+)
+
+// CodeActionContext carries the diagnostics the actions should address,
+// which is what turns quick fixes on: servers generally only return
+// quick fixes for diagnostics included here.
+type CodeActionContext struct {
+	Diagnostics []Diagnostic `json:"diagnostics"`
+	TriggerKind int          `json:"triggerKind,omitempty"`
+	Only        []string     `json:"only,omitempty"`
+}
+
+// CodeActionParams requests the code actions in a document range.
+type CodeActionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
+	Context      CodeActionContext      `json:"context"`
+}
+
+// CodeActionDisabled explains why an action cannot be applied.
+type CodeActionDisabled struct {
+	Reason string `json:"reason"`
+}
+
+// CodeAction is a quick fix or refactoring offered by a server.
+// The changes are either provided inline in Edit, retrievable via
+// codeAction/resolve (Data set, Edit nil), or require running Command.
+type CodeAction struct {
+
+	// Title is the human-readable title, e.g. "Organize imports".
+	Title string `json:"title"`
+
+	// Kind is the action kind: "quickfix", "refactor",
+	// "refactor.extract", "source.organizeImports", etc.
+	// Empty for plain Command results.
+	Kind string `json:"kind,omitempty"`
+
+	// Diagnostics are the problems this action addresses.
+	Diagnostics []Diagnostic `json:"diagnostics,omitempty"`
+
+	// IsPreferred marks the recommended fix for the diagnostics.
+	IsPreferred bool `json:"isPreferred,omitempty"`
+
+	// Disabled, if set, marks the action un-appliable with a reason.
+	Disabled *CodeActionDisabled `json:"disabled,omitempty"`
+
+	// Edit is the inline workspace edit, if provided.
+	Edit *WorkspaceEdit `json:"edit,omitempty"`
+
+	// Command is an associated command to run, when edits are not
+	// provided inline or additional work is required.
+	Command *Command `json:"command,omitempty"`
+
+	// Data is an opaque token echoed back to codeAction/resolve.
+	Data rawJSON `json:"data,omitempty"`
 }

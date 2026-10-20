@@ -7,6 +7,7 @@ package code
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -53,6 +54,10 @@ type LangService struct {
 	// line, which it regenerates from scratch on every cursor movement.
 	diagStatus map[string]string
 
+	// diagCache is the full diagnostic list per file, from the latest
+	// publish, used as code action context for quick fixes.
+	diagCache map[string][]lang.Diagnostic
+
 	hover hoverCache
 
 	quit chan struct{}
@@ -98,6 +103,7 @@ func NewLangService(cv *Code) *LangService {
 		debounce:   make(map[string]*time.Timer),
 		prevDiags:  make(map[string][]tagPos),
 		diagStatus: make(map[string]string),
+		diagCache:  make(map[string][]lang.Diagnostic),
 		quit:       make(chan struct{}),
 	}
 	ls.lspB.RootFunc = func(fpath string) string {
@@ -322,8 +328,10 @@ func (ls *LangService) consumeDiags() {
 			ls.mu.Lock()
 			if summary == "" {
 				delete(ls.diagStatus, fd.Filename)
+				delete(ls.diagCache, fd.Filename)
 			} else {
 				ls.diagStatus[fd.Filename] = summary
+				ls.diagCache[fd.Filename] = fd.Diags
 			}
 			ls.mu.Unlock()
 			if ls.cv.Scene == nil {
@@ -462,6 +470,7 @@ func (ls *LangService) clearDiags(ln *lines.Lines) {
 	prev := ls.prevDiags[fname]
 	delete(ls.prevDiags, fname)
 	delete(ls.diagStatus, fname)
+	delete(ls.diagCache, fname)
 	ls.mu.Unlock()
 	done := make(map[int]bool)
 	for _, p := range prev {
@@ -513,6 +522,11 @@ func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	ls.mu.Unlock()
 
 	txt := ls.lspB.Hover(ln, pos)
+	if diag != "" {
+		// pair fixes with the diagnostic: list available quick fixes
+		// right in the hover, on the quick timeout so hover stays snappy:
+		txt += ls.quickFixHint(ln, pos)
+	}
 
 	ls.mu.Lock()
 	hc = &ls.hover
@@ -741,7 +755,8 @@ func (cv *Code) RenameSymbol() { //types:add
 	tf := core.NewTextField(d).SetPlaceholder("new name")
 	tf.SetText(word)
 	d.AddBottomBar(func(bar *core.Frame) {
-		core.NewButton(bar).SetText("Rename").OnClick(func(e events.Event) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Rename").OnClick(func(e events.Event) {
 			newName := strings.TrimSpace(tf.Text())
 			d.Close()
 			if newName == "" || newName == word {
@@ -878,8 +893,182 @@ func (cv *Code) WorkspaceSymbolPrompt() { //types:add
 		lst.SetItems(langSymItems(cv, symsL)...)
 	}
 	d.AddBottomBar(func(bar *core.Frame) {
-		core.NewButton(bar).SetText("Search").OnClick(func(e events.Event) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Search").OnClick(func(e events.Event) {
 			search()
+		})
+	})
+	d.RunWindowDialog(tv)
+}
+
+// diagCovers reports whether the diagnostic region contains pos,
+// with inclusive boundaries matching [LangService.diagAt].
+func diagCovers(d lang.Diagnostic, pos textpos.Pos) bool {
+	if pos.Line < d.Region.Start.Line || pos.Line > d.Region.End.Line {
+		return false
+	}
+	if pos.Line == d.Region.Start.Line && pos.Char < d.Region.Start.Char {
+		return false
+	}
+	if pos.Line == d.Region.End.Line && pos.Char > d.Region.End.Char {
+		return false
+	}
+	return true
+}
+
+// diagsIn returns the cached diagnostics for this file whose regions
+// overlap the given region, for use as code action context.
+func (ls *LangService) diagsIn(ln *lines.Lines, reg textpos.Region) []lang.Diagnostic {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	var out []lang.Diagnostic
+	for _, d := range ls.diagCache[ln.Filename()] {
+		if d.Region.End.Line >= reg.Start.Line && d.Region.Start.Line <= reg.End.Line {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// quickFixHint returns a hover text suffix listing the titles of the
+// quick fixes available for the diagnostic at pos, pairing fixes with
+// diagnostics on hover. It uses the quick timeout and returns "" on any
+// failure, so hover never blocks or misbehaves because of it.
+func (ls *LangService) quickFixHint(ln *lines.Lines, pos textpos.Pos) string {
+	ls.mu.Lock()
+	all := ls.diagCache[ln.Filename()]
+	ls.mu.Unlock()
+	var atPos []lang.Diagnostic
+	for _, d := range all {
+		if diagCovers(d, pos) {
+			atPos = append(atPos, d)
+		}
+	}
+	if len(atPos) == 0 {
+		return ""
+	}
+	actions, err := ls.lspB.CodeActionsQuick(ln, atPos[0].Region, atPos)
+	if err != nil || len(actions) == 0 {
+		return ""
+	}
+	var ts []string
+	for _, ca := range actions {
+		if ca.Disabled != nil || ca.Kind == "refactor" || strings.HasPrefix(ca.Kind, "refactor.") {
+			continue // fixes only on hover; refactorings via the prompt
+		}
+		ts = append(ts, ca.Title)
+		if len(ts) >= 3 {
+			break
+		}
+	}
+	if len(ts) == 0 {
+		return ""
+	}
+	return "\n⚡ quick fix: " + strings.Join(ts, "; ") + "  (" + string(KeyQuickFix.Chord()) + ")"
+}
+
+// actionRegion returns the region to request code actions for:
+// a single-line selection if there is one, otherwise the word at
+// the cursor, falling back to the bare cursor position.
+func actionRegion(tv *TextEditor) textpos.Region {
+	ln := tv.Lines
+	if tv.HasSelection() && tv.SelectRegion.End.Line == tv.SelectRegion.Start.Line {
+		return tv.SelectRegion
+	}
+	pos := tv.CursorPos
+	if !ln.IsValidLine(pos.Line) {
+		return textpos.Region{Start: pos, End: pos}
+	}
+	w := ln.WordAt(pos)
+	if w.Start.Line == pos.Line && w.End.Char >= w.Start.Char {
+		return w
+	}
+	return textpos.Region{Start: pos, End: pos}
+}
+
+// QuickFix prompts for and applies a quick fix or refactoring from the
+// language server at the cursor or selection, like other editors'
+// Ctrl+. (Ctrl+period). The diagnostics cached for the position are
+// sent as context, which is what turns the quick fixes on: organize
+// imports, missing returns, error-check wrapping, typo fixes, etc,
+// along with refactorings like extract function/variable.
+func (cv *Code) QuickFix() { //types:add
+	tv := cv.ActiveEditor()
+	if tv == nil || tv.Lines == nil {
+		return
+	}
+	ln := tv.Lines
+	ls := cv.LangSvc()
+	if !ls.LSPActive(ln) {
+		cv.SetStatus("Quick fix: requires an LSP language server for this file")
+		return
+	}
+	reg := actionRegion(tv)
+	diags := ls.diagsIn(ln, reg)
+	cv.SetStatus("Quick fix: consulting server...")
+	actions, err := ls.lspB.CodeActions(ln, reg, diags)
+	if err != nil {
+		cv.SetStatus("Quick fix: " + err.Error())
+		return
+	}
+	if len(actions) == 0 {
+		cv.SetStatus("Quick fix: no actions available here")
+		return
+	}
+	// preferred, enabled actions first for a useful default selection:
+	sort.SliceStable(actions, func(i, j int) bool {
+		a, b := &actions[i], &actions[j]
+		ad, bd := a.Disabled != nil, b.Disabled != nil
+		if ad != bd {
+			return !ad
+		}
+		if a.IsPreferred != b.IsPreferred {
+			return a.IsPreferred
+		}
+		return false
+	})
+	d := core.NewBody("Quick fix / refactor")
+	c := core.NewChooser(d)
+	items := make([]core.ChooserItem, 0, len(actions))
+	for _, ca := range actions {
+		t := ca.Title
+		switch {
+		case ca.Disabled != nil:
+			t += " -- " + ca.Disabled.Reason
+		case ca.IsPreferred:
+			t += " (preferred)"
+		}
+		items = append(items, core.ChooserItem{Text: t, Value: ca.Title})
+	}
+	c.SetItems(items...)
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Apply").OnClick(func(e events.Event) {
+			idx := int(c.CurrentIndex)
+			d.Close()
+			if idx < 0 || idx >= len(actions) {
+				idx = 0
+			}
+			ca := &actions[idx]
+			if ca.Disabled != nil {
+				cv.SetStatus("Quick fix: " + ca.Disabled.Reason)
+				return
+			}
+			out, err := ls.lspB.RunCodeAction(ln, ca)
+			if err != nil {
+				cv.SetStatus("Quick fix: " + err.Error())
+				return
+			}
+			n := 0
+			for _, f := range out {
+				n += len(f.Edits)
+				if fln := cv.GetOpenFile(f.Filename); fln != nil {
+					if ftv, _, has := cv.EditorForLines(fln); has && ftv != nil {
+						ftv.NeedsRender()
+					}
+				}
+			}
+			cv.SetStatus(fmt.Sprintf("Applied: %s (%d edits in %d files)", ca.Title, n, len(out)))
 		})
 	})
 	d.RunWindowDialog(tv)

@@ -11,9 +11,9 @@
 // found via standard project marker files (go.mod, package.json, etc)
 // relative to each file. Position queries retry briefly after the
 // server is ready, to absorb null responses from ongoing package
-// loading. The rename command writes files; use -n to preview.
-// Exit status is 0 on success (clean check, or results found)
-// and 1 for problems found, no results, or errors.
+// loading. The rename and actions -a commands write files; use rename
+// -n to preview. Exit status is 0 on success (clean check, or results
+// found) and 1 for problems found, no results, or errors.
 package main
 
 import (
@@ -49,6 +49,10 @@ type Config struct {
 
 	// preview changes without writing any files (rename command)
 	DryRun bool `flag:"dry-run,n"`
+
+	// apply the code action whose title matches (exact, then
+	// case-insensitive substring) (actions command)
+	Apply string `flag:"apply,a"`
 
 	// overall wait for language server startup and responses,
 	// as a Go duration string like 30s or 2m
@@ -323,6 +327,143 @@ func Rename(c *Config) error {
 	return nil
 }
 
+// Actions lists the quick fixes and refactorings the server offers at
+// FILE:LINE:COL: organize imports, missing returns, error-check
+// wrapping, typo fixes, extract function/variable, fill struct, etc.
+// Diagnostics published for the file are sent as context, which is
+// what turns the quick fixes on. With -a TITLE, applies the matching
+// action and rewrites the affected files.
+func Actions(c *Config) error {
+	setup()
+	if len(c.Args) != 1 {
+		return fmt.Errorf("actions needs a FILE:LINE:COL argument")
+	}
+	deadline, err := c.deadline()
+	if err != nil {
+		return err
+	}
+	path, pos, err := parseLoc(c.Args[0])
+	if err != nil {
+		return err
+	}
+	b := lsp.NewBackend(nil)
+	defer b.Stop()
+	ln, abs, err := openFile(path)
+	if err != nil {
+		return err
+	}
+	if !b.Supported(ln) {
+		return fmt.Errorf("no language server available for %s", path)
+	}
+	b.Open(ln)
+	// collect the diagnostics published for this file as context:
+	var diags []lang.Diagnostic
+	done := false
+	for !done && time.Now().Before(deadline) {
+		rem := time.Until(deadline)
+		select {
+		case fd, ok := <-b.Diagnostics():
+			if !ok {
+				return fmt.Errorf("diagnostics channel closed unexpectedly")
+			}
+			if cliNormalize(fd.Filename) != cliNormalize(abs) {
+				continue
+			}
+			diags = fd.Diags
+			done = true
+		case <-time.After(rem):
+			done = true
+		}
+	}
+	if !done {
+		fmt.Fprintf(os.Stderr, "no diagnostics published for %s (continuing without context)\n", path)
+	}
+	// region: the word at the position, expanded to cover any
+	// diagnostics overlapping it, which is what quick fixes attach to:
+	reg := textpos.Region{Start: pos, End: pos}
+	if ln.IsValidLine(pos.Line) {
+		if w := ln.WordAt(pos); w.Start.Line == pos.Line && w.End.Char > w.Start.Char {
+			reg = w
+		}
+	}
+	var cdiags []lang.Diagnostic
+	for _, d := range diags {
+		if d.Region.End.Line >= reg.Start.Line && d.Region.Start.Line <= reg.End.Line {
+			cdiags = append(cdiags, d)
+			if d.Region.Start.Line < reg.Start.Line {
+				reg.Start = d.Region.Start
+			}
+			if d.Region.End.Line > reg.End.Line ||
+				(d.Region.End.Line == reg.End.Line && d.Region.End.Char > reg.End.Char) {
+				reg.End = d.Region.End
+			}
+		}
+	}
+	if len(cdiags) == 0 {
+		cdiags = diags
+	}
+	acts, err := b.CodeActions(ln, reg, cdiags)
+	if err != nil {
+		return err
+	}
+	if len(acts) == 0 {
+		return fmt.Errorf("no code actions at %s", c.Args[0])
+	}
+	if c.Apply == "" {
+		for _, ca := range acts {
+			fmt.Printf("%s [%s]", ca.Title, ca.Kind)
+			if ca.IsPreferred {
+				fmt.Print(" (preferred)")
+			}
+			if ca.Disabled != nil {
+				fmt.Printf(" -- disabled: %s", ca.Disabled.Reason)
+			}
+			fmt.Println()
+		}
+		return nil
+	}
+	sel := pickAction(acts, c.Apply)
+	if sel == nil {
+		return fmt.Errorf("no action matching %q at %s (list without -a to see options)", c.Apply, c.Args[0])
+	}
+	if sel.Disabled != nil {
+		return fmt.Errorf("action %q is disabled: %s", sel.Title, sel.Disabled.Reason)
+	}
+	out, err := b.RunCodeAction(ln, sel)
+	if err != nil {
+		return err
+	}
+	target := cliNormalize(path)
+	for _, f := range out {
+		fmt.Printf("%s: %d edit(s)\n", f.Filename, len(f.Edits))
+		// the target file was edited in memory (it is open in this
+		// session, so the backend does not write it): write it out:
+		if cliNormalize(f.Filename) == target {
+			if err := os.WriteFile(path, []byte(ln.String()), 0644); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// pickAction finds the action whose title matches the given pattern:
+// exact match first, then case-insensitive substring.
+func pickAction(acts []lsp.CodeAction, pat string) *lsp.CodeAction {
+	for i := range acts {
+		if acts[i].Title == pat {
+			return &acts[i]
+		}
+	}
+	lpat := strings.ToLower(pat)
+	for i := range acts {
+		if strings.Contains(strings.ToLower(acts[i].Title), lpat) {
+			return &acts[i]
+		}
+	}
+	return nil
+}
+
 // editCounts converts a workspace edit into per-file counts, for a
 // dry-run report, without applying anything.
 func editCounts(we *lsp.WorkspaceEdit) []lang.FileEdits {
@@ -501,5 +642,5 @@ func printSymbols(sl []lang.Symbol, indent int) {
 func main() { //types:skip
 	opts := cli.DefaultOptions("cogent-lsp", "Command-line access to language server features (gopls and other servers) via the Cogent LSP client, for shells, scripts, CI, and AI agents.")
 	opts.PrintSuccess = false
-	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename)
+	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename, Actions)
 }

@@ -289,6 +289,17 @@ func (s *Server) InitParams() *InitializeParams {
 		WorkspaceSymbol: &WorkspaceSymbolClientCapability{},
 		Formatting:      &FormattingClientCapability{},
 		Rename:          &RenameClientCapability{PrepareSupport: true, HonorsChangeAnnotations: true},
+		CodeAction: &CodeActionClientCapability{
+			CodeActionLiteralSupport: &CodeActionLiteralSupport{
+				CodeActionKind: CodeActionKindValueSet{ValueSet: []string{
+					"quickfix", "refactor", "refactor.extract", "refactor.inline",
+					"refactor.rewrite", "source", "source.organizeImports", "source.fixAll",
+				}},
+			},
+			IsPreferredSupport: true,
+			DataSupport:        true,
+			ResolveSupport:     &ResolveSupport{Properties: []string{"edit"}},
+		},
 	}
 	params.Capabilities.TextDoc = td
 	return params
@@ -641,6 +652,149 @@ func (s *Server) Rename(params *RenameParams) (*WorkspaceEdit, error) {
 		return nil, fmt.Errorf("lsp: bad rename result: %w", err)
 	}
 	return &we, nil
+}
+
+// supportsCodeAction reports whether the server offers code actions.
+func (s *Server) supportsCodeAction() bool {
+	s.mu.Lock()
+	raw := s.caps.CodeActionProvider
+	s.mu.Unlock()
+	return len(raw) > 0 && string(raw) != "null" && string(raw) != "false"
+}
+
+// codeActionResolveProvider reports whether the server fills in action
+// edits lazily via codeAction/resolve.
+func (s *Server) codeActionResolveProvider() bool {
+	s.mu.Lock()
+	raw := s.caps.CodeActionProvider
+	s.mu.Unlock()
+	var o struct {
+		ResolveProvider bool `json:"resolveProvider"`
+	}
+	json.Unmarshal(raw, &o)
+	return o.ResolveProvider
+}
+
+// CodeAction sends a textDocument/codeAction request, returning the
+// offered quick fixes and refactorings.
+func (s *Server) CodeAction(params *CodeActionParams) ([]CodeAction, error) {
+	return s.codeAction(params, defaultCallTimeout)
+}
+
+// CodeActionQuick is CodeAction with the quick, latency-sensitive
+// timeout, for use on interactive paths such as hover.
+func (s *Server) CodeActionQuick(params *CodeActionParams) ([]CodeAction, error) {
+	return s.codeAction(params, quickCallTimeout)
+}
+
+func (s *Server) codeAction(params *CodeActionParams, timeout time.Duration) ([]CodeAction, error) {
+	var raw json.RawMessage
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/codeAction", params, &raw); err != nil {
+		return nil, err
+	}
+	if Verbose && len(raw) > 0 {
+		dbg := string(raw)
+		if len(dbg) > 600 {
+			dbg = dbg[:600] + "..."
+		}
+		log.Printf("lsp: %s: codeAction raw: %s\n", s.Cfg.ID, dbg)
+	}
+	return parseCodeActions(raw)
+}
+
+// parseCodeActions decodes a codeAction result, which is a mixed array
+// of CodeAction literals and plain Commands (legacy form, per the
+// union type in the spec).
+func parseCodeActions(raw json.RawMessage) ([]CodeAction, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var items []json.RawMessage
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return nil, fmt.Errorf("lsp: bad codeAction result: %w", err)
+	}
+	var out []CodeAction
+	for _, it := range items {
+		var probe struct {
+			Kind    string          `json:"kind"`
+			Title   string          `json:"title"`
+			Command json.RawMessage `json:"command"`
+		}
+		if err := json.Unmarshal(it, &probe); err != nil {
+			continue
+		}
+		if probe.Kind != "" { // literal code action form
+			var ca CodeAction
+			if err := json.Unmarshal(it, &ca); err == nil {
+				out = append(out, ca)
+				continue
+			}
+		}
+		// plain Command form: command is a string id, not an object
+		var cmd struct {
+			Title     string `json:"title"`
+			Command   string `json:"command"`
+			Arguments []any  `json:"arguments"`
+		}
+		if err := json.Unmarshal(it, &cmd); err == nil && cmd.Command != "" {
+			out = append(out, CodeAction{
+				Title: cmd.Title,
+				Kind:  "command",
+				Command: &Command{
+					Title:     cmd.Title,
+					Command:   cmd.Command,
+					Arguments: cmd.Arguments,
+				},
+			})
+			continue
+		}
+		// fallback: literal with object-form command, decode fully
+		var ca CodeAction
+		if err := json.Unmarshal(it, &ca); err == nil && ca.Title != "" {
+			out = append(out, ca)
+		}
+	}
+	return out, nil
+}
+
+// ResolveCodeAction fills in deferred parts (the edit) of an action via
+// codeAction/resolve, when the server supports it. It is a no-op
+// otherwise.
+func (s *Server) ResolveCodeAction(ca *CodeAction) error {
+	if !s.codeActionResolveProvider() {
+		return nil
+	}
+	var out CodeAction
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "codeAction/resolve", ca, &out); err != nil {
+		return err
+	}
+	if out.Edit != nil {
+		ca.Edit = out.Edit
+	}
+	if out.Command != nil {
+		ca.Command = out.Command
+	}
+	return nil
+}
+
+// ExecuteCommand sends a workspace/executeCommand request, returning
+// the raw result; many editing commands return a WorkspaceEdit.
+func (s *Server) ExecuteCommand(command string, args []any) (json.RawMessage, error) {
+	params := struct {
+		Command   string `json:"command"`
+		Arguments []any  `json:"arguments,omitempty"`
+	}{Command: command, Arguments: args}
+	var raw json.RawMessage
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "workspace/executeCommand", params, &raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
 }
 
 // DocumentSymbol sends a textDocument/documentSymbol request,
