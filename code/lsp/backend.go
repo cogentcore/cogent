@@ -193,6 +193,14 @@ func (b *Backend) Supported(ln *lines.Lines) bool {
 	return has
 }
 
+// Ready returns whether the language server for the given buffer
+// exists and has completed its startup handshake, so that requests
+// such as Hover and Definition can be answered.
+func (b *Backend) Ready(ln *lines.Lines) bool {
+	srv, _, has := b.serverFor(ln)
+	return has && srv != nil && srv.Ready()
+}
+
 // Open notifies the server that the file is open, sending its current
 // contents, starting the server asynchronously if needed.
 func (b *Backend) Open(ln *lines.Lines) {
