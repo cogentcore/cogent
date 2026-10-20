@@ -20,6 +20,8 @@ import (
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
 	"cogentcore.org/core/tree"
+
+	"cogentcore.org/cogent/code/lang"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -185,7 +187,14 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
 	tv := cv.ActiveEditor()
-	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		sv.symbolsViaLang(true)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Lines.ParseFileState()
@@ -204,7 +213,14 @@ func (sv *SymbolsPanel) OpenPackage() {
 func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
 	tv := cv.ActiveEditor()
-	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		sv.symbolsViaLang(false)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Lines.ParseFileState()
@@ -217,6 +233,36 @@ func (sv *SymbolsPanel) OpenFile() {
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
 	sv.Syms.OpenSyms(pkg, tv.Lines.Filename(), sv.Match)
+}
+
+// symbolsViaLang populates the symbol tree using the language service
+// backend: workspace symbols for package scope, document symbols for
+// the current file. Returns false if the backend is not ready yet.
+func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) bool {
+	cv := sv.Code
+	ln := cv.ActiveEditor().Lines
+	b := cv.LangSvc().backendFor(ln)
+	var sl []lang.Symbol
+	if pkgScope {
+		sl = b.WorkspaceSymbols(ln, sv.Match)
+	} else {
+		sl = b.Symbols(ln)
+	}
+	if sl == nil {
+		core.MessageSnackbar(sv, "Symbols not ready from language server -- try again in a few moments")
+		return false
+	}
+	root := &syms.Symbol{Name: "symbols", Filename: ln.Filename()}
+	for _, s := range sl {
+		c := LangSymbolToSyms(s)
+		root.Children.Add(&c)
+	}
+	fname := ""
+	if !pkgScope {
+		fname = ln.Filename()
+	}
+	sv.Syms.OpenSyms(root, fname, sv.Match)
+	return true
 }
 
 func symMatch(str, match string, ignoreCase bool) bool {

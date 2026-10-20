@@ -96,6 +96,7 @@ func (cv *Code) SetActiveEditor(av *TextEditor) int {
 		if av.Complete != nil {
 			av.Complete.LookupFunc = cv.LookupFun
 		}
+		cv.LangSvc().Activated(av) // overrides completers for LSP files
 		cv.SetActiveFileInfo(av.Lines)
 		av.Lines.FileModCheck()
 	}

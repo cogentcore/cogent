@@ -224,6 +224,7 @@ func (cv *Code) SaveActiveView() { //types:add
 		fpath, _ := filepath.Split(fname)
 		cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 		cv.RunPostCmds(tv.Lines)
+		cv.LangSvc().Saved(tv.Lines)
 		cv.updatePreviewPanel()
 	} else {
 		core.CallFunc(cv, cv.SaveActiveViewAs)
@@ -293,6 +294,7 @@ func (cv *Code) CloseActiveView() { //types:add
 		}
 		cv.SetStatus("File closed: " + fpath)
 		cv.OpenFiles.DeleteByKey(fpath)
+		cv.LangSvc().Closed(tv.Lines)
 	})
 }
 

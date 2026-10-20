@@ -56,9 +56,25 @@ func (ed *TextEditor) WidgetTooltip(pos image.Point) (string, image.Point) {
 	if pos == image.Pt(-1, -1) {
 		return "_", image.Point{}
 	}
-	// todo: look for documentation on symbols here; we don't actually have this
-	// in parse so we need lsp to make this work
-	return ed.DebugVarValueAtPos(pos), pos
+	if dbg := ed.DebugVarValueAtPos(pos); dbg != "" {
+		return dbg, pos
+	}
+	// look for documentation on symbols via the language backend (gopls etc):
+	if ed.Lines != nil && ed.Code != nil {
+		pt := ed.PointToRelPos(pos)
+		tpos := ed.PixelToCursor(pt)
+		if ed.Lines.IsValidLine(tpos.Line) {
+			w := ed.Lines.WordAt(tpos)
+			hpos := tpos
+			if w.Start.Line == tpos.Line && w.End.Char > 0 {
+				hpos = w.End
+			}
+			if docs := ed.Code.LangSvc().HoverAt(ed, hpos); docs != "" {
+				return docs, pos
+			}
+		}
+	}
+	return "", pos
 }
 
 // CurDebug returns the current debugger, true if it is present
@@ -215,6 +231,13 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 
 	core.NewSeparator(m)
 	core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
+
+	if ed.Lines != nil && ed.Code != nil && ed.Code.LangSvc().LSPActive(ed.Lines) {
+		core.NewSeparator(m)
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition")
+		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references")
+		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file")
+	}
 
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
 	if fn != nil {

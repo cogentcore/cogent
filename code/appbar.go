@@ -325,7 +325,16 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 
 func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 	tv := cv.ActiveEditor()
-	if tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		b := cv.LangSvc().backendFor(tv.Lines)
+		sl := b.WorkspaceSymbols(tv.Lines, "")
+		*items = append(*items, langSymItems(cv, sl)...)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	_, ps := tv.Lines.ParseState()

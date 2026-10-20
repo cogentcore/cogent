@@ -98,6 +98,9 @@ type Code struct {
 	// current debug view
 	CurDbg *DebugPanel `set:"-"`
 
+	// language service backends (LSP / parse) for this window
+	langSvc *LangService `set:"-" json:"-" xml:"-"`
+
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`
 
@@ -255,6 +258,9 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.OnInput(func(e events.Event) {
 				cv.UpdateTextButtons()
 				cv.UpdateStatusText()
+				if w.Lines != nil {
+					cv.LangSvc().Input(w.Lines)
+				}
 			})
 			w.OnChange(func(e events.Event) {
 				cv.updatePreviewPanel()
@@ -290,9 +296,10 @@ const (
 	TabsIndex
 )
 
-// Splits returns the main Splits
+// Splits returns the main Splits, nil if the tree has not been built
 func (cv *Code) Splits() *core.Splits {
-	return cv.ChildByName("splits", 2).(*core.Splits)
+	sp, _ := cv.ChildByName("splits", 2).(*core.Splits)
+	return sp
 }
 
 // EditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
@@ -302,7 +309,19 @@ func (cv *Code) EditorButtonByIndex(idx int) *core.Button {
 
 // EditorByIndex returns the TextEditor by index (0 or 1), nil if not found
 func (cv *Code) EditorByIndex(idx int) *TextEditor {
-	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
+	sp := cv.Splits()
+	if sp == nil {
+		return nil
+	}
+	ch := sp.Child(TextEditor1Index + idx)
+	if ch == nil {
+		return nil
+	}
+	tv, ok := ch.AsTree().Child(1).(*TextEditor)
+	if !ok {
+		return nil
+	}
+	return tv
 }
 
 // Tabs returns the main TabView
@@ -668,6 +687,9 @@ func (cv *Code) NChangedFiles() int {
 // containing this code view.
 func (cv *Code) AddCloseDialog() {
 	cv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
+		if cv.langSvc != nil {
+			cv.langSvc.CloseAll() // stop any language servers for this window
+		}
 		cv.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
 		nch := cv.NChangedFiles()
 		if nch == 0 {

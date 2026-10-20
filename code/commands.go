@@ -29,7 +29,7 @@ import (
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/runes"
 	"cogentcore.org/core/text/textcore"
-	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/alecthomas/chroma/v3/lexers"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -766,6 +766,7 @@ func (cm *Commands) CopyFrom(cp Commands) {
 	*cm = make(Commands, 0, len(cp)) // reset
 	b, err := json.Marshal(cp)
 	if err != nil {
+		bbb.Error()
 		fmt.Printf("json err: %v\n", err.Error())
 	}
 	json.Unmarshal(b, cm)
