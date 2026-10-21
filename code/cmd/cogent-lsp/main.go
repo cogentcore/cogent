@@ -26,6 +26,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"cogentcore.org/core/base/logx"
@@ -92,7 +93,7 @@ func Check(c *Config) error {
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 
 	orig := make(map[string]string)
@@ -278,7 +279,7 @@ func Workspace(c *Config) error {
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	ln, ok := openReady(b, c.Args[1], deadline)
 	if !ok {
@@ -307,7 +308,7 @@ func Format(c *Config) error {
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	for _, f := range c.Args {
 		ln, ok := openReady(b, f, deadline)
@@ -346,7 +347,7 @@ func Rename(c *Config) error {
 		return err
 	}
 	newName := c.Args[1]
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	ln, ok := openReady(b, path, deadline)
 	if !ok {
@@ -391,7 +392,7 @@ func Actions(c *Config) error {
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	ln, abs, err := openFile(path)
 	if err != nil {
@@ -475,6 +476,7 @@ func Actions(c *Config) error {
 		return fmt.Errorf("action %q is disabled: %s", sel.Title, sel.Disabled.Reason)
 	}
 	out, err := b.RunCodeAction(ln, sel)
+	pendingShows.Wait()
 	if err != nil {
 		return err
 	}
@@ -560,13 +562,47 @@ func withPos(c *Config, fn func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	ln, ok := openReady(b, path, deadline)
 	if !ok {
 		return fmt.Errorf("language server not available for %s", path)
 	}
 	return fn(b, ln, pos)
+}
+
+// pendingShows waits for documents being shown, before the server stops.
+var pendingShows sync.WaitGroup
+
+// newBackend returns a new backend that prints the documents that
+// servers ask to show, such as the pages for gopls Browse actions,
+// as text for pages served by the server itself, and as a URL or
+// location otherwise.
+func newBackend() *lsp.Backend {
+	b := lsp.NewBackend(nil)
+	b.ShowDocument = func(uri string, loc *lang.Location) bool {
+		switch {
+		case loc != nil:
+			fmt.Println("show:", locString(*loc))
+		case lsp.IsLocalURL(uri):
+			// must not block the server connection, which the server
+			// needs to serve the page:
+			pendingShows.Add(1)
+			go func() {
+				defer pendingShows.Done()
+				title, text, err := lsp.DocumentText(uri)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+				fmt.Printf("%s\n\n%s", title, text)
+			}()
+		default:
+			fmt.Println("open:", uri)
+		}
+		return true
+	}
+	return b
 }
 
 // withFile handles the common setup for single-file commands:
@@ -580,7 +616,7 @@ func withFile(c *Config, cmd string, fn func(b *lsp.Backend, ln *lines.Lines) er
 	if err != nil {
 		return err
 	}
-	b := lsp.NewBackend(nil)
+	b := newBackend()
 	defer b.Stop()
 	ln, ok := openReady(b, c.Args[0], deadline)
 	if !ok {

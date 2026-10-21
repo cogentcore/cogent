@@ -240,7 +240,7 @@ func normalizeWE(we *WorkspaceEdit) []fileEdits {
 	var fes []fileEdits
 	idx := map[DocumentURI]int{}
 	add := func(uri DocumentURI, edits []TextEdit) {
-		if len(edits) == 0 {
+		if len(edits) == 0 || uri == "" { // resource operations have no edits
 			return
 		}
 		if i, has := idx[uri]; has {
@@ -354,6 +354,17 @@ func (b *Backend) ApplyWorkspaceEdit(we *WorkspaceEdit) []lang.FileEdits {
 		return nil
 	}
 	var out []lang.FileEdits
+	for _, de := range we.DocumentChanges {
+		if de.Kind != "create" {
+			continue
+		}
+		fname, err := createFile(de)
+		if err != nil {
+			log.Printf("lsp: applyEdit: %v\n", err)
+		} else if fname != "" {
+			out = append(out, lang.FileEdits{Filename: normalizePath(fname)})
+		}
+	}
 	for _, fe := range normalizeWE(we) {
 		fname := fe.uri.Path()
 		if fname == "" {
@@ -376,10 +387,31 @@ func (b *Backend) ApplyWorkspaceEdit(we *WorkspaceEdit) []lang.FileEdits {
 				continue
 			}
 		}
-		out = append(out, lang.FileEdits{Filename: normalizePath(fname), Edits: edits})
+		norm := normalizePath(fname)
+		if i := slices.IndexFunc(out, func(f lang.FileEdits) bool { return f.Filename == norm }); i >= 0 {
+			out[i].Edits = append(out[i].Edits, edits...) // just created
+			continue
+		}
+		out = append(out, lang.FileEdits{Filename: norm, Edits: edits})
 	}
 	slices.SortFunc(out, func(a, b lang.FileEdits) int { return strings.Compare(a.Filename, b.Filename) })
 	return out
+}
+
+// createFile performs the given create file resource operation,
+// returning the name of the file if it was created.
+func createFile(de DocumentEdit) (string, error) {
+	fname := de.URI.Path()
+	if fname == "" {
+		return "", fmt.Errorf("create: not a file: %q", de.URI)
+	}
+	if _, err := os.Stat(fname); err == nil && (de.Options == nil || !de.Options.Overwrite) {
+		return "", nil // exists: ignored
+	}
+	if err := os.MkdirAll(filepath.Dir(fname), 0755); err != nil {
+		return "", err
+	}
+	return fname, os.WriteFile(fname, nil, 0644)
 }
 
 // applyFileEdits applies the given edits to the file on disk,
@@ -518,27 +550,33 @@ func (b *Backend) codeActions(ln *lines.Lines, reg textpos.Region, diags []lang.
 // action's command, which can return a WorkspaceEdit, or apply its edits
 // through workspace/applyEdit requests (as gopls does). Workspace edits
 // are applied to open buffers and files on disk, as for renames
-// (see [Backend.ApplyWorkspaceEdit]). It returns the edits applied.
+// (see [Backend.ApplyWorkspaceEdit]). It returns the edits applied,
+// which can be none for a command that does something else, such as
+// showing a document.
 func (b *Backend) RunCodeAction(ln *lines.Lines, ca *CodeAction) ([]lang.FileEdits, error) {
 	srv, ok := b.readyServer(ln)
 	if !ok {
 		return nil, fmt.Errorf("language server not ready for %s", filepath.Base(ln.Filename()))
 	}
+	var out []lang.FileEdits
 	if ca.Edit == nil {
-		if err := srv.ResolveCodeAction(ca); err != nil {
-			log.Printf("lsp: codeAction resolve %q: %v\n", ca.Title, err)
+		// gopls can run the command for the action on resolve,
+		// applying its edits through workspace/applyEdit:
+		var err error
+		out = b.captureEdits(func() { err = srv.ResolveCodeAction(ca) })
+		if err != nil && ca.Command == nil {
+			return out, fmt.Errorf("code action %q: %w", ca.Title, err)
 		}
 	}
-	var out []lang.FileEdits
 	if ca.Edit != nil {
-		out = b.ApplyWorkspaceEdit(ca.Edit)
+		out = append(out, b.ApplyWorkspaceEdit(ca.Edit)...)
 	}
 	if ca.Command != nil && ca.Command.Command != "" {
 		cmdOut, err := b.runCommand(srv, ca.Command)
 		if err != nil {
 			return out, fmt.Errorf("code action %q: %w", ca.Title, err)
 		}
-		out = append(out, cmdOut...)
+		return append(out, cmdOut...), nil
 	}
 	if len(out) == 0 {
 		return nil, fmt.Errorf("code action %q produced no edits", ca.Title)
@@ -546,20 +584,108 @@ func (b *Backend) RunCodeAction(ln *lines.Lines, ca *CodeAction) ([]lang.FileEdi
 	return out, nil
 }
 
-// runCommand executes the given command on the server, returning the
-// edits applied, either from a WorkspaceEdit result, or from the
-// workspace/applyEdit requests the server makes while executing it.
-func (b *Backend) runCommand(srv *Server, cmd *Command) ([]lang.FileEdits, error) {
+// captureEdits calls the given function, which makes a request to a
+// server, returning the edits applied by any workspace/applyEdit
+// requests that the server makes while handling it.
+func (b *Backend) captureEdits(fun func()) []lang.FileEdits {
 	b.mu.Lock()
 	b.inCommand = true
 	b.cmdEdits = nil
 	b.mu.Unlock()
-	raw, err := srv.ExecuteCommand(cmd.Command, cmd.Arguments)
+	fun()
 	b.mu.Lock()
+	defer b.mu.Unlock()
 	out := b.cmdEdits
 	b.inCommand = false
 	b.cmdEdits = nil
-	b.mu.Unlock()
+	return out
+}
+
+// IsQuickFix returns whether the code action is a quick fix for a
+// problem, as opposed to a refactoring or source action.
+func (ca *CodeAction) IsQuickFix() bool {
+	return ca.Kind == "quickfix" || strings.HasPrefix(ca.Kind, "quickfix.")
+}
+
+// SortCodeActions sorts the code actions for presentation: enabled
+// before disabled, then quick fixes (preferred first), refactorings,
+// source actions, and finally general documentation, such as the
+// gopls feature documentation.
+func SortCodeActions(acts []CodeAction) {
+	rank := func(ca *CodeAction) int {
+		switch {
+		case ca.Disabled != nil:
+			return 6
+		case ca.IsQuickFix() && ca.IsPreferred:
+			return 0
+		case ca.IsQuickFix():
+			return 1
+		case strings.HasPrefix(ca.Kind, "refactor"):
+			return 2
+		case strings.HasPrefix(ca.Kind, "source"):
+			return 3
+		case strings.HasPrefix(ca.Kind, "gopls.doc"):
+			return 5
+		}
+		return 4
+	}
+	slices.SortStableFunc(acts, func(a, b CodeAction) int { return cmp.Compare(rank(&a), rank(&b)) })
+}
+
+// codeActionKindDescs describe what code actions of each kind do,
+// including the gopls-specific kinds, by kind prefix.
+var codeActionKindDescs = []struct{ kind, desc string }{
+	{"quickfix", "Fixes the problem"},
+	{"refactor.extract", "Refactoring: extracts the selected code into a new function, method, variable, or constant"},
+	{"refactor.inline", "Refactoring: inlines the function call or variable at the cursor"},
+	{"refactor.rewrite", "Refactoring: rewrites the code at the cursor in an equivalent form"},
+	{"refactor.move", "Refactoring: moves the code at the cursor"},
+	{"refactor", "Refactoring: restructures the code without changing its behavior"},
+	{"source.organizeImports", "Adds missing imports and removes unused ones"},
+	{"source.fixAll", "Applies all of the automatic fixes for the file"},
+	{"source.addTest", "Adds a test for this function to the corresponding _test.go file"},
+	{"source.doc", "Opens the documentation for this symbol in a web browser"},
+	{"source.assembly", "Opens the assembly listing for this function in a web browser"},
+	{"source.freesymbols", "Opens a report of the free symbols referenced by the selected code in a web browser"},
+	{"source.splitPackage", "Opens a tool for splitting this package in a web browser"},
+	{"source.toggleCompilerOptDetails", "Toggles the display of compiler optimization details as diagnostics"},
+	{"gopls.doc.features", "Opens the gopls feature documentation in a web browser"},
+	{"source", "Source action: applies to the whole file"},
+}
+
+// Description returns a description of what the code action does,
+// based on its kind, including the messages of any diagnostics that
+// it fixes, for use as a tooltip.
+func (ca *CodeAction) Description() string {
+	desc := ""
+	for _, kd := range codeActionKindDescs {
+		if ca.Kind == kd.kind || strings.HasPrefix(ca.Kind, kd.kind+".") {
+			desc = kd.desc
+			break
+		}
+	}
+	if desc == "" {
+		desc = "Code action"
+		if ca.Kind != "" {
+			desc += " of kind " + ca.Kind
+		}
+	}
+	for _, d := range ca.Diagnostics {
+		desc += ": " + cleanMessage(d.Message)
+	}
+	if ca.Disabled != nil {
+		desc += " (not available: " + ca.Disabled.Reason + ")"
+	}
+	return desc
+}
+
+// runCommand executes the given command on the server, returning the
+// edits applied, either from a WorkspaceEdit result, or from the
+// workspace/applyEdit requests the server makes while executing it.
+func (b *Backend) runCommand(srv *Server, cmd *Command) ([]lang.FileEdits, error) {
+	var raw json.RawMessage
+	var err error
+	out := b.captureEdits(func() { raw, err = srv.ExecuteCommand(cmd.Command, cmd.Arguments) })
 	if err != nil {
 		return out, err
 	}

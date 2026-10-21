@@ -67,14 +67,27 @@ func completionContext(text string) *CompletionContext {
 }
 
 // Completions returns completions for the given text at position,
-// querying the language server with a short timeout.
+// querying the language server with a short timeout. It returns
+// nothing when there is no seed (e.g., after punctuation or a space),
+// as it is called after each keystroke: see [Backend.CompletionsExplicit].
 func (b *Backend) Completions(ln *lines.Lines, text string, posLine, posChar int) complete.Matches {
+	return b.completions(ln, text, posLine, posChar, false)
+}
+
+// CompletionsExplicit returns completions for the given text at
+// position, for an explicit user request, which also returns
+// completions when there is no seed.
+func (b *Backend) CompletionsExplicit(ln *lines.Lines, text string, posLine, posChar int) complete.Matches {
+	return b.completions(ln, text, posLine, posChar, true)
+}
+
+func (b *Backend) completions(ln *lines.Lines, text string, posLine, posChar int, explicit bool) complete.Matches {
 	srv, ok := b.readyServer(ln)
 	if !ok {
 		return complete.Matches{}
 	}
 	seed := completionSeed(text)
-	if seed == "" {
+	if seed == "" && !explicit {
 		// nothing typed after punctuation or space: the editor offers
 		// completions after every keystroke, and a list of every symbol
 		// in scope after each comma, etc, is not useful.
@@ -186,7 +199,11 @@ func completionDesc(item CompletionItem) string {
 		if desc != "" {
 			desc += "\n\n"
 		}
-		desc += item.Documentation.Value
+		if item.Documentation.Kind == "markdown" {
+			desc += MarkdownText(item.Documentation.Value)
+		} else {
+			desc += item.Documentation.Value
+		}
 	}
 	const maxDesc = 500
 	if utf8.RuneCountInString(desc) > maxDesc {

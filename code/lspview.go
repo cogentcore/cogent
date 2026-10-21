@@ -10,7 +10,6 @@ import (
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
@@ -384,22 +383,27 @@ func (ls *LangService) showSigHelp(tv *TextEditor, sh *lsp.SignatureHelp, act in
 // from the event loop. Following the completer's logic (Complete.Show
 // cancels any existing stage before showing a new one), any existing
 // popup is closed first, so popups can never accumulate or overlap.
+//
+// It is a tooltip stage, which never receives events, so that keys go
+// to the completion popup when both are shown, as the signature popup
+// is typically shown after (on top of) it. A tooltip is positioned
+// above its context region (or below if there is no room), which is
+// set to the cursor line.
 func (ls *LangService) showSigPopup(tv *TextEditor, txt string) {
 	ls.closeSigPopup()
 	if tv == nil || tv.Lines == nil || tv.Scene == nil {
 		return
 	}
-	p := editorCursorPos(tv, tv.CursorPos)
+	p := tv.CharStartPos(tv.CursorPos).ToPoint()
 	if p == (image.Point{}) {
 		return
 	}
 	sc := core.NewScene(tv.Lines.Filename() + "-sig")
 	core.StyleMenuScene(sc)
-	st := core.NewPopupStage(core.CompleterStage, sc, tv).SetPos(p)
+	sc.SceneGeom.Pos = p
+	sc.SceneGeom.Size = image.Pt(1, int(tv.Styles.Font.FontHeight()))
+	st := core.NewPopupStage(core.TooltipStage, sc, tv).SetPos(p)
 	st.SetClickOff(false) // typing continues in the editor; we manage closing
-	sc.OnFocus(func(e events.Event) {
-		tv.SetFocus() // never take focus: just return it
-	})
 	// match the editor's font size so the signature reads as part of the buffer:
 	fsz := tv.Styles.Font.Size
 	core.NewText(sc).SetType(core.TextSupporting).SetText(txt).Styler(func(s *styles.Style) {
@@ -410,14 +414,6 @@ func (ls *LangService) showSigPopup(tv *TextEditor, txt string) {
 	ls.sigStage = st
 	ls.mu.Unlock()
 	st.Run()
-	// the popup size is only known once it is run: move it up so that
-	// its bottom is just above the top of the cursor line.
-	if ht := sc.SceneGeom.Size.Y; ht > 0 {
-		top := tv.CharStartPos(tv.CursorPos).ToPoint().Y
-		if y := top - ht - 2; y >= 0 {
-			sc.SceneGeom.Pos.Y = y
-		}
-	}
 }
 
 // closeSigPopup closes the signature popup if one is open.

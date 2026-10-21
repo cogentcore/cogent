@@ -55,7 +55,8 @@ const (
 	KeyBuildProject
 	// run overall project
 	KeyRunProject
-	// prompt for a quick fix or refactoring at the cursor (code actions)
+	// lookup at the cursor: quick fixes if there is an error there,
+	// and otherwise completions and go to definition (see [Code.Lookup])
 	KeyQuickFix
 	// show signature help for the callable at the cursor
 	KeySignatureHelp

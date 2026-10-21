@@ -5,16 +5,16 @@
 package code
 
 import (
-	"cmp"
 	"fmt"
 	"image"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/syms"
@@ -112,24 +112,119 @@ func wordRegion(ln *lines.Lines, pos textpos.Pos) textpos.Region {
 
 ////////   Lookup and quick fixes
 
-// Lookup shows the lookup / quick-fix chooser menu at the cursor, the
-// Ctrl+. action: quick fixes and refactorings from the language server,
-// plus symbol lookup (docs or go-to-definition). For LSP-backed files
-// it uses the language-server lookup; otherwise it falls back to the
-// editor's own parse-based lookup.
+// Lookup is the Ctrl+. action at the cursor: if there is an error with
+// quick fixes from the language server there, it shows a menu of them,
+// and otherwise it shows the completions for the text up to the cursor,
+// headed by a go to definition item for the symbol at the cursor.
 func (cv *Code) Lookup() { //types:add
-	tv := cv.ActiveEditor()
-	if tv == nil || tv.Lines == nil {
+	if tv := cv.ActiveEditor(); tv != nil && tv.Lines != nil {
+		cv.LangSvc().Lookup(tv)
+	}
+}
+
+// Lookup does [Code.Lookup] for the given editor, returning true if
+// it showed quick fixes, and false if it offered completions.
+func (ls *LangService) Lookup(tv *TextEditor) bool {
+	if ls.LSPActive(tv.Lines) && ls.lookupMenu(tv, tv.CursorPos, true) {
+		return true
+	}
+	ls.offerCompletion(tv)
+	return false
+}
+
+// gotoDefCompletion and docsCompletion are the Text of the go to
+// definition and docs completion items, which are handled by a select
+// listener, without editing the text.
+const (
+	gotoDefCompletion = "\x00goto-definition"
+	docsCompletion    = "\x00docs"
+)
+
+// offerCompletion shows the completions for the text up to the cursor,
+// like the editor does while typing, for an explicit request, which
+// for LSP files also includes completions with no seed, and a go to
+// definition item (see [LangService.explicitMatches]).
+func (ls *LangService) offerCompletion(tv *TextEditor) {
+	c := tv.Complete
+	ln := tv.Lines
+	pos := tv.CursorPos
+	if c == nil || !ln.IsValidLine(pos.Line) {
 		return
 	}
-	ls := cv.LangSvc()
-	if !ls.LSPActive(tv.Lines) {
-		tv.Lookup()
-		return
+	rn := ln.Line(pos.Line)
+	pos.Char = min(pos.Char, len(rn))
+	if ls.LSPActive(ln) {
+		ls.mu.Lock()
+		ls.explicit, ls.explicitAt, ls.explicitLn = true, pos, ln
+		ls.mu.Unlock()
 	}
-	if pos, ok := cursorWordPos(tv); ok {
-		ls.lookupMenu(tv, pos)
+	c.SrcLn, c.SrcCh = pos.Line, pos.Char
+	c.Show(tv, editorCursorPos(tv, pos), strings.TrimLeft(string(rn[:pos.Char]), " \t"))
+}
+
+// takeExplicit returns whether there is a pending explicit completion
+// request for the given buffer and position, clearing it.
+func (ls *LangService) takeExplicit(ln *lines.Lines, pos textpos.Pos) bool {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	ok := ls.explicit && ls.explicitLn == ln && ls.explicitAt == pos
+	ls.explicit = false
+	return ok
+}
+
+// explicitMatches returns the completions for an explicit request at
+// the given position, headed by a go to definition item for the symbol
+// at the position, if it is defined elsewhere, and a docs item that
+// shows its docs, if any.
+func (ls *LangService) explicitMatches(ln *lines.Lines, text string, pos textpos.Pos) complete.Matches {
+	ms := ls.lspB.CompletionsExplicit(ln, text, pos.Line, pos.Char)
+	md := ls.lspB.Hover(ln, pos)
+	tip := lsp.MarkdownText(md)
+	var loc *lang.Location
+	var items []complete.Completion
+	if locs := ls.lspB.Definition(ln, pos); len(locs) > 0 &&
+		!(lsp.SameFile(locs[0].Filename, ln.Filename()) && locs[0].Region.Start.Line == pos.Line) {
+		loc = &locs[0]
+		items = append(items, complete.Completion{
+			Text:  gotoDefCompletion,
+			Label: "Go to definition: " + locString(ls.cv, *loc),
+			Icon:  icons.JumpToElement,
+			Desc:  tip,
+		})
 	}
+	if md != "" {
+		items = append(items, complete.Completion{
+			Text:  docsCompletion,
+			Label: "Docs: " + docsSummary(tip),
+			Icon:  icons.Description,
+			Desc:  tip,
+		})
+	}
+	ls.mu.Lock()
+	ls.gotoLoc, ls.docsMD, ls.docsSymbol = loc, md, symbolAt(ln, pos)
+	ls.mu.Unlock()
+	ms.Matches = append(items, ms.Matches...)
+	return ms
+}
+
+// symbolAt returns the name of the symbol (word) at the given position,
+// which can be at the end of the word.
+func symbolAt(ln *lines.Lines, pos textpos.Pos) string {
+	if ln.IsWordEnd(pos) && pos.Char > 0 {
+		pos.Char--
+	}
+	w := wordRegion(ln, pos)
+	return string(ln.Region(w.Start, w.End).ToBytes())
+}
+
+// docsSummary returns a short summary of the given plain text docs,
+// for a menu label: the first line, truncated.
+func docsSummary(docs string) string {
+	rn := []rune(firstLine(docs))
+	if len(rn) > 60 {
+		rn = append(rn[:60], '…')
+	}
+	return string(rn)
 }
 
 // lookupFunc returns the editor LookupFunc for the given buffer,
@@ -137,55 +232,72 @@ func (cv *Code) Lookup() { //types:add
 func (ls *LangService) lookupFunc(ln *lines.Lines) complete.LookupFunc {
 	return func(data any, txt string, posLine, posChar int) complete.Lookup {
 		if tv, _, has := ls.cv.EditorForLines(ln); has && tv != nil && tv.Scene != nil {
-			ls.lookupMenu(tv, textpos.Pos{Line: posLine, Char: posChar})
+			ls.lookupMenu(tv, textpos.Pos{Line: posLine, Char: posChar}, false)
 		}
 		return complete.Lookup{}
 	}
 }
 
 // lookupMenu shows a completer-style chooser menu at the given position
-// in the editor: the quick fixes / refactorings available from the
-// language server (applied on click), followed by the symbol lookup
-// action: showing hover docs if the symbol is defined in the current
-// file, and opening the defining file otherwise.
-func (ls *LangService) lookupMenu(tv *TextEditor, pos textpos.Pos) {
+// in the editor: the quick fixes available from the language server for
+// any errors at the position (applied on click), followed by the symbol
+// lookup action: showing hover docs if the symbol is defined in the
+// current file, and opening the defining file otherwise. If fixesOnly,
+// the menu is only shown if there are quick fixes. It returns whether
+// the menu was shown.
+func (ls *LangService) lookupMenu(tv *TextEditor, pos textpos.Pos, fixesOnly bool) bool {
 	ln := tv.Lines
 	if !ln.IsValidLine(pos.Line) {
-		return
+		return false
+	}
+	diags := ls.diagsAt(ln, pos)
+	if fixesOnly && len(diags) == 0 {
+		return false
 	}
 	if tv.Complete != nil {
 		tv.Complete.Cancel() // like the completer does before offering
 	}
 	ls.Change(ln) // make sure the server has the current text
 
-	actions, _ := ls.lspB.CodeActionsQuick(ln, wordRegion(ln, pos), ls.diagsAt(ln, pos))
 	var items []core.ChooserItem
-	for _, ca := range actions {
-		items = append(items, core.ChooserItem{Text: "Fix: " + actionTitle(&ca), Value: ca})
+	if len(diags) > 0 {
+		actions, _ := ls.lspB.CodeActionsQuick(ln, diags[0].Region, diags)
+		for _, ca := range actions {
+			if ca.IsQuickFix() || len(ca.Diagnostics) > 0 {
+				items = append(items, core.ChooserItem{Text: "Fix: " + actionTitle(&ca), Tooltip: ca.Description(), Value: ca})
+			}
+		}
 	}
-	if locs := ls.lspB.Definition(ln, pos); len(locs) > 0 && locs[0].Filename != ln.Filename() {
-		items = append(items, core.ChooserItem{Text: "Go to definition: " + locString(ls.cv, locs[0]), Value: locs[0]})
-	} else if docs := ls.lspB.Hover(ln, pos); docs != "" {
-		items = append(items, core.ChooserItem{Text: "Docs: " + firstLine(docs), Value: docs})
+	if fixesOnly && len(items) == 0 {
+		return false
+	}
+	docs := ls.lspB.Hover(ln, pos)
+	tip := lsp.MarkdownText(docs)
+	if locs := ls.lspB.Definition(ln, pos); len(locs) > 0 && !lsp.SameFile(locs[0].Filename, ln.Filename()) {
+		items = append(items, core.ChooserItem{Text: "Go to definition: " + locString(ls.cv, locs[0]), Tooltip: tip, Value: locs[0]})
+	}
+	if docs != "" {
+		items = append(items, core.ChooserItem{Text: "Docs: " + docsSummary(tip), Tooltip: tip, Value: docs})
 	}
 	if len(items) == 0 {
 		ls.cv.SetStatus("Lookup: nothing available at cursor")
-		return
+		return false
 	}
 	core.NewMenu(func(m *core.Scene, mp image.Point) {
 		for _, it := range items {
-			core.NewButton(m).SetText(it.Text).OnClick(func(e events.Event) {
+			core.NewButton(m).SetText(it.Text).SetTooltip(it.Tooltip).OnClick(func(e events.Event) {
 				switch v := it.Value.(type) {
 				case lsp.CodeAction:
 					ls.applyCodeAction(ln, &v)
 				case lang.Location:
 					ls.cv.openLoc(v)
 				case string:
-					textcore.TextDialog(tv, "Docs", v)
+					docsDialog(tv, docsWindow+": "+symbolAt(ln, pos), v)
 				}
 			})
 		}
 	}, tv, editorCursorPos(tv, pos)).Run()
+	return true
 }
 
 // actionTitle returns the title of the code action for display,
@@ -220,6 +332,10 @@ func (ls *LangService) applyCodeAction(ln *lines.Lines, ca *lsp.CodeAction) {
 		ls.cv.SetStatus("Quick fix: " + err.Error())
 		return
 	}
+	if len(out) == 0 { // e.g., showed a document
+		ls.cv.SetStatus("Done: " + ca.Title)
+		return
+	}
 	n := 0
 	for _, f := range out {
 		n += len(f.Edits)
@@ -251,15 +367,12 @@ func (cv *Code) QuickFix() { //types:add
 		cv.SetStatus("Quick fix: no actions available here")
 		return
 	}
-	// preferred, enabled actions first for a useful default selection:
-	slices.SortStableFunc(actions, func(a, b lsp.CodeAction) int {
-		return cmp.Or(compareBool(a.Disabled == nil, b.Disabled == nil), compareBool(a.IsPreferred, b.IsPreferred))
-	})
+	lsp.SortCodeActions(actions)
 	d := core.NewBody("Quick fix / refactor")
 	c := core.NewChooser(d)
 	items := make([]core.ChooserItem, len(actions))
 	for i := range actions {
-		items[i] = core.ChooserItem{Text: actionTitle(&actions[i])}
+		items[i] = core.ChooserItem{Text: actionTitle(&actions[i]), Tooltip: actions[i].Description()}
 	}
 	c.SetItems(items...)
 	d.AddBottomBar(func(bar *core.Frame) {
@@ -273,15 +386,26 @@ func (cv *Code) QuickFix() { //types:add
 	d.RunWindowDialog(tv)
 }
 
-// compareBool orders true before false.
-func compareBool(a, b bool) int {
-	switch {
-	case a == b:
-		return 0
-	case a:
-		return -1
+// codeActionsMenu adds the code actions available at the cursor or
+// selection in the given editor to the given menu: quick fixes,
+// refactorings, and source actions such as browsing the assembly or
+// documentation. This is used for a submenu, which is populated when
+// it is opened.
+func (ls *LangService) codeActionsMenu(m *core.Scene, tv *TextEditor) {
+	ln := tv.Lines
+	reg := actionRegion(tv)
+	actions, err := ls.lspB.CodeActionsQuick(ln, reg, ls.diagsIn(ln, reg))
+	if err != nil || len(actions) == 0 {
+		core.NewButton(m).SetText("No code actions here").SetState(true, states.Disabled)
+		return
 	}
-	return 1
+	lsp.SortCodeActions(actions)
+	for _, ca := range actions {
+		core.NewButton(m).SetText(actionTitle(&ca)).SetTooltip(ca.Description()).
+			SetState(ca.Disabled != nil, states.Disabled).OnClick(func(e events.Event) {
+			ls.applyCodeAction(ln, &ca)
+		})
+	}
 }
 
 ////////   Navigation
@@ -352,7 +476,9 @@ func (cv *Code) openLoc(lc lang.Location) {
 // locString returns a display string for a location,
 // with file:line plus a trimmed preview of the line.
 func locString(cv *Code, lc lang.Location) string {
-	nm := lc.Filename
+	// files outside the project (e.g., in GOROOT) show their directory
+	// name, and deep paths within the project are abbreviated:
+	nm := filepath.Join(filepath.Base(filepath.Dir(lc.Filename)), filepath.Base(lc.Filename))
 	if rel, err := filepath.Rel(string(cv.Settings.ProjectRoot), lc.Filename); err == nil && !strings.HasPrefix(rel, "..") {
 		nm = rel
 		if dir := filepath.Dir(rel); strings.Count(dir, string(filepath.Separator)) > 1 {
@@ -598,6 +724,7 @@ func (cv *Code) ShowSignatureHelp() { //types:add
 		cv.SetStatus("Signature help: no callable at cursor")
 		return
 	}
+	// markdown, with the signatures as code:
 	var sb strings.Builder
 	for i, sig := range sh.Signatures {
 		mark, unmark := "", ""
@@ -605,14 +732,15 @@ func (cv *Code) ShowSignatureHelp() { //types:add
 			mark, unmark = "[", "]"
 		}
 		if i > 0 {
-			sb.WriteString("\n\n")
+			sb.WriteString("\n---\n")
 		}
-		sb.WriteString(lsp.SignatureText(sh, i, sh.ActiveParam(), mark, unmark))
+		sb.WriteString("```go\n" + lsp.SignatureText(sh, i, sh.ActiveParam(), mark, unmark) + "\n```\n")
 		if sig.Documentation != nil && sig.Documentation.Value != "" {
-			sb.WriteString("\n" + sig.Documentation.Value)
+			sb.WriteString("\n" + sig.Documentation.Value + "\n")
 		}
 	}
-	textcore.TextDialog(tv, "Signature help", sb.String())
+	name, _, _ := strings.Cut(sh.Signatures[max(act, 0)].Label, "(")
+	docsDialog(tv, signatureWindow+": "+name, sb.String())
 }
 
 // goplsInlayHints are the gopls inlay hint categories to enable when
@@ -696,5 +824,5 @@ func (cv *Code) ShowInlayHints() { //types:add
 		cv.SetStatus("Inlay hints: none returned by the server for this file")
 		return
 	}
-	textcore.TextDialog(tv, fmt.Sprintf("Inlay hints for %s (%d)", filepath.Base(ln.Filename()), n), sb.String())
+	textcore.TextDialog(tv, fmt.Sprintf("%s: %s (%d)", inlayHintsWindow, filepath.Base(ln.Filename()), n), sb.String())
 }

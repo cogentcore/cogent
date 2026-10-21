@@ -12,9 +12,12 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/system"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
 
@@ -82,6 +85,21 @@ type LangService struct {
 	// exist at a time.
 	sigStage *core.Stage
 
+	// explicit is set for a pending explicit completion request at
+	// explicitAt in explicitLn (see [LangService.offerCompletion]),
+	// for which the completions include go to definition and docs
+	// items, which go to gotoLoc and show docsMD.
+	explicit   bool
+	explicitAt textpos.Pos
+	explicitLn *lines.Lines
+	gotoLoc    *lang.Location
+	docsMD     string
+	docsSymbol string
+
+	// selectHooked records the completers that have our select
+	// listener, which handles the go to definition item.
+	selectHooked map[*core.Complete]bool
+
 	quit     chan struct{}
 	quitOnce sync.Once
 }
@@ -130,8 +148,10 @@ func NewLangService(cv *Code) *LangService {
 		diagCache:      make(map[string][]lang.Diagnostic),
 		semanticTagged: make(map[string]bool),
 		semGen:         make(map[string]int),
+		selectHooked:   make(map[*core.Complete]bool),
 		quit:           make(chan struct{}),
 	}
+	ls.lspB.ShowDocument = ls.showDocument
 	ls.lspB.SetOptions(serverOptions(cv.Settings.InlayHints))
 	ls.lspB.RootFunc = func(fpath string) string {
 		root := filepath.Clean(string(cv.Settings.ProjectRoot))
@@ -192,15 +212,81 @@ func (ls *LangService) Activated(tv *TextEditor) {
 	}
 	ls.lspB.Open(ln)
 	ls.SemanticRefresh(ln)
-	if tv.Complete != nil {
-		tv.Complete.MatchFunc = func(data any, text string, posLine, posChar int) complete.Matches {
-			return ls.lspB.Completions(ln, text, posLine, posChar)
-		}
-		tv.Complete.EditFunc = func(data any, text string, cursorPos int, comp complete.Completion, seed string) complete.Edit {
-			return ls.lspB.CompleteEdit(ln, text, cursorPos, comp, seed)
-		}
-		tv.Complete.LookupFunc = ls.lookupFunc(ln)
+	c := tv.Complete
+	if c == nil {
+		return
 	}
+	c.MatchFunc = func(data any, text string, posLine, posChar int) complete.Matches {
+		pos := textpos.Pos{Line: posLine, Char: posChar}
+		if ls.takeExplicit(ln, pos) {
+			return ls.explicitMatches(ln, text, pos)
+		}
+		return ls.lspB.Completions(ln, text, posLine, posChar)
+	}
+	c.EditFunc = func(data any, text string, cursorPos int, comp complete.Completion, seed string) complete.Edit {
+		return ls.lspB.CompleteEdit(ln, text, cursorPos, comp, seed)
+	}
+	c.LookupFunc = ls.lookupFunc(ln)
+	ls.mu.Lock()
+	hooked := ls.selectHooked[c]
+	ls.selectHooked[c] = true
+	ls.mu.Unlock()
+	if !hooked {
+		// select listeners run most recent first, so this one runs before
+		// the editor's own listener, which it preempts for the go to
+		// definition and docs items, so that the text is not edited:
+		c.OnSelect(func(e events.Event) {
+			if c.Completion != gotoDefCompletion && c.Completion != docsCompletion {
+				return
+			}
+			e.SetHandled()
+			ls.mu.Lock()
+			loc, md, sym := ls.gotoLoc, ls.docsMD, ls.docsSymbol
+			ls.mu.Unlock()
+			switch {
+			case c.Completion == docsCompletion:
+				docsDialog(tv, docsWindow+": "+sym, md)
+			case loc != nil:
+				ls.cv.openLoc(*loc)
+			}
+		})
+	}
+}
+
+// showDocument shows a document at the request of a language server
+// (e.g., for gopls "Browse" code actions): a page served by the server
+// itself (documentation, assembly, etc) is shown as text in a new window
+// with a text editor, other web pages are opened in the browser, and
+// file locations are opened in the editor. It is called from a server
+// connection goroutine and must not block.
+func (ls *LangService) showDocument(uri string, loc *lang.Location) bool {
+	if loc == nil && !lsp.IsLocalURL(uri) {
+		if system.TheApp == nil {
+			return false
+		}
+		go system.TheApp.OpenURL(uri)
+		return true
+	}
+	if ls.cv.Scene == nil {
+		return false
+	}
+	go func() {
+		if loc != nil {
+			ls.cv.AsyncLock()
+			ls.cv.openLoc(*loc)
+			ls.cv.AsyncUnlock()
+			return
+		}
+		title, text, err := lsp.DocumentText(uri)
+		ls.cv.AsyncLock()
+		defer ls.cv.AsyncUnlock()
+		if err != nil {
+			ls.cv.SetStatus("Show document: " + err.Error())
+			return
+		}
+		textcore.TextDialog(ls.cv, documentTitle(uri, title), text)
+	}()
+	return true
 }
 
 // Input should be called on editor Input events, to sync changed
@@ -557,7 +643,7 @@ func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	}
 	ls.mu.Unlock()
 
-	txt := ls.lspB.Hover(ln, pos)
+	txt := lsp.MarkdownText(ls.lspB.Hover(ln, pos))
 	if diag != "" {
 		txt += ls.quickFixHint(ln, pos)
 	}

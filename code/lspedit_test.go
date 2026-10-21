@@ -67,7 +67,9 @@ func newEditorTest(t *testing.T, src string, pos textpos.Pos) *editorTest {
 	ln.SetFilename(fpath)
 	ln.SetText([]byte(src))
 	et.ed.SetLines(ln)
-	et.ed.OnInput(func(e events.Event) { et.ls.EditorInput(et.ed) }) // as in Code
+	cv.OpenFiles.Add(ln) // for diagnostics
+	// as in Code:
+	et.ed.OnInput(func(e events.Event) { et.ls.EditorInput(et.ed) })
 	if et.ed.Complete == nil {
 		et.ed.Complete = core.NewComplete()
 	}
@@ -206,5 +208,61 @@ func TestEditorSignatureHelp(t *testing.T) {
 	}
 	if sig := et.ls.SigStatusMsg(); sig != "" {
 		t.Errorf("after typing over the close paren: signature still shown: %q", sig)
+	}
+}
+
+// TestEditorLookup checks the Ctrl+. lookup: completions for the text
+// up to the cursor, headed by go to definition, when there is no error,
+// and quick fixes when there is an error with fixes.
+func TestEditorLookup(t *testing.T) {
+	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\t_ = strings.Split(\"a\", \",\")\n}\n"
+	et := newEditorTest(t, src, textpos.Pos{Line: 5, Char: 16}) // strings.Spl|it
+	n := et.nmatch
+	if et.ls.Lookup(et.ed) {
+		t.Fatal("quick fixes shown with no error")
+	}
+	if et.nmatch == n {
+		t.Fatal("completer was not called")
+	}
+	t.Logf("completions(seed %q): %s", et.seed, et.labels(6))
+	if et.seed != "strings.Spl" || !et.hasMatch("Split") || !et.hasMatch("SplitN") {
+		t.Errorf("completions for strings.Spl: seed %q, %s", et.seed, et.labels(10))
+	}
+	if len(et.matches) == 0 || et.matches[0].Text != gotoDefCompletion {
+		t.Fatalf("first completion is not go to definition: %s", et.labels(3))
+	}
+	gd := et.matches[0]
+	if !strings.Contains(gd.Label, "strings.go") || !strings.Contains(gd.Desc, "Split") {
+		t.Errorf("go to definition item: label %q, desc %q", gd.Label, gd.Desc)
+	}
+	if et.ls.gotoLoc == nil || filepath.Base(et.ls.gotoLoc.Filename) != "strings.go" {
+		t.Errorf("go to definition location: %v", et.ls.gotoLoc)
+	}
+	if len(et.matches) < 2 || et.matches[1].Text != docsCompletion || !strings.HasPrefix(et.matches[1].Label, "Docs: func strings.Split") {
+		t.Errorf("second completion is not docs: %s", et.labels(3))
+	}
+	if !strings.Contains(et.ls.docsMD, "```go") {
+		t.Errorf("docs markdown: %q", et.ls.docsMD)
+	}
+
+	// typing after an explicit request goes back to plain completions:
+	et.ed.SetCursorShow(textpos.Pos{Line: 5, Char: 18})
+	et.typeText("x")
+	if len(et.matches) > 0 && et.matches[0].Text == gotoDefCompletion {
+		t.Errorf("go to definition offered while typing")
+	}
+
+	// an error with a quick fix: undefined fmt, fixed by adding the import
+	et.ed.SetCursorShow(textpos.Pos{Line: 5, Char: et.ed.Lines.LineLen(5)})
+	et.ed.HandleEvent(events.NewKey(events.KeyChord, 0, key.CodeReturnEnter, 0))
+	et.typeText("fmt.Println()")
+	et.ls.Change(et.ed.Lines)
+	pos := textpos.Pos{Line: 6, Char: 2}
+	waitCode(t, 30*time.Second, "undefined fmt diagnostic", func() bool {
+		return len(et.ls.diagsAt(et.ed.Lines, pos)) > 0
+	})
+	et.ed.SetCursorShow(pos)
+	if !et.ls.Lookup(et.ed) {
+		t.Errorf("quick fixes not shown for error: %v", et.ls.diagsAt(et.ed.Lines, pos))
 	}
 }

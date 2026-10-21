@@ -76,6 +76,11 @@ type Server struct {
 	// if not.
 	ApplyEdit func(we WorkspaceEdit) (applied bool, reason string)
 
+	// ShowDocument receives server requests to show a document
+	// (window/showDocument), if set. It must be set before calling
+	// [Start], and must not block. It returns whether it was shown.
+	ShowDocument func(sd ShowDocumentParams) bool
+
 	// reg is the registry used to find the executable.
 	reg *Registry
 
@@ -326,7 +331,7 @@ func (s *Server) InitParams() *InitializeParams {
 	}
 	params.Capabilities.Workspace = &WorkspaceClientCapabilities{
 		ApplyEdit:        true,
-		WorkspaceEdit:    &WorkspaceEditCapability{DocumentChanges: true},
+		WorkspaceEdit:    &WorkspaceEditCapability{DocumentChanges: true, ResourceOperations: []string{"create"}},
 		Configuration:    true,
 		WorkspaceFolders: true,
 		// needed for gopls to run its didChangeConfiguration handler
@@ -335,6 +340,7 @@ func (s *Server) InitParams() *InitializeParams {
 	}
 	params.Capabilities.Window = &WindowClientCapabilities{
 		WorkDoneProgress: true,
+		ShowDocument:     &ShowDocumentCapability{Support: s.ShowDocument != nil},
 	}
 	td := &TextDocumentClientCapab{
 		Synchronization:    &TextDocumentSyncCapability{DidSave: true},
@@ -1020,6 +1026,13 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 	case "window/showMessageRequest":
 		// no action items for now
 		return nil, nil
+	case "window/showDocument":
+		var sd ShowDocumentParams
+		if err := json.Unmarshal(params, &sd); err != nil {
+			return nil, &RPCError{Code: CodeInvalidParams, Message: err.Error()}
+		}
+		shown := s.ShowDocument != nil && s.ShowDocument(sd)
+		return &ShowDocumentResult{Success: shown}, nil
 	case "workspace/applyEdit":
 		var ap ApplyWorkspaceEditParams
 		if err := json.Unmarshal(params, &ap); err != nil {

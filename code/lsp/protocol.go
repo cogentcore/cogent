@@ -192,8 +192,11 @@ type DidChangeConfigurationCapability struct {
 
 // WorkspaceEditCapability describes workspace edit support.
 type WorkspaceEditCapability struct {
-	DocumentChanges    bool `json:"documentChanges,omitempty"`
-	ResourceOperations bool `json:"resourceOperations,omitempty"`
+	DocumentChanges bool `json:"documentChanges,omitempty"`
+
+	// ResourceOperations lists the supported resource operations
+	// in documentChanges: "create", "rename", "delete".
+	ResourceOperations []string `json:"resourceOperations,omitempty"`
 }
 
 // DidChangeWatchedFilesCapability describes file watching support.
@@ -203,7 +206,13 @@ type DidChangeWatchedFilesCapability struct {
 
 // WindowClientCapabilities are window-related client capabilities.
 type WindowClientCapabilities struct {
-	WorkDoneProgress bool `json:"workDoneProgress,omitempty"`
+	WorkDoneProgress bool                    `json:"workDoneProgress,omitempty"`
+	ShowDocument     *ShowDocumentCapability `json:"showDocument,omitempty"`
+}
+
+// ShowDocumentCapability declares window/showDocument support.
+type ShowDocumentCapability struct {
+	Support bool `json:"support"`
 }
 
 // TextDocumentClientCapab are textDocument-related client capabilities.
@@ -578,11 +587,29 @@ type WorkspaceEdit struct {
 	DocumentChanges []DocumentEdit        `json:"documentChanges,omitempty"`
 }
 
-// DocumentEdit is the TextDocumentEdit of the spec: edits to a
-// specific versioned document, as used in WorkspaceEdit.DocumentChanges.
+// DocumentEdit is an element of WorkspaceEdit.DocumentChanges, which is
+// either the TextDocumentEdit of the spec: edits to a specific versioned
+// document, or a resource operation, when Kind is set, of which only
+// "create" (CreateFile) is supported.
 type DocumentEdit struct {
 	TextDocument VersionedTextDocumentIdentifier `json:"textDocument"`
 	Edits        []TextEdit                      `json:"edits"`
+
+	// Kind is the resource operation kind: "create", "rename", "delete",
+	// or "" for a text document edit.
+	Kind string `json:"kind,omitempty"`
+
+	// URI is the resource to create.
+	URI DocumentURI `json:"uri,omitempty"`
+
+	// Options are the options for creating the resource.
+	Options *CreateFileOptions `json:"options,omitempty"`
+}
+
+// CreateFileOptions are the options for a create resource operation.
+type CreateFileOptions struct {
+	Overwrite      bool `json:"overwrite,omitempty"`
+	IgnoreIfExists bool `json:"ignoreIfExists,omitempty"`
 }
 
 ////////   Server -> client messages
@@ -672,6 +699,20 @@ func progressMessage(v rawJSON) string {
 	}
 	json.Unmarshal(v, &obj)
 	return obj.Message
+}
+
+// ShowDocumentParams request that the client show a resource:
+// a web page (External) or a location in a file.
+type ShowDocumentParams struct {
+	URI       DocumentURI `json:"uri"`
+	External  bool        `json:"external,omitempty"`
+	TakeFocus bool        `json:"takeFocus,omitempty"`
+	Selection *Range      `json:"selection,omitempty"`
+}
+
+// ShowDocumentResult reports whether a document was shown.
+type ShowDocumentResult struct {
+	Success bool `json:"success"`
 }
 
 // ApplyWorkspaceEditParams requests that the client apply an edit

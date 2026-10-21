@@ -41,6 +41,13 @@ type Backend struct {
 	// [ServerConfig.RootDir] marker-based search is used instead.
 	RootFunc func(fpath string) string
 
+	// ShowDocument, if set, shows a document at the request of a server
+	// (e.g., gopls "Browse" code actions): an external resource such as
+	// a web page to open in a browser if loc is nil, or otherwise the
+	// given location in a file. It is called from the server connection
+	// goroutine and must not block. It returns whether it was shown.
+	ShowDocument func(uri string, loc *lang.Location) bool
+
 	// Verbose enables detailed logging of the backend.
 	Verbose bool
 
@@ -51,7 +58,8 @@ type Backend struct {
 
 	// cmdEdits collects the edits applied by server-initiated
 	// workspace/applyEdit requests while inCommand is set, i.e., during
-	// the workspace/executeCommand call of a code action.
+	// the resolve or command requests of a code action
+	// (see [Backend.captureEdits]).
 	cmdEdits  []lang.FileEdits
 	inCommand bool
 
@@ -240,6 +248,9 @@ func (b *Backend) serverFor(ln *lines.Lines) (*Server, *docRef, bool) {
 		srv = NewServer(b.Reg, cfg, root)
 		srv.Diags = b.handleDiags
 		srv.ApplyEdit = b.handleApplyEdit
+		if b.ShowDocument != nil {
+			srv.ShowDocument = b.handleShowDocument
+		}
 		b.servers[skey] = srv
 		go srv.Start(context.Background()) // errors are logged and recorded
 	}
@@ -391,6 +402,13 @@ func normalizePath(p string) string {
 	return filepath.Clean(abs)
 }
 
+// SameFile returns whether the two file paths refer to the same file,
+// resolving symlinks, e.g., for comparing paths reported by servers
+// with buffer filenames.
+func SameFile(a, b string) bool {
+	return normalizePath(a) == normalizePath(b)
+}
+
 ////////   Diagnostics
 
 // handleDiags converts published diagnostics for a file into the
@@ -460,6 +478,20 @@ func codeString(code any) string {
 		return strconv.FormatFloat(c, 'f', -1, 64)
 	}
 	return ""
+}
+
+// handleShowDocument implements server window/showDocument requests,
+// using [Backend.ShowDocument].
+func (b *Backend) handleShowDocument(sd ShowDocumentParams) bool {
+	fname := sd.URI.Path()
+	if sd.External || fname == "" {
+		return b.ShowDocument(string(sd.URI), nil)
+	}
+	loc := &lang.Location{Filename: fname}
+	if sd.Selection != nil {
+		loc.Region = b.regionForFile(fname, *sd.Selection)
+	}
+	return b.ShowDocument(string(sd.URI), loc)
 }
 
 ////////   Positions
