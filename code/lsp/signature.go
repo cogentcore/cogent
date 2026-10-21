@@ -111,6 +111,7 @@ func (b *Backend) SignatureHelp(ln *lines.Lines, pos textpos.Pos, wasShowing boo
 		TextDocumentPositionParams: posParams(ln, pos),
 		Context:                    signatureContext(string(rn[:min(pos.Char, len(rn))]), wasShowing),
 	}
+	srv.DidChange(params.TextDocument.URI, currentText(ln)) // typing hot path
 	sh, err := srv.SignatureHelp(params)
 	if err != nil || sh == nil {
 		return nil, -1, err

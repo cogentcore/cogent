@@ -544,12 +544,26 @@ func (s *Server) didOpenDoc(ds *docState) {
 // as a textDocument/didChange notification, bumping its version.
 // If the document has not yet been opened because the server was
 // starting, this records the new text for the eventual didOpen.
+// Nothing is sent if the server already has this text.
 func (s *Server) DidChange(uri DocumentURI, text string) {
+	s.didChange(uri, text, false)
+}
+
+// ForceDidChange is [Server.DidChange] that sends the text even if it
+// is unchanged, e.g., to make the server rebuild its state.
+func (s *Server) ForceDidChange(uri DocumentURI, text string) {
+	s.didChange(uri, text, true)
+}
+
+func (s *Server) didChange(uri DocumentURI, text string, force bool) {
 	s.mu.Lock()
 	ds, has := s.docs[uri]
 	if !has {
 		ds = &docState{uri: uri, version: 1}
 		s.docs[uri] = ds
+	} else if !force && ds.opened && ds.text == text {
+		s.mu.Unlock()
+		return // already in sync
 	}
 	ds.version++
 	ds.text = text

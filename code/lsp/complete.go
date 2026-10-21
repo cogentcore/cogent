@@ -73,17 +73,26 @@ func (b *Backend) Completions(ln *lines.Lines, text string, posLine, posChar int
 	if !ok {
 		return complete.Matches{}
 	}
+	seed := completionSeed(text)
+	if seed == "" {
+		// nothing typed after punctuation or space: the editor offers
+		// completions after every keystroke, and a list of every symbol
+		// in scope after each comma, etc, is not useful.
+		return complete.Matches{}
+	}
 	params := &CompletionParams{
 		TextDocumentPositionParams: posParams(ln, textpos.Pos{Line: posLine, Char: posChar}),
 		Context:                    completionContext(text),
 	}
+	// the editor asks for completions right after each keystroke, before
+	// the debounced change sync, so the server must be synced first:
+	srv.DidChange(params.TextDocument.URI, currentText(ln))
 	list, err := srv.Completion(params)
 	if err != nil || list == nil {
 		return complete.Matches{}
 	}
 	lt := []rune(lineText(ln, posLine))
 	posChar = min(posChar, len(lt))
-	seed := completionSeed(text)
 	ms := complete.Matches{Seed: seed}
 	edits := make(map[string]*complete.Edit, len(list.Items))
 	for _, item := range list.Items {

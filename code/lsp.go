@@ -73,6 +73,9 @@ type LangService struct {
 	sigHelp   sigHelpCache
 	sigStatus string
 
+	// sigPending is set while a deferred SigHelpUpdate is scheduled.
+	sigPending bool
+
 	// sigStage is the live signature help popup, anchored near the
 	// cursor like the completion popup but display-only. Any existing
 	// popup is closed before a new one is shown, so exactly one can

@@ -133,7 +133,7 @@ func (b *Backend) Reconfigure() {
 	// so nudge each open document with a full-content didChange:
 	for _, ref := range refs {
 		if ref.srv.Ready() {
-			ref.srv.DidChange(URIFromPath(ref.fname), currentText(ref.ln))
+			ref.srv.ForceDidChange(URIFromPath(ref.fname), currentText(ref.ln))
 		}
 	}
 }

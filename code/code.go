@@ -261,13 +261,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.OnInput(func(e events.Event) {
 				cv.UpdateTextButtons()
 				cv.UpdateStatusText()
-				if w.Lines != nil {
-					cv.LangSvc().Input(w.Lines)
-					// signature help goes after UpdateStatusText so a
-					// live parameter signature takes over the line,
-					// and clears itself when the call context is exited:
-					cv.LangSvc().SigHelpUpdate(w)
-				}
+				cv.LangSvc().EditorInput(w)
 			})
 			w.OnChange(func(e events.Event) {
 				cv.updatePreviewPanel()

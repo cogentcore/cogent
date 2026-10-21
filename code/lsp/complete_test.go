@@ -209,10 +209,10 @@ func TestApplyTextEditsOrder(t *testing.T) {
 		return TextEdit{Range: Range{Start: Position{Line: line, Character: ch}, End: Position{Line: line, Character: ch}}, NewText: text}
 	}
 	applyTextEdits(ln, []TextEdit{ins(1, 0, "1"), ins(0, 1, "X"), ins(1, 0, "2")})
-	assert.Equal(t, "aX\n12b", strings.TrimRight(ln.String(), "\n"))
+	assert.Equal(t, "aX\n12b\n", ln.String())
 	// deletion through the end of the document:
 	applyTextEdits(ln, []TextEdit{{Range: Range{Start: Position{Line: 0, Character: 2}, End: Position{Line: 2, Character: 0}}}})
-	assert.Equal(t, "aX", strings.TrimRight(ln.String(), "\n"))
+	assert.Equal(t, "aX\n", ln.String())
 }
 
 func TestURIFromPath(t *testing.T) {

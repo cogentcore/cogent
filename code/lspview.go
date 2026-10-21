@@ -225,11 +225,15 @@ var semanticOwnedTokens = func() map[token.Tokens]bool {
 // sigHelpCache is a short-lived single-entry cache for signature help,
 // keyed by the exact text prefix before the cursor, which changes on
 // every keystroke, so re-requests only happen when the prefix recurs.
+// It also records the position of the open paren of the call, so the
+// signature can remain shown within the same call when the server
+// returns nothing.
 type sigHelpCache struct {
 	valid  bool
 	time   time.Time
 	fname  string
 	prefix string
+	paren  textpos.Pos
 	sh     *lsp.SignatureHelp
 	act    int
 }
@@ -243,11 +247,45 @@ const sigHelpCacheTime = 5 * time.Second
 // help, so they can be recognized and cleared.
 const signatureStatusPrefix = "call: "
 
+// EditorInput should be called on editor Input events (text changes and
+// cursor movements), to sync changed text to the language server with
+// a debounce delay, and update the signature help.
+func (ls *LangService) EditorInput(tv *TextEditor) {
+	if tv.Lines == nil {
+		return
+	}
+	ls.Input(tv.Lines)
+	ls.ScheduleSigHelp(tv)
+}
+
+// ScheduleSigHelp schedules a [LangService.SigHelpUpdate] for after
+// the current event has been fully processed and the editor rendered.
+// It must be called from the event loop, for every key event and
+// Input event: the Input event for typed text is sent before the editor
+// moves the cursor past the new text, and some keys move the cursor
+// without any Input event (e.g., typing over an auto-inserted ")").
+func (ls *LangService) ScheduleSigHelp(tv *TextEditor) {
+	ls.mu.Lock()
+	pending := ls.sigPending
+	ls.sigPending = true
+	ls.mu.Unlock()
+	if pending {
+		return
+	}
+	tv.Defer(func() {
+		ls.mu.Lock()
+		ls.sigPending = false
+		ls.mu.Unlock()
+		ls.SigHelpUpdate(tv)
+	})
+	tv.NeedsRender()
+}
+
 // SigHelpUpdate checks whether the editor cursor is in a function-call
 // parameter context and updates the signature display accordingly: a
 // display-only popup anchored below the cursor (like the completion
 // popup, but nothing is ever inserted) plus the status-bar line.
-// Should be called on editor Input events, from the event loop.
+// It must be called from the event loop: see [LangService.ScheduleSigHelp].
 func (ls *LangService) SigHelpUpdate(tv *TextEditor) {
 	if tv == nil || tv.Lines == nil {
 		ls.clearSigHelp()
@@ -262,42 +300,47 @@ func (ls *LangService) SigHelpUpdate(tv *TextEditor) {
 	rn := ln.Line(pos.Line)
 	pos.Char = min(pos.Char, len(rn))
 	prefix := string(rn[:pos.Char])
-	if !inCallContext(prefix) {
+	pi := callParen(prefix)
+	if pi < 0 {
 		ls.clearSigHelp()
 		return
 	}
+	paren := textpos.Pos{Line: pos.Line, Char: pi}
 
 	fname := ln.Filename()
 	ls.mu.Lock()
-	c := &ls.sigHelp
-	if c.valid && c.fname == fname && c.prefix == prefix && time.Since(c.time) < sigHelpCacheTime {
-		sh, act := c.sh, c.act
-		ls.mu.Unlock()
-		ls.showSigHelp(tv, sh, act)
-		return
-	}
-	c.valid = false
+	c := ls.sigHelp
 	retrigger := ls.sigStatus != ""
 	ls.mu.Unlock()
+	if c.valid && c.fname == fname && c.prefix == prefix && time.Since(c.time) < sigHelpCacheTime {
+		ls.showSigHelp(tv, c.sh, c.act)
+		return
+	}
 
 	sh, act, err := ls.lspB.SignatureHelp(ln, pos, retrigger)
 	if err != nil || sh == nil {
+		// servers return nothing in some argument contexts, such as
+		// inside a string literal: keep showing the same call's signature.
+		if retrigger && c.valid && c.fname == fname && c.paren == paren {
+			ls.showSigHelp(tv, c.sh, c.act)
+			return
+		}
 		ls.clearSigHelp()
 		return
 	}
 	ls.mu.Lock()
-	ls.sigHelp = sigHelpCache{valid: true, time: time.Now(), fname: fname, prefix: prefix, sh: sh, act: act}
+	ls.sigHelp = sigHelpCache{valid: true, time: time.Now(), fname: fname, prefix: prefix, paren: paren, sh: sh, act: act}
 	ls.mu.Unlock()
 	ls.showSigHelp(tv, sh, act)
 }
 
-// inCallContext reports whether the text before the cursor ends inside
-// an unclosed "(", not nested within another kind of bracket.
-// This is the client-side equivalent of the server returning no help:
-// it keeps us from requesting signatures while the cursor sits on a
-// plain line, and from leaving a stale signature up after ")" closes
-// the call.
-func inCallContext(prefix string) bool {
+// callParen returns the index of the unclosed "(" that the text before
+// the cursor ends inside of, not nested within another kind of bracket,
+// or -1 if none. This is the client-side equivalent of the server
+// returning no help: it keeps us from requesting signatures while the
+// cursor sits on a plain line, and from leaving a stale signature up
+// after ")" closes the call.
+func callParen(prefix string) int {
 	rn := []rune(prefix)
 	depth := 0
 	for i := len(rn) - 1; i >= 0; i-- {
@@ -306,12 +349,15 @@ func inCallContext(prefix string) bool {
 			depth++
 		case '(', '[', '{':
 			if depth == 0 {
-				return rn[i] == '('
+				if rn[i] == '(' {
+					return i
+				}
+				return -1
 			}
 			depth--
 		}
 	}
-	return false
+	return -1
 }
 
 // showSigHelp formats and displays the active signature: in a popup
@@ -332,8 +378,9 @@ func (ls *LangService) showSigHelp(tv *TextEditor, sh *lsp.SignatureHelp, act in
 	ls.cv.UpdateStatusText()
 }
 
-// showSigPopup shows the display-only signature popup anchored below
-// the cursor, in the style of the completion popup. It must be called
+// showSigPopup shows the display-only signature popup just above the
+// cursor line, so that it does not cover the line being typed, or the
+// completion popup, which goes below the cursor. It must be called
 // from the event loop. Following the completer's logic (Complete.Show
 // cancels any existing stage before showing a new one), any existing
 // popup is closed first, so popups can never accumulate or overlap.
@@ -346,7 +393,6 @@ func (ls *LangService) showSigPopup(tv *TextEditor, txt string) {
 	if p == (image.Point{}) {
 		return
 	}
-	p.Y -= 16 // todo: make this the font height
 	sc := core.NewScene(tv.Lines.Filename() + "-sig")
 	core.StyleMenuScene(sc)
 	st := core.NewPopupStage(core.CompleterStage, sc, tv).SetPos(p)
@@ -364,6 +410,14 @@ func (ls *LangService) showSigPopup(tv *TextEditor, txt string) {
 	ls.sigStage = st
 	ls.mu.Unlock()
 	st.Run()
+	// the popup size is only known once it is run: move it up so that
+	// its bottom is just above the top of the cursor line.
+	if ht := sc.SceneGeom.Size.Y; ht > 0 {
+		top := tv.CharStartPos(tv.CursorPos).ToPoint().Y
+		if y := top - ht - 2; y >= 0 {
+			sc.SceneGeom.Pos.Y = y
+		}
+	}
 }
 
 // closeSigPopup closes the signature popup if one is open.

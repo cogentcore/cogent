@@ -12,10 +12,14 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/styles/states"
 )
 
 func (cv *Code) codeKeys(e events.Event) {
 	SetGoMod(cv.Settings.GoMod)
+	if tv := cv.ActiveEditor(); tv != nil && tv.StateIs(states.Focused) {
+		cv.LangSvc().ScheduleSigHelp(tv) // after the editor handles the key
+	}
 	kc := e.KeyChord()
 	kf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
