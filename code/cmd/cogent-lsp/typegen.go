@@ -10,6 +10,12 @@ var _ = types.AddFunc(&types.Func{Name: "main.retryQuery", Doc: "retryQuery call
 
 var _ = types.AddFunc(&types.Func{Name: "main.Check", Doc: "Check reports diagnostics for the given files, in\npath:line:col-line:col: severity: message format.", Args: []string{"c"}, Returns: []string{"error"}})
 
+var _ = types.AddFunc(&types.Func{Name: "main.Sig", Doc: "Sig shows the signature help for the callable at FILE:LINE:COL,\nmarking the active parameter with brackets.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.Hints", Doc: "Hints dumps the inlay hints the server provides for FILE, one per\nline as path:line:col: label. Note: these are for programmatic use;\nthe editor does not render inlay hints inline.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.Tokens", Doc: "Tokens dumps the semantic tokens the server provides for FILE,\none per line as path:line:col-endcol: type (+modifiers).", Args: []string{"c"}, Returns: []string{"error"}})
+
 var _ = types.AddFunc(&types.Func{Name: "main.Hover", Doc: "Hover shows the hover documentation for the symbol at FILE:LINE:COL.", Args: []string{"c"}, Returns: []string{"error"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.Definition", Doc: "Definition shows the definition location(s) of the symbol at FILE:LINE:COL.", Args: []string{"c"}, Returns: []string{"error"}})
@@ -26,6 +32,8 @@ var _ = types.AddFunc(&types.Func{Name: "main.Rename", Doc: "Rename renames the 
 
 var _ = types.AddFunc(&types.Func{Name: "main.Actions", Doc: "Actions lists the quick fixes and refactorings the server offers at\nFILE:LINE:COL: organize imports, missing returns, error-check\nwrapping, typo fixes, extract function/variable, fill struct, etc.\nDiagnostics published for the file are sent as context, which is\nwhat turns the quick fixes on. With -a TITLE, applies the matching\naction and rewrites the affected files.", Args: []string{"c"}, Returns: []string{"error"}})
 
+var _ = types.AddFunc(&types.Func{Name: "main.writeEdited", Doc: "writeEdited reports the edits applied per file, and writes out the\ngiven target file, which is open in this session, so the backend\nedited it in memory rather than writing it.", Args: []string{"out", "path", "ln"}, Returns: []string{"error"}})
+
 var _ = types.AddFunc(&types.Func{Name: "main.pickAction", Doc: "pickAction finds the action whose title matches the given pattern:\nexact match first, then case-insensitive substring.", Args: []string{"acts", "pat"}, Returns: []string{"CodeAction"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.editCounts", Doc: "editCounts converts a workspace edit into per-file counts, for a\ndry-run report, without applying anything.", Args: []string{"we"}, Returns: []string{"FileEdits"}})
@@ -33,6 +41,8 @@ var _ = types.AddFunc(&types.Func{Name: "main.editCounts", Doc: "editCounts conv
 var _ = types.AddFunc(&types.Func{Name: "main.cliNormalize", Doc: "cliNormalize canonicalizes a path for comparing whether two names\nrefer to the same file, resolving symlinks like /var -> /private/var.", Args: []string{"path"}, Returns: []string{"string"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.withPos", Doc: "withPos handles the common setup for position-based commands:\nparse FILE:LINE:COL, open the file, and wait for the server.", Args: []string{"c", "fn"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.withFile", Doc: "withFile handles the common setup for single-file commands:\nopen the FILE argument and wait for the server.", Args: []string{"c", "cmd", "fn"}, Returns: []string{"error"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.setup", Doc: "setup silences the client's internal logging unless -v was given."})
 

@@ -156,20 +156,16 @@ func Sig(c *Config) error {
 		if !retryQuery(func() bool {
 			var err error
 			sh, act, err = b.SignatureHelp(ln, pos, false)
-			return sh != nil && act >= 0 && err == nil
+			return sh != nil && err == nil
 		}) {
 			return fmt.Errorf("no callable at %s", c.Args[0])
-		}
-		actP := 0
-		if sh.ActiveParameter != nil && *sh.ActiveParameter >= 0 {
-			actP = *sh.ActiveParameter
 		}
 		for i := range sh.Signatures {
 			mark, unmark := "", ""
 			if i == act {
 				mark, unmark = "[", "]"
 			}
-			fmt.Println(lsp.SignatureText(sh, i, actP, mark, unmark))
+			fmt.Println(lsp.SignatureText(sh, i, sh.ActiveParam(), mark, unmark))
 		}
 		return nil
 	})
@@ -179,75 +175,44 @@ func Sig(c *Config) error {
 // line as path:line:col: label. Note: these are for programmatic use;
 // the editor does not render inlay hints inline.
 func Hints(c *Config) error {
-	setup()
-	if len(c.Args) != 1 {
-		return fmt.Errorf("hints needs a FILE argument")
-	}
-	deadline, err := c.deadline()
-	if err != nil {
-		return err
-	}
-	b := lsp.NewBackend(nil)
-	defer b.Stop()
-	ln, ok := openReady(b, c.Args[0], deadline)
-	if !ok {
-		return fmt.Errorf("language server not available for %s", c.Args[0])
-	}
-	hints, err := b.InlayHints(ln, textpos.Region{
-		Start: textpos.Pos{Line: 0, Char: 0},
-		End:   textpos.Pos{Line: ln.NumLines(), Char: 0},
-	})
-	if err != nil {
-		return err
-	}
-	path, _ := filepath.Abs(c.Args[0])
-	for _, h := range hints {
-		txt := h.LabelText()
-		if txt == "" {
-			continue
+	return withFile(c, "hints", func(b *lsp.Backend, ln *lines.Lines) error {
+		hints, err := b.InlayHints(ln, textpos.Region{End: textpos.Pos{Line: ln.NumLines()}})
+		if err != nil {
+			return err
 		}
-		fmt.Printf("%s:%d:%d: %s\n", path, h.Position.Line+1, h.Position.Character+1, txt)
-	}
-	if len(hints) == 0 {
-		fmt.Fprintln(os.Stderr, "no inlay hints (many servers gate these behind settings)")
-	}
-	return nil
+		for _, h := range hints {
+			if txt := h.LabelText(); txt != "" {
+				fmt.Printf("%s:%d:%d: %s\n", ln.Filename(), h.Position.Line+1, h.Position.Character+1, txt)
+			}
+		}
+		if len(hints) == 0 {
+			fmt.Fprintln(os.Stderr, "no inlay hints (many servers gate these behind settings)")
+		}
+		return nil
+	})
 }
 
 // Tokens dumps the semantic tokens the server provides for FILE,
 // one per line as path:line:col-endcol: type (+modifiers).
 func Tokens(c *Config) error {
-	setup()
-	if len(c.Args) != 1 {
-		return fmt.Errorf("tokens needs a FILE argument")
-	}
-	deadline, err := c.deadline()
-	if err != nil {
-		return err
-	}
-	b := lsp.NewBackend(nil)
-	defer b.Stop()
-	ln, ok := openReady(b, c.Args[0], deadline)
-	if !ok {
-		return fmt.Errorf("language server not available for %s", c.Args[0])
-	}
-	var toks []lsp.SemanticToken
-	if !retryQuery(func() bool {
-		var err error
-		toks, err = b.SemanticTokensFull(ln)
-		return len(toks) > 0 && err == nil
-	}) {
-		return fmt.Errorf("no semantic tokens for %s", c.Args[0])
-	}
-	path, _ := filepath.Abs(c.Args[0])
-	for _, tk := range toks {
-		mods := ""
-		if len(tk.Modifiers) > 0 {
-			mods = " (+" + strings.Join(tk.Modifiers, ",") + ")"
+	return withFile(c, "tokens", func(b *lsp.Backend, ln *lines.Lines) error {
+		var toks []lsp.SemanticToken
+		if !retryQuery(func() bool {
+			var err error
+			toks, err = b.SemanticTokensFull(ln)
+			return len(toks) > 0 && err == nil
+		}) {
+			return fmt.Errorf("no semantic tokens for %s", c.Args[0])
 		}
-		fmt.Printf("%s:%d:%d-%d: %s%s\n", path, tk.Start.Line+1, tk.Start.Char+1, tk.End.Char, tk.Type, mods)
-	}
-	return nil
+		for _, tk := range toks {
+			mods := ""
+			if len(tk.Modifiers) > 0 {
+				mods = " (+" + strings.Join(tk.Modifiers, ",") + ")"
+			}
+			fmt.Printf("%s:%d:%d-%d: %s%s\n", ln.Filename(), tk.Start.Line+1, tk.Start.Char+1, tk.End.Char, tk.Type, mods)
+		}
+		return nil
+	})
 }
 
 // Hover shows the hover documentation for the symbol at FILE:LINE:COL.
@@ -292,26 +257,14 @@ func Refs(c *Config) error {
 
 // Symbols lists the hierarchical document symbols for FILE.
 func Symbols(c *Config) error {
-	setup()
-	if len(c.Args) != 1 {
-		return fmt.Errorf("symbols needs a FILE argument")
-	}
-	deadline, err := c.deadline()
-	if err != nil {
-		return err
-	}
-	b := lsp.NewBackend(nil)
-	defer b.Stop()
-	ln, ok := openReady(b, c.Args[0], deadline)
-	if !ok {
-		return fmt.Errorf("language server not available for %s", c.Args[0])
-	}
-	sl := b.Symbols(ln)
-	if len(sl) == 0 {
-		return fmt.Errorf("no symbols in %s", c.Args[0])
-	}
-	printSymbols(sl, 0)
-	return nil
+	return withFile(c, "symbols", func(b *lsp.Backend, ln *lines.Lines) error {
+		sl := b.Symbols(ln)
+		if len(sl) == 0 {
+			return fmt.Errorf("no symbols in %s", c.Args[0])
+		}
+		printSymbols(sl, 0)
+		return nil
+	})
 }
 
 // Workspace searches workspace-wide for symbols matching QUERY,
@@ -416,18 +369,7 @@ func Rename(c *Config) error {
 	if err != nil {
 		return err
 	}
-	target := cliNormalize(path)
-	for _, f := range out {
-		fmt.Printf("%s: %d edit(s)\n", f.Filename, len(f.Edits))
-		// the target file was edited in memory (it is open in this
-		// session, so the backend does not write it): write it out:
-		if cliNormalize(f.Filename) == target {
-			if err := os.WriteFile(path, []byte(ln.String()), 0644); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return writeEdited(out, path, ln)
 }
 
 // Actions lists the quick fixes and refactorings the server offers at
@@ -536,11 +478,16 @@ func Actions(c *Config) error {
 	if err != nil {
 		return err
 	}
+	return writeEdited(out, path, ln)
+}
+
+// writeEdited reports the edits applied per file, and writes out the
+// given target file, which is open in this session, so the backend
+// edited it in memory rather than writing it.
+func writeEdited(out []lang.FileEdits, path string, ln *lines.Lines) error {
 	target := cliNormalize(path)
 	for _, f := range out {
 		fmt.Printf("%s: %d edit(s)\n", f.Filename, len(f.Edits))
-		// the target file was edited in memory (it is open in this
-		// session, so the backend does not write it): write it out:
 		if cliNormalize(f.Filename) == target {
 			if err := os.WriteFile(path, []byte(ln.String()), 0644); err != nil {
 				return err
@@ -575,11 +522,7 @@ func editCounts(we *lsp.WorkspaceEdit) []lang.FileEdits {
 		counts[lsp.DocumentURI(u).Path()] += len(es)
 	}
 	for _, de := range we.DocumentChanges {
-		n := len(de.Edits)
-		if de.Edit != nil {
-			n++
-		}
-		counts[de.TextDocument.URI.Path()] += n
+		counts[de.TextDocument.URI.Path()] += len(de.Edits)
 	}
 	var out []lang.FileEdits
 	for fname, n := range counts {
@@ -624,6 +567,26 @@ func withPos(c *Config, fn func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos
 		return fmt.Errorf("language server not available for %s", path)
 	}
 	return fn(b, ln, pos)
+}
+
+// withFile handles the common setup for single-file commands:
+// open the FILE argument and wait for the server.
+func withFile(c *Config, cmd string, fn func(b *lsp.Backend, ln *lines.Lines) error) error {
+	setup()
+	if len(c.Args) != 1 {
+		return fmt.Errorf("%s needs a FILE argument", cmd)
+	}
+	deadline, err := c.deadline()
+	if err != nil {
+		return err
+	}
+	b := lsp.NewBackend(nil)
+	defer b.Stop()
+	ln, ok := openReady(b, c.Args[0], deadline)
+	if !ok {
+		return fmt.Errorf("language server not available for %s", c.Args[0])
+	}
+	return fn(b, ln)
 }
 
 // setup silences the client's internal logging unless -v was given.

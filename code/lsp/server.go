@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -61,10 +60,10 @@ type docState struct {
 // with gopls: golang.org/x/tools/gopls/internal/cmd (BSD license).
 type Server struct {
 
-	// cfg is the configuration for this server.
+	// Cfg is the configuration for this server.
 	Cfg *ServerConfig
 
-	// root is the workspace root directory for this server.
+	// Root is the workspace root directory for this server.
 	Root string
 
 	// Diags receives published diagnostics, if set.
@@ -91,11 +90,12 @@ type Server struct {
 	// from the registry (built-in InitOptions plus overrides).
 	options map[string]any
 
-	mu    sync.Mutex
-	state int
-	err   error
-	docs  map[DocumentURI]*docState
-	caps  ServerCapabilities
+	mu       sync.Mutex
+	state    int
+	err      error
+	failTime time.Time // when the server failed, for restart throttling
+	docs     map[DocumentURI]*docState
+	caps     ServerCapabilities
 }
 
 // NewServer returns a new Server for the given config and workspace
@@ -218,7 +218,13 @@ func (s *Server) Start(ctx context.Context) error {
 		return werr
 	}
 
+	go s.watchExit()
+
 	s.mu.Lock()
+	if s.state != stateStarting { // shut down while starting
+		s.mu.Unlock()
+		return fmt.Errorf("lsp: %s server was stopped", s.Cfg.ID)
+	}
 	s.state = stateReady
 	pending := make([]*docState, 0, len(s.docs))
 	for _, ds := range s.docs {
@@ -240,9 +246,34 @@ func (s *Server) fail(err error) {
 	if s.state != stateStopped {
 		s.state = stateFailed
 		s.err = err
+		s.failTime = time.Now()
 	}
 	s.mu.Unlock()
 	log.Println(err)
+}
+
+// failedSince returns how long ago the server failed,
+// and false if it has not failed.
+func (s *Server) failedSince() (time.Duration, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.state != stateFailed {
+		return 0, false
+	}
+	return time.Since(s.failTime), true
+}
+
+// watchExit marks the server as failed if its connection closes
+// (e.g., the process crashes) while it is supposed to be running.
+func (s *Server) watchExit() {
+	<-s.conn.Closed()
+	s.mu.Lock()
+	running := s.state == stateReady
+	s.mu.Unlock()
+	if running {
+		s.fail(fmt.Errorf("lsp: %s: server exited unexpectedly", s.Cfg.ID))
+		s.kill()
+	}
 }
 
 // initialize does the two-call LSP client/server handshake,
@@ -272,10 +303,7 @@ func (s *Server) initialize(ctx context.Context) error {
 // applied after the server started. An unknown section gets null,
 // meaning "use defaults".
 func (s *Server) configResult(section string) any {
-	if section == "" {
-		return s.Options()
-	}
-	if section == s.Cfg.ID || strings.HasPrefix(section, s.Cfg.ID+".") {
+	if section == "" || section == s.Cfg.ID || strings.HasPrefix(section, s.Cfg.ID+".") {
 		return s.Options()
 	}
 	return nil
@@ -370,46 +398,57 @@ var clientSemanticTokenModifiers = []string{
 	"abstract", "async", "modification", "documentation", "defaultLibrary",
 }
 
+// shutdownTimeout is how long to wait for each stage of a graceful
+// server shutdown before killing the process.
+const shutdownTimeout = 3 * time.Second
+
 // kill terminates the server process if needed.
 func (s *Server) kill() {
 	s.mu.Lock()
 	cmd := s.cmd
+	s.cmd = nil
 	s.mu.Unlock()
 	if cmd != nil && cmd.Process != nil {
 		_ = cmd.Process.Kill()
-		_, _ = cmd.Process.Wait()
+		_ = cmd.Wait()
 	}
 }
 
-// Shutdown gracefully shuts down the server, with a timeout
-// after which the process is killed.
+// Shutdown gracefully shuts down the server with the shutdown request
+// and exit notification, killing the process if it does not exit
+// within a timeout.
 func (s *Server) Shutdown() {
 	s.mu.Lock()
 	st := s.state
-	conn := s.conn
+	conn, cmd := s.conn, s.cmd
 	s.state = stateStopped
+	s.cmd = nil
 	s.mu.Unlock()
-	if st != stateReady && st != stateFailed {
-		s.kill()
+	if cmd == nil {
 		return
 	}
-	if conn != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		err := conn.Call(ctx, "shutdown", nil, nil)
-		if err != nil && !errors.Is(err, ErrServerClosed) {
-			log.Printf("lsp: %s: shutdown: %v\n", s.Cfg.ID, err)
-		}
-		_ = conn.Notify("exit", nil)
-		cancel()
+	if st != stateReady || conn == nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	err := conn.Call(ctx, "shutdown", nil, nil)
+	cancel()
+	if err != nil && !errors.Is(err, ErrServerClosed) {
+		log.Printf("lsp: %s: shutdown: %v\n", s.Cfg.ID, err)
+	}
+	_ = conn.Notify("exit", nil)
 	done := make(chan struct{})
 	go func() {
-		s.kill()
+		_ = cmd.Wait()
 		close(done)
 	}()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(shutdownTimeout):
+		_ = cmd.Process.Kill()
+		<-done
 	}
 }
 
@@ -538,6 +577,15 @@ func (s *Server) DidSave(uri DocumentURI) {
 	})
 }
 
+// isOpen reports whether the server is currently tracking
+// a document for the given URI.
+func (s *Server) isOpen(uri DocumentURI) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, has := s.docs[uri]
+	return has
+}
+
 // Close removes the document from tracking,
 // sending textDocument/didClose if it was opened.
 func (s *Server) Close(uri DocumentURI) {
@@ -644,25 +692,6 @@ func (s *Server) References(posParams *ReferenceParams) ([]Location, error) {
 	return locs, nil
 }
 
-// supportsPrepareRename reports whether the server advertised
-// prepareProvider in its renameProvider capability.
-func (s *Server) supportsPrepareRename() bool {
-	s.mu.Lock()
-	raw := s.caps.RenameProvider
-	s.mu.Unlock()
-	if len(raw) == 0 || string(raw) == "null" || string(raw) == "false" {
-		return false
-	}
-	if string(raw) == "true" {
-		return false // plain capability: rename without prepare support
-	}
-	var rp struct {
-		PrepareProvider bool `json:"prepareProvider"`
-	}
-	json.Unmarshal(raw, &rp)
-	return rp.PrepareProvider
-}
-
 // PrepareRename sends a textDocument/prepareRename request, checking
 // whether the symbol at the position can be renamed. It returns the
 // valid rename range and a suggested placeholder name, which can be
@@ -719,13 +748,6 @@ func (s *Server) Rename(params *RenameParams) (*WorkspaceEdit, error) {
 	if err := s.request(ctx, "textDocument/rename", params, &raw); err != nil {
 		return nil, err
 	}
-	if Verbose && len(raw) > 0 {
-		dbg := string(raw)
-		if len(dbg) > 600 {
-			dbg = dbg[:600] + "..."
-		}
-		log.Printf("lsp: %s: rename raw: %s\n", s.Cfg.ID, dbg)
-	}
 	if len(raw) == 0 || string(raw) == "null" {
 		return nil, nil
 	}
@@ -738,23 +760,13 @@ func (s *Server) Rename(params *RenameParams) (*WorkspaceEdit, error) {
 
 // supportsCodeAction reports whether the server offers code actions.
 func (s *Server) supportsCodeAction() bool {
-	s.mu.Lock()
-	raw := s.caps.CodeActionProvider
-	s.mu.Unlock()
-	return len(raw) > 0 && string(raw) != "null" && string(raw) != "false"
+	return jsonEnabled(s.Caps().CodeActionProvider)
 }
 
 // codeActionResolveProvider reports whether the server fills in action
 // edits lazily via codeAction/resolve.
 func (s *Server) codeActionResolveProvider() bool {
-	s.mu.Lock()
-	raw := s.caps.CodeActionProvider
-	s.mu.Unlock()
-	var o struct {
-		ResolveProvider bool `json:"resolveProvider"`
-	}
-	json.Unmarshal(raw, &o)
-	return o.ResolveProvider
+	return jsonObjectBool(s.Caps().CodeActionProvider, "resolveProvider")
 }
 
 // CodeAction sends a textDocument/codeAction request, returning the
@@ -793,39 +805,19 @@ func parseCodeActions(raw json.RawMessage) ([]CodeAction, error) {
 	var out []CodeAction
 	for _, it := range items {
 		var probe struct {
-			Kind    string          `json:"kind"`
-			Title   string          `json:"title"`
 			Command json.RawMessage `json:"command"`
 		}
 		if err := json.Unmarshal(it, &probe); err != nil {
 			continue
 		}
-		if probe.Kind != "" { // literal code action form
-			var ca CodeAction
-			if err := json.Unmarshal(it, &ca); err == nil {
-				out = append(out, ca)
-				continue
+		if len(probe.Command) > 0 && probe.Command[0] == '"' {
+			// plain Command form: command is a string id, not an object
+			var cmd Command
+			if err := json.Unmarshal(it, &cmd); err == nil {
+				out = append(out, CodeAction{Title: cmd.Title, Kind: "command", Command: &cmd})
 			}
-		}
-		// plain Command form: command is a string id, not an object
-		var cmd struct {
-			Title     string `json:"title"`
-			Command   string `json:"command"`
-			Arguments []any  `json:"arguments"`
-		}
-		if err := json.Unmarshal(it, &cmd); err == nil && cmd.Command != "" {
-			out = append(out, CodeAction{
-				Title: cmd.Title,
-				Kind:  "command",
-				Command: &Command{
-					Title:     cmd.Title,
-					Command:   cmd.Command,
-					Arguments: cmd.Arguments,
-				},
-			})
 			continue
 		}
-		// fallback: literal with object-form command, decode fully
 		var ca CodeAction
 		if err := json.Unmarshal(it, &ca); err == nil && ca.Title != "" {
 			out = append(out, ca)
@@ -947,13 +939,12 @@ func (s *Server) DocumentSymbol(uri DocumentURI) ([]DocumentSymbol, error) {
 	for i, si := range infos {
 		syms[i] = DocumentSymbol{
 			Name:           si.Name,
+			Detail:         si.ContainerName,
 			Kind:           si.Kind,
 			Deprecated:     si.Deprecated,
 			Range:          si.Location.Range,
 			SelectionRange: si.Location.Range,
 		}
-		// note: flat form includes file info which we track at this level:
-		syms[i].Detail = si.ContainerName
 	}
 	return syms, nil
 }
@@ -995,7 +986,7 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 	case "workspace/configuration":
 		var cp ConfigurationParams
 		if err := json.Unmarshal(params, &cp); err != nil {
-			return nil, &RPCError{Code: http.StatusBadRequest, Message: err.Error()}
+			return nil, &RPCError{Code: CodeInvalidParams, Message: err.Error()}
 		}
 		results := make([]any, len(cp.Items))
 		for i, item := range cp.Items {
@@ -1018,7 +1009,7 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 	case "workspace/applyEdit":
 		var ap ApplyWorkspaceEditParams
 		if err := json.Unmarshal(params, &ap); err != nil {
-			return nil, &RPCError{Code: http.StatusBadRequest, Message: err.Error()}
+			return nil, &RPCError{Code: CodeInvalidParams, Message: err.Error()}
 		}
 		if s.ApplyEdit == nil {
 			return &ApplyWorkspaceEditResult{Applied: false, FailureReason: clientName + " cannot apply workspace edits right now"}, nil
@@ -1026,7 +1017,7 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 		applied, reason := s.ApplyEdit(ap.Edit)
 		return &ApplyWorkspaceEditResult{Applied: applied, FailureReason: reason}, nil
 	default:
-		return nil, &RPCError{Code: http.StatusNotImplemented, Message: "method not handled: " + method}
+		return nil, &RPCError{Code: CodeMethodNotFound, Message: "method not handled: " + method}
 	}
 }
 

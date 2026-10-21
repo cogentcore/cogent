@@ -237,13 +237,10 @@ func (sv *SymbolsPanel) OpenFile() {
 
 // symbolsViaLang populates the symbol tree using the language service
 // backend: workspace symbols for package scope, document symbols for
-// the current file. Returns false if the backend is not ready yet.
-func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) bool {
+// the current file.
+func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) {
 	cv := sv.Code
 	ln := cv.ActiveEditor().Lines
-	if !cv.LangSvc().LSPActive(ln) {
-		return false
-	}
 	b := cv.LangSvc().lspB
 	var sl []lang.Symbol
 	if pkgScope {
@@ -253,7 +250,7 @@ func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) bool {
 	}
 	if sl == nil {
 		core.MessageSnackbar(sv, "Symbols not ready from language server -- try again in a few moments")
-		return false
+		return
 	}
 	root := &syms.Symbol{Name: "symbols", Filename: ln.Filename()}
 	for _, s := range sl {
@@ -265,7 +262,6 @@ func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) bool {
 		fname = ln.Filename()
 	}
 	sv.Syms.OpenSyms(root, fname, sv.Match)
-	return true
 }
 
 func symMatch(str, match string, ignoreCase bool) bool {

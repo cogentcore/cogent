@@ -107,17 +107,14 @@ func TestLinesHelpersNoDeadlock(t *testing.T) {
 		pAfter := toLSPPos(ln, textpos.Pos{Line: 3, Char: idx + 1})
 		assert.Equal(t, idx+2, pAfter.Character)
 
-		lnNum, ch := posFromLSP(ln, Position{Line: 3, Character: idx})
-		assert.Equal(t, 3, lnNum)
-		assert.Equal(t, idx, ch)
-		lnNum, ch = posFromLSP(ln, Position{Line: 3, Character: idx + 2})
-		assert.Equal(t, 3, lnNum)
-		assert.Equal(t, idx+1, ch)
+		assert.Equal(t, textpos.Pos{Line: 3, Char: idx}, posFromLSP(ln, Position{Line: 3, Character: idx}))
+		assert.Equal(t, textpos.Pos{Line: 3, Char: idx + 1}, posFromLSP(ln, Position{Line: 3, Character: idx + 2}))
 
-		// clamping for out-of-range positions:
-		lnNum, ch = posFromLSP(ln, Position{Line: 999, Character: 999})
-		assert.Equal(t, ln.NumLines()-1, lnNum)
-		assert.Equal(t, utf8.RuneCountInString(lineText(ln, lnNum)), ch)
+		// clamping for out-of-range positions: end of buffer
+		last := ln.NumLines() - 1
+		end := textpos.Pos{Line: last, Char: utf8.RuneCountInString(lineText(ln, last))}
+		assert.Equal(t, end, posFromLSP(ln, Position{Line: 999, Character: 999}))
+		assert.Equal(t, end, posFromLSP(ln, Position{Line: last + 1, Character: 0}))
 
 		// invalid line for toLSPPos does not panic:
 		p = toLSPPos(ln, textpos.Pos{Line: 999, Char: 5})
@@ -905,7 +902,7 @@ func TestSignatureContextAndActiveParam(t *testing.T) {
 	assert.False(t, IsSignatureTrigger(""))
 
 	c := signatureContext("foo(", false)
-	assert.Equal(t, SigHelpTriggerCharacterKind, c.TriggerKind)
+	assert.Equal(t, SigHelpTriggerChar, c.TriggerKind)
 	assert.Equal(t, "(", c.TriggerCharacter)
 	c = signatureContext("foo(a", true)
 	assert.Equal(t, SigHelpContentChange, c.TriggerKind)

@@ -274,7 +274,6 @@ func Install(sc *ServerConfig, goos string) (*InstallMethod, error) {
 			fmt.Fprintf(os.Stderr, "failed: %v\n", lastErr)
 			continue
 		}
-		// re-check PATH in case the installer dir is new to this process:
 		return m, nil
 	}
 	return nil, lastErr
@@ -456,7 +455,7 @@ func normalizeVersion(v string) string {
 func CapsList(caps ServerCapabilities) []string {
 	var ps []string
 	add := func(name string, v rawJSON) {
-		if len(v) > 0 && string(v) != "null" && string(v) != "false" {
+		if jsonEnabled(v) {
 			ps = append(ps, name)
 		}
 	}
@@ -469,5 +468,9 @@ func CapsList(caps ServerCapabilities) []string {
 	add("workspaceSymbol", caps.WorkspaceSymbolProvider)
 	add("formatting", caps.DocumentFormattingProvider)
 	add("rename", caps.RenameProvider)
+	add("codeAction", caps.CodeActionProvider)
+	add("signatureHelp", caps.SignatureHelpProvider)
+	add("inlayHint", caps.InlayHintProvider)
+	add("semanticTokens", caps.SemanticTokensProvider)
 	return ps
 }

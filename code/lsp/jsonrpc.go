@@ -33,6 +33,15 @@ func (re *RPCError) Error() string {
 	return fmt.Sprintf("lsp: rpc error %d: %s", re.Code, re.Message)
 }
 
+// Standard JSON-RPC 2.0 error codes.
+const (
+	// CodeInvalidParams indicates invalid method parameters.
+	CodeInvalidParams = -32602
+
+	// CodeMethodNotFound indicates that the method is not handled.
+	CodeMethodNotFound = -32601
+)
+
 // ErrServerClosed indicates that the connection to the server was
 // closed while a request was pending.
 var ErrServerClosed = errors.New("lsp: server connection closed")
@@ -125,13 +134,11 @@ func (c *Conn) writeMsg(msg *rpcMsg) error {
 	if err != nil {
 		return err
 	}
+	hdr := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(data))
 	c.wm.Lock()
 	defer c.wm.Unlock()
-	fmt.Fprintf(c.wr, "Content-Length: %d\r\n\r\n", len(data))
-	if _, err := c.wr.Write(data); err != nil {
-		return err
-	}
-	return nil
+	_, err = c.wr.Write(append([]byte(hdr), data...))
+	return err
 }
 
 // readMsg reads one JSON-RPC message, returning io.EOF at end of stream.
@@ -220,10 +227,9 @@ func (c *Conn) dispatch(msg *rpcMsg) {
 		// server-initiated request: handle and reply
 		result, rpcerr := c.handler.Request(msg.Method, msg.Params)
 		resp := &rpcMsg{Version: "2.0", ID: msg.ID}
-		switch {
-		case rpcerr != nil:
+		if rpcerr != nil {
 			resp.Error = rpcerr
-		default:
+		} else {
 			data, err := json.Marshal(result)
 			if err != nil {
 				data = []byte("null")
@@ -307,7 +313,7 @@ func (c *Conn) Notify(method string, params any) error {
 type nopHandler struct{}
 
 func (nh nopHandler) Request(method string, params json.RawMessage) (any, *RPCError) {
-	return nil, &RPCError{Code: -32601, Message: "method not handled: " + method}
+	return nil, &RPCError{Code: CodeMethodNotFound, Message: "method not handled: " + method}
 }
 
 func (nh nopHandler) Notify(method string, params json.RawMessage) {}

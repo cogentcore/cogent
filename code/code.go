@@ -694,27 +694,35 @@ func (cv *Code) NChangedFiles() int {
 // containing this code view.
 func (cv *Code) AddCloseDialog() {
 	cv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
-		if cv.langSvc != nil {
-			cv.langSvc.CloseAll() // stop any language servers for this window
-		}
 		cv.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
 		nch := cv.NChangedFiles()
 		if nch == 0 {
+			cv.stopLangSvc()
 			return false
 		}
 		d.SetTitle("Unsaved files")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
 		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
+				cv.stopLangSvc()
 				cv.Scene.Close()
 			})
 			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
 				cv.SaveAllOpenFiles()
+				cv.stopLangSvc()
 				cv.Scene.Close()
 			})
 		})
 		return true
 	})
+}
+
+// stopLangSvc stops the language service for this window, if any,
+// shutting down its language servers, when the window is closing.
+func (cv *Code) stopLangSvc() {
+	if cv.langSvc != nil {
+		cv.langSvc.Stop() // kept, stopped, in case of further calls
+	}
 }
 
 ////////   Project window

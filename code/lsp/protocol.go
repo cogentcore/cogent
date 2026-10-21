@@ -24,13 +24,19 @@ import (
 // DocumentURI represents an LSP URI, which is typically a file:// URL.
 type DocumentURI string
 
-// URIFromPath returns the file:// URI for the given file path.
+// URIFromPath returns the file:// URI for the given file path,
+// with the path percent-encoded as needed (e.g., for spaces).
 func URIFromPath(path string) DocumentURI {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		abs = path
 	}
-	return DocumentURI("file://" + filepath.ToSlash(abs))
+	p := filepath.ToSlash(abs)
+	if !strings.HasPrefix(p, "/") { // windows drive letter: C:/...
+		p = "/" + p
+	}
+	u := url.URL{Scheme: "file", Path: p}
+	return DocumentURI(u.String())
 }
 
 // Path returns the file path for a file:// URI.
@@ -40,7 +46,11 @@ func (uri DocumentURI) Path() string {
 	if err != nil || u.Scheme != "file" {
 		return ""
 	}
-	return filepath.FromSlash(u.Path)
+	p := u.Path
+	if len(p) >= 3 && p[0] == '/' && p[2] == ':' { // windows: /C:/...
+		p = p[1:]
+	}
+	return filepath.FromSlash(p)
 }
 
 // String returns the URI as a string.
@@ -332,12 +342,9 @@ func jsonEnabled(r rawJSON) bool {
 	return len(r) > 0 && string(r) != "false" && string(r) != "null"
 }
 
-// jsonBoolField extracts a bool field from an object-form capability
-// value, or the bool itself if that is the form used.
-func jsonBoolField(r rawJSON, name string) bool {
-	if string(r) == "true" {
-		return true
-	}
+// jsonObjectBool returns the value of the named bool field of an
+// object-form capability value, which is false for the bool form.
+func jsonObjectBool(r rawJSON, name string) bool {
 	var obj map[string]any
 	if err := json.Unmarshal(r, &obj); err != nil {
 		return false
@@ -571,14 +578,11 @@ type WorkspaceEdit struct {
 	DocumentChanges []DocumentEdit        `json:"documentChanges,omitempty"`
 }
 
-// DocumentEdit is an edit to specific versioned documents,
-// as used in WorkspaceEdit.DocumentChanges. The spec form has a
-// single Edit, but some servers (e.g. gopls) send multiple edits
-// per document in an Edits array instead.
+// DocumentEdit is the TextDocumentEdit of the spec: edits to a
+// specific versioned document, as used in WorkspaceEdit.DocumentChanges.
 type DocumentEdit struct {
 	TextDocument VersionedTextDocumentIdentifier `json:"textDocument"`
-	Edit         *TextEdit                       `json:"edit,omitempty"`
-	Edits        []TextEdit                      `json:"edits,omitempty"`
+	Edits        []TextEdit                      `json:"edits"`
 }
 
 ////////   Server -> client messages
@@ -830,18 +834,14 @@ type SignatureHelpClientCapability struct {
 	ContextSupport bool `json:"contextSupport,omitempty"`
 }
 
-// SignatureHelpTriggerCharacter is a character that should trigger
-// a signature help request, e.g. "(" or ",".
-type SignatureHelpTriggerCharacter = string
-
 // Signature help context trigger kinds.
 const (
 	// SigHelpInvoked means explicitly requested by the user.
 	SigHelpInvoked = 1
 
-	// SigHelpTriggerCharacter means it was triggered by a trigger
+	// SigHelpTriggerChar means it was triggered by a trigger
 	// character such as "(" or ",".
-	SigHelpTriggerCharacterKind = 2
+	SigHelpTriggerChar = 2
 
 	// SigHelpContentChange means it was triggered by a content change
 	// while signature help was already showing.

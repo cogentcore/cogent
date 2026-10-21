@@ -314,13 +314,16 @@ func TestDiagAt(t *testing.T) {
 	if got := joinHover("", "docs"); got != "docs" || joinHover("err", "") != "err" {
 		t.Error("joinHover single-sided failed")
 	}
-	if got := diagSummary("gopls", 1, 0); got != "gopls: 1 error" {
+	err := lang.Diagnostic{Severity: lang.DiagErr}
+	warn := lang.Diagnostic{Severity: lang.DiagWarn}
+	info := lang.Diagnostic{Severity: lang.DiagInfo}
+	if got := diagSummary([]lang.Diagnostic{err, info}); got != "lsp: 1 error" {
 		t.Errorf("diagSummary singular: %q", got)
 	}
-	if got := diagSummary("gopls", 2, 3); got != "gopls: 2 errors, 3 warnings" {
+	if got := diagSummary([]lang.Diagnostic{err, warn, err, warn, warn}); got != "lsp: 2 errors, 3 warnings" {
 		t.Errorf("diagSummary plural: %q", got)
 	}
-	if got := diagSummary("gopls", 0, 0); got != "" {
+	if got := diagSummary([]lang.Diagnostic{info}); got != "" {
 		t.Errorf("diagSummary none: %q", got)
 	}
 }

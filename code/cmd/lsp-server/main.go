@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -122,7 +123,7 @@ func Install(c *Config) error {
 	var todo []*lsp.ServerConfig
 	for _, sc := range scs {
 		if _, err := rg.ExecPath(sc); err == nil {
-			if !c.includedExplicitly(sc.ID) {
+			if !slices.Contains(c.Args, sc.ID) { // explicitly included: reinstall
 				fmt.Printf("%s: already installed, skipping\n", sc.ID)
 				continue
 			}
@@ -259,17 +260,6 @@ func (c *Config) exclude() []string {
 		}
 	}
 	return ps
-}
-
-// includedExplicitly reports whether the ID was given as a positional
-// argument, meaning reinstall if already present.
-func (c *Config) includedExplicitly(id string) bool {
-	for _, a := range c.Args {
-		if a == id {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *Config) timeout() time.Duration {

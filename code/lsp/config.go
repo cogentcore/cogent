@@ -6,6 +6,7 @@ package lsp
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -116,7 +117,7 @@ var DefaultServers = []*ServerConfig{
 		ID:          "gopls",
 		Desc:        "gopls, the official Go language server",
 		Exec:        "gopls",
-		Args:        []string{"-logfile", "/tmp/gopls-cogent.log", "serve"},
+		Args:        []string{"serve"},
 		Langs:       []fileinfo.Known{fileinfo.Go},
 		RootMarkers: []string{"go.work", "go.mod"},
 		InitOptions: map[string]any{
@@ -377,41 +378,20 @@ func (rg *Registry) ExecPath(sc *ServerConfig) (string, error) {
 	return p, nil
 }
 
-// copyOptions returns a deep-enough copy of the given server options
-// map: nested map values (the common case, e.g. "analyses" or "hints")
-// are copied one level down so that SetOptions-style merging never
-// mutates the shared DefaultServers InitOptions.
-func copyOptions(opt map[string]any) map[string]any {
-	cp := make(map[string]any, len(opt)+1)
-	for k, v := range opt {
-		if sub, ok := v.(map[string]any); ok {
-			inner := make(map[string]any, len(sub))
-			for sk, sv := range sub {
-				inner[sk] = sv
-			}
-			cp[k] = inner
-			continue
-		}
-		cp[k] = v
-	}
-	return cp
-}
-
 // mergeOptions merges the override options over a base options map,
-// returning a new map: base entries are copied (nested maps one level
-// down) so neither input is mutated, and overrides win.
+// returning a new map. Nested map values (e.g., "analyses" or "hints")
+// are copied one level down, so that neither input (in particular the
+// shared DefaultServers InitOptions) is ever mutated through the result.
+// Overrides replace base entries with the same key.
 func mergeOptions(base, over map[string]any) map[string]any {
-	opt := copyOptions(base)
-	for k, v := range over {
-		if sub, ok := v.(map[string]any); ok {
-			inner := make(map[string]any, len(sub))
-			for sk, sv := range sub {
-				inner[sk] = sv
+	opt := make(map[string]any, len(base)+len(over))
+	for _, m := range []map[string]any{base, over} {
+		for k, v := range m {
+			if sub, ok := v.(map[string]any); ok {
+				v = maps.Clone(sub)
 			}
-			opt[k] = inner
-			continue
+			opt[k] = v
 		}
-		opt[k] = v
 	}
 	return opt
 }
