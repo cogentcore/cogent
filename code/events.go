@@ -134,6 +134,9 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.Run()
 	case KeyQuickFix:
 		e.SetHandled()
-		cv.QuickFix()
+		cv.Lookup()
+	case KeySignatureHelp:
+		e.SetHandled()
+		cv.ShowSignatureHelp()
 	}
 }

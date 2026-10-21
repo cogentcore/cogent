@@ -17,6 +17,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"cogentcore.org/cogent/code/lang"
 )
 
 // DocumentURI represents an LSP URI, which is typically a file:// URL.
@@ -163,8 +165,19 @@ type WorkspaceClientCapabilities struct {
 	ApplyEdit             bool                             `json:"applyEdit,omitempty"`
 	WorkspaceEdit         *WorkspaceEditCapability         `json:"workspaceEdit,omitempty"`
 	DidChangeWatchedFiles *DidChangeWatchedFilesCapability `json:"didChangeWatchedFiles,omitempty"`
-	Configuration         bool                             `json:"configuration,omitempty"`
-	WorkspaceFolders      bool                             `json:"workspaceFolders,omitempty"`
+
+	// DidChangeConfiguration must be non-nil for gopls to handle the
+	// workspace/didChangeConfiguration notification at all (it gates
+	// the handler on this capability being registered).
+	DidChangeConfiguration *DidChangeConfigurationCapability `json:"didChangeConfiguration,omitempty"`
+	Configuration          bool                              `json:"configuration,omitempty"`
+	WorkspaceFolders       bool                              `json:"workspaceFolders,omitempty"`
+}
+
+// DidChangeConfigurationCapability describes didChangeConfiguration
+// support, per the LSP didChangeConfiguration client capabilities.
+type DidChangeConfigurationCapability struct {
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // WorkspaceEditCapability describes workspace edit support.
@@ -197,6 +210,9 @@ type TextDocumentClientCapab struct {
 	Formatting         *FormattingClientCapability      `json:"formatting,omitempty"`
 	Rename             *RenameClientCapability          `json:"rename,omitempty"`
 	CodeAction         *CodeActionClientCapability      `json:"codeAction,omitempty"`
+	SignatureHelp      *SignatureHelpClientCapability   `json:"signatureHelp,omitempty"`
+	InlayHint          *InlayHintClientCapability       `json:"inlayHint,omitempty"`
+	SemanticTokens     *SemanticTokensClientCapability  `json:"semanticTokens,omitempty"`
 }
 
 // TextDocumentSyncCapability declares text sync support.
@@ -301,6 +317,9 @@ type ServerCapabilities struct {
 	DocumentFormattingProvider rawJSON `json:"documentFormattingProvider,omitempty"`
 	RenameProvider             rawJSON `json:"renameProvider,omitempty"`
 	CodeActionProvider         rawJSON `json:"codeActionProvider,omitempty"`
+	SignatureHelpProvider      rawJSON `json:"signatureHelpProvider,omitempty"`
+	InlayHintProvider          rawJSON `json:"inlayHintProvider,omitempty"`
+	SemanticTokensProvider     rawJSON `json:"semanticTokensProvider,omitempty"`
 }
 
 // rawJSON holds raw JSON for union-typed protocol fields,
@@ -416,6 +435,11 @@ const (
 	// CompleteTriggerForIncompleteCompletions re-triggers
 	// an incomplete completion list.
 	CompleteTriggerForIncompleteCompletions = 3
+
+	// CompleteContentChange means the completion list is being updated
+	// because the user kept typing; servers filter their candidates
+	// against the typed prefix for this kind.
+	CompleteContentChange = 4
 )
 
 // CompletionParams are the params for a textDocument/completion request.
@@ -797,4 +821,250 @@ type CodeAction struct {
 
 	// Data is an opaque token echoed back to codeAction/resolve.
 	Data rawJSON `json:"data,omitempty"`
+}
+
+////////   Signature help
+
+// SignatureHelpClientCapability declares signature help support.
+type SignatureHelpClientCapability struct {
+	ContextSupport bool `json:"contextSupport,omitempty"`
+}
+
+// SignatureHelpTriggerCharacter is a character that should trigger
+// a signature help request, e.g. "(" or ",".
+type SignatureHelpTriggerCharacter = string
+
+// Signature help context trigger kinds.
+const (
+	// SigHelpInvoked means explicitly requested by the user.
+	SigHelpInvoked = 1
+
+	// SigHelpTriggerCharacter means it was triggered by a trigger
+	// character such as "(" or ",".
+	SigHelpTriggerCharacterKind = 2
+
+	// SigHelpContentChange means it was triggered by a content change
+	// while signature help was already showing.
+	SigHelpContentChange = 3
+)
+
+// SignatureHelpContext provides context for a signature help request.
+type SignatureHelpContext struct {
+	TriggerKind      int    `json:"triggerKind"`
+	TriggerCharacter string `json:"triggerCharacter,omitempty"`
+
+	// IsRetrigger is true when signature help was already showing and
+	// more content was typed or a cursor movement occurred.
+	IsRetrigger bool `json:"isRetrigger"`
+
+	// ActiveSignatureHelp is the previously computed signature help,
+	// which servers can use for incremental updates. We do not
+	// currently send it back, but the field exists in the protocol.
+	ActiveSignatureHelp *SignatureHelp `json:"activeSignatureHelp,omitempty"`
+}
+
+// SignatureHelpParams are the params for a textDocument/signatureHelp
+// request.
+type SignatureHelpParams struct {
+	TextDocumentPositionParams
+	Context *SignatureHelpContext `json:"context,omitempty"`
+}
+
+// ParameterInformation describes one parameter of a signature.
+type ParameterInformation struct {
+
+	// Label is either the parameter label as a string, or a
+	// [start, end) pair of UTF-16 offsets into the signature label,
+	// so it is raw JSON. Use LabelText with the signature label
+	// to resolve either form.
+	Label rawJSON `json:"label"`
+
+	// Documentation is optional human-readable documentation.
+	Documentation *MarkupContent `json:"documentation,omitempty"`
+}
+
+// LabelText returns the plain text of a parameter label, resolving the
+// offset form against the given signature label if needed.
+func (pi *ParameterInformation) LabelText(sigLabel string) string {
+	var s string
+	if err := json.Unmarshal(pi.Label, &s); err == nil {
+		return s
+	}
+	var offs []int
+	if err := json.Unmarshal(pi.Label, &offs); err == nil && len(offs) == 2 {
+		rn := []rune(sigLabel)
+		st := lang.UTF16ToRune(sigLabel, offs[0])
+		ed := lang.UTF16ToRune(sigLabel, offs[1])
+		if st >= 0 && ed <= len(rn) && st < ed {
+			return string(rn[st:ed])
+		}
+	}
+	return ""
+}
+
+// SignatureInformation describes one overloaded signature of a callable.
+type SignatureInformation struct {
+
+	// Label is the signature label, e.g. "Read(f *os.File, p []byte) (n int, err error)".
+	Label string `json:"label"`
+
+	// Documentation is optional human-readable documentation.
+	Documentation *MarkupContent `json:"documentation,omitempty"`
+
+	// Parameters are the parameters of this signature.
+	Parameters []ParameterInformation `json:"parameters,omitempty"`
+
+	// ActiveParameter is a server-suggested active parameter index,
+	// which most servers leave to the client context to compute.
+	ActiveParameter *int `json:"activeParameter,omitempty"`
+}
+
+// SignatureHelp is the result of a textDocument/signatureHelp request.
+type SignatureHelp struct {
+	Signatures      []SignatureInformation `json:"signatures"`
+	ActiveSignature *int                   `json:"activeSignature,omitempty"`
+	ActiveParameter *int                   `json:"activeParameter,omitempty"`
+}
+
+////////   Inlay hints
+
+// InlayHintClientCapability declares inlay hint support.
+type InlayHintClientCapability struct {
+	ResolveSupport *ResolveSupport `json:"resolveSupport,omitempty"`
+}
+
+// InlayHintKind indicates the kind of an inlay hint.
+type InlayHintKind int
+
+const (
+	// InlayHintType is a type hint, e.g. ": []byte" after a variable.
+	InlayHintType InlayHintKind = 1
+
+	// InlayHintParameter is a parameter-name hint, e.g. "f:" before
+	// an argument in a function call.
+	InlayHintParameter InlayHintKind = 2
+)
+
+// InlayHintLabelPart is one segment of a structured inlay hint label.
+type InlayHintLabelPart struct {
+	Value         string         `json:"value"`
+	Tooltip       *MarkupContent `json:"tooltip,omitempty"`
+	Location      *Location      `json:"location,omitempty"`
+	Command       *Command       `json:"command,omitempty"`
+	MarkupContent *MarkupContent `json:"markupContent,omitempty"`
+}
+
+// InlayHintParams are the params for a textDocument/inlayHint request.
+type InlayHintParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
+}
+
+// InlayHint is a virtual text annotation at a position. Note: the
+// client currently has no way to render these inline in the editor;
+// they are fetched and decoded for programmatic use only.
+type InlayHint struct {
+
+	// Position is where the hint is anchored.
+	Position Position `json:"position"`
+
+	// Label is either a plain string or an array of label parts,
+	// so it is raw JSON. Use LabelText to get the plain text.
+	Label rawJSON `json:"label"`
+
+	// Kind distinguishes parameter from type hints.
+	Kind InlayHintKind `json:"kind,omitempty"`
+
+	// TextEdits, if present, insert the label text into the document
+	// on accept; we do not apply these.
+	TextEdits []TextEdit `json:"textEdits,omitempty"`
+
+	// PaddingLeft, PaddingRight add whitespace around the hint.
+	PaddingLeft  bool `json:"paddingLeft,omitempty"`
+	PaddingRight bool `json:"paddingRight,omitempty"`
+}
+
+// LabelText returns the plain text of an inlay hint label, joining the
+// parts of the array form if needed.
+func (ih *InlayHint) LabelText() string {
+	var s string
+	if err := json.Unmarshal(ih.Label, &s); err == nil {
+		return s
+	}
+	var parts []InlayHintLabelPart
+	if err := json.Unmarshal(ih.Label, &parts); err == nil {
+		var sb strings.Builder
+		for _, p := range parts {
+			sb.WriteString(p.Value)
+		}
+		return sb.String()
+	}
+	return ""
+}
+
+////////   Semantic tokens
+
+// SemanticTokensClientCapability declares semantic token support.
+// The legend arrays must be declared with the exact types the client
+// renders; servers only return tokens from this set.
+type SemanticTokensClientCapability struct {
+
+	// Requests lists the supported request forms.
+	Requests SemanticTokensRequestsClientCapability `json:"requests"`
+
+	// TokenTypes are the token types we understand, in the order of
+	// the legend the server uses to encode them.
+	TokenTypes []string `json:"tokenTypes"`
+
+	// TokenModifiers are the token modifiers we understand.
+	TokenModifiers []string `json:"tokenModifiers"`
+
+	// Formats are the encodings we support; only "relative" is used.
+	Formats []string `json:"formats"`
+}
+
+// SemanticTokensRequestsClientCapability declares which token requests
+// the client supports.
+type SemanticTokensRequestsClientCapability struct {
+	Range bool `json:"range,omitempty"`
+	Full  bool `json:"full,omitempty"`
+}
+
+// SemanticTokensLegend is the server's encoding legend, mapping token
+// type and modifier indexes to their names.
+type SemanticTokensLegend struct {
+	TokenTypes     []string `json:"tokenTypes"`
+	TokenModifiers []string `json:"tokenModifiers"`
+}
+
+// SemanticTokensParams are the params for a
+// textDocument/semanticTokens/full request.
+type SemanticTokensParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+// SemanticTokens is the result of a textDocument/semanticTokens/full
+// request. Data is a flat array of five integers per token:
+// deltaLine, deltaStartChar, length, tokenType, tokenModifiers (bit set),
+// with positions relative to the previous token, in UTF-16 code units,
+// and tokenModifiers relative to the legend in [ServerCapabilities].
+type SemanticTokens struct {
+	ResultID string `json:"resultId,omitempty"`
+	Data     []int  `json:"data"`
+}
+
+// semanticTokensProviderLegend extracts the legend from the raw
+// semanticTokensProvider capability, which can be a bool (no legend,
+// no support) or an object with a legend field.
+func semanticTokensProviderLegend(r rawJSON) *SemanticTokensLegend {
+	var obj struct {
+		Legend SemanticTokensLegend `json:"legend"`
+	}
+	if err := json.Unmarshal(r, &obj); err != nil {
+		return nil
+	}
+	if len(obj.Legend.TokenTypes) == 0 {
+		return nil
+	}
+	return &obj.Legend
 }

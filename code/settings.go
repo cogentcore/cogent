@@ -213,6 +213,9 @@ type ProjectSettings struct { //types:add
 	// backend that provides language services (diagnostics, completion, hover, navigation, symbols) for this project -- LSP uses external language servers such as gopls, falling back to the parser when no server is available for a file
 	LangBackend LangBackends
 
+	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and the Show Inlay Hints command can display them; running servers pick the change up immediately through dynamic reconfiguration
+	InlayHints bool
+
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
 	VersionControl vcs.Types

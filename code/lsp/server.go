@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -86,6 +87,10 @@ type Server struct {
 	conn *Conn
 	cmd  *exec.Cmd
 
+	// options are the effective server options resolved at creation
+	// from the registry (built-in InitOptions plus overrides).
+	options map[string]any
+
 	mu    sync.Mutex
 	state int
 	err   error
@@ -94,14 +99,26 @@ type Server struct {
 }
 
 // NewServer returns a new Server for the given config and workspace
-// root directory, using the given registry to find the executable.
+// root directory, using the given registry to find the executable and
+// resolve the effective server options (built-in InitOptions plus any
+// registry-level overrides; see [Registry.SetOptions]).
 func NewServer(reg *Registry, cfg *ServerConfig, root string) *Server {
 	return &Server{
-		Cfg:  cfg,
-		Root: root,
-		reg:  reg,
-		docs: make(map[DocumentURI]*docState),
+		Cfg:     cfg,
+		Root:    root,
+		reg:     reg,
+		options: reg.optionsFor(cfg),
+		docs:    make(map[DocumentURI]*docState),
 	}
+}
+
+// Options returns the effective server options for this server: the
+// registry-resolved options from startup, with any options set on the
+// registry since then merged in (the latter win), so configuration
+// re-fetches see live changes. The result is a private copy safe for
+// the caller to modify.
+func (s *Server) Options() map[string]any {
+	return mergeOptions(s.options, s.reg.optionOverride(s.Cfg.ID))
 }
 
 // Ready returns whether the server has been started
@@ -162,6 +179,7 @@ func (s *Server) Start(ctx context.Context) error {
 	cmd := exec.Command(exe, s.Cfg.Args...)
 	cmd.Dir = s.Root
 	cmd.Env = os.Environ()
+
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		s.fail(err)
@@ -245,6 +263,24 @@ func (s *Server) initialize(ctx context.Context) error {
 	return nil
 }
 
+// configResult returns the settings object to reply for a given
+// configuration section. Servers send this request after initialized
+// and again after didChangeConfiguration when the client advertises
+// workspace.configuration support; the reply must be the language
+// server's own settings object (the "gopls" section in gopls's case).
+// It reflects the current effective options including any SetOptions
+// applied after the server started. An unknown section gets null,
+// meaning "use defaults".
+func (s *Server) configResult(section string) any {
+	if section == "" {
+		return s.Options()
+	}
+	if section == s.Cfg.ID || strings.HasPrefix(section, s.Cfg.ID+".") {
+		return s.Options()
+	}
+	return nil
+}
+
 // InitParams returns the initialize request params for this server,
 // based on initParams from the sample gopls client.
 func (s *Server) InitParams() *InitializeParams {
@@ -257,7 +293,7 @@ func (s *Server) InitParams() *InitializeParams {
 			Name:    clientName,
 			Version: Version,
 		},
-		InitializationOptions: s.Cfg.InitOptions,
+		InitializationOptions: s.options,
 		Trace:                 "off",
 	}
 	params.Capabilities.Workspace = &WorkspaceClientCapabilities{
@@ -265,6 +301,9 @@ func (s *Server) InitParams() *InitializeParams {
 		WorkspaceEdit:    &WorkspaceEditCapability{DocumentChanges: true},
 		Configuration:    true,
 		WorkspaceFolders: true,
+		// needed for gopls to run its didChangeConfiguration handler
+		// (settings re-fetch) when we send that notification:
+		DidChangeConfiguration: &DidChangeConfigurationCapability{},
 	}
 	params.Capabilities.Window = &WindowClientCapabilities{
 		WorkDoneProgress: true,
@@ -300,9 +339,35 @@ func (s *Server) InitParams() *InitializeParams {
 			DataSupport:        true,
 			ResolveSupport:     &ResolveSupport{Properties: []string{"edit"}},
 		},
+		SignatureHelp: &SignatureHelpClientCapability{ContextSupport: true},
+		InlayHint:     &InlayHintClientCapability{},
+		SemanticTokens: &SemanticTokensClientCapability{
+			Requests:       SemanticTokensRequestsClientCapability{Full: true},
+			TokenTypes:     clientSemanticTokenTypes,
+			TokenModifiers: clientSemanticTokenModifiers,
+			Formats:        []string{"relative"},
+		},
 	}
 	params.Capabilities.TextDoc = td
 	return params
+}
+
+// clientSemanticTokenTypes are the semantic token types we can render,
+// declared in the initialize capabilities so servers encode them.
+// The order here defines our own legend; servers map their own legend
+// indexes to the names, so ours is authoritative for decoding.
+var clientSemanticTokenTypes = []string{
+	"namespace", "type", "class", "enum", "interface", "struct",
+	"typeParameter", "parameter", "variable", "property", "enumMember",
+	"event", "function", "method", "macro", "keyword", "modifier",
+	"comment", "string", "number", "regexp", "operator", "decorator",
+}
+
+// clientSemanticTokenModifiers are the semantic token modifiers
+// we understand, in the order of our declared legend.
+var clientSemanticTokenModifiers = []string{
+	"declaration", "definition", "readonly", "static", "deprecated",
+	"abstract", "async", "modification", "documentation", "defaultLibrary",
 }
 
 // kill terminates the server process if needed.
@@ -369,6 +434,23 @@ func (s *Server) notify(method string, params any) error {
 		return fmt.Errorf("lsp: %s server is not ready", s.Cfg.ID)
 	}
 	return conn.Notify(method, params)
+}
+
+// DidChangeConfiguration sends the workspace/didChangeConfiguration
+// notification. gopls ignores the params and re-fetches settings via
+// workspace/configuration, which gets our current options (see
+// [Server.Options], re-resolved from the registry so post-startup
+// SetOptions changes are included); we send the settings object too
+// for maximal compatibility with servers that read settings directly
+// from the notification.
+//
+// Note: gopls applies the re-fetched settings to its session options,
+// and updates folder/view options only when it next rebuilds a snapshot
+// (a didChange or didSave event). Callers should therefore follow this
+// with a Change sync of open buffers, or expect the new settings to
+// apply on the next edit.
+func (s *Server) DidChangeConfiguration() error {
+	return s.notify("workspace/didChangeConfiguration", map[string]any{s.Cfg.ID: s.Options()})
 }
 
 ////////   Document sync
@@ -694,13 +776,6 @@ func (s *Server) codeAction(params *CodeActionParams, timeout time.Duration) ([]
 	if err := s.request(ctx, "textDocument/codeAction", params, &raw); err != nil {
 		return nil, err
 	}
-	if Verbose && len(raw) > 0 {
-		dbg := string(raw)
-		if len(dbg) > 600 {
-			dbg = dbg[:600] + "..."
-		}
-		log.Printf("lsp: %s: codeAction raw: %s\n", s.Cfg.ID, dbg)
-	}
 	return parseCodeActions(raw)
 }
 
@@ -797,6 +872,55 @@ func (s *Server) ExecuteCommand(command string, args []any) (json.RawMessage, er
 	return raw, nil
 }
 
+// SignatureHelp sends a textDocument/signatureHelp request.
+// Uses the quick timeout: it is on the typing hot path.
+func (s *Server) SignatureHelp(params *SignatureHelpParams) (*SignatureHelp, error) {
+	var sh SignatureHelp
+	ctx, cancel := context.WithTimeout(context.Background(), quickCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/signatureHelp", params, &sh); err != nil {
+		return nil, err
+	}
+	if len(sh.Signatures) == 0 {
+		return nil, nil
+	}
+	return &sh, nil
+}
+
+// InlayHint sends a textDocument/inlayHint request for the given range.
+// Note: the editor does not currently render inlay hints; this is for
+// programmatic use (CLI, tooling).
+func (s *Server) InlayHint(params *InlayHintParams) ([]InlayHint, error) {
+	var hints []InlayHint
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/inlayHint", params, &hints); err != nil {
+		return nil, err
+	}
+	return hints, nil
+}
+
+// SemanticTokensLegend returns the legend the server advertised for
+// semantic tokens, or nil if it does not support them.
+func (s *Server) SemanticTokensLegend() *SemanticTokensLegend {
+	s.mu.Lock()
+	raw := s.caps.SemanticTokensProvider
+	s.mu.Unlock()
+	return semanticTokensProviderLegend(raw)
+}
+
+// SemanticTokensFull sends a textDocument/semanticTokens/full request.
+func (s *Server) SemanticTokensFull(uri DocumentURI) (*SemanticTokens, error) {
+	var st SemanticTokens
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	params := &SemanticTokensParams{TextDocument: TextDocumentIdentifier{URI: uri}}
+	if err := s.request(ctx, "textDocument/semanticTokens/full", params, &st); err != nil {
+		return nil, err
+	}
+	return &st, nil
+}
+
 // DocumentSymbol sends a textDocument/documentSymbol request,
 // returning hierarchical symbols if the server supports them,
 // converting the flat form otherwise.
@@ -875,9 +999,10 @@ func (s *Server) Request(method string, params json.RawMessage) (any, *RPCError)
 		}
 		results := make([]any, len(cp.Items))
 		for i, item := range cp.Items {
-			if item.Section == "" || item.Section == s.Cfg.ID {
-				results[i] = s.Cfg.InitOptions
-			}
+			// the configuration request is the server re-delivering
+			// the settings we sent as initializationOptions; reply
+			// per-section, with null (defaults) for unknown sections:
+			results[i] = s.configResult(item.Section)
 		}
 		return results, nil
 	case "workspace/workspaceFolders":

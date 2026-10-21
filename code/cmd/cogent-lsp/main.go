@@ -147,6 +147,109 @@ func Check(c *Config) error {
 	return nil
 }
 
+// Sig shows the signature help for the callable at FILE:LINE:COL,
+// marking the active parameter with brackets.
+func Sig(c *Config) error {
+	return withPos(c, func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos) error {
+		var sh *lsp.SignatureHelp
+		act := -1
+		if !retryQuery(func() bool {
+			var err error
+			sh, act, err = b.SignatureHelp(ln, pos, false)
+			return sh != nil && act >= 0 && err == nil
+		}) {
+			return fmt.Errorf("no callable at %s", c.Args[0])
+		}
+		actP := 0
+		if sh.ActiveParameter != nil && *sh.ActiveParameter >= 0 {
+			actP = *sh.ActiveParameter
+		}
+		for i := range sh.Signatures {
+			mark, unmark := "", ""
+			if i == act {
+				mark, unmark = "[", "]"
+			}
+			fmt.Println(lsp.SignatureText(sh, i, actP, mark, unmark))
+		}
+		return nil
+	})
+}
+
+// Hints dumps the inlay hints the server provides for FILE, one per
+// line as path:line:col: label. Note: these are for programmatic use;
+// the editor does not render inlay hints inline.
+func Hints(c *Config) error {
+	setup()
+	if len(c.Args) != 1 {
+		return fmt.Errorf("hints needs a FILE argument")
+	}
+	deadline, err := c.deadline()
+	if err != nil {
+		return err
+	}
+	b := lsp.NewBackend(nil)
+	defer b.Stop()
+	ln, ok := openReady(b, c.Args[0], deadline)
+	if !ok {
+		return fmt.Errorf("language server not available for %s", c.Args[0])
+	}
+	hints, err := b.InlayHints(ln, textpos.Region{
+		Start: textpos.Pos{Line: 0, Char: 0},
+		End:   textpos.Pos{Line: ln.NumLines(), Char: 0},
+	})
+	if err != nil {
+		return err
+	}
+	path, _ := filepath.Abs(c.Args[0])
+	for _, h := range hints {
+		txt := h.LabelText()
+		if txt == "" {
+			continue
+		}
+		fmt.Printf("%s:%d:%d: %s\n", path, h.Position.Line+1, h.Position.Character+1, txt)
+	}
+	if len(hints) == 0 {
+		fmt.Fprintln(os.Stderr, "no inlay hints (many servers gate these behind settings)")
+	}
+	return nil
+}
+
+// Tokens dumps the semantic tokens the server provides for FILE,
+// one per line as path:line:col-endcol: type (+modifiers).
+func Tokens(c *Config) error {
+	setup()
+	if len(c.Args) != 1 {
+		return fmt.Errorf("tokens needs a FILE argument")
+	}
+	deadline, err := c.deadline()
+	if err != nil {
+		return err
+	}
+	b := lsp.NewBackend(nil)
+	defer b.Stop()
+	ln, ok := openReady(b, c.Args[0], deadline)
+	if !ok {
+		return fmt.Errorf("language server not available for %s", c.Args[0])
+	}
+	var toks []lsp.SemanticToken
+	if !retryQuery(func() bool {
+		var err error
+		toks, err = b.SemanticTokensFull(ln)
+		return len(toks) > 0 && err == nil
+	}) {
+		return fmt.Errorf("no semantic tokens for %s", c.Args[0])
+	}
+	path, _ := filepath.Abs(c.Args[0])
+	for _, tk := range toks {
+		mods := ""
+		if len(tk.Modifiers) > 0 {
+			mods = " (+" + strings.Join(tk.Modifiers, ",") + ")"
+		}
+		fmt.Printf("%s:%d:%d-%d: %s%s\n", path, tk.Start.Line+1, tk.Start.Char+1, tk.End.Char, tk.Type, mods)
+	}
+	return nil
+}
+
 // Hover shows the hover documentation for the symbol at FILE:LINE:COL.
 func Hover(c *Config) error {
 	return withPos(c, func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos) error {
@@ -642,5 +745,5 @@ func printSymbols(sl []lang.Symbol, indent int) {
 func main() { //types:skip
 	opts := cli.DefaultOptions("cogent-lsp", "Command-line access to language server features (gopls and other servers) via the Cogent LSP client, for shells, scripts, CI, and AI agents.")
 	opts.PrintSuccess = false
-	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename, Actions)
+	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename, Actions, Sig, Hints, Tokens)
 }

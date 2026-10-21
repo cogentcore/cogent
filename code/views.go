@@ -272,6 +272,10 @@ func (cv *Code) UpdateStatusText() {
 		if cv.langSvc != nil && tv.Lines != nil {
 			msg = addToMsg(msg, cv.langSvc.DiagStatusMsg(tv.Lines))
 		}
+		// live signature help while typing a call, if any:
+		if cv.langSvc != nil {
+			msg = addToMsg(msg, cv.langSvc.SigStatusMsg())
+		}
 	}
 	// recent transient message from SetStatus:
 	if cv.StatusMessage != "" && time.Since(cv.statusTime) < statusMessageTime {

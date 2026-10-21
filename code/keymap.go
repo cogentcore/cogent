@@ -57,6 +57,8 @@ const (
 	KeyRunProject
 	// prompt for a quick fix or refactoring at the cursor (code actions)
 	KeyQuickFix
+	// show signature help for the callable at the cursor
+	KeySignatureHelp
 )
 
 // StandardKeyMaps are the standard extended maps for Code
@@ -102,6 +104,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -144,6 +147,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -186,6 +190,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X r":         KeyRunProject,
 		"Control+X Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 	{"LinuxStandard", "Standard Linux key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -230,6 +235,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 	{"WindowsStandard", "Standard Windows key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -274,6 +280,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -318,5 +325,6 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E r":         KeyRunProject,
 		"Control+E Control+R": KeyRunProject,
 		"Control+.":           KeyQuickFix,
+		"Control+Shift+Space": KeySignatureHelp,
 	}},
 }

@@ -11,10 +11,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"cogentcore.org/core/text/lines"
@@ -81,6 +83,52 @@ func NewBackend(execPaths map[string]string) *Backend {
 
 // Name returns the name of this backend: "lsp"
 func (b *Backend) Name() string { return "lsp" }
+
+// SetOptions sets additional per-server options (server ID -> options)
+// on the registry, merged over the built-in defaults. See
+// [Registry.SetOptions]: only servers started after this call see them,
+// so pair it with [Backend.Restart] to apply to running servers.
+func (b *Backend) SetOptions(opts map[string]map[string]any) {
+	b.Reg.SetOptions(opts)
+}
+
+// Reconfigure prompts all running servers to re-fetch their settings
+// from the client (workspace/didChangeConfiguration), picking up any
+// options set with [Backend.SetOptions] after the servers started.
+// Safe to call from a background goroutine.
+func (b *Backend) Reconfigure() {
+	b.mu.Lock()
+	if b.stopped {
+		b.mu.Unlock()
+		return
+	}
+	servers := make([]*Server, 0, len(b.servers))
+	for _, srv := range b.servers {
+		servers = append(servers, srv)
+	}
+	refs := make([]*docRef, 0, len(b.docs))
+	for _, ref := range b.docs {
+		refs = append(refs, ref)
+	}
+	b.mu.Unlock()
+	for _, srv := range servers {
+		if !srv.Ready() {
+			continue
+		}
+		if err := srv.DidChangeConfiguration(); err != nil {
+			log.Printf("lsp: %s: didChangeConfiguration: %v\n", srv.Cfg.ID, err)
+		}
+	}
+	// gopls applies re-fetched settings when it next rebuilds a snapshot,
+	// so nudge each open document with a full-content didChange:
+	for _, ref := range refs {
+		srv := ref.srv
+		if !srv.Ready() {
+			continue
+		}
+		srv.DidChange(DocumentURIfromFilename(ref.fname), currentText(ref.ln))
+	}
+}
 
 // Stop shuts down all server processes and closes the diagnostics
 // channel. It is safe to call more than once.
@@ -339,12 +387,22 @@ func (b *Backend) handleDiags(uri DocumentURI, diags []Diagnostic) {
 			Code:     codeString(d.Code),
 		})
 	}
-	select {
-	case b.diags <- fd:
-	case <-time.After(time.Second):
-		if b.Verbose {
-			log.Printf("lsp: dropping diagnostics for %s: channel full\n", fname)
+	// the send races with Stop closing the channel (servers can
+	// publish at any time until they are shut down), so re-check
+	// stopped under the lock around the send:
+	b.mu.Lock()
+	stopped := b.stopped
+	if !stopped {
+		select {
+		case b.diags <- fd:
+			b.mu.Unlock()
+			return
+		case <-time.After(time.Second):
 		}
+	}
+	b.mu.Unlock()
+	if !stopped && b.Verbose {
+		log.Printf("lsp: dropping diagnostics for %s: channel full\n", fname)
 	}
 }
 
@@ -443,6 +501,32 @@ func toLSPPos(ln *lines.Lines, pos textpos.Pos) Position {
 
 ////////   Completion
 
+// isIdentRune reports whether the rune can appear in an identifier.
+func isIdentRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'
+}
+
+// completionSeed returns the seed for completions from the given line
+// prefix: the trailing identifier PLUS any qualifying selector prefixes
+// ("core.F" -> "core.F", not "F" as a plain whitespace seed would give),
+// so that selecting a completion rewrites the whole qualified reference.
+// It is rune-based: the text may be a byte prefix of the line ending
+// mid-rune, and byte-slicing an incomplete rune would corrupt it.
+func completionSeed(text string) string {
+	rn := []rune(text)
+	i := len(rn)
+	for i > 0 && isIdentRune(rn[i-1]) {
+		i--
+	}
+	for i > 0 && rn[i-1] == '.' {
+		i--
+		for i > 0 && isIdentRune(rn[i-1]) {
+			i--
+		}
+	}
+	return string(rn[i:])
+}
+
 // Completions returns completions for the given text at position,
 // querying the language server with a short timeout.
 func (b *Backend) Completions(ln *lines.Lines, text string, posLine, posChar int) complete.Matches {
@@ -462,7 +546,7 @@ func (b *Backend) Completions(ln *lines.Lines, text string, posLine, posChar int
 	if err != nil || list == nil {
 		return complete.Matches{}
 	}
-	seed := complete.SeedSpace(text)
+	seed := completionSeed(text)
 	ms := complete.Matches{Seed: seed}
 	b.mu.Lock()
 	b.edits = make(map[string]*complete.Edit)
@@ -474,18 +558,281 @@ func (b *Backend) Completions(ln *lines.Lines, text string, posLine, posChar int
 	return ms
 }
 
-// completionContext determines the completion trigger kind from the text.
-func completionContext(text string) *CompletionContext {
-	tk := CompleteInvoked
-	var ch string
-	if len(text) > 0 {
-		last := text[len(text)-1]
-		if last == '.' || last == ':' || last == '/' {
-			tk = CompleteTriggerCharacter
-			ch = string(last)
+// signatureTriggerChars are the characters that trigger signature help
+// in most language servers; gopls uses "(" and ",".
+var signatureTriggerChars = []rune{'(', ',', '<'}
+
+// IsSignatureTrigger reports whether the last character of the given
+// text is one that should trigger a signature help request.
+func IsSignatureTrigger(text string) bool {
+	rn := []rune(text)
+	if len(rn) == 0 {
+		return false
+	}
+	return slices.Contains(signatureTriggerChars, rn[len(rn)-1])
+}
+
+// signatureContext determines the signature help trigger kind from the
+// text and whether signature help was already showing (retrigger).
+func signatureContext(text string, wasShowing bool) *SignatureHelpContext {
+	ctx := &SignatureHelpContext{IsRetrigger: wasShowing}
+	rn := []rune(text)
+	if len(rn) > 0 && slices.Contains(signatureTriggerChars, rn[len(rn)-1]) {
+		ctx.TriggerKind = SigHelpTriggerCharacterKind
+		ctx.TriggerCharacter = string(rn[len(rn)-1])
+	} else if wasShowing {
+		ctx.TriggerKind = SigHelpContentChange
+	} else {
+		ctx.TriggerKind = SigHelpInvoked
+	}
+	return ctx
+}
+
+// activeParameter computes the index of the parameter the cursor is at,
+// by counting top-level commas since the innermost unmatched open paren
+// before the cursor. Returns -1 if the cursor is not inside a call.
+// This is the standard client-side computation; some servers also
+// provide ActiveParameter, which takes precedence when set.
+func activeParameter(text string, charPos int) int {
+	rn := []rune(text)
+	if charPos > len(rn) {
+		charPos = len(rn)
+	}
+	depth := 0
+	paren := -1
+	for i := charPos - 1; i >= 0; i-- {
+		switch rn[i] {
+		case ')', ']', '}':
+			depth++
+		case '(', '[', '{':
+			if depth > 0 {
+				depth--
+			} else if rn[i] == '(' {
+				paren = i
+			} else {
+				return -1 // crossed a non-paren bracket: not in a call
+			}
+		}
+		if paren >= 0 {
+			break
 		}
 	}
-	return &CompletionContext{TriggerKind: tk, TriggerCharacter: ch}
+	if paren < 0 {
+		return -1
+	}
+	idx := 0
+	depth = 0
+	for i := paren + 1; i < charPos; i++ {
+		switch rn[i] {
+		case '(', '[', '{':
+			depth++
+		case ')', ']', '}':
+			depth--
+		case ',':
+			if depth == 0 {
+				idx++
+			}
+		case '"', '\'', '`': // skip string literal
+			q := rn[i]
+			i++
+			for i < charPos && rn[i] != q {
+				if rn[i] == '\\' {
+					i++
+				}
+				i++
+			}
+		}
+	}
+	return idx
+}
+
+// SignatureHelp returns the signature help for the given text at the
+// given editor position, or nil if the server has nothing to show.
+// wasReTrigger indicates that signature help was already being shown,
+// so that the server can do incremental updates.
+func (b *Backend) SignatureHelp(ln *lines.Lines, pos textpos.Pos, wasReTrigger bool) (*SignatureHelp, int, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, -1, nil
+	}
+	text := lineText(ln, pos.Line)
+	params := &SignatureHelpParams{
+		TextDocumentPositionParams: TextDocumentPositionParams{
+			TextDocument: TextDocumentIdentifier{URI: DocumentURIfromFilename(ln.Filename())},
+			Position:     toLSPPos(ln, pos),
+		},
+	}
+	params.Context = signatureContext(text[:min(pos.Char, len([]rune(text)))], wasReTrigger)
+	sh, err := srv.SignatureHelp(params)
+	if err != nil || sh == nil {
+		return nil, -1, err
+	}
+	act := -1
+	if sh.ActiveSignature != nil && *sh.ActiveSignature >= 0 && *sh.ActiveSignature < len(sh.Signatures) {
+		act = *sh.ActiveSignature
+	}
+	if act < 0 && len(sh.Signatures) > 0 {
+		act = 0
+	}
+	if act >= 0 {
+		sig := &sh.Signatures[act]
+		ap := activeParameter(text, pos.Char)
+		if ap < 0 {
+			ap = 0
+		}
+		if sh.ActiveParameter != nil && *sh.ActiveParameter >= 0 {
+			ap = *sh.ActiveParameter
+		}
+		if ap >= len(sig.Parameters) {
+			ap = len(sig.Parameters) - 1
+		}
+		sh.ActiveParameter = &ap
+	}
+	return sh, act, nil
+}
+
+// SignatureText formats the given (already active-signature-selected)
+// signature help into a single-line display string, with the active
+// parameter marked using the given prefix, suffix markers.
+func SignatureText(sh *SignatureHelp, actSig, activeParam int, mark, unmark string) string {
+	if sh == nil || actSig < 0 || actSig >= len(sh.Signatures) {
+		return ""
+	}
+	sig := &sh.Signatures[actSig]
+	if len(sig.Parameters) == 0 || activeParam < 0 || activeParam >= len(sig.Parameters) {
+		return sig.Label
+	}
+	var sb strings.Builder
+	prev := 0
+	for i, p := range sig.Parameters {
+		txt := p.LabelText(sig.Label)
+		off := strings.Index(sig.Label[prev:], txt)
+		if off < 0 {
+			return sig.Label // label form doesn't match; show it plain
+		}
+		st, ed := prev+off, prev+off+len(txt)
+		sb.WriteString(sig.Label[prev:st])
+		if i == activeParam {
+			sb.WriteString(mark)
+		}
+		sb.WriteString(txt)
+		if i == activeParam {
+			sb.WriteString(unmark)
+		}
+		prev = ed
+	}
+	sb.WriteString(sig.Label[prev:])
+	return sb.String()
+}
+
+// InlayHints returns the inlay hints the server provides for the
+// current contents of the buffer within the given region.
+// Note: the editor does not render these; this is for programmatic use.
+func (b *Backend) InlayHints(ln *lines.Lines, reg textpos.Region) ([]InlayHint, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, nil
+	}
+	params := &InlayHintParams{
+		TextDocument: TextDocumentIdentifier{URI: DocumentURIfromFilename(ln.Filename())},
+		Range:        toLSPRange(ln, reg),
+	}
+	return srv.InlayHint(params)
+}
+
+// SemanticToken is a decoded semantic token in editor units:
+// a rune-based line/char region with the legend type name and a
+// bit set of legend modifier names.
+type SemanticToken struct {
+	Start      textpos.Pos
+	End        textpos.Pos
+	Type       string
+	Modifiers  []string
+	Deprecated bool
+}
+
+// SemanticTokensFull returns the decoded semantic tokens for the given
+// buffer, in editor (rune) units. Returns nil if the server does not
+// support semantic tokens or the request fails.
+func (b *Backend) SemanticTokensFull(ln *lines.Lines) ([]SemanticToken, error) {
+	srv, _, has := b.serverFor(ln)
+	if !has || !srv.Ready() {
+		return nil, nil
+	}
+	legend := srv.SemanticTokensLegend()
+	if legend == nil {
+		return nil, nil
+	}
+	st, err := srv.SemanticTokensFull(DocumentURIfromFilename(ln.Filename()))
+	if err != nil || st == nil {
+		return nil, err
+	}
+	return decodeSemanticTokens(ln, legend, st)
+}
+
+// decodeSemanticTokens converts the relative-encoded token data into
+// absolute editor-unit tokens. Data is five ints per token:
+// deltaLine, deltaStartUTF16, length, type, modifiers, where the first
+// four are relative to the previous token's start.
+func decodeSemanticTokens(ln *lines.Lines, legend *SemanticTokensLegend, st *SemanticTokens) ([]SemanticToken, error) {
+	n := len(st.Data) / 5
+	if len(st.Data)%5 != 0 {
+		return nil, fmt.Errorf("lsp: semanticTokens data length %d not a multiple of 5", len(st.Data))
+	}
+	out := make([]SemanticToken, 0, n)
+	line, char16 := 0, 0
+	for i := 0; i < n; i++ {
+		d := st.Data[i*5 : i*5+5]
+		line += d[0]
+		if d[0] == 0 {
+			char16 += d[1]
+		} else {
+			char16 = d[1]
+		}
+		if !ln.IsValidLine(line) {
+			continue
+		}
+		txt := string(ln.Line(line))
+		stChar := lang.UTF16ToRune(txt, char16)
+		edChar := lang.UTF16ToRune(txt, char16+d[2])
+		typ := ""
+		if d[3] >= 0 && d[3] < len(legend.TokenTypes) {
+			typ = legend.TokenTypes[d[3]]
+		}
+		var mods []string
+		modsBit := d[4]
+		for mi := 0; mi < len(legend.TokenModifiers) && modsBit > 0; mi++ {
+			if modsBit&1 != 0 {
+				mods = append(mods, legend.TokenModifiers[mi])
+			}
+			modsBit >>= 1
+		}
+		out = append(out, SemanticToken{
+			Start:      textpos.Pos{Line: line, Char: stChar},
+			End:        textpos.Pos{Line: line, Char: edChar},
+			Type:       typ,
+			Modifiers:  mods,
+			Deprecated: slices.Contains(mods, "deprecated"),
+		})
+	}
+	return out, nil
+}
+
+// completionContext determines the completion trigger kind from the text.
+func completionContext(text string) *CompletionContext {
+	seed := completionSeed(text)
+	rn := []rune(seed)
+	if len(rn) > 0 && rn[len(rn)-1] == '.' {
+		// just typed a selector: members of the qualifier
+		return &CompletionContext{TriggerKind: CompleteTriggerCharacter, TriggerCharacter: "."}
+	}
+	if len(rn) > 0 {
+		// typing an identifier: gopls only filters its full candidate
+		// list when the request is a content-change trigger; Invoked
+		// returns everything unfiltered.
+		return &CompletionContext{TriggerKind: CompleteContentChange}
+	}
+	return &CompletionContext{TriggerKind: CompleteInvoked}
 }
 
 // convertCompletion converts one LSP CompletionItem into a
@@ -507,13 +854,52 @@ func (b *Backend) convertCompletion(ln *lines.Lines, posLine, posChar int, item 
 		}
 		newText = nt
 	}
+	// The seed the user has typed (possibly qualified, e.g. "core.F")
+	// must be accounted for: the editor replaces the seed back from the
+	// cursor with the edit text. Servers disagree about how much of the
+	// seed their text includes: if the item's TextEdit range starts
+	// before the cursor, the difference is how many seed runes it
+	// already contains, so drop exactly that many from the text and keep
+	// the rest of the prefix -- which the editor's seed replacement
+	// restores ("core.F" + "Frame" -> "core.Frame", and "strings.S" +
+	// "strings.Split" or "Split" -> "strings.Split"). Without a usable
+	// TextEdit range, the text is taken as-is relative to the cursor.
+	// Note: seed here is the line prefix up to the cursor, not the full
+	// line, which may continue past it.
+	lt := lineText(ln, posLine)
+	rn := []rune(lt)
+	seed := completionSeed(string(rn[:min(posChar, len(rn))]))
+	repl := len([]rune(seed)) // how many seed runes the server's text replaces
+	if item.TextEdit != nil {
+		r := regionFromLSP(ln, item.TextEdit.Range)
+		if r.Start.Line == posLine && r.Start.Char <= posChar {
+			repl = posChar - r.Start.Char
+		}
+	}
+	if repl > 0 && repl < len([]rune(seed)) {
+		sr := []rune(seed)
+		newText = string(sr[:len(sr)-repl]) + newText
+	} else if repl >= len([]rune(seed)) && strings.HasPrefix(newText, seed) {
+		newText = newText[len(seed):]
+	}
 	cp := complete.Completion{
 		Text:  newText,
 		Label: item.Label,
 		Icon:  completionIcon(item.Kind).Icon(),
 		Desc:  completionDesc(item),
 	}
-	fd := forwardDelete(lineText(ln, posLine), posChar, newText)
+	// forward delete is relative to what the server's edit range ends
+	// at (the cursor for gopls member completions), not to the end of
+	// our full-seed replacement span:
+	fdSrc := newText
+	if item.TextEdit != nil {
+		r := regionFromLSP(ln, item.TextEdit.Range)
+		if r.Start.Line == posLine && r.End.Char >= posChar {
+			rnr := []rune(lt)
+			fdSrc = string(rnr[min(posChar, len(rnr)):min(r.End.Char, len(rnr))]) + newText
+		}
+	}
+	fd := forwardDelete(lt, posChar, fdSrc)
 	if item.TextEdit != nil {
 		r := regionFromLSP(ln, item.TextEdit.Range)
 		if r.Start.Line == posLine {
@@ -655,8 +1041,9 @@ func atoi(s string) (int, error) {
 }
 
 // CompleteEdit returns the recorded edit for a selected completion,
-// falling back to overwriting the current word if the edit was not
-// recorded (e.g., after an editor restart between completion and select).
+// falling back to the same seed-normalization the conversion used if
+// the edit was not recorded (e.g., after an editor restart between
+// completion and select).
 func (b *Backend) CompleteEdit(ln *lines.Lines, text string, cursorPos int, comp complete.Completion, seed string) complete.Edit {
 	b.mu.Lock()
 	ed, has := b.edits[comp.Text]
@@ -664,8 +1051,17 @@ func (b *Backend) CompleteEdit(ln *lines.Lines, text string, cursorPos int, comp
 	if has {
 		return *ed
 	}
-	fd := forwardDelete(text, cursorPos, comp.Text)
-	return complete.Edit{NewText: comp.Text, ForwardDelete: fd}
+	newText := comp.Text
+	// same normalization as convertCompletion, from the seed alone
+	// (no server item available here): the editor replaces the seed,
+	// so text that already starts with the whole seed keeps only its
+	// selector prefix portion.
+	if strings.HasPrefix(newText, seed) && strings.Contains(seed, ".") {
+		dot := strings.LastIndexByte(seed, '.')
+		newText = seed[:dot+1] + newText[len(seed):]
+	}
+	fd := forwardDelete(text, cursorPos, newText)
+	return complete.Edit{NewText: newText, ForwardDelete: fd}
 }
 
 // completionIcon returns the icon token for a completion item kind,
@@ -962,11 +1358,16 @@ func (b *Backend) handleApplyEdit(we WorkspaceEdit) (bool, string) {
 	if len(out) == 0 {
 		return false, "no edits applied"
 	}
-	select {
-	case b.applies <- out:
-	default:
-		log.Printf("lsp: applyEdit refresh notification dropped: buffer full\n")
+	// guard the send against Stop closing the channel concurrently:
+	b.mu.Lock()
+	if !b.stopped {
+		select {
+		case b.applies <- out:
+		default:
+			log.Printf("lsp: applyEdit refresh notification dropped: buffer full\n")
+		}
 	}
+	b.mu.Unlock()
 	return true, ""
 }
 

@@ -116,7 +116,7 @@ var DefaultServers = []*ServerConfig{
 		ID:          "gopls",
 		Desc:        "gopls, the official Go language server",
 		Exec:        "gopls",
-		Args:        []string{"serve"},
+		Args:        []string{"-logfile", "/tmp/gopls-cogent.log", "serve"},
 		Langs:       []fileinfo.Known{fileinfo.Go},
 		RootMarkers: []string{"go.work", "go.mod"},
 		InitOptions: map[string]any{
@@ -129,6 +129,10 @@ var DefaultServers = []*ServerConfig{
 			"completeUnimported": true,
 			"usePlaceholders":    true,
 			"staticcheck":        true,
+			// gopls only returns semantic tokens when explicitly
+			// enabled (it is off by default in the settings;
+			// Options.Set uses the last segment of a dotted name):
+			"semanticTokens": true,
 		},
 		Install: &InstallSpec{
 			GoModule: "golang.org/x/tools/gopls",
@@ -306,6 +310,10 @@ type Registry struct {
 	mu        sync.Mutex
 	langsOnce bool
 	langMap   map[fileinfo.Known][]*ServerConfig
+
+	// options are additional per-server options (server ID -> options)
+	// merged over each config's built-in InitOptions; see SetOptions.
+	options map[string]map[string]any
 }
 
 // NewRegistry returns a new Registry using the [DefaultServers],
@@ -367,6 +375,75 @@ func (rg *Registry) ExecPath(sc *ServerConfig) (string, error) {
 		return "", fmt.Errorf("lsp: language server %q executable %q not found in PATH: %w", sc.ID, sc.Exec, err)
 	}
 	return p, nil
+}
+
+// copyOptions returns a deep-enough copy of the given server options
+// map: nested map values (the common case, e.g. "analyses" or "hints")
+// are copied one level down so that SetOptions-style merging never
+// mutates the shared DefaultServers InitOptions.
+func copyOptions(opt map[string]any) map[string]any {
+	cp := make(map[string]any, len(opt)+1)
+	for k, v := range opt {
+		if sub, ok := v.(map[string]any); ok {
+			inner := make(map[string]any, len(sub))
+			for sk, sv := range sub {
+				inner[sk] = sv
+			}
+			cp[k] = inner
+			continue
+		}
+		cp[k] = v
+	}
+	return cp
+}
+
+// mergeOptions merges the override options over a base options map,
+// returning a new map: base entries are copied (nested maps one level
+// down) so neither input is mutated, and overrides win.
+func mergeOptions(base, over map[string]any) map[string]any {
+	opt := copyOptions(base)
+	for k, v := range over {
+		if sub, ok := v.(map[string]any); ok {
+			inner := make(map[string]any, len(sub))
+			for sk, sv := range sub {
+				inner[sk] = sv
+			}
+			opt[k] = inner
+			continue
+		}
+		opt[k] = v
+	}
+	return opt
+}
+
+// SetOptions sets additional server options for this registry, merged
+// over the built-in InitOptions of each server config when servers are
+// created (custom keys win). Keys follow each server's own settings
+// schema: for gopls these are the keys of its "gopls" settings section;
+// dotted names such as "ui.inlayhint.hints" are accepted by gopls and
+// use only their last segment. Running servers pick the changes up on
+// their next workspace/configuration re-fetch (see
+// [Server.DidChangeConfiguration]); servers that only read options at
+// startup pick them up when they next start.
+func (rg *Registry) SetOptions(opts map[string]map[string]any) {
+	rg.mu.Lock()
+	defer rg.mu.Unlock()
+	rg.options = opts
+}
+
+// optionOverride returns the registry-level options for the given
+// server ID, or nil.
+func (rg *Registry) optionOverride(id string) map[string]any {
+	rg.mu.Lock()
+	defer rg.mu.Unlock()
+	return rg.options[id]
+}
+
+// optionsFor returns the effective initialization options for the given
+// server config: the built-in InitOptions with any registry-level
+// options merged in (the latter win).
+func (rg *Registry) optionsFor(sc *ServerConfig) map[string]any {
+	return mergeOptions(sc.InitOptions, rg.optionOverride(sc.ID))
 }
 
 // RootDir finds the workspace root directory for the server config,

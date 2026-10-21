@@ -234,11 +234,12 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 
 	if ed.Lines != nil && ed.Code != nil && ed.Code.LangSvc().LSPActive(ed.Lines) {
 		core.NewSeparator(m)
-		core.NewFuncButton(m).SetFunc(ed.Code.QuickFix).SetText("Quick fix...")
+		core.NewFuncButton(m).SetFunc(ed.Code.Lookup).SetText("Lookup / quick fix...")
 		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition")
 		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references")
 		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...")
 		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file")
+		core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")
 	}
 
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())

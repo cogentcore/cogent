@@ -263,6 +263,10 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				cv.UpdateStatusText()
 				if w.Lines != nil {
 					cv.LangSvc().Input(w.Lines)
+					// signature help goes after UpdateStatusText so a
+					// live parameter signature takes over the line,
+					// and clears itself when the call context is exited:
+					cv.LangSvc().SigHelpUpdate(w)
 				}
 			})
 			w.OnChange(func(e events.Event) {

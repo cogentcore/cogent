@@ -877,3 +877,381 @@ func TestCodeActionsGopls(t *testing.T) {
 	assert.True(t, len(out) > 0, "no edits applied")
 	assert.NotContains(t, ln.String(), `"fmt"`, "unused import still present after fix %q", sel.Title)
 }
+
+func TestSignatureContextAndActiveParam(t *testing.T) {
+	cases := []struct {
+		text string
+		pos  int
+		want int
+		desc string
+	}{
+		{"foo(a, b", 8, 1, "second arg"},
+		{"foo(", 4, 0, "just after paren"},
+		{"foo(a", 5, 0, "first arg"},
+		{"foo(bar(a, b), c", 16, 1, "nested call outer second arg"},
+		{"x := 1", 6, -1, "not in a call"},
+		{"foo(a[1, 2]", 11, 0, "inside brackets"},
+		{"foo(\"a,b\", c", 11, 1, "comma inside string ignored"},
+		{"foo(a, b", 3, -1, "pos before paren: no call context"},
+	}
+	for _, tc := range cases {
+		got := activeParameter(tc.text, tc.pos)
+		assert.Equal(t, tc.want, got, tc.desc)
+	}
+
+	assert.True(t, IsSignatureTrigger("foo("))
+	assert.True(t, IsSignatureTrigger("foo(a,"))
+	assert.False(t, IsSignatureTrigger("foo(a"))
+	assert.False(t, IsSignatureTrigger(""))
+
+	c := signatureContext("foo(", false)
+	assert.Equal(t, SigHelpTriggerCharacterKind, c.TriggerKind)
+	assert.Equal(t, "(", c.TriggerCharacter)
+	c = signatureContext("foo(a", true)
+	assert.Equal(t, SigHelpContentChange, c.TriggerKind)
+	c = signatureContext("foo(a", false)
+	assert.Equal(t, SigHelpInvoked, c.TriggerKind)
+}
+
+func TestParameterLabelText(t *testing.T) {
+	label := "Read(f *os.File, p []byte) (n int, err error)"
+	pi := ParameterInformation{Label: json.RawMessage(`"f *os.File"`)}
+	assert.Equal(t, "f *os.File", pi.LabelText(label))
+	// offset form: offsets are UTF-16 code units into the signature label
+	pi = ParameterInformation{Label: json.RawMessage(`[5,15]`)}
+	assert.Equal(t, "f *os.File", pi.LabelText(label))
+	pi = ParameterInformation{Label: json.RawMessage(`null`)}
+	assert.Equal(t, "", pi.LabelText(label))
+}
+
+func TestSignatureText(t *testing.T) {
+	sh := &SignatureHelp{
+		Signatures: []SignatureInformation{{
+			Label:      "Greet(name string, loud bool) string",
+			Parameters: []ParameterInformation{{Label: json.RawMessage(`"name string"`)}, {Label: json.RawMessage(`"loud bool"`)}},
+		}},
+	}
+	assert.Equal(t, "Greet([name string], loud bool) string", SignatureText(sh, 0, 0, "[", "]"))
+	assert.Equal(t, "Greet(name string, [loud bool]) string", SignatureText(sh, 0, 1, "[", "]"))
+	assert.Equal(t, "Greet(name string, loud bool) string", SignatureText(sh, 0, -1, "[", "]"))
+	assert.Equal(t, "", SignatureText(nil, 0, 0, "[", "]"))
+	assert.Equal(t, "", SignatureText(sh, 5, 0, "[", "]"))
+}
+
+func TestInlayHintLabelText(t *testing.T) {
+	ih := InlayHint{Label: json.RawMessage(`"n:"`)}
+	assert.Equal(t, "n:", ih.LabelText())
+	ih = InlayHint{Label: json.RawMessage(`[{"value":"err "},{"value":":error"}]`)}
+	assert.Equal(t, "err :error", ih.LabelText())
+	ih = InlayHint{Label: json.RawMessage(`null`)}
+	assert.Equal(t, "", ih.LabelText())
+}
+
+func TestDecodeSemanticTokens(t *testing.T) {
+	// two lines, second token on line 1 is after a unicode char:
+	src := "var x = 1\ns := \"\u5909\""
+	ln := lines.NewLines()
+	ln.SetText([]byte(src))
+	legend := &SemanticTokensLegend{
+		TokenTypes:     []string{"variable", "number", "string"},
+		TokenModifiers: []string{"declaration", "deprecated"},
+	}
+	// tokens: x variable, 1 number, s variable, and the quoted string,
+	// which in UTF-16 columns runs 5..9 (opening quote at 5, CJK char
+	// adds one extra utf-16 unit, so the rune end (8) must differ from
+	// the utf-16 end (9)).
+	st := &SemanticTokens{Data: []int{
+		0, 4, 1, 0, 1, // x: variable, declaration
+		0, 4, 1, 1, 0, // 1: number (delta start from x = +4)
+		1, 0, 1, 0, 1, // line 1: s: variable
+		0, 5, 4, 2, 0, // the quoted string: 4 utf-16 units from col 5
+	}}
+	toks, err := decodeSemanticTokens(ln, legend, st)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(toks) != 4 {
+		t.Fatalf("got %d tokens, want 4", len(toks))
+	}
+	assert.Equal(t, "variable", toks[0].Type)
+	assert.Equal(t, textpos.Pos{Line: 0, Char: 4}, toks[0].Start)
+	assert.ElementsMatch(t, []string{"declaration"}, toks[0].Modifiers)
+	assert.Equal(t, "number", toks[1].Type)
+	assert.Equal(t, textpos.Pos{Line: 0, Char: 8}, toks[1].Start)
+	assert.Equal(t, "variable", toks[2].Type)
+	assert.Equal(t, 1, toks[2].Start.Line)
+	assert.Equal(t, "string", toks[3].Type)
+	assert.Equal(t, textpos.Pos{Line: 1, Char: 5}, toks[3].Start)
+	assert.Equal(t, textpos.Pos{Line: 1, Char: 8}, toks[3].End)
+
+	// deprecated bit:
+	st = &SemanticTokens{Data: []int{0, 4, 1, 0, 2}}
+	toks, err = decodeSemanticTokens(ln, legend, st)
+	assert.NoError(t, err)
+	if assert.Equal(t, 1, len(toks)) {
+		assert.True(t, toks[0].Deprecated)
+	}
+
+	// bad data length:
+	_, err = decodeSemanticTokens(ln, legend, &SemanticTokens{Data: []int{0, 1, 2}})
+	assert.Error(t, err)
+}
+
+func TestSemanticProviderLegend(t *testing.T) {
+	leg := semanticTokensProviderLegend(json.RawMessage(`{"legend":{"tokenTypes":["variable"],"tokenModifiers":[]},"full":true}`))
+	if assert.NotNil(t, leg) {
+		assert.Equal(t, []string{"variable"}, leg.TokenTypes)
+	}
+	assert.Nil(t, semanticTokensProviderLegend(json.RawMessage(`true`)))
+	assert.Nil(t, semanticTokensProviderLegend(json.RawMessage(`{"legend":{"tokenTypes":[]}}`)))
+}
+
+// goplsSetup sets up a temp module with the given source and a backend
+// with the file open and the server ready.
+func goplsSetup(t *testing.T, src string) (*Backend, *lines.Lines, string) {
+	t.Helper()
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	srcPath := filepath.Join(tmp, "main.go")
+	if err := os.WriteFile(srcPath, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOWORK", "off")
+	b := NewBackend(nil)
+	b.RootFunc = func(fpath string) string { return tmp }
+	t.Cleanup(b.Stop)
+	ln := lines.NewLines()
+	ln.SetFilename(srcPath)
+	ln.SetText([]byte(src))
+	if !b.Supported(ln) {
+		t.Skip("no language server for Go found at runtime")
+	}
+	go func() {
+		for range b.Diagnostics() {
+		} // drain
+	}()
+	b.Open(ln)
+	waitUntil(t, 60*time.Second, "server ready", func() bool { return b.Ready(ln) })
+	return b, ln, srcPath
+}
+
+func TestSignatureHelpGopls(t *testing.T) {
+	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\tstrings.Split(\"a,b\", \",\")\n}\n"
+	b, ln, _ := goplsSetup(t, src)
+
+	// cursor inside the call, on the second argument:
+	// line 5: "\tstrings.Split("a,b", ",")" -- pos after the second `", `
+	pos := textpos.Pos{Line: 5, Char: 21}
+	var sh *SignatureHelp
+	act := -1
+	var err error
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		guard(t, 20*time.Second, "Backend.SignatureHelp", func() {
+			sh, act, err = b.SignatureHelp(ln, pos, false)
+		})
+		if err == nil && sh != nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("signature help never arrived: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if act != 0 || len(sh.Signatures) == 0 {
+		t.Fatalf("bad signature help: act=%d sigs=%d", act, len(sh.Signatures))
+	}
+	sig := sh.Signatures[act]
+	// gopls gives the bare function label for cross-package calls:
+	if !strings.Contains(sig.Label, "Split(") {
+		t.Errorf("signature label: %q", sig.Label)
+	}
+	if len(sig.Parameters) != 2 {
+		t.Fatalf("got %d params, want 2: %q", len(sig.Parameters), sig.Label)
+	}
+	if sh.ActiveParameter == nil || *sh.ActiveParameter != 1 {
+		t.Errorf("active parameter: %v, want 1", sh.ActiveParameter)
+	}
+	txt := SignatureText(sh, act, *sh.ActiveParameter, "[", "]")
+	t.Logf("marked signature: %s", txt)
+	if !strings.Contains(txt, "[") {
+		t.Errorf("active param not marked: %q", txt)
+	}
+}
+
+func TestSemanticTokensGopls(t *testing.T) {
+	src := "package main\n\nimport \"fmt\"\n\nfunc Hello(name string) {\n\tfmt.Println(\"hello\", name)\n}\n"
+	b, ln, _ := goplsSetup(t, src)
+
+	var toks []SemanticToken
+	var err error
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		guard(t, 30*time.Second, "Backend.SemanticTokensFull", func() {
+			toks, err = b.SemanticTokensFull(ln)
+		})
+		if err == nil && len(toks) > 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("semantic tokens never arrived: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	byType := map[string]int{}
+	var helloTok, nameTok, fmtTok, strTok *SemanticToken
+	for i := range toks {
+		tk := &toks[i]
+		byType[tk.Type]++
+		line := string(ln.Line(tk.Start.Line))
+		word := ""
+		if tk.End.Char <= len([]rune(line)) {
+			word = string([]rune(line)[tk.Start.Char:tk.End.Char])
+		}
+		switch word {
+		case "Hello":
+			helloTok = tk
+		case "name":
+			if nameTok == nil {
+				nameTok = tk
+			}
+		case "fmt":
+			fmtTok = tk
+		}
+		if tk.Type == "string" {
+			strTok = tk
+		}
+	}
+	t.Logf("token types: %v", byType)
+	if helloTok == nil || helloTok.Type != "function" {
+		t.Errorf("Hello token: %+v", helloTok)
+	}
+	if nameTok == nil || nameTok.Type != "parameter" {
+		t.Errorf("name token: %+v", nameTok)
+	}
+	if fmtTok == nil {
+		t.Errorf("no fmt token")
+	}
+	if strTok == nil {
+		t.Errorf("no string literal token")
+	}
+	// all decoded regions must be valid in the buffer:
+	nln := ln.NumLines()
+	for _, tk := range toks {
+		if tk.Start.Line < 0 || tk.Start.Line >= nln {
+			t.Fatalf("token line out of range: %+v", tk)
+		}
+		lc := len([]rune(string(ln.Line(tk.Start.Line))))
+		if tk.Start.Char < 0 || tk.End.Char > lc || tk.End.Char < tk.Start.Char {
+			t.Fatalf("token chars out of range: %+v line len %d", tk, lc)
+		}
+	}
+}
+
+func TestInlayHintsGopls(t *testing.T) {
+	src := "package main\n\nfunc add(a, b int) int { return a + b }\n\nvar _ = add(1, 2)\n"
+	b, ln, _ := goplsSetup(t, src)
+
+	var hints []InlayHint
+	var err error
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		guard(t, 30*time.Second, "Backend.InlayHints", func() {
+			hints, err = b.InlayHints(ln, textpos.Region{
+				Start: textpos.Pos{Line: 0, Char: 0},
+				End:   textpos.Pos{Line: ln.NumLines(), Char: 0},
+			})
+		})
+		if err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("inlay hints request never succeeded: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	// gopls only provides hints when enabled via initialization options,
+	// so an empty result is valid; verify decoding of whatever comes back.
+	for _, h := range hints {
+		txt := h.LabelText()
+		if txt == "" {
+			t.Errorf("hint with empty label at %+v", h.Position)
+		}
+		if h.Kind != InlayHintType && h.Kind != InlayHintParameter && h.Kind != 0 {
+			t.Errorf("unexpected hint kind: %v", h.Kind)
+		}
+	}
+	t.Logf("%d inlay hints", len(hints))
+}
+
+// TestInlayHintsConfig verifies the settings path that turns gopls's
+// inlay hints on (they are gated behind settings, default off): options
+// set before the server starts arrive through initializationOptions, and
+// options set on a running server arrive through the dynamic
+// didChangeConfiguration / workspace/configuration re-fetch.
+func TestInlayHintsConfig(t *testing.T) {
+	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\tx := 1\n\t_, _ = x, strings.Split(\"a,b\", \",\")\n}\n"
+	hintOpts := map[string]map[string]any{
+		"gopls": {"hints": map[string]any{
+			"parameterNames":      true,
+			"assignVariableTypes": true,
+		}},
+	}
+
+	// startup path: options must be on the registry before the server
+	// starts -- the editor applies the setting in NewLangService, before
+	// any file opens -- arriving through initializationOptions.
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	srcPath := filepath.Join(tmp, "main.go")
+	if err := os.WriteFile(srcPath, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b := NewBackend(nil)
+	b.RootFunc = func(string) string { return tmp }
+	t.Cleanup(b.Stop)
+	b.SetOptions(hintOpts)
+	ln := lines.NewLines()
+	ln.SetFilename(srcPath)
+	ln.SetText([]byte(src))
+	b.Open(ln)
+	waitUntil(t, 60*time.Second, "server ready (hint options)", func() bool { return b.Ready(ln) })
+	waitUntil(t, 60*time.Second, "hints via init options", func() bool {
+		hs, err := b.InlayHints(ln, textpos.Region{End: textpos.Pos{Line: ln.NumLines()}})
+		return err == nil && len(hs) > 0
+	})
+
+	// dynamic path: enable on a running server that started without any
+	// hint options, through Reconfigure (didChangeConfiguration +
+	// workspace/configuration re-fetch + didChange snapshot refresh).
+	b2, ln2, _ := goplsSetup(t, src)
+	hs0, err := b2.InlayHints(ln2, textpos.Region{End: textpos.Pos{Line: ln2.NumLines()}})
+	if err != nil {
+		t.Fatalf("baseline InlayHints: %v", err)
+	}
+	if len(hs0) > 0 {
+		t.Skipf("server returned %d hints without options; cannot test the off state", len(hs0))
+	}
+	b2.SetOptions(hintOpts)
+	b2.Reconfigure()
+	waitUntil(t, 60*time.Second, "hints via Reconfigure", func() bool {
+		hs, err := b2.InlayHints(ln2, textpos.Region{End: textpos.Pos{Line: ln2.NumLines()}})
+		return err == nil && len(hs) > 0
+	})
+
+	// the shared defaults must never be mutated by option merging
+	for _, sc := range DefaultServers {
+		if sc.ID == "gopls" {
+			if _, has := sc.InitOptions["hints"]; has {
+				t.Error("DefaultServers gopls InitOptions were mutated by SetOptions")
+			}
+		}
+	}
+}
