@@ -286,7 +286,8 @@ func (cv *Code) CloseActiveView() { //types:add
 	if tv.Lines == nil {
 		return
 	}
-	fpath := tv.Lines.Filename()
+	ln := tv.Lines
+	fpath := ln.Filename()
 	tv.Close(func(canceled bool) {
 		if canceled {
 			cv.SetStatus("File NOT closed: " + fpath)
@@ -294,7 +295,7 @@ func (cv *Code) CloseActiveView() { //types:add
 		}
 		cv.SetStatus("File closed: " + fpath)
 		cv.OpenFiles.DeleteByKey(fpath)
-		cv.LangSvc().Closed(tv.Lines)
+		cv.LangSvc().Closed(ln) // tv.Lines is now nil
 	})
 }
 
@@ -594,6 +595,7 @@ func (cv *Code) CloseOpenFile(fname string) {
 		}
 		cv.SetStatus(fmt.Sprintf("File %q closed", fname))
 		cv.OpenFiles.DeleteByKey(fname)
+		cv.LangSvc().Closed(ln)
 	})
 }
 

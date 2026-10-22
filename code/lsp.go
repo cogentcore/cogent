@@ -180,6 +180,7 @@ func NewLangService(cv *Code) *LangService {
 		quit:           make(chan struct{}),
 	}
 	ls.lspB.ShowDocument = ls.showDocument
+	ls.lspB.Renamed = ls.renamed
 	ls.lspB.Progress = ls.progress
 	ls.lspB.SetOptions(serverOptions(cv.Settings.InlayHints))
 	ls.lspB.RootFunc = func(fpath string) string {
@@ -408,17 +409,38 @@ func (ls *LangService) Saved(ln *lines.Lines) {
 // Closed should be called when a file is closed in the editor.
 // Language servers are shut down automatically when the last of
 // their files closes.
+// It can be called after the buffer has been closed, which clears
+// its filename. Must be called from the event loop.
 func (ls *LangService) Closed(ln *lines.Lines) {
 	if ln == nil {
 		return
 	}
-	fname := ln.Filename()
+	fname := ls.lspB.Filename(ln) // the filename it was opened under
+	if fname == "" {
+		fname = ln.Filename()
+	}
 	ls.clearSigHelp()
-	ls.clearDiags(ln)
-	ls.updateProblems(false)
-	ls.bumpSemantic(fname)
-	ls.clearSemanticTags(ln)
+	ls.forgetFile(ln, fname)
 	ls.lspB.Close(ln)
+	ls.needsRender(ln)
+	ls.updateProblems(false)
+}
+
+// renamed is called by the backend when the given buffer is found to
+// have been renamed from the given old filename, to forget the state
+// for the old filename. It can be called from any goroutine.
+func (ls *LangService) renamed(ln *lines.Lines, old string) {
+	ls.forgetFile(ln, old)
+}
+
+// forgetFile removes all of the state for the given filename of the
+// given buffer: diagnostic and semantic token tags, cached diagnostics,
+// and pending updates. Only uses self-locking Lines methods, so it can
+// be called from any goroutine.
+func (ls *LangService) forgetFile(ln *lines.Lines, fname string) {
+	ls.clearDiags(ln, fname)
+	ls.bumpSemantic(fname)
+	ls.clearSemanticTagsFile(ln, fname)
 	ls.mu.Lock()
 	stopTimer(ls.debounce, fname)
 	stopTimer(ls.semantic, fname)
@@ -633,10 +655,10 @@ func diagWord(s lang.DiagSeverity) string {
 	return "hint"
 }
 
-// clearDiags removes all diagnostic tags previously applied to buffer.
-// Called from the UI goroutine; Lines methods lock internally.
-func (ls *LangService) clearDiags(ln *lines.Lines) {
-	fname := ln.Filename()
+// clearDiags removes all diagnostic tags previously applied to the
+// buffer for the given filename, and the cached diagnostics for it.
+// Lines methods lock internally, so it can be called from any goroutine.
+func (ls *LangService) clearDiags(ln *lines.Lines, fname string) {
 	ls.mu.Lock()
 	prev := ls.prevDiags[fname]
 	delete(ls.prevDiags, fname)
@@ -644,7 +666,6 @@ func (ls *LangService) clearDiags(ln *lines.Lines) {
 	delete(ls.diagCache, fname)
 	ls.mu.Unlock()
 	removeErrorTags(ln, prev)
-	ls.needsRender(ln)
 }
 
 // diagCovers reports whether the diagnostic region contains pos,

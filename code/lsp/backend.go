@@ -49,6 +49,12 @@ type Backend struct {
 	// goroutine and must not block. It returns whether it was shown.
 	ShowDocument func(uri string, loc *lang.Location) bool
 
+	// Renamed, if set, is called when a tracked buffer is found to have
+	// a new filename (e.g., after Save As), after its document under the
+	// old filename has been closed with the server. It can be called
+	// from any goroutine that uses the backend, and must not block.
+	Renamed func(ln *lines.Lines, oldFilename string)
+
 	// Progress, if set, is called with a short message describing the
 	// most recent operation in progress in the servers (e.g., gopls
 	// loading packages), or "" when there are none. It is called from
@@ -271,12 +277,51 @@ func (b *Backend) serverFor(ln *lines.Lines) (*Server, *docRef, bool) {
 		go srv.Start(context.Background()) // errors are logged and recorded
 	}
 	ref := &docRef{ln: ln, srv: srv, langID: LanguageID(kn, fname), fname: fname}
+	okey, old := b.refFor(ln)
+	if old != nil && okey != key {
+		delete(b.docs, okey) // renamed
+	} else {
+		old = nil
+	}
 	b.docs[key] = ref
 	b.mu.Unlock()
 
+	if old != nil {
+		old.srv.Close(URIFromPath(old.fname))
+		if old.srv != srv {
+			b.maybeShutdown(old.srv)
+		}
+		if b.Renamed != nil {
+			b.Renamed(ln, old.fname)
+		}
+	}
 	// queued until the server is ready, if it is still starting:
 	srv.Open(URIFromPath(fname), ref.langID, currentText(ln))
 	return srv, ref, true
+}
+
+// refFor returns the key and tracking record for the given buffer, found
+// by identity, so that it works for buffers whose filename has changed,
+// or been cleared by closing them. Must be called under mu.
+func (b *Backend) refFor(ln *lines.Lines) (string, *docRef) {
+	for key, ref := range b.docs {
+		if ref.ln == ln {
+			return key, ref
+		}
+	}
+	return "", nil
+}
+
+// Filename returns the filename under which the given buffer is
+// tracked, which can differ from its current filename if that has
+// changed (e.g., it was closed), or "" if it is not tracked.
+func (b *Backend) Filename(ln *lines.Lines) string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if _, ref := b.refFor(ln); ref != nil {
+		return ref.fname
+	}
+	return ""
 }
 
 // usable returns whether the given server is the current one for its
@@ -352,20 +397,20 @@ func (b *Backend) Save(ln *lines.Lines) {
 
 // Close notifies the server that the file has been closed,
 // shutting down the server if it is the last file using it.
+// It works for buffers that have already been closed, which clears
+// their filename.
 func (b *Backend) Close(ln *lines.Lines) {
 	if ln == nil {
 		return
 	}
-	fname := ln.Filename()
-	key := normalizePath(fname)
 	b.mu.Lock()
-	ref := b.docs[key]
+	key, ref := b.refFor(ln)
 	delete(b.docs, key)
 	b.mu.Unlock()
 	if ref == nil {
 		return
 	}
-	ref.srv.Close(URIFromPath(fname))
+	ref.srv.Close(URIFromPath(ref.fname))
 	b.maybeShutdown(ref.srv)
 }
 
@@ -746,12 +791,45 @@ func (b *Backend) Symbols(ln *lines.Lines) []lang.Symbol {
 	if err != nil {
 		return nil
 	}
-	return convertDocSymbols(ln, syms, ln.Filename())
+	return convertDocSymbols(syms, ln.Filename(), func(r Range) textpos.Region { return regionFromLSP(ln, r) })
 }
 
-// convertDocSymbols converts the hierarchical LSP document symbols into
-// our [lang.Symbol] tree.
-func convertDocSymbols(ln *lines.Lines, syms []DocumentSymbol, fname string) []lang.Symbol {
+// PackageSymbols returns the document symbols for all of the files in
+// the directory of the given buffer's file with the same extension,
+// which is the package for Go, excluding Go test files unless the given
+// file is one. The files do not need to be open.
+func (b *Backend) PackageSymbols(ln *lines.Lines) []lang.Symbol {
+	srv, ok := b.readyServer(ln)
+	if !ok {
+		return nil
+	}
+	fname := ln.Filename()
+	ext := filepath.Ext(fname)
+	tests := strings.HasSuffix(fname, "_test.go")
+	files, _ := filepath.Glob(filepath.Join(filepath.Dir(fname), "*"+ext))
+	files = slices.DeleteFunc(files, func(f string) bool {
+		return ext == ".go" && !tests && strings.HasSuffix(f, "_test.go")
+	})
+	fsyms := make([][]DocumentSymbol, len(files))
+	var wg sync.WaitGroup
+	for i, f := range files {
+		wg.Go(func() {
+			fsyms[i], _ = srv.DocumentSymbol(URIFromPath(f))
+		})
+	}
+	wg.Wait()
+	rc := b.newRegionConverter()
+	var out []lang.Symbol
+	for i, f := range files {
+		out = append(out, convertDocSymbols(fsyms[i], f, func(r Range) textpos.Region { return rc.region(f, r) })...)
+	}
+	return out
+}
+
+// convertDocSymbols converts the hierarchical LSP document symbols for
+// the given file into our [lang.Symbol] tree, using the given function
+// to convert ranges into editor units.
+func convertDocSymbols(syms []DocumentSymbol, fname string, region func(r Range) textpos.Region) []lang.Symbol {
 	out := make([]lang.Symbol, 0, len(syms))
 	for _, ds := range syms {
 		sy := lang.Symbol{
@@ -759,10 +837,10 @@ func convertDocSymbols(ln *lines.Lines, syms []DocumentSymbol, fname string) []l
 			Detail:   ds.Detail,
 			Kind:     symbolToken(int(ds.Kind)),
 			Filename: fname,
-			Region:   regionFromLSP(ln, ds.SelectionRange),
+			Region:   region(ds.SelectionRange),
 		}
 		if len(ds.Children) > 0 {
-			sy.Children = convertDocSymbols(ln, ds.Children, fname)
+			sy.Children = convertDocSymbols(ds.Children, fname, region)
 		}
 		out = append(out, sy)
 	}

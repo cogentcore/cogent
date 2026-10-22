@@ -292,3 +292,51 @@ func TestCompletionCallGopls(t *testing.T) {
 	assert.Equal(t, "fmt.Println()", ed.NewText)
 	assert.Equal(t, -1, ed.CursorAdjust)
 }
+
+// TestPackageSymbolsGopls checks the symbols of all of the files in the
+// package, including files that are not open, excluding test files.
+func TestPackageSymbolsGopls(t *testing.T) {
+	src := "package main\n\nfunc main() {}\n"
+	b, ln, srcPath := goplsSetup(t, src)
+	dir := filepath.Dir(srcPath)
+	os.WriteFile(filepath.Join(dir, "other.go"), []byte("package main\n\ntype T struct{ F int }\n\nfunc (t T) M() {}\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "main_test.go"), []byte("package main\n\nfunc helper() {}\n"), 0644)
+	names := map[string]string{}
+	waitUntil(t, 30*time.Second, "package symbols", func() bool {
+		for _, sy := range b.PackageSymbols(ln) {
+			names[sy.Name] = filepath.Base(sy.Filename)
+		}
+		return names["T"] != ""
+	})
+	assert.Equal(t, "main.go", names["main"])
+	assert.Equal(t, "other.go", names["T"])
+	assert.NotContains(t, names, "helper")
+}
+
+// TestRenameCloseGopls checks that a buffer that is renamed has its old
+// document closed with the server, and that closing a buffer that has
+// already been closed (which clears its filename) closes its document.
+func TestRenameCloseGopls(t *testing.T) {
+	src := "package main\n\nfunc main() {}\n"
+	b, ln, srcPath := goplsSetup(t, src)
+	var renamedFrom string
+	b.Renamed = func(rln *lines.Lines, old string) { renamedFrom = old }
+	srv, _, _ := b.serverFor(ln)
+	oldURI := URIFromPath(srcPath)
+	assert.True(t, srv.isOpen(oldURI))
+
+	newPath := filepath.Join(filepath.Dir(srcPath), "renamed.go")
+	os.WriteFile(newPath, []byte(src), 0644)
+	ln.SetFilename(newPath)
+	b.Change(ln)
+	newURI := URIFromPath(newPath)
+	assert.False(t, srv.isOpen(oldURI), "old document still open")
+	assert.True(t, srv.isOpen(newURI))
+	assert.Equal(t, srcPath, renamedFrom)
+	assert.Equal(t, newPath, b.Filename(ln))
+
+	ln.Close() // clears the filename
+	b.Close(ln)
+	assert.False(t, srv.isOpen(newURI), "closed document still open")
+	assert.Equal(t, "", b.Filename(ln))
+}

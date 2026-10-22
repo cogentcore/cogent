@@ -13,12 +13,15 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/cogent/code/lang"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/complete"
+	"cogentcore.org/core/text/parse/syms"
 	"cogentcore.org/core/text/textpos"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -324,4 +327,46 @@ func TestEditorOccurrences(t *testing.T) {
 	ed.HighlightsReset()
 	et.ls.setOccurrences(ed, regs)
 	assert.Equal(t, regs, ed.Highlights)
+}
+
+// TestEditorSymbolsPanel checks the Symbols panel tree from the language
+// server, for package and file scope, with methods under their types.
+func TestEditorSymbolsPanel(t *testing.T) {
+	src := "package main\n\nvar V = 2\n\ntype T struct {\n\tF int\n}\n\nfunc (t *T) M() {}\n\nfunc main() {}\n"
+	et := newEditorTest(t, src, textpos.Pos{})
+	ln := et.ed.Lines
+	os.WriteFile(filepath.Join(filepath.Dir(ln.Filename()), "other.go"), []byte("package main\n\nfunc (t T) M2() {}\n\nfunc Other() {}\n"), 0644)
+	symTree := func(sl []lang.Symbol, fname string) []string {
+		root := &syms.Symbol{Name: "symbols"}
+		for _, s := range nestMethods(sl) {
+			c := LangSymbolToSyms(s)
+			root.Children.Add(&c)
+		}
+		sn := NewSymNode()
+		sn.OpenSyms(root, fname, "")
+		var names []string
+		sn.WalkDown(func(k tree.Node) bool {
+			if k == tree.Node(sn) {
+				return tree.Continue
+			}
+			depth := 0
+			for p := k.AsTree().Parent; p != nil && p != tree.Node(sn); p = p.AsTree().Parent {
+				depth++
+			}
+			names = append(names, strings.Repeat(" ", depth)+k.AsTree().Name)
+			return tree.Continue
+		})
+		return names
+	}
+	var pkg []string
+	waitCode(t, 30*time.Second, "package symbols", func() bool {
+		pkg = symTree(et.ls.lspB.PackageSymbols(ln), "")
+		return slices.Contains(pkg, "Other()")
+	})
+	t.Logf("package: %q", pkg)
+	assert.Subset(t, pkg, []string{"V", "T", " F", " M()", " M2()", "main()", "Other()"})
+	file := symTree(et.ls.lspB.Symbols(ln), ln.Filename())
+	t.Logf("file: %q", file)
+	assert.Subset(t, file, []string{"V", "T", " F", " M()", "main()"})
+	assert.NotContains(t, file, "Other()")
 }

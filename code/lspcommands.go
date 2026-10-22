@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"image"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -555,6 +557,55 @@ func langSymItems(cv *Code, sl []lang.Symbol) []core.ChooserItem {
 		}
 	}
 	return items
+}
+
+// methodName matches the names of Go methods as gopls lists them in
+// document symbols: (T).M or (*T).M, with optional type parameters.
+var methodName = regexp.MustCompile(`^\(\*?([\pL_][\pL\pN_]*)(?:\[[^\]]*\])?\)\.(.+)$`)
+
+// nestMethods moves the top-level method symbols named (T).M or (*T).M,
+// as gopls lists Go methods, to be children of their type T, named M,
+// when T is among the symbols, as the parse system symbols are.
+func nestMethods(sl []lang.Symbol) []lang.Symbol {
+	types := map[string]bool{}
+	for _, sy := range sl {
+		types[sy.Name] = true
+	}
+	type method struct {
+		recv string
+		sym  lang.Symbol
+	}
+	var methods []method
+	out := make([]lang.Symbol, 0, len(sl))
+	for _, sy := range sl {
+		if m := methodName.FindStringSubmatch(sy.Name); m != nil && types[m[1]] {
+			sy.Name = m[2]
+			methods = append(methods, method{recv: m[1], sym: sy})
+			continue
+		}
+		out = append(out, sy)
+	}
+	for _, md := range methods {
+		if i := slices.IndexFunc(out, func(sy lang.Symbol) bool { return sy.Name == md.recv }); i >= 0 {
+			out[i].Children = append(out[i].Children, md.sym)
+		}
+	}
+	return out
+}
+
+// flattenSymbols returns the given symbols and all of their children,
+// with the names of children qualified by those of their parents
+// (e.g., Type.Method), for a flat list of symbols to search.
+func flattenSymbols(sl []lang.Symbol, prefix string) []lang.Symbol {
+	var out []lang.Symbol
+	for _, sy := range sl {
+		sy.Name = prefix + sy.Name
+		children := sy.Children
+		sy.Children = nil
+		out = append(out, sy)
+		out = append(out, flattenSymbols(children, sy.Name+".")...)
+	}
+	return out
 }
 
 // LangSymbolToSyms converts a [lang.Symbol] to the [syms.Symbol]

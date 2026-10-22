@@ -172,65 +172,6 @@ func (i *BBoxPoints) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "BBoxPoints")
 }
 
-var _canvasFlagsValues = []canvasFlags{0}
-
-// canvasFlagsN is the highest valid value for type canvasFlags, plus one.
-const canvasFlagsN canvasFlags = 1
-
-var _canvasFlagsValueMap = map[string]canvasFlags{`AutoSaving`: 0}
-
-var _canvasFlagsDescMap = map[canvasFlags]string{0: `canvasAutoSaving is true if auto-saving.`}
-
-var _canvasFlagsMap = map[canvasFlags]string{0: `AutoSaving`}
-
-// String returns the string representation of this canvasFlags value.
-func (i canvasFlags) String() string { return enums.BitFlagString(i, _canvasFlagsValues) }
-
-// BitIndexString returns the string representation of this canvasFlags value
-// if it is a bit index value (typically an enum constant), and
-// not an actual bit flag value.
-func (i canvasFlags) BitIndexString() string { return enums.String(i, _canvasFlagsMap) }
-
-// SetString sets the canvasFlags value from its string representation,
-// and returns an error if the string is invalid.
-func (i *canvasFlags) SetString(s string) error { *i = 0; return i.SetStringOr(s) }
-
-// SetStringOr sets the canvasFlags value from its string representation
-// while preserving any bit flags already set, and returns an
-// error if the string is invalid.
-func (i *canvasFlags) SetStringOr(s string) error {
-	return enums.SetStringOr(i, s, _canvasFlagsValueMap, "canvasFlags")
-}
-
-// Int64 returns the canvasFlags value as an int64.
-func (i canvasFlags) Int64() int64 { return int64(i) }
-
-// SetInt64 sets the canvasFlags value from an int64.
-func (i *canvasFlags) SetInt64(in int64) { *i = canvasFlags(in) }
-
-// Desc returns the description of the canvasFlags value.
-func (i canvasFlags) Desc() string { return enums.Desc(i, _canvasFlagsDescMap) }
-
-// canvasFlagsValues returns all possible values for the type canvasFlags.
-func canvasFlagsValues() []canvasFlags { return _canvasFlagsValues }
-
-// Values returns all possible values for the type canvasFlags.
-func (i canvasFlags) Values() []enums.Enum { return enums.Values(_canvasFlagsValues) }
-
-// HasFlag returns whether these bit flags have the given bit flag set.
-func (i *canvasFlags) HasFlag(f enums.BitFlag) bool { return enums.HasFlag((*int64)(i), f) }
-
-// SetFlag sets the value of the given flags in these flags to the given value.
-func (i *canvasFlags) SetFlag(on bool, f ...enums.BitFlag) { enums.SetFlag((*int64)(i), on, f...) }
-
-// MarshalText implements the [encoding.TextMarshaler] interface.
-func (i canvasFlags) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
-
-// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *canvasFlags) UnmarshalText(text []byte) error {
-	return enums.UnmarshalText(i, text, "canvasFlags")
-}
-
 var _MarkerColorsValues = []MarkerColors{0, 1, 2}
 
 // MarkerColorsN is the highest valid value for type MarkerColors, plus one.

@@ -110,7 +110,7 @@ func TestApplyClearDiagsTags(t *testing.T) {
 	// clearDiags cleans up tracking state without error:
 	guardCode(t, 10*time.Second, "applyDiags + clearDiags", func() {
 		ls.applyDiags(ln, diags)
-		ls.clearDiags(ln)
+		ls.clearDiags(ln, ln.Filename())
 		if got := errTagCount(ln, 2); got != 0 {
 			t.Errorf("clearDiags left %d tags", got)
 		}
@@ -277,6 +277,26 @@ func TestDiagsFlowWithGopls(t *testing.T) {
 	waitCode(t, 10*time.Second, "status-bar summary cleared after fix", func() bool {
 		return ls.DiagStatusMsg(ln) == ""
 	})
+
+	// break it again, then close the buffer as Code does: the buffer is
+	// closed first, clearing its filename, and then the service is told:
+	ln.SetText([]byte(badSrc))
+	ls.Change(ln)
+	waitCode(t, 60*time.Second, "error diagnostics again", func() bool {
+		return strings.Contains(ls.DiagStatusMsg(ln), "1 error")
+	})
+	ln.Close()
+	ls.Closed(ln)
+	ls.mu.Lock()
+	_, hasStatus := ls.diagStatus[demoPath]
+	_, hasCache := ls.diagCache[demoPath]
+	ls.mu.Unlock()
+	if hasStatus || hasCache {
+		t.Errorf("diagnostics state remains after close: status %v, cache %v", hasStatus, hasCache)
+	}
+	if ls.lspB.Filename(ln) != "" {
+		t.Error("buffer still tracked by the backend after close")
+	}
 }
 
 func TestDiagAt(t *testing.T) {

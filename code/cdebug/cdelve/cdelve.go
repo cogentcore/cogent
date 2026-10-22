@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
@@ -43,6 +44,10 @@ type GiDelve struct {
 	lastEvalScope *api.EvalScope           // last used EvalScope
 	statFunc      func(stat cdebug.Status) // status function
 	params        cdebug.Params            // local copy of initial params
+
+	consoleMu      sync.Mutex // protects consolePending and consoleWriting
+	consolePending []string   // console messages that are not written yet
+	consoleWriting bool       // whether a goroutine is writing consolePending
 }
 
 // NewGiDelve creates a new debugger exe and client
@@ -59,14 +64,48 @@ func (gd *GiDelve) HasTasks() bool {
 	return true
 }
 
+// WriteToConsole writes the given message to the console output.
+// It is called both from the event loop (the debugger commands of the
+// DebugPanel, with the render lock of its window) and from goroutines
+// without it (DebugPanel.Continue, the goroutine of Continue, and the
+// markup function of the delve output monitor), so the messages are
+// written in order by a separate goroutine with
+// [lines.Lines.AppendTextMarkupAsync], which gets the lock of the console
+// editor itself and must not be called with it held.
 func (gd *GiDelve) WriteToConsole(msg string) {
 	if gd.obuf == nil {
 		log.Println(msg)
 		return
 	}
-	tlns := []rune(msg)
-	mlns := rich.NewPlainText(tlns)
-	gd.obuf.Lines.AppendTextMarkup([][]rune{tlns}, []rich.Text{mlns})
+	gd.consoleMu.Lock()
+	defer gd.consoleMu.Unlock()
+	gd.consolePending = append(gd.consolePending, msg)
+	if !gd.consoleWriting {
+		gd.consoleWriting = true
+		go gd.writeConsole()
+	}
+}
+
+// writeConsole writes the pending console messages, until there are none.
+func (gd *GiDelve) writeConsole() {
+	for {
+		gd.consoleMu.Lock()
+		msgs := gd.consolePending
+		gd.consolePending = nil
+		if len(msgs) == 0 {
+			gd.consoleWriting = false
+			gd.consoleMu.Unlock()
+			return
+		}
+		gd.consoleMu.Unlock()
+		text := make([][]rune, len(msgs))
+		markup := make([]rich.Text, len(msgs))
+		for i, msg := range msgs {
+			text[i] = []rune(msg)
+			markup[i] = rich.NewPlainText(text[i])
+		}
+		gd.obuf.Lines.AppendTextMarkupAsync(text, markup)
+	}
 }
 
 func (gd *GiDelve) LogErr(err error) error {

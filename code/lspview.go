@@ -163,7 +163,12 @@ func (ls *LangService) applySemanticTags(ln *lines.Lines, toks []lsp.SemanticTok
 
 // clearSemanticTags removes any semantic token tags we applied.
 func (ls *LangService) clearSemanticTags(ln *lines.Lines) {
-	fname := ln.Filename()
+	ls.clearSemanticTagsFile(ln, ln.Filename())
+}
+
+// clearSemanticTagsFile removes any semantic token tags we applied
+// to the given buffer for the given filename.
+func (ls *LangService) clearSemanticTagsFile(ln *lines.Lines, fname string) {
 	ls.mu.Lock()
 	tagged := ls.semanticTagged[fname]
 	delete(ls.semanticTagged, fname)

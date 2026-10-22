@@ -5,6 +5,9 @@
 package code
 
 import (
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/text/parse/syms"
+	"cogentcore.org/core/text/token"
 	"os"
 	"path/filepath"
 	"testing"
@@ -78,5 +81,44 @@ func TestLocationsMarkup(t *testing.T) {
 	links := mus[4].GetLinks()
 	if assert.Len(t, links, 1) {
 		assert.Equal(t, "location:1", links[0].URL)
+	}
+}
+
+func TestFlattenSymbols(t *testing.T) {
+	sl := []lang.Symbol{{Name: "T", Children: []lang.Symbol{{Name: "F"}, {Name: "M"}}}, {Name: "main"}}
+	var names []string
+	for _, sy := range flattenSymbols(sl, "") {
+		names = append(names, sy.Name)
+		assert.Empty(t, sy.Children)
+	}
+	assert.Equal(t, []string{"T", "T.F", "T.M", "main"}, names)
+}
+
+func TestNestMethods(t *testing.T) {
+	sl := []lang.Symbol{
+		{Name: "T", Children: []lang.Symbol{{Name: "F"}}},
+		{Name: "(*T).M", Detail: "func()"},
+		{Name: "(G[K]).N"},
+		{Name: "G"},
+		{Name: "(*Other).X"}, // type not among the symbols: kept as is
+		{Name: "main"},
+	}
+	out := nestMethods(sl)
+	var names []string
+	for _, sy := range flattenSymbols(out, "") {
+		names = append(names, sy.Name)
+	}
+	assert.Equal(t, []string{"T", "T.F", "T.M", "G", "G.N", "(*Other).X", "main"}, names)
+	assert.Equal(t, "func()", out[0].Children[1].Detail, "method detail kept")
+}
+
+func TestSymNodeIcons(t *testing.T) {
+	for kind, ic := range map[token.Tokens]icons.Icon{
+		token.NameType: icons.Title, token.NameStruct: icons.Title, token.NameInterface: icons.Title,
+		token.NameConstant: icons.Constant, token.NameField: icons.Field, token.NameMethod: icons.Method,
+		token.NameFunction: icons.Function, token.NameVar: icons.Variable,
+	} {
+		sn := NewSymNode().SetSymbol(syms.Symbol{Kind: kind})
+		assert.Equal(t, ic, sn.GetIcon(), kind.String())
 	}
 }

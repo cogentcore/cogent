@@ -472,7 +472,7 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *lines.Lines) {
 	} else if len(cm.Cmds) > 0 {
 		cma := &cm.Cmds[0]
 		if buf == nil {
-			go cm.RunNoBuf(cv, cma)
+			go cm.runNoBufAsync(cv, cma)
 		} else {
 			go cm.RunBuf(cv, buf, cma)
 		}
@@ -512,7 +512,7 @@ func (cm *Command) RunBuf(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 		}
 		err = cmd.Wait()
 	}
-	return cm.RunStatus(cv, buf, cmdstr, err, nil)
+	return cm.runStatusAsync(cv, buf, cmdstr, err, nil)
 }
 
 // RunNoBuf runs a command without any output to the buffer -- can call using
@@ -523,6 +523,26 @@ func (cm *Command) RunNoBuf(cv *Code, cma *CmdAndArgs) bool {
 	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	return cm.RunStatus(cv, nil, cmdstr, err, out)
+}
+
+// runNoBufAsync is [Command.RunNoBuf] for a separate goroutine,
+// which reports the status under the lock of cv.
+func (cm *Command) runNoBufAsync(cv *Code, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
+	out, err := cmd.CombinedOutput()
+	return cm.runStatusAsync(cv, nil, cmdstr, err, out)
+}
+
+// runStatusAsync is [Command.RunStatus] for a separate goroutine:
+// it updates the widgets of cv under its lock, and does nothing
+// if cv is no longer shown (its window has been closed).
+func (cm *Command) runStatusAsync(cv *Code, buf *lines.Lines, cmdstr string, err error, out []byte) bool {
+	if !cv.AsyncLockIfShown() {
+		return err == nil
+	}
+	defer cv.AsyncUnlock()
+	return cm.RunStatus(cv, buf, cmdstr, err, out)
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
