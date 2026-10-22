@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,6 +49,12 @@ type Backend struct {
 	// goroutine and must not block. It returns whether it was shown.
 	ShowDocument func(uri string, loc *lang.Location) bool
 
+	// Progress, if set, is called with a short message describing the
+	// most recent operation in progress in the servers (e.g., gopls
+	// loading packages), or "" when there are none. It is called from
+	// server connection goroutines and must not block.
+	Progress func(msg string)
+
 	// Verbose enables detailed logging of the backend.
 	Verbose bool
 
@@ -62,6 +69,10 @@ type Backend struct {
 	// (see [Backend.captureEdits]).
 	cmdEdits  []lang.FileEdits
 	inCommand bool
+
+	// progress are the messages of the operations in progress,
+	// in order of their most recent update, for [Backend.Progress].
+	progress []progressMsg
 
 	stopped bool
 
@@ -250,6 +261,11 @@ func (b *Backend) serverFor(ln *lines.Lines) (*Server, *docRef, bool) {
 		srv.ApplyEdit = b.handleApplyEdit
 		if b.ShowDocument != nil {
 			srv.ShowDocument = b.handleShowDocument
+		}
+		if b.Progress != nil {
+			srv.Progress = func(token, title, msg string, done bool) {
+				b.handleProgress(cfg.ID, token, title, msg, done)
+			}
 		}
 		b.servers[skey] = srv
 		go srv.Start(context.Background()) // errors are logged and recorded
@@ -480,6 +496,33 @@ func codeString(code any) string {
 	return ""
 }
 
+// progressMsg is the message for one operation in progress.
+type progressMsg struct {
+	key, msg string
+}
+
+// handleProgress updates the operations in progress for the given
+// server operation, and calls [Backend.Progress] with the message for
+// the most recently updated one.
+func (b *Backend) handleProgress(server, token, title, msg string, done bool) {
+	key := server + "\x00" + token
+	text := server + ": " + title
+	if msg != "" {
+		text += ": " + msg
+	}
+	b.mu.Lock()
+	b.progress = slices.DeleteFunc(b.progress, func(p progressMsg) bool { return p.key == key })
+	if !done {
+		b.progress = append(b.progress, progressMsg{key: key, msg: text})
+	}
+	cur := ""
+	if n := len(b.progress); n > 0 {
+		cur = b.progress[n-1].msg
+	}
+	b.mu.Unlock()
+	b.Progress(cur)
+}
+
 // handleShowDocument implements server window/showDocument requests,
 // using [Backend.ShowDocument].
 func (b *Backend) handleShowDocument(sd ShowDocumentParams) bool {
@@ -560,12 +603,31 @@ func (b *Backend) Hover(ln *lines.Lines, pos textpos.Pos) string {
 
 // Definition returns definition locations for the symbol at the position.
 func (b *Backend) Definition(ln *lines.Lines, pos textpos.Pos) []lang.Location {
+	return b.locations(ln, pos, (*Server).Definition)
+}
+
+// TypeDefinition returns the locations of the definition of the type
+// of the symbol at the position.
+func (b *Backend) TypeDefinition(ln *lines.Lines, pos textpos.Pos) []lang.Location {
+	return b.locations(ln, pos, (*Server).TypeDefinition)
+}
+
+// Implementations returns the locations of the implementations of the
+// interface or method at the position, or of the interfaces that the
+// type at the position implements.
+func (b *Backend) Implementations(ln *lines.Lines, pos textpos.Pos) []lang.Location {
+	return b.locations(ln, pos, (*Server).Implementation)
+}
+
+// locations returns the locations from the given server position
+// request for the symbol at the position.
+func (b *Backend) locations(ln *lines.Lines, pos textpos.Pos, req func(*Server, *TextDocumentPositionParams) ([]Location, error)) []lang.Location {
 	srv, ok := b.readyServer(ln)
 	if !ok {
 		return nil
 	}
 	params := posParams(ln, pos)
-	locs, err := srv.Definition(&params)
+	locs, err := req(srv, &params)
 	if err != nil {
 		return nil
 	}
@@ -649,6 +711,27 @@ func (b *Backend) openLines(fname string) *lines.Lines {
 		return ref.ln
 	}
 	return nil
+}
+
+// Occurrences returns the regions of the occurrences of the symbol at the
+// position in the buffer, for highlighting them, or nil if there is no
+// symbol there.
+func (b *Backend) Occurrences(ln *lines.Lines, pos textpos.Pos) []textpos.Region {
+	srv, ok := b.readyServer(ln)
+	if !ok || !jsonEnabled(srv.Caps().DocumentHighlightProvider) {
+		return nil
+	}
+	params := posParams(ln, pos)
+	srv.DidChange(params.TextDocument.URI, currentText(ln))
+	hs, err := srv.DocumentHighlight(&params)
+	if err != nil {
+		return nil
+	}
+	regs := make([]textpos.Region, len(hs))
+	for i, h := range hs {
+		regs[i] = regionFromLSP(ln, h.Range)
+	}
+	return regs
 }
 
 ////////   Symbols
@@ -755,6 +838,29 @@ var symbolKindToken = map[int]token.Tokens{
 	24: token.NameEvent,
 	25: token.Operator,
 	26: token.NameTypeParam,
+}
+
+////////   Selection ranges
+
+// SelectionRanges returns the nested regions around the given position,
+// from the innermost (e.g., the word) to the outermost (e.g., the whole
+// function), for expanding and shrinking the selection.
+func (b *Backend) SelectionRanges(ln *lines.Lines, pos textpos.Pos) []textpos.Region {
+	srv, ok := b.readyServer(ln)
+	if !ok {
+		return nil
+	}
+	uri := docID(ln).URI
+	srv.DidChange(uri, currentText(ln))
+	rs, err := srv.SelectionRange(uri, toLSPPos(ln, pos))
+	if err != nil {
+		return nil
+	}
+	regs := make([]textpos.Region, len(rs))
+	for i, r := range rs {
+		regs[i] = regionFromLSP(ln, r)
+	}
+	return regs
 }
 
 ////////   Inlay hints

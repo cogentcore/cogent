@@ -142,5 +142,11 @@ func (cv *Code) codeKeys(e events.Event) {
 	case KeySignatureHelp:
 		e.SetHandled()
 		cv.ShowSignatureHelp()
+	case KeyExpandSelection:
+		e.SetHandled()
+		cv.ExpandSelection()
+	case KeyShrinkSelection:
+		e.SetHandled()
+		cv.ShrinkSelection()
 	}
 }

@@ -128,8 +128,11 @@ var DefaultServers = []*ServerConfig{
 				"noresultvalues": true,
 			},
 			"completeUnimported": true,
-			"usePlaceholders":    true,
-			"staticcheck":        true,
+			// placeholders insert the parameter names as text, as the
+			// editor cannot select them for typing over; the signature
+			// help shows the parameters instead:
+			"usePlaceholders": false,
+			"staticcheck":     true,
 			// gopls only returns semantic tokens when explicitly
 			// enabled (it is off by default in the settings;
 			// Options.Set uses the last segment of a dotted name):

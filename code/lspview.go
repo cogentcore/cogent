@@ -276,6 +276,7 @@ func (ls *LangService) ScheduleSigHelp(tv *TextEditor) {
 		ls.sigPending = false
 		ls.mu.Unlock()
 		ls.SigHelpUpdate(tv)
+		ls.scheduleOccurrences(tv)
 	})
 	tv.NeedsRender()
 }

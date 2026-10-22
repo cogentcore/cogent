@@ -177,6 +177,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv.Highlights = tv.Highlights[:0]
 	tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
 	tv.Highlights = append(tv.Highlights, tr)
+	cv.LangSvc().replaceableHighlights(tv)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
 	cv.FocusOnTabs()

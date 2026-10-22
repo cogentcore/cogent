@@ -76,6 +76,13 @@ type Server struct {
 	// if not.
 	ApplyEdit func(we WorkspaceEdit) (applied bool, reason string)
 
+	// Progress receives the progress of server operations, if set:
+	// the title of the operation, its current message (with any
+	// percentage done), and whether it has ended, keyed by a token
+	// that is unique to each operation. It is called from the server
+	// connection goroutine and must not block.
+	Progress func(token, title, msg string, done bool)
+
 	// ShowDocument receives server requests to show a document
 	// (window/showDocument), if set. It must be set before calling
 	// [Start], and must not block. It returns whether it was shown.
@@ -94,6 +101,9 @@ type Server struct {
 	// options are the effective server options resolved at creation
 	// from the registry (built-in InitOptions plus overrides).
 	options map[string]any
+
+	// progress is the title of each operation in progress, by token.
+	progress map[string]string
 
 	mu       sync.Mutex
 	state    int
@@ -349,7 +359,8 @@ func (s *Server) InitParams() *InitializeParams {
 			CompletionItem: &CompletionItemCapability{
 				SnippetSupport:      true,
 				DocumentationFormat: []string{"markdown", "plaintext"},
-				ResolveSupport:      &ResolveSupport{Properties: []string{"documentation"}},
+				// note: no ResolveSupport, as completionItem/resolve is not
+				// used, so that servers include documentation in the items.
 			},
 			ContextSupport: true,
 		},
@@ -668,10 +679,29 @@ func (s *Server) Hover(posParams *HoverParams) (string, bool) {
 // Definition sends a textDocument/definition request, returning
 // locations in either Location or LocationLink form.
 func (s *Server) Definition(posParams *DefinitionParams) ([]Location, error) {
+	return s.locations("textDocument/definition", posParams)
+}
+
+// TypeDefinition sends a textDocument/typeDefinition request,
+// returning the locations of the type of the symbol at the position.
+func (s *Server) TypeDefinition(posParams *TextDocumentPositionParams) ([]Location, error) {
+	return s.locations("textDocument/typeDefinition", posParams)
+}
+
+// Implementation sends a textDocument/implementation request,
+// returning the locations of the implementations of the interface
+// or method at the position, or the interfaces that a type implements.
+func (s *Server) Implementation(posParams *TextDocumentPositionParams) ([]Location, error) {
+	return s.locations("textDocument/implementation", posParams)
+}
+
+// locations sends a position request with the given method that returns
+// locations in either Location or LocationLink form.
+func (s *Server) locations(method string, posParams *TextDocumentPositionParams) ([]Location, error) {
 	var raw json.RawMessage
 	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
 	defer cancel()
-	if err := s.request(ctx, "textDocument/definition", posParams, &raw); err != nil {
+	if err := s.request(ctx, method, posParams, &raw); err != nil {
 		return nil, err
 	}
 	return decodeLocations(raw)
@@ -899,6 +929,37 @@ func (s *Server) SignatureHelp(params *SignatureHelpParams) (*SignatureHelp, err
 	return &sh, nil
 }
 
+// DocumentHighlight sends a textDocument/documentHighlight request,
+// returning the occurrences of the symbol at the position in the document.
+func (s *Server) DocumentHighlight(posParams *TextDocumentPositionParams) ([]DocumentHighlight, error) {
+	var hs []DocumentHighlight
+	ctx, cancel := context.WithTimeout(context.Background(), quickCallTimeout)
+	defer cancel()
+	if err := s.request(ctx, "textDocument/documentHighlight", posParams, &hs); err != nil {
+		return nil, err
+	}
+	return hs, nil
+}
+
+// SelectionRange sends a textDocument/selectionRange request for the
+// given position, returning the ranges around it, innermost first.
+func (s *Server) SelectionRange(uri DocumentURI, pos Position) ([]Range, error) {
+	var srs []SelectionRange
+	ctx, cancel := context.WithTimeout(context.Background(), quickCallTimeout)
+	defer cancel()
+	params := &SelectionRangeParams{TextDocument: TextDocumentIdentifier{URI: uri}, Positions: []Position{pos}}
+	if err := s.request(ctx, "textDocument/selectionRange", params, &srs); err != nil {
+		return nil, err
+	}
+	var rs []Range
+	if len(srs) > 0 {
+		for sr := &srs[0]; sr != nil; sr = sr.Parent {
+			rs = append(rs, sr.Range)
+		}
+	}
+	return rs, nil
+}
+
 // InlayHint sends a textDocument/inlayHint request for the given range.
 // Note: the editor does not currently render inlay hints; this is for
 // programmatic use (CLI, tooling).
@@ -996,6 +1057,32 @@ func (s *Server) Formatting(uri DocumentURI, opts FormattingOptions) ([]TextEdit
 	return edits, nil
 }
 
+// handleProgress handles a $/progress notification.
+// It is only called from the connection read goroutine.
+func (s *Server) handleProgress(token string, wp *WorkDoneProgress) {
+	if s.progress == nil {
+		s.progress = make(map[string]string)
+	}
+	if wp.Kind == "begin" {
+		s.progress[token] = wp.Title
+	}
+	title := s.progress[token]
+	done := wp.Kind == "end"
+	if done {
+		delete(s.progress, token)
+	}
+	msg := wp.Message
+	if wp.Percentage != nil {
+		msg = strings.TrimSpace(fmt.Sprintf("%s %d%%", msg, *wp.Percentage))
+	}
+	if Verbose {
+		log.Printf("lsp: %s: progress: %s %s: %s\n", s.Cfg.ID, wp.Kind, title, msg)
+	}
+	if s.Progress != nil {
+		s.Progress(token, title, msg, done)
+	}
+}
+
 ////////   Server -> client downcalls (Handler interface)
 
 // Request handles server-initiated requests, replying with results
@@ -1072,11 +1159,11 @@ func (s *Server) Notify(method string, params json.RawMessage) {
 		}
 	case "$/progress":
 		var pp ProgressParams
-		if err := json.Unmarshal(params, &pp); err == nil && Verbose {
-			if kind := progressKind(pp.Value); kind == "report" {
-				log.Printf("lsp: %s: progress: %s\n", s.Cfg.ID, progressMessage(pp.Value))
-			}
+		var wp WorkDoneProgress
+		if json.Unmarshal(params, &pp) != nil || json.Unmarshal(pp.Value, &wp) != nil {
+			return
 		}
+		s.handleProgress(fmt.Sprint(pp.Token), &wp)
 	default:
 		// ignore other notifications
 	}

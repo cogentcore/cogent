@@ -330,6 +330,9 @@ type ServerCapabilities struct {
 	CompletionProvider         rawJSON `json:"completionProvider,omitempty"`
 	HoverProvider              rawJSON `json:"hoverProvider,omitempty"`
 	DefinitionProvider         rawJSON `json:"definitionProvider,omitempty"`
+	DocumentHighlightProvider  rawJSON `json:"documentHighlightProvider,omitempty"`
+	TypeDefinitionProvider     rawJSON `json:"typeDefinitionProvider,omitempty"`
+	ImplementationProvider     rawJSON `json:"implementationProvider,omitempty"`
 	ReferencesProvider         rawJSON `json:"referencesProvider,omitempty"`
 	DocumentSymbolProvider     rawJSON `json:"documentSymbolProvider,omitempty"`
 	WorkspaceSymbolProvider    rawJSON `json:"workspaceSymbolProvider,omitempty"`
@@ -484,6 +487,19 @@ const (
 // CompletionItemKind is the LSP kind of a completion item,
 // which overlaps with [SymbolKind].
 type CompletionItemKind int
+
+// Completion item kinds for callables.
+const (
+	CompletionMethod      CompletionItemKind = 2
+	CompletionFunction    CompletionItemKind = 3
+	CompletionConstructor CompletionItemKind = 4
+)
+
+// IsCallable returns whether the kind is a function, method,
+// or constructor, which is completed with its call arguments.
+func (k CompletionItemKind) IsCallable() bool {
+	return k == CompletionMethod || k == CompletionFunction || k == CompletionConstructor
+}
 
 // CompletionItem represents one completion option.
 type CompletionItem struct {
@@ -682,23 +698,21 @@ type ProgressParams struct {
 	Value rawJSON `json:"value"`
 }
 
-// progressKind extracts the kind field ("begin", "report", "end")
-// from a progress value.
-func progressKind(v rawJSON) string {
-	var obj struct {
-		Kind string `json:"kind"`
-	}
-	json.Unmarshal(v, &obj)
-	return obj.Kind
-}
+// WorkDoneProgress is the union of the WorkDoneProgressBegin, Report,
+// and End values of [ProgressParams].
+type WorkDoneProgress struct {
 
-// progressMessage extracts the message field from a progress value.
-func progressMessage(v rawJSON) string {
-	var obj struct {
-		Message string `json:"message"`
-	}
-	json.Unmarshal(v, &obj)
-	return obj.Message
+	// Kind is "begin", "report", or "end".
+	Kind string `json:"kind"`
+
+	// Title is the title of the operation, in "begin" only.
+	Title string `json:"title,omitempty"`
+
+	// Message is an optional, more detailed progress message.
+	Message string `json:"message,omitempty"`
+
+	// Percentage is an optional percentage done, from 0 to 100.
+	Percentage *int `json:"percentage,omitempty"`
 }
 
 // ShowDocumentParams request that the client show a resource:
@@ -965,6 +979,34 @@ type SignatureHelp struct {
 	Signatures      []SignatureInformation `json:"signatures"`
 	ActiveSignature *int                   `json:"activeSignature,omitempty"`
 	ActiveParameter *int                   `json:"activeParameter,omitempty"`
+}
+
+////////   Document highlights
+
+// DocumentHighlight is an occurrence of the symbol at a position,
+// from a textDocument/documentHighlight request.
+type DocumentHighlight struct {
+	Range Range `json:"range"`
+
+	// Kind is 1 for text, 2 for a read, and 3 for a write (optional).
+	Kind int `json:"kind,omitempty"`
+}
+
+////////   Selection ranges
+
+// SelectionRangeParams are the params for a textDocument/selectionRange
+// request.
+type SelectionRangeParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Positions    []Position             `json:"positions"`
+}
+
+// SelectionRange is a range around a position, with the next larger
+// range that contains it as its parent, e.g., word, expression,
+// statement, block, function.
+type SelectionRange struct {
+	Range  Range           `json:"range"`
+	Parent *SelectionRange `json:"parent,omitempty"`
 }
 
 ////////   Inlay hints

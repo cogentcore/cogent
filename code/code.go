@@ -327,7 +327,12 @@ func (cv *Code) EditorByIndex(idx int) *TextEditor {
 
 // Tabs returns the main TabView
 func (cv *Code) Tabs() *core.Tabs {
-	return cv.Splits().Child(TabsIndex).(*core.Tabs)
+	sp := cv.Splits()
+	if sp == nil {
+		return nil
+	}
+	tv, _ := sp.Child(TabsIndex).(*core.Tabs)
+	return tv
 }
 
 // StatusBar returns the statusbar widget

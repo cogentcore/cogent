@@ -38,6 +38,15 @@ func (ed *TextEditor) Init() {
 	ed.On(events.Focus, func(e events.Event) {
 		ed.Code.SetActiveEditor(ed)
 	})
+	// clicks move the cursor without an Input event or a key event,
+	// which otherwise drive the cursor-dependent language features;
+	// this runs before the editor moves the cursor, but the update is
+	// deferred until after it.
+	ed.OnClick(func(e events.Event) {
+		if ed.Code != nil {
+			ed.Code.LangSvc().ScheduleSigHelp(ed)
+		}
+	})
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
@@ -249,7 +258,10 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 			ed.Code.LangSvc().codeActionsMenu(m, ed)
 		})
 		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition")
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoTypeDefinition).SetText("Go to type definition")
+		core.NewFuncButton(m).SetFunc(ed.Code.FindImplementations).SetText("Find implementations")
 		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references")
+		core.NewFuncButton(m).SetFunc(ed.Code.ShowProblems).SetText("Show problems")
 		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...")
 		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file")
 		core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")

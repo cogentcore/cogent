@@ -19,6 +19,7 @@ import (
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/textpos"
+	"github.com/stretchr/testify/assert"
 )
 
 // editorTest is a real [TextEditor] driven by key events, wired to the
@@ -83,7 +84,7 @@ func newEditorTest(t *testing.T, src string, pos textpos.Pos) *editorTest {
 	}
 
 	waitCode(t, 60*time.Second, "gopls loaded", func() bool {
-		return et.ls.lspB.Hover(ln, textpos.Pos{Line: 2, Char: 10}) != ""
+		return len(et.ls.lspB.Symbols(ln)) > 0
 	})
 	et.ed.SetCursorShow(pos)
 	return et
@@ -265,4 +266,62 @@ func TestEditorLookup(t *testing.T) {
 	if !et.ls.Lookup(et.ed) {
 		t.Errorf("quick fixes not shown for error: %v", et.ls.diagsAt(et.ed.Lines, pos))
 	}
+}
+
+// TestEditorExpandSelection expands the selection from a word in a call
+// argument outward, and shrinks it back.
+func TestEditorExpandSelection(t *testing.T) {
+	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\t_ = strings.Index(\"abc\", \"b\")\n}\n"
+	et := newEditorTest(t, src, textpos.Pos{Line: 5, Char: 8}) // in "strings"
+	selText := func() string {
+		r := et.ed.SelectRegion
+		return string(et.ed.Lines.Region(r.Start, r.End).ToBytes())
+	}
+	var sels []string
+	for et.ls.ExpandSelection(et.ed) {
+		sels = append(sels, selText())
+	}
+	t.Logf("expansions: %q", sels)
+	if len(sels) < 4 || sels[0] != "strings" || !strings.Contains(sels[len(sels)-1], "func main()") {
+		t.Fatalf("expansions: %q", sels)
+	}
+	if !slices.Contains(sels, `strings.Index("abc", "b")`) {
+		t.Errorf("call expression not among expansions: %q", sels)
+	}
+	for i := len(sels) - 2; i >= 0; i-- {
+		et.ls.ShrinkSelection(et.ed)
+		if got := selText(); got != sels[i] {
+			t.Errorf("shrink %d: %q, want %q", i, got, sels[i])
+		}
+	}
+	et.ls.ShrinkSelection(et.ed)
+	if et.ed.HasSelection() {
+		t.Errorf("selection after shrinking all the way: %q", selText())
+	}
+}
+
+// TestEditorOccurrences checks the highlighting of the occurrences of
+// the symbol at the cursor, which does not replace other highlights.
+func TestEditorOccurrences(t *testing.T) {
+	src := "package main\n\nfunc main() {\n\tx := 1\n\tx++\n\t_ = x\n}\n"
+	et := newEditorTest(t, src, textpos.Pos{Line: 3, Char: 1}) // on x
+	ed := et.ed
+	regs := et.ls.occurrences(ed, ed.Lines, ed.CursorPos)
+	if len(regs) != 3 {
+		t.Fatalf("occurrences of x: %v", regs)
+	}
+	et.ls.setOccurrences(ed, regs)
+	assert.Equal(t, regs, ed.Highlights)
+	// moving to a symbol with one occurrence clears them:
+	et.ls.setOccurrences(ed, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 2, Char: 6}))
+	assert.Empty(t, ed.Highlights)
+	// other highlights (e.g., from Find) are not replaced:
+	find := textpos.Region{Start: textpos.Pos{Line: 2, Char: 0}, End: textpos.Pos{Line: 2, Char: 4}}
+	ed.HighlightRegion(find)
+	et.ls.setOccurrences(ed, regs)
+	assert.Equal(t, []textpos.Region{find}, ed.Highlights)
+	// until they are reset:
+	ed.HighlightsReset()
+	et.ls.setOccurrences(ed, regs)
+	assert.Equal(t, regs, ed.Highlights)
 }

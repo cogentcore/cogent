@@ -156,6 +156,13 @@ func convertCompletion(lt []rune, posLine, posChar int, seed string, item Comple
 	} else if strings.HasPrefix(text, seed) {
 		repl = len(sr) // the text includes the whole qualified seed
 	}
+	if item.Kind.IsCallable() && posChar+fd < len(lt) && lt[posChar+fd] == '(' {
+		// replacing the name of a call that already has its arguments,
+		// e.g., Index -> LastIndex: insert just the name.
+		if i := strings.IndexByte(text, '('); i > 0 {
+			text, adj = text[:i], 0
+		}
+	}
 	repl = max(0, min(repl, len(sr)))
 	text = string(sr[:len(sr)-repl]) + text
 	cp := complete.Completion{

@@ -249,6 +249,8 @@ func (c *Conn) dispatch(msg *rpcMsg) {
 // Call makes a request and waits for the response, unmarshaling it
 // into result (which may be nil to ignore). It returns an error on
 // timeout, context cancellation, connection close, or server error.
+// On timeout or cancellation, the request is canceled with the server
+// ($/cancelRequest).
 func (c *Conn) Call(ctx context.Context, method string, params, result any) error {
 	c.pmu.Lock()
 	c.idSeq++
@@ -291,6 +293,8 @@ func (c *Conn) Call(ctx context.Context, method string, params, result any) erro
 		c.pmu.Lock()
 		delete(c.pend, id)
 		c.pmu.Unlock()
+		// let the server stop working on it; its reply is dropped:
+		_ = c.Notify("$/cancelRequest", map[string]int64{"id": id})
 		return ctx.Err()
 	}
 }

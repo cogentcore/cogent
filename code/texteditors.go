@@ -157,6 +157,7 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	}
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
+	cv.LangSvc().replaceableHighlights(tv)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
 	tv.NeedsLayout()

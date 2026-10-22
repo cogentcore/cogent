@@ -156,6 +156,24 @@ func TestConvertCompletion(t *testing.T) {
 	}
 }
 
+// TestConvertCompletionExistingCall checks that completing the name of
+// a call that already has its arguments does not insert them again.
+func TestConvertCompletionExistingCall(t *testing.T) {
+	line := []rune("\tx := strings.Index(s, \"find\")")
+	posChar := len([]rune("\tx := strings.In")) // cursor in the name
+	seed := completionSeed(string(line[:posChar]))
+	item := CompletionItem{Label: "LastIndex", Kind: CompletionFunction, InsertTextFormat: InsertTextSnippet,
+		TextEdit: &TextEdit{Range: Range{Start: Position{Character: 14}, End: Position{Character: 19}}, NewText: "LastIndex(${1:s string}, ${2:substr string})"}}
+	_, ed := convertCompletion(line, 0, posChar, seed, item)
+	assert.Equal(t, "strings.LastIndex", ed.NewText)
+	assert.Equal(t, 3, ed.ForwardDelete) // "dex"
+	assert.Equal(t, 0, ed.CursorAdjust)
+	// without a following paren, the arguments are inserted:
+	line = []rune("\tx := strings.In")
+	_, ed = convertCompletion(line, 0, len(line), seed, item)
+	assert.Equal(t, "strings.LastIndex(s string, substr string)", ed.NewText)
+}
+
 func TestPlainSnippet(t *testing.T) {
 	for _, tc := range []struct {
 		snip, text string
@@ -222,4 +240,55 @@ func TestURIFromPath(t *testing.T) {
 	assert.Equal(t, p, uri.Path())
 	assert.Equal(t, "/x/y z", DocumentURI("file:///x/y%20z").Path())
 	assert.Equal(t, "", DocumentURI("untitled:foo").Path())
+}
+
+// TestCompletionExistingCallGopls renames a call with completion, with
+// gopls: the existing arguments must be kept, not duplicated.
+func TestCompletionExistingCallGopls(t *testing.T) {
+	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\t_ = strings.Index(\"a\", \"find\")\n}\n"
+	b, ln, _ := goplsSetup(t, src)
+	line := "\t_ = strings.Index(\"a\", \"find\")"
+	posChar := len([]rune("\t_ = strings.In"))
+	var ms complete.Matches
+	var comp *complete.Completion
+	waitUntil(t, 30*time.Second, "LastIndex in completions", func() bool {
+		ms = b.Completions(ln, line[:posChar], 5, posChar)
+		for i := range ms.Matches {
+			if ms.Matches[i].Label == "LastIndex" {
+				comp = &ms.Matches[i]
+				return true
+			}
+		}
+		return false
+	})
+	ed := b.CompleteEdit(ln, line, posChar, *comp, ms.Seed)
+	rn := []rune(line)
+	out := string(rn[:posChar-len([]rune(ms.Seed))]) + ed.NewText + string(rn[posChar+ed.ForwardDelete:])
+	assert.Equal(t, "\t_ = strings.LastIndex(\"a\", \"find\")", out)
+}
+
+// TestCompletionCallGopls checks the text inserted for a function
+// completion with gopls: the call parens without parameter placeholders,
+// which cannot be selected in the editor, with the cursor inside them.
+func TestCompletionCallGopls(t *testing.T) {
+	src := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Prin\n}\n"
+	b, ln, _ := goplsSetup(t, src)
+	line := "\tfmt.Prin"
+	posChar := len([]rune(line))
+	var ms complete.Matches
+	var comp *complete.Completion
+	waitUntil(t, 30*time.Second, "Println in completions", func() bool {
+		ms = b.Completions(ln, line, 5, posChar)
+		for i := range ms.Matches {
+			if ms.Matches[i].Label == "Println" {
+				comp = &ms.Matches[i]
+				return true
+			}
+		}
+		return false
+	})
+	assert.Contains(t, comp.Desc, "Println formats using the default formats")
+	ed := b.CompleteEdit(ln, line, posChar, *comp, ms.Seed)
+	assert.Equal(t, "fmt.Println()", ed.NewText)
+	assert.Equal(t, -1, ed.CursorAdjust)
 }

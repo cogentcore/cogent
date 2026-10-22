@@ -20,6 +20,12 @@ var _ = types.AddFunc(&types.Func{Name: "main.Hover", Doc: "Hover shows the hove
 
 var _ = types.AddFunc(&types.Func{Name: "main.Definition", Doc: "Definition shows the definition location(s) of the symbol at FILE:LINE:COL.", Args: []string{"c"}, Returns: []string{"error"}})
 
+var _ = types.AddFunc(&types.Func{Name: "main.Typedef", Doc: "Typedef shows the location(s) of the definition of the type of the\nsymbol at FILE:LINE:COL.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.Impls", Doc: "Impls shows the locations of the implementations of the interface or\nmethod at FILE:LINE:COL, or the interfaces that the type there implements.", Args: []string{"c"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.locationsCmd", Doc: "locationsCmd runs the given location request at FILE:LINE:COL,\nprinting the locations.", Args: []string{"c", "what", "req"}, Returns: []string{"error"}})
+
 var _ = types.AddFunc(&types.Func{Name: "main.Refs", Doc: "Refs shows the reference location(s) of the symbol at FILE:LINE:COL.", Args: []string{"c"}, Returns: []string{"error"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.Symbols", Doc: "Symbols lists the hierarchical document symbols for FILE.", Args: []string{"c"}, Returns: []string{"error"}})
@@ -41,6 +47,8 @@ var _ = types.AddFunc(&types.Func{Name: "main.editCounts", Doc: "editCounts conv
 var _ = types.AddFunc(&types.Func{Name: "main.cliNormalize", Doc: "cliNormalize canonicalizes a path for comparing whether two names\nrefer to the same file, resolving symlinks like /var -> /private/var.", Args: []string{"path"}, Returns: []string{"string"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.withPos", Doc: "withPos handles the common setup for position-based commands:\nparse FILE:LINE:COL, open the file, and wait for the server.", Args: []string{"c", "fn"}, Returns: []string{"error"}})
+
+var _ = types.AddFunc(&types.Func{Name: "main.newBackend", Doc: "newBackend returns a new backend that prints the documents that\nservers ask to show, such as the pages for gopls Browse actions,\nas text for pages served by the server itself, and as a URL or\nlocation otherwise.", Returns: []string{"Backend"}})
 
 var _ = types.AddFunc(&types.Func{Name: "main.withFile", Doc: "withFile handles the common setup for single-file commands:\nopen the FILE argument and wait for the server.", Args: []string{"c", "cmd", "fn"}, Returns: []string{"error"}})
 

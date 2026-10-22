@@ -413,7 +413,27 @@ func (ls *LangService) codeActionsMenu(m *core.Scene, tv *TextEditor) {
 // GotoDefinition jumps to the definition of the symbol at the cursor,
 // using the active language backend.
 func (cv *Code) GotoDefinition() { //types:add
-	tv := cv.lspEditor("Goto definition")
+	cv.gotoLocations("Go to definition", (*lsp.Backend).Definition)
+}
+
+// GotoTypeDefinition jumps to the definition of the type of the symbol
+// at the cursor, e.g., the type of a variable, using the language server.
+func (cv *Code) GotoTypeDefinition() { //types:add
+	cv.gotoLocations("Go to type definition", (*lsp.Backend).TypeDefinition)
+}
+
+// FindImplementations lists the implementations of the interface or
+// method at the cursor, or the interfaces that the type at the cursor
+// implements, using the language server, in a menu for selection.
+func (cv *Code) FindImplementations() { //types:add
+	cv.gotoLocations("Find implementations", (*lsp.Backend).Implementations)
+}
+
+// gotoLocations does the given location request for the symbol at the
+// cursor, going to the location if there is one, and otherwise showing
+// a menu of the locations. The cmd is the name of the command.
+func (cv *Code) gotoLocations(cmd string, req func(*lsp.Backend, *lines.Lines, textpos.Pos) []lang.Location) {
+	tv := cv.lspEditor(cmd)
 	if tv == nil {
 		return
 	}
@@ -421,36 +441,16 @@ func (cv *Code) GotoDefinition() { //types:add
 	if !ok {
 		return
 	}
-	cv.SetStatus("Goto definition...")
-	locs := cv.LangSvc().lspB.Definition(tv.Lines, pos)
+	cv.SetStatus(cmd + "...")
+	locs := req(cv.LangSvc().lspB, tv.Lines, pos)
 	switch len(locs) {
 	case 0:
-		cv.SetStatus("Goto definition: not found")
+		cv.SetStatus(cmd + ": none found")
 	case 1:
 		cv.openLoc(locs[0])
 	default:
 		cv.locationsMenu(tv, locs)
 	}
-}
-
-// FindReferences lists all references to the symbol at the cursor,
-// using the active language backend, in a menu for selection.
-func (cv *Code) FindReferences() { //types:add
-	tv := cv.lspEditor("Find references")
-	if tv == nil {
-		return
-	}
-	pos, ok := cursorWordPos(tv)
-	if !ok {
-		return
-	}
-	cv.SetStatus("Finding references...")
-	locs := cv.LangSvc().lspB.References(tv.Lines, pos)
-	if len(locs) == 0 {
-		cv.SetStatus("Find references: none found")
-		return
-	}
-	cv.locationsMenu(tv, locs)
 }
 
 // locationsMenu shows a menu of the given locations in the editor,
@@ -825,4 +825,85 @@ func (cv *Code) ShowInlayHints() { //types:add
 		return
 	}
 	textcore.TextDialog(tv, fmt.Sprintf("%s: %s (%d)", inlayHintsWindow, filepath.Base(ln.Filename()), n), sb.String())
+}
+
+////////   Selection
+
+// ExpandSelection expands the selection to the next larger syntactic
+// element around it, using the language server: word, expression,
+// statement, block, function, etc.
+func (cv *Code) ExpandSelection() { //types:add
+	if tv := cv.lspEditor("Expand selection"); tv != nil && !cv.LangSvc().ExpandSelection(tv) {
+		cv.SetStatus("Expand selection: no larger element")
+	}
+}
+
+// ShrinkSelection shrinks the selection back to the next smaller
+// syntactic element, after it has been expanded with [Code.ExpandSelection].
+func (cv *Code) ShrinkSelection() { //types:add
+	if tv := cv.lspEditor("Shrink selection"); tv != nil {
+		cv.LangSvc().ShrinkSelection(tv)
+	}
+}
+
+// selectionChain returns the recorded chain of nested selection regions
+// and the index of the selected one, if it is for the given editor and
+// selection, and otherwise nil.
+func (ls *LangService) selectionChain(tv *TextEditor, sel textpos.Region) ([]textpos.Region, int) {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	if ls.selEditor != tv || ls.selIndex >= len(ls.selChain) || ls.selChain[ls.selIndex] != sel {
+		return nil, -1
+	}
+	return ls.selChain, ls.selIndex
+}
+
+// ExpandSelection does [Code.ExpandSelection] in the given editor,
+// returning false if there is no larger element.
+func (ls *LangService) ExpandSelection(tv *TextEditor) bool {
+	sel := tv.SelectRegion
+	if !tv.HasSelection() {
+		sel = textpos.Region{Start: tv.CursorPos, End: tv.CursorPos}
+	}
+	chain, idx := ls.selectionChain(tv, sel)
+	if chain == nil {
+		chain = ls.lspB.SelectionRanges(tv.Lines, sel.Start)
+	}
+	for i := idx + 1; i < len(chain); i++ {
+		if r := chain[i]; regionContains(r, sel) && r != sel {
+			ls.setSelection(tv, chain, i)
+			return true
+		}
+	}
+	return false
+}
+
+// ShrinkSelection does [Code.ShrinkSelection] in the given editor.
+func (ls *LangService) ShrinkSelection(tv *TextEditor) {
+	chain, idx := ls.selectionChain(tv, tv.SelectRegion)
+	switch {
+	case chain == nil: // not an expanded selection
+	case idx == 0:
+		tv.SelectReset()
+		tv.NeedsRender()
+	default:
+		ls.setSelection(tv, chain, idx-1)
+	}
+}
+
+// setSelection selects the region at the given index in the given chain
+// of nested selection regions in the editor, and records the chain.
+func (ls *LangService) setSelection(tv *TextEditor, chain []textpos.Region, idx int) {
+	ls.mu.Lock()
+	ls.selChain, ls.selEditor, ls.selIndex = chain, tv, idx
+	ls.mu.Unlock()
+	reg := chain[idx]
+	tv.SetCursorShow(reg.End)
+	tv.SelectRegion = reg
+	tv.NeedsRender()
+}
+
+// regionContains returns whether region a contains region b.
+func regionContains(a, b textpos.Region) bool {
+	return !b.Start.IsLess(a.Start) && !a.End.IsLess(b.End)
 }

@@ -242,6 +242,33 @@ func Definition(c *Config) error {
 	})
 }
 
+// Typedef shows the location(s) of the definition of the type of the
+// symbol at FILE:LINE:COL.
+func Typedef(c *Config) error {
+	return locationsCmd(c, "type definition", (*lsp.Backend).TypeDefinition)
+}
+
+// Impls shows the locations of the implementations of the interface or
+// method at FILE:LINE:COL, or the interfaces that the type there implements.
+func Impls(c *Config) error {
+	return locationsCmd(c, "implementations", (*lsp.Backend).Implementations)
+}
+
+// locationsCmd runs the given location request at FILE:LINE:COL,
+// printing the locations.
+func locationsCmd(c *Config, what string, req func(*lsp.Backend, *lines.Lines, textpos.Pos) []lang.Location) error {
+	return withPos(c, func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos) error {
+		var locs []lang.Location
+		if !retryQuery(func() bool { locs = req(b, ln, pos); return len(locs) > 0 }) {
+			return fmt.Errorf("no %s found at %s", what, c.Args[0])
+		}
+		for _, l := range locs {
+			fmt.Println(locString(l))
+		}
+		return nil
+	})
+}
+
 // Refs shows the reference location(s) of the symbol at FILE:LINE:COL.
 func Refs(c *Config) error {
 	return withPos(c, func(b *lsp.Backend, ln *lines.Lines, pos textpos.Pos) error {
@@ -744,5 +771,5 @@ func printSymbols(sl []lang.Symbol, indent int) {
 func main() { //types:skip
 	opts := cli.DefaultOptions("cogent-lsp", "Command-line access to language server features (gopls and other servers) via the Cogent LSP client, for shells, scripts, CI, and AI agents.")
 	opts.PrintSuccess = false
-	cli.Run(opts, &Config{}, Check, Hover, Definition, Refs, Symbols, Workspace, Format, Rename, Actions, Sig, Hints, Tokens)
+	cli.Run(opts, &Config{}, Check, Hover, Definition, Typedef, Impls, Refs, Symbols, Workspace, Format, Rename, Actions, Sig, Hints, Tokens)
 }

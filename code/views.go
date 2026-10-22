@@ -277,6 +277,10 @@ func (cv *Code) UpdateStatusText() {
 			msg = addToMsg(msg, cv.langSvc.SigStatusMsg())
 		}
 	}
+	// language server operation in progress, if any (e.g., loading):
+	if cv.langSvc != nil {
+		msg = addToMsg(msg, cv.langSvc.ProgressStatusMsg())
+	}
 	// recent transient message from SetStatus:
 	if cv.StatusMessage != "" && time.Since(cv.statusTime) < statusMessageTime {
 		msg = addToMsg(msg, cv.StatusMessage)
