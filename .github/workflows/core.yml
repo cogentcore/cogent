@@ -37,7 +37,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.6'
+          go-version: '1.27.2'
 
       - name: Install Core
         run: go install cogentcore.org/core@main && core setup
@@ -46,16 +46,16 @@ jobs:
         run: mkdir -p static && cp -r docs/. static/ && cp docs/index.html static/404.html
 
       - name: Build Code
-        run: core build web -dir code/cmd/cogentcode -o static/code
+        run: core build js -dir code/cmd/cogentcode -o static/code
 
       - name: Build Canvas
-        run: core build web -dir canvas/cmd/canvas -o static/canvas
+        run: core build js -dir canvas/cmd/canvas -o static/canvas
 
       - name: Build Chess
-        run: core build web -dir chess/chess -o static/chess
+        run: core build js -dir chess/chess -o static/chess
 
       - name: Build Marbles
-        run: core build web -dir marbles -o static/marbles
+        run: core build js -dir marbles -o static/marbles
 
       - name: Setup Pages
         id: pages
