@@ -20,6 +20,8 @@ import (
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
 	"cogentcore.org/core/tree"
+
+	"cogentcore.org/cogent/code/lang"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -71,7 +73,10 @@ func (sv *SymbolsPanel) Init() {
 			s.Grow.Set(1, 1)
 			s.Overflow.Set(styles.OverflowAuto)
 		})
-		tree.AddChildAt(w, "syms", func(w *SymTree) {
+		// note: the name is what SyncTree names the tree for the "syms"
+		// node, so that updates of the frame keep the same tree, instead
+		// of replacing it (which loses the selection and click in progress):
+		tree.AddChildAt(w, "tv_syms", func(w *SymTree) {
 			sv.symTree = w
 			sv.Syms = NewSymNode()
 			sv.Syms.SetName("syms")
@@ -175,6 +180,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv.Highlights = tv.Highlights[:0]
 	tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
 	tv.Highlights = append(tv.Highlights, tr)
+	cv.LangSvc().replaceableHighlights(tv)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
 	cv.FocusOnTabs()
@@ -185,7 +191,14 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
 	tv := cv.ActiveEditor()
-	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		sv.symbolsViaLang(true)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Lines.ParseFileState()
@@ -204,7 +217,14 @@ func (sv *SymbolsPanel) OpenPackage() {
 func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
 	tv := cv.ActiveEditor()
-	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		sv.symbolsViaLang(false)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Lines.ParseFileState()
@@ -217,6 +237,36 @@ func (sv *SymbolsPanel) OpenFile() {
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
 	sv.Syms.OpenSyms(pkg, tv.Lines.Filename(), sv.Match)
+}
+
+// symbolsViaLang populates the symbol tree using the language service
+// backend: the symbols of all files in the package for package scope,
+// and of the current file otherwise, with methods under their types.
+func (sv *SymbolsPanel) symbolsViaLang(pkgScope bool) {
+	cv := sv.Code
+	ln := cv.ActiveEditor().Lines
+	b := cv.LangSvc().lspB
+	var sl []lang.Symbol
+	if pkgScope {
+		sl = b.PackageSymbols(ln)
+	} else {
+		sl = b.Symbols(ln)
+	}
+	sl = nestMethods(sl)
+	if sl == nil {
+		core.MessageSnackbar(sv, "Symbols not ready from language server -- try again in a few moments")
+		return
+	}
+	root := &syms.Symbol{Name: "symbols", Filename: ln.Filename()}
+	for _, s := range sl {
+		c := LangSymbolToSyms(s)
+		root.Children.Add(&c)
+	}
+	fname := ""
+	if !pkgScope {
+		fname = ln.Filename()
+	}
+	sv.Syms.OpenSyms(root, fname, sv.Match)
 }
 
 func symMatch(str, match string, ignoreCase bool) bool {
@@ -324,22 +374,24 @@ type SymNode struct {
 
 // GetIcon returns the appropriate Icon for this symbol type
 func (sy *SymNode) GetIcon() icons.Icon {
-	ic := icons.Blank
-	switch sy.Symbol.Kind {
-	case token.NameType:
-		ic = icons.Title
-	case token.NameVar, token.NameVarGlobal:
-		ic = icons.Variable
-	case token.NameMethod:
-		ic = icons.Method
-	case token.NameFunction:
-		ic = icons.Function
-	case token.NameField:
-		ic = icons.Field
-	case token.NameConstant:
-		ic = icons.Constant
+	// note: sub-categories include the specific kinds from language
+	// servers, e.g., NameStruct and NameInterface are NameType, and
+	// NameConstant is also in the NameType sub-category, so it is first.
+	switch k := sy.Symbol.Kind; {
+	case k == token.NameConstant || k == token.NameEnumMember:
+		return icons.Constant
+	case k == token.NameField:
+		return icons.Field
+	case k == token.NameMethod:
+		return icons.Method
+	case k.SubCat() == token.NameType:
+		return icons.Title
+	case k.SubCat() == token.NameVar:
+		return icons.Variable
+	case k.SubCat() == token.NameFunction:
+		return icons.Function
 	}
-	return ic
+	return icons.Blank
 }
 
 //////// SymTree

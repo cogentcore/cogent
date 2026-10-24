@@ -224,6 +224,7 @@ func (cv *Code) SaveActiveView() { //types:add
 		fpath, _ := filepath.Split(fname)
 		cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 		cv.RunPostCmds(tv.Lines)
+		cv.LangSvc().Saved(tv.Lines)
 		cv.updatePreviewPanel()
 	} else {
 		core.CallFunc(cv, cv.SaveActiveViewAs)
@@ -285,7 +286,8 @@ func (cv *Code) CloseActiveView() { //types:add
 	if tv.Lines == nil {
 		return
 	}
-	fpath := tv.Lines.Filename()
+	ln := tv.Lines
+	fpath := ln.Filename()
 	tv.Close(func(canceled bool) {
 		if canceled {
 			cv.SetStatus("File NOT closed: " + fpath)
@@ -293,6 +295,7 @@ func (cv *Code) CloseActiveView() { //types:add
 		}
 		cv.SetStatus("File closed: " + fpath)
 		cv.OpenFiles.DeleteByKey(fpath)
+		cv.LangSvc().Closed(ln) // tv.Lines is now nil
 	})
 }
 
@@ -592,6 +595,7 @@ func (cv *Code) CloseOpenFile(fname string) {
 		}
 		cv.SetStatus(fmt.Sprintf("File %q closed", fname))
 		cv.OpenFiles.DeleteByKey(fname)
+		cv.LangSvc().Closed(ln)
 	})
 }
 

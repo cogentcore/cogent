@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
@@ -215,8 +216,26 @@ func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 // SetStatus sets the current status update message for the StatusBar next time it renders
 func (cv *Code) SetStatus(msg string) {
 	cv.StatusMessage = msg
+	cv.statusTime = time.Now()
 	cv.UpdateStatusText()
 	cv.UpdateTextButtons()
+}
+
+// statusMessageTime is how long a transient [Code.SetStatus] message
+// remains in the status line, which is otherwise regenerated from
+// scratch on every cursor movement and similar update.
+const statusMessageTime = 10 * time.Second
+
+// addToMsg appends a segment to the status line message,
+// separating with a tab only when needed.
+func addToMsg(msg, add string) string {
+	if add == "" {
+		return msg
+	}
+	if msg == "" {
+		return add
+	}
+	return msg + "\t" + add
 }
 
 // UpdateStatusText updates the status bar text with current data.
@@ -244,11 +263,27 @@ func (cv *Code) UpdateStatusText() {
 			}
 		}
 		if tv.ISearch.On {
-			msg = fmt.Sprintf("\tISearch: %v (n=%v)", tv.ISearch.Find, len(tv.ISearch.Matches))
+			msg = addToMsg(msg, fmt.Sprintf("ISearch: %v (n=%v)", tv.ISearch.Find, len(tv.ISearch.Matches)))
 		}
 		if tv.QReplace.On {
-			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches))
+			msg = addToMsg(msg, fmt.Sprintf("QReplace: %v -> %v (n=%v)", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches)))
 		}
+		// language server diagnostics summary for this file, if any:
+		if cv.langSvc != nil && tv.Lines != nil {
+			msg = addToMsg(msg, cv.langSvc.DiagStatusMsg(tv.Lines))
+		}
+		// live signature help while typing a call, if any:
+		if cv.langSvc != nil {
+			msg = addToMsg(msg, cv.langSvc.SigStatusMsg())
+		}
+	}
+	// language server operation in progress, if any (e.g., loading):
+	if cv.langSvc != nil {
+		msg = addToMsg(msg, cv.langSvc.ProgressStatusMsg())
+	}
+	// recent transient message from SetStatus:
+	if cv.StatusMessage != "" && time.Since(cv.statusTime) < statusMessageTime {
+		msg = addToMsg(msg, cv.StatusMessage)
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", cv.Name, cv.ActiveVCSInfo, fnm, ln, ch, msg)

@@ -96,6 +96,7 @@ func (cv *Code) SetActiveEditor(av *TextEditor) int {
 		if av.Complete != nil {
 			av.Complete.LookupFunc = cv.LookupFun
 		}
+		cv.LangSvc().Activated(av) // overrides completers for LSP files
 		cv.SetActiveFileInfo(av.Lines)
 		av.Lines.FileModCheck()
 	}
@@ -156,6 +157,7 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	}
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
+	cv.LangSvc().replaceableHighlights(tv)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
 	tv.NeedsLayout()

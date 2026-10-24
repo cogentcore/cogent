@@ -89,6 +89,10 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(cv.Lookup).SetIcon(icons.Bolt).
+			SetShortcut(KeyQuickFix.Chord())
+	})
 
 	tree.Add(p, func(w *core.Separator) {})
 
@@ -325,7 +329,15 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 
 func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 	tv := cv.ActiveEditor()
-	if tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
+	if tv == nil || tv.Lines == nil {
+		return
+	}
+	if cv.LangSvc().LSPActive(tv.Lines) {
+		sl := flattenSymbols(nestMethods(cv.LangSvc().lspB.PackageSymbols(tv.Lines)), "")
+		*items = append(*items, langSymItems(cv, sl)...)
+		return
+	}
+	if !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
 	_, ps := tv.Lines.ParseState()

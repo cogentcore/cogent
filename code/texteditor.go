@@ -38,6 +38,15 @@ func (ed *TextEditor) Init() {
 	ed.On(events.Focus, func(e events.Event) {
 		ed.Code.SetActiveEditor(ed)
 	})
+	// clicks move the cursor without an Input event or a key event,
+	// which otherwise drive the cursor-dependent language features;
+	// this runs before the editor moves the cursor, but the update is
+	// deferred until after it.
+	ed.OnClick(func(e events.Event) {
+		if ed.Code != nil {
+			ed.Code.LangSvc().ScheduleSigHelp(ed)
+		}
+	})
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
@@ -56,9 +65,25 @@ func (ed *TextEditor) WidgetTooltip(pos image.Point) (string, image.Point) {
 	if pos == image.Pt(-1, -1) {
 		return "_", image.Point{}
 	}
-	// todo: look for documentation on symbols here; we don't actually have this
-	// in parse so we need lsp to make this work
-	return ed.DebugVarValueAtPos(pos), pos
+	if dbg := ed.DebugVarValueAtPos(pos); dbg != "" {
+		return dbg, pos
+	}
+	// look for documentation on symbols via the language backend (gopls etc):
+	if ed.Lines != nil && ed.Code != nil {
+		pt := ed.PointToRelPos(pos)
+		tpos := ed.PixelToCursor(pt)
+		if ed.Lines.IsValidLine(tpos.Line) {
+			w := ed.Lines.WordAt(tpos)
+			hpos := tpos
+			if w.Start.Line == tpos.Line && w.End.Char > 0 {
+				hpos = w.End
+			}
+			if docs := ed.Code.LangSvc().HoverAt(ed, hpos); docs != "" {
+				return docs, pos
+			}
+		}
+	}
+	return "", pos
 }
 
 // CurDebug returns the current debugger, true if it is present
@@ -188,6 +213,19 @@ func ConfigOutputTextEditor(ed *textcore.Editor) {
 }
 
 // ContextMenu builds the text editor context menu
+// ShowContextMenu shows the context menu, first moving the cursor to the
+// position of the click if there is no selection, so that the language
+// actions in the menu (lookup, code actions, etc) apply there.
+func (ed *TextEditor) ShowContextMenu(e events.Event) {
+	if ed.Lines != nil && !ed.HasSelection() {
+		tpos := ed.PixelToCursor(ed.PointToRelPos(e.Pos()))
+		if tpos != textpos.PosErr && ed.Lines.IsValidLine(tpos.Line) {
+			ed.SetCursorShow(tpos)
+		}
+	}
+	ed.Editor.ShowContextMenu(e)
+}
+
 func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 	core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
 		SetKey(keymap.Copy).SetState(!ed.HasSelection(), states.Disabled).
@@ -214,7 +252,22 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 		})
 
 	core.NewSeparator(m)
-	core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
+	if ed.Lines != nil && ed.Code != nil && ed.Code.LangSvc().LSPActive(ed.Lines) {
+		core.NewFuncButton(m).SetFunc(ed.Code.Lookup).SetIcon(icons.Search).SetShortcut(KeyQuickFix.Chord())
+		core.NewButton(m).SetText("Code actions").SetIcon(icons.Bolt).SetMenu(func(m *core.Scene, pos image.Point) {
+			ed.Code.LangSvc().codeActionsMenu(m, ed)
+		})
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition")
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoTypeDefinition).SetText("Go to type definition")
+		core.NewFuncButton(m).SetFunc(ed.Code.FindImplementations).SetText("Find implementations")
+		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references")
+		core.NewFuncButton(m).SetFunc(ed.Code.ShowProblems).SetText("Show problems")
+		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...")
+		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file")
+		core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")
+	} else {
+		core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
+	}
 
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
 	if fn != nil {
