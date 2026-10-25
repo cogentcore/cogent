@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse"
 	"cogentcore.org/core/text/parse/complete"
@@ -48,12 +49,8 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
 		return ld
 	}
-	lp, err := parse.LanguageSupport.Properties(sfs.Known)
-	if err != nil {
-		log.Printf("LookupFun: %v\n", err)
-		return ld
-	}
-	if lp.Lang == nil {
+	lp := highlighting.ParseLanguage(sfs.Known)
+	if lp == nil {
 		return ld
 	}
 

@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/system"
+	_ "cogentcore.org/core/text/highlighting/alllexers"
 )
 
 func main() {

@@ -135,6 +135,49 @@ func (i *Locations) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "Locations")
 }
 
+var _LangBackendsValues = []LangBackends{0, 1}
+
+// LangBackendsN is the highest valid value for type LangBackends, plus one.
+const LangBackendsN LangBackends = 2
+
+var _LangBackendsValueMap = map[string]LangBackends{`LSP`: 0, `Parser`: 1}
+
+var _LangBackendsDescMap = map[LangBackends]string{0: `LangBackendLSP uses external language servers (gopls etc), which run as separate processes and provide full IDE-level language features for any file with an available server, except for languages set to use the parser in the Languages settings (Markdown and TeX by default)`, 1: `LangBackendParser uses the built-in interactive parse system, which runs in-process`}
+
+var _LangBackendsMap = map[LangBackends]string{0: `LSP`, 1: `Parser`}
+
+// String returns the string representation of this LangBackends value.
+func (i LangBackends) String() string { return enums.String(i, _LangBackendsMap) }
+
+// SetString sets the LangBackends value from its string representation,
+// and returns an error if the string is invalid.
+func (i *LangBackends) SetString(s string) error {
+	return enums.SetString(i, s, _LangBackendsValueMap, "LangBackends")
+}
+
+// Int64 returns the LangBackends value as an int64.
+func (i LangBackends) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the LangBackends value from an int64.
+func (i *LangBackends) SetInt64(in int64) { *i = LangBackends(in) }
+
+// Desc returns the description of the LangBackends value.
+func (i LangBackends) Desc() string { return enums.Desc(i, _LangBackendsDescMap) }
+
+// LangBackendsValues returns all possible values for the type LangBackends.
+func LangBackendsValues() []LangBackends { return _LangBackendsValues }
+
+// Values returns all possible values for the type LangBackends.
+func (i LangBackends) Values() []enums.Enum { return enums.Values(_LangBackendsValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i LangBackends) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *LangBackends) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "LangBackends")
+}
+
 var _SymScopesValues = []SymScopes{0, 1}
 
 // SymScopesN is the highest valid value for type SymScopes, plus one.

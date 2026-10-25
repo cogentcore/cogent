@@ -36,6 +36,23 @@ var Settings = &SettingsData{
 	},
 }
 
+// LangBackends specifies which system provides the language services:
+// diagnostics, completions, hover docs, navigation, and symbols.
+type LangBackends int32 //enums:enum -trim-prefix LangBackend
+
+const (
+	// LangBackendLSP uses external language servers (gopls etc),
+	// which run as separate processes and provide full IDE-level
+	// language features for any file with an available server,
+	// except for languages set to use the parser in the Languages
+	// settings (Markdown and TeX by default)
+	LangBackendLSP LangBackends = iota
+
+	// LangBackendParser uses the built-in interactive parse system,
+	// which runs in-process
+	LangBackendParser
+)
+
 // SettingsData is the data type for the overall user settings for Code.
 type SettingsData struct { //types:add
 	core.SettingsBase
@@ -48,6 +65,9 @@ type SettingsData struct { //types:add
 
 	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveCmds bool
+
+	// executable paths for language servers, keyed by server id (gopls, typescript-language-server, pyright-langserver, pylsp, rust-analyzer, clangd, bash-language-server, vscode-json-language-server) -- paths or names to search in PATH if not an absolute path -- empty by default, meaning just search the PATH for the standard executable
+	LSExecs map[string]string `display:"-"`
 }
 
 // FileSettings contains file picker settings
@@ -190,6 +210,12 @@ type ProjectSettings struct { //types:add
 	// the language associated with the most frequently encountered file
 	// extension in the file tree -- can be manually set here as well
 	MainLang fileinfo.Known
+
+	// backend that provides language services (diagnostics, completion, hover, navigation, symbols) for this project -- LSP uses external language servers such as gopls, except for languages set to use the parser in the Languages settings (Markdown and TeX by default)
+	LangBackend LangBackends
+
+	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and the Show Inlay Hints command can display them; running servers pick the change up immediately through dynamic reconfiguration
+	InlayHints bool
 
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
@@ -341,6 +367,7 @@ func (cv *Code) ApplySettings() {
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
+	UpdateParserUse(cv)
 	// core.UpdateAll() // note: this is not necessary and is very slow
 }
 

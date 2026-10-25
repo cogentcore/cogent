@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
@@ -45,16 +46,17 @@ type Canvas struct {
 	// SVG displays the SVG image and has methods for managing it.
 	SVG *SVG
 
-	tabs        *core.Tabs
-	splits      *core.Splits
-	modalTools  *core.Toolbar
-	tools       *core.Toolbar
-	tree        *Tree
-	defs        *Tree
-	layerTree   *core.Frame
-	layers      *core.Table
-	statusBar   *core.Frame
-	canvasFlags canvasFlags
+	tabs       *core.Tabs
+	splits     *core.Splits
+	modalTools *core.Toolbar
+	tools      *core.Toolbar
+	tree       *Tree
+	defs       *Tree
+	layerTree  *core.Frame
+	layers     *core.Table
+	statusBar  *core.Frame
+	// autoSaving is whether an autosave is in progress.
+	autoSaving atomic.Bool
 }
 
 func (cv *Canvas) Init() {
@@ -765,17 +767,22 @@ func (cv *Canvas) autoSaveFilename(fnm core.Filename) string {
 	return filepath.Join(path, "#"+fn+"#")
 }
 
-// Autosave does the autosave -- safe to call in a separate goroutine
+// Autosave does the autosave. It is safe to call in a separate goroutine,
+// but not with the lock of the Canvas held, as it saves the drawing under
+// that lock. It does nothing if an autosave is already in progress.
 func (cv *Canvas) Autosave() error {
-	if cv.canvasFlags.HasFlag(canvasAutoSaving) {
+	if !cv.autoSaving.CompareAndSwap(false, true) {
 		return nil
 	}
-	cv.canvasFlags.SetFlag(true, canvasAutoSaving)
+	defer cv.autoSaving.Store(false)
+	if !cv.AsyncLockIfShown() {
+		return nil
+	}
+	defer cv.AsyncUnlock()
 	asfn := cv.autoSaveFilename(cv.Filename)
 	sv := cv.SSVG()
 	err := sv.SaveXML(asfn)
 	errors.Log(err)
-	cv.canvasFlags.SetFlag(false, canvasAutoSaving)
 	return err
 }
 
@@ -793,12 +800,3 @@ func (cv *Canvas) AutosaveCheck(fnm core.Filename) bool {
 	}
 	return true
 }
-
-// canvasFlags are atomic bit flags for [Canvas] state.
-// They must be atomic to prevent race conditions.
-type canvasFlags int64 //enums:bitflag -trim-prefix canvas
-
-const (
-	// canvasAutoSaving is true if auto-saving.
-	canvasAutoSaving canvasFlags = iota
-)

@@ -19,6 +19,8 @@ import (
 	"sync"
 	"time"
 
+	_ "cogentcore.org/core/text/parse/supportedlanguages"
+
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fileinfo/mimedata"
@@ -68,6 +70,11 @@ type Code struct {
 	// the last status update message
 	StatusMessage string
 
+	// statusTime is when StatusMessage was last set; it remains in the
+	// regenerated status line for a short interval before the routine
+	// cursor-movement updates take over again.
+	statusTime time.Time
+
 	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
 	LastSaveTStamp time.Time `set:"-" json:"-"`
 
@@ -98,6 +105,9 @@ type Code struct {
 	// current debug view
 	CurDbg *DebugPanel `set:"-"`
 
+	// language service backends (LSP / parse) for this window
+	langSvc *LangService `set:"-" json:"-" xml:"-"`
+
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`
 
@@ -106,9 +116,7 @@ type Code struct {
 }
 
 func init() {
-	// TODO(URLHandler):
-	// core.URLHandler = URLHandler
-	// paint.TextLinkHandler = TextLinkHandler
+	highlighting.UseParse = true // with supportedlanguages imported
 }
 
 func (cv *Code) Init() {
@@ -255,6 +263,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.OnInput(func(e events.Event) {
 				cv.UpdateTextButtons()
 				cv.UpdateStatusText()
+				cv.LangSvc().EditorInput(w)
 			})
 			w.OnChange(func(e events.Event) {
 				cv.updatePreviewPanel()
@@ -290,9 +299,10 @@ const (
 	TabsIndex
 )
 
-// Splits returns the main Splits
+// Splits returns the main Splits, nil if the tree has not been built
 func (cv *Code) Splits() *core.Splits {
-	return cv.ChildByName("splits", 2).(*core.Splits)
+	sp, _ := cv.ChildByName("splits", 2).(*core.Splits)
+	return sp
 }
 
 // EditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
@@ -302,12 +312,29 @@ func (cv *Code) EditorButtonByIndex(idx int) *core.Button {
 
 // EditorByIndex returns the TextEditor by index (0 or 1), nil if not found
 func (cv *Code) EditorByIndex(idx int) *TextEditor {
-	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
+	sp := cv.Splits()
+	if sp == nil {
+		return nil
+	}
+	ch := sp.Child(TextEditor1Index + idx)
+	if ch == nil {
+		return nil
+	}
+	tv, ok := ch.AsTree().Child(1).(*TextEditor)
+	if !ok {
+		return nil
+	}
+	return tv
 }
 
 // Tabs returns the main TabView
 func (cv *Code) Tabs() *core.Tabs {
-	return cv.Splits().Child(TabsIndex).(*core.Tabs)
+	sp := cv.Splits()
+	if sp == nil {
+		return nil
+	}
+	tv, _ := sp.Child(TabsIndex).(*core.Tabs)
+	return tv
 }
 
 // StatusBar returns the statusbar widget
@@ -671,21 +698,32 @@ func (cv *Code) AddCloseDialog() {
 		cv.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
 		nch := cv.NChangedFiles()
 		if nch == 0 {
+			cv.stopLangSvc()
 			return false
 		}
 		d.SetTitle("Unsaved files")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
 		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
+				cv.stopLangSvc()
 				cv.Scene.Close()
 			})
 			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
 				cv.SaveAllOpenFiles()
+				cv.stopLangSvc()
 				cv.Scene.Close()
 			})
 		})
 		return true
 	})
+}
+
+// stopLangSvc stops the language service for this window, if any,
+// shutting down its language servers, when the window is closing.
+func (cv *Code) stopLangSvc() {
+	if cv.langSvc != nil {
+		cv.langSvc.Stop() // kept, stopped, in case of further calls
+	}
 }
 
 ////////   Project window
