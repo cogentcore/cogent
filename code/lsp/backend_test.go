@@ -1192,6 +1192,9 @@ func TestInlayHintsGopls(t *testing.T) {
 // options set on a running server arrive through the dynamic
 // didChangeConfiguration / workspace/configuration re-fetch.
 func TestInlayHintsConfig(t *testing.T) {
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
 	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\tx := 1\n\t_, _ = x, strings.Split(\"a,b\", \",\")\n}\n"
 	hintOpts := map[string]map[string]any{
 		"gopls": {"hints": map[string]any{
