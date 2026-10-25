@@ -1,9 +1,9 @@
 codeberg.org/go-pdf/fpdf v0.11.1 h1:U8+coOTDVLxHIXZgGvkfQEi/q0hYHYvEHFuGNX2GzGs=
 codeberg.org/go-pdf/fpdf v0.11.1/go.mod h1:Y0DGRAdZ0OmnZPvjbMp/1bYxmIPxm0ws4tfoPOc4LjU=
-cogentcore.org/core v0.5.0 h1:2hA7/Rl56yVis7kKje4aHzDWuWFjmCNI+ON3YKGiVng=
-cogentcore.org/core v0.5.0/go.mod h1:vwEBOxZbxXHmTQJQSN4Euaofn715HxgizFPqUBQSnYA=
-cogentcore.org/lab v0.2.0 h1:aNU2wuo90lyE1a6gHwjRXN8EhbWiTsR/q/G/xi5YZOM=
-cogentcore.org/lab v0.2.0/go.mod h1:jQNNbP6V/4xArGp6xpauinnRlEIb4L5E0ZMj1vygtTg=
+cogentcore.org/core v0.5.5 h1:BszdtbomsnAFpEMDkijw2gECOsM7ifVp84gpx//yOWg=
+cogentcore.org/core v0.5.5/go.mod h1:f6aErCXBDWuzxgI6I/8XTZIa8aiwuMx4VBRUbpIGrhs=
+cogentcore.org/lab v0.2.4 h1:lPSDnIu7zHSgNMRzJCjNfRqk6UiBBT/+1E+EF+/4EeA=
+cogentcore.org/lab v0.2.4/go.mod h1:Xz1vdSGwHXh1nEu0S+AHj8XAEIWjgQ31XamTcA+gGDk=
 git.sr.ht/~sbinet/overlayfs v0.1.1 h1:HvCHXT1cs8RMSjNLQXxPPosB2hgR3tRC8RniH0f3ESg=
 git.sr.ht/~sbinet/overlayfs v0.1.1/go.mod h1:TmrIWKlxyPJJ7vchTqk85DUcW6IDsIa7ONLvSGIw438=
 github.com/Bios-Marcel/wastebasket/v2 v2.0.3 h1:TkoDPcSqluhLGE+EssHu7UGmLgUEkWg7kNyHyyJ3Q9g=
@@ -52,8 +52,8 @@ github.com/cogentcore/star-tex v0.7.2-0.20260625151004-a16970c7d698 h1:GsehCn/Dw
 github.com/cogentcore/star-tex v0.7.2-0.20260625151004-a16970c7d698/go.mod h1:pdlQowLCSMiGfeOM6M7yz09OmR2fzlmFYcvR/u6QaRQ=
 github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e h1:seoKVtXIRWYZrY3vlwaos/PifRWJsKi48xroc9cGXis=
 github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e/go.mod h1:3WDWvccSCRXvDZ5T0kvk2OTofeUQWLlQDTWaVYUZwhI=
-github.com/cogentcore/yaegi v0.0.0-20260116172027-700fbf8949f3 h1:y3Djpt/g3QTjFdj8cpvy/r8FsZsEa7PqHGjgsKXbta0=
-github.com/cogentcore/yaegi v0.0.0-20260116172027-700fbf8949f3/go.mod h1:XkOm++pRmWlk85p+hw71ZItfTeRdzqG23+2xjP9eb+M=
+github.com/cogentcore/yaegi v0.0.0-20261024142200-c0b92ec4f6b6 h1:f5OhUCmt00f7u2WbWRJ7JCIsLbDDPZZKGUdmHutmuKo=
+github.com/cogentcore/yaegi v0.0.0-20261024142200-c0b92ec4f6b6/go.mod h1:o1kG6o9hHlM/exRCSdIenr+5NTxDg6ve/DsOkYfbt6k=
 github.com/corentings/chess/v2 v2.0.8 h1:QWsd8AD+7aUwCWPEVLZ5K/nQrztkCQnYaBqSLDHLgzA=
 github.com/corentings/chess/v2 v2.0.8/go.mod h1:JhWYDbjY81/7NECXrLzz4g2r9taaMEXvyqS4gYZciVE=
 github.com/coreos/go-oidc/v3 v3.17.0 h1:hWBGaQfbi0iVviX4ibC7bk8OKT5qNr4klBaCHVNvehc=

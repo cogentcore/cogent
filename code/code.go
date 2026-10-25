@@ -19,6 +19,8 @@ import (
 	"sync"
 	"time"
 
+	_ "cogentcore.org/core/text/parse/supportedlanguages"
+
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fileinfo/mimedata"
@@ -114,7 +116,7 @@ type Code struct {
 }
 
 func init() {
-	highlighting.UseParse = true
+	highlighting.UseParse = true // with supportedlanguages imported
 }
 
 func (cv *Code) Init() {

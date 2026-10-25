@@ -44,7 +44,8 @@ const (
 	// LangBackendLSP uses external language servers (gopls etc),
 	// which run as separate processes and provide full IDE-level
 	// language features for any file with an available server,
-	// falling back to the parser where none is available
+	// except for languages set to use the parser in the Languages
+	// settings (Markdown and TeX by default)
 	LangBackendLSP LangBackends = iota
 
 	// LangBackendParser uses the built-in interactive parse system,
@@ -210,7 +211,7 @@ type ProjectSettings struct { //types:add
 	// extension in the file tree -- can be manually set here as well
 	MainLang fileinfo.Known
 
-	// backend that provides language services (diagnostics, completion, hover, navigation, symbols) for this project -- LSP uses external language servers such as gopls, falling back to the parser when no server is available for a file
+	// backend that provides language services (diagnostics, completion, hover, navigation, symbols) for this project -- LSP uses external language servers such as gopls, except for languages set to use the parser in the Languages settings (Markdown and TeX by default)
 	LangBackend LangBackends
 
 	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and the Show Inlay Hints command can display them; running servers pick the change up immediately through dynamic reconfiguration
@@ -366,6 +367,7 @@ func (cv *Code) ApplySettings() {
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
+	UpdateParserUse(cv)
 	// core.UpdateAll() // note: this is not necessary and is very slow
 }
 

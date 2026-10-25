@@ -3,14 +3,14 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.0
-	cogentcore.org/lab v0.2.0
+	cogentcore.org/core v0.5.5
+	cogentcore.org/lab v0.2.4
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/cogentcore/yaegi v0.0.0-20260116172027-700fbf8949f3
+	github.com/cogentcore/yaegi v0.0.0-20261024142200-c0b92ec4f6b6
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3

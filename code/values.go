@@ -54,6 +54,9 @@ func LanguagesView(pt *Languages) {
 	AvailableLanguagesChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableLanguagesChanged = true
+		if pt == &AvailableLanguages {
+			UpdateParserUse()
+		}
 	})
 
 	d.AddTopBar(func(bar *core.Frame) {

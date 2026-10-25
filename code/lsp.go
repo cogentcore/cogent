@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/system"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/lexer"
@@ -204,12 +205,39 @@ func (cv *Code) LangSvc() *LangService {
 }
 
 // LSPActive returns whether the language server backend is being used
-// for the given buffer: the LSP backend must be selected in settings and
-// a server must be registered for the file's language. Otherwise, the
-// built-in parse system provides whatever features it can through the
-// standard editor machinery.
+// for the given buffer: the LSP backend must be selected in settings,
+// the language must not be set to use the parser in its
+// [LanguageOptions], and a server must be registered for the file's
+// language. Otherwise, the built-in parse system provides whatever
+// features it can through the standard editor machinery.
 func (ls *LangService) LSPActive(ln *lines.Lines) bool {
-	return ls.cv.Settings.LangBackend == LangBackendLSP && ls.lspB.Supported(ln)
+	if ls.cv.Settings.LangBackend != LangBackendLSP || ln == nil {
+		return false
+	}
+	return !parserLanguage(ln.FileInfo().Known) && ls.lspB.Supported(ln)
+}
+
+// updateParserUse re-initializes the highlighting of the open files
+// whose use of the built-in parser has changed (see [UpdateParserUse]).
+func (cv *Code) updateParserUse() {
+	upd := func(ln *lines.Lines) {
+		if ln == nil {
+			return
+		}
+		fi := ln.FileInfo()
+		if ln.Highlighter.UsingParse() != (highlighting.ParseLanguage(fi.Known) != nil) {
+			ln.SetFileInfo(fi)
+		}
+	}
+	for _, ln := range cv.OpenFiles.Values {
+		upd(ln)
+	}
+	if len(cv.Children) == 0 {
+		return
+	}
+	for i := range NTextEditors {
+		upd(cv.EditorByIndex(i).Lines)
+	}
 }
 
 // Stop halts all language servers and ends the event loop.

@@ -142,7 +142,7 @@ const LangBackendsN LangBackends = 2
 
 var _LangBackendsValueMap = map[string]LangBackends{`LSP`: 0, `Parser`: 1}
 
-var _LangBackendsDescMap = map[LangBackends]string{0: `LangBackendLSP uses external language servers (gopls etc), which run as separate processes and provide full IDE-level language features for any file with an available server, falling back to the parser where none is available`, 1: `LangBackendParser uses the built-in interactive parse system, which runs in-process`}
+var _LangBackendsDescMap = map[LangBackends]string{0: `LangBackendLSP uses external language servers (gopls etc), which run as separate processes and provide full IDE-level language features for any file with an available server, except for languages set to use the parser in the Languages settings (Markdown and TeX by default)`, 1: `LangBackendParser uses the built-in interactive parse system, which runs in-process`}
 
 var _LangBackendsMap = map[LangBackends]string{0: `LSP`, 1: `Parser`}
 
