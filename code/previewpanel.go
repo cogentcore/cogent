@@ -14,8 +14,8 @@ import (
 	"cogentcore.org/core/styles"
 
 	// todo: too big for wasm with bug.. reenable with gopherjs
-	// _ "cogentcore.org/lab/yaegilab" // for interactive previews of Cogent Content and Lab MD files
-	_ "cogentcore.org/core/yaegicore"
+	// _ "cogentcore.org/lab/mvmlab" // for interactive previews of Cogent Content and Lab MD files
+	_ "cogentcore.org/core/mvmcore"
 )
 
 // PreviewPanel is a widget that displays an interactive live preview of a

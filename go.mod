@@ -3,14 +3,13 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.6
-	cogentcore.org/lab v0.2.4
+	cogentcore.org/core v0.5.7-0.20261026084225-c7c8c0daaf4f
+	cogentcore.org/lab v0.2.5-0.20261026083254-682461fe5352
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/cogentcore/yaegi v0.0.0-20261024142200-c0b92ec4f6b6
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
@@ -42,6 +41,7 @@ require (
 	github.com/chewxy/math32 v1.11.2 // indirect
 	github.com/cilium/ebpf v0.22.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cogentcore/mvm v0.0.0-20261026083022-c63aa0ace285 // indirect
 	github.com/cogentcore/readline v0.1.3 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
