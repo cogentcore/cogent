@@ -125,9 +125,13 @@ func (cv *Code) Lookup() { //types:add
 }
 
 // Lookup does [Code.Lookup] for the given editor, returning true if
-// it showed quick fixes, and false if it offered completions.
+// it showed quick fixes or spelling corrections, and false if it
+// offered completions.
 func (ls *LangService) Lookup(tv *TextEditor) bool {
 	if ls.LSPActive(tv.Lines) && ls.lookupMenu(tv, tv.CursorPos, true) {
+		return true
+	}
+	if tv.OfferCorrect() {
 		return true
 	}
 	ls.offerCompletion(tv)
