@@ -78,7 +78,7 @@ type Task struct {
 	Line int
 
 	// full path to file
-	FPath string `table:"-" table:"-"`
+	FPath string `table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
@@ -146,7 +146,7 @@ type Frame struct {
 	Line int
 
 	// full path to file
-	FPath string `table:"-" table:"-"`
+	FPath string `table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`

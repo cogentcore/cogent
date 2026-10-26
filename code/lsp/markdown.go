@@ -95,7 +95,7 @@ func ParseMarkdown(md string) []DocLine {
 		out = append(out, dl)
 	}
 	inCode, lang := false, ""
-	for _, ln := range strings.Split(md, "\n") {
+	for ln := range strings.SplitSeq(md, "\n") {
 		ln = strings.TrimRight(ln, " \t\r")
 		tln := strings.TrimSpace(ln)
 		switch {

@@ -511,7 +511,7 @@ func (cv *Code) ShowFile(fpath string, ln int) (*TextEditor, error) {
 		tv.SetCursorTarget(textpos.Pos{Line: ln - 1})
 		return tv, nil
 	}
-	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fpath)
+	return nil, fmt.Errorf("ShowFile: file named: %v not found", fpath)
 }
 
 // SelectOpenFile pops up a menu to select an open file to view

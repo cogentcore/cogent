@@ -87,7 +87,7 @@ func (fn *FileNode) ExecCmdFile() { //types:add
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		cv.ExecCmdNameFile(string(fn.Node.Filepath), CmdName(cmdNm))
+		cv.ExecCmdNameFile(string(fn.Filepath), CmdName(cmdNm))
 	}
 }
 

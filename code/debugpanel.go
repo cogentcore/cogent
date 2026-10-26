@@ -256,7 +256,7 @@ func (dv *DebugPanel) InitTabs() {
 // panelIsValid checks if panel is valid for use.
 // for outside functions calling in, e.g., textbuf.
 func (dv *DebugPanel) panelIsValid() bool {
-	return !(dv.This == nil || dv.Code == nil || dv.Code.This == nil || dv.Tabs() == nil)
+	return dv.This != nil && dv.Code != nil && dv.Code.This != nil && dv.Tabs() != nil
 }
 
 // DbgIsActive means debugger is started.

@@ -172,7 +172,7 @@ func (ed *TextEditor) FindFrames(ln int) {
 	dbg.FindFrames(ed.Lines.Filename(), ln+1)
 }
 
-// DoubleClickEvent processes double-clicks NOT on the line-number section
+// HandleDebugDoubleClick processes double-clicks NOT on the line-number section
 func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos textpos.Pos) {
 	dbg, has := ed.CurDebug()
 	lx, _ := ed.Lines.HiTagAtPos(tpos)
@@ -212,7 +212,7 @@ func ConfigOutputTextEditor(ed *textcore.Editor) {
 	})
 }
 
-// ContextMenu builds the text editor context menu
+// ShowContextMenu builds the text editor context menu
 // ShowContextMenu shows the context menu, first moving the cursor to the
 // position of the click if there is no selection, so that the language
 // actions in the menu (lookup, code actions, etc) apply there.
@@ -254,14 +254,17 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 	core.NewSeparator(m)
 	if ed.Lines != nil && ed.Code != nil && ed.Code.LangSvc().LSPActive(ed.Lines) {
 		core.NewFuncButton(m).SetFunc(ed.Code.Lookup).SetIcon(icons.Search).SetShortcut(KeyQuickFix.Chord())
-		core.NewButton(m).SetText("Code actions").SetIcon(icons.Bolt).SetMenu(func(m *core.Scene, pos image.Point) {
+		ed.Code.LangSvc().quickFixButtons(m, ed)
+		core.NewButton(m).SetText("Code actions").SetIcon(icons.Build).SetMenu(func(m *core.Scene, pos image.Point) {
 			ed.Code.LangSvc().codeActionsMenu(m, ed)
 		})
 		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition").SetIcon(icons.Directions)
 		core.NewFuncButton(m).SetFunc(ed.Code.GotoTypeDefinition).SetText("Go to type").SetIcon(icons.Title)
 		core.NewFuncButton(m).SetFunc(ed.Code.FindImplementations).SetText("Find implementations").SetIcon(icons.SearchCheck)
 		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references").SetIcon(icons.ManageSearch)
-		core.NewFuncButton(m).SetFunc(ed.Code.ShowProblems).SetText("Show problems").SetIcon(icons.BugReport)
+		core.NewButton(m).SetText("Show problems").SetIcon(icons.BugReport).OnClick(func(e events.Event) {
+			ed.Code.ShowProblems(ed.Code.Settings.ProblemsLoc)
+		})
 		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...").SetIcon(icons.SwapHoriz)
 		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file").SetIcon(icons.TextFormat)
 		// core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")

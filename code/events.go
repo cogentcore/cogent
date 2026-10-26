@@ -138,7 +138,7 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.Run()
 	case KeyProblems:
 		e.SetHandled()
-		cv.ShowProblems()
+		cv.ShowProblems(cv.Settings.ProblemsLoc)
 	case KeyQuickFix:
 		e.SetHandled()
 		cv.Lookup()

@@ -38,8 +38,8 @@ type Split struct {
 }
 
 // Label satisfies the Labeler interface
-func (sp Split) Label() string {
-	return sp.Name
+func (lt Split) Label() string {
+	return lt.Name
 }
 
 // SaveSplits saves given splits to this setting -- must use copy!

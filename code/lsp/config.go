@@ -137,6 +137,11 @@ var DefaultServers = []*ServerConfig{
 			// enabled (it is off by default in the settings;
 			// Options.Set uses the last segment of a dotted name):
 			"semanticTokens": true,
+			// pull diagnostics (textDocument/diagnostic) report the
+			// results of all of the analyzers for files that are not
+			// open, while the published diagnostics of those files only
+			// have type errors; this does not change the publishing:
+			"pullDiagnostics": true,
 		},
 		Install: &InstallSpec{
 			GoModule: "golang.org/x/tools/gopls",

@@ -58,7 +58,7 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *cdebug.Thread {
 }
 
 func (gd *GiDelve) cvtThreads(ds []*api.Thread) []*cdebug.Thread {
-	if ds == nil || len(ds) == 0 {
+	if len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
@@ -89,7 +89,7 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *cdebug.Task {
 }
 
 func (gd *GiDelve) cvtTasks(ds []*api.Goroutine) []*cdebug.Task {
-	if ds == nil || len(ds) == 0 {
+	if len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
@@ -133,7 +133,7 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *cdebug.Break {
 }
 
 func (gd *GiDelve) cvtBreaks(ds []*api.Breakpoint) []*cdebug.Break {
-	if ds == nil || len(ds) == 0 {
+	if len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
@@ -150,12 +150,12 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *cdebug.Frame {
 	}
 	fr := &cdebug.Frame{}
 	fr.ThreadID = taskID
-	fr.PC = ds.Location.PC
-	fr.File = fsx.RelativeFilePath(ds.Location.File, gd.rootPath)
-	fr.Line = ds.Location.Line
-	fr.FPath = ds.Location.File
-	if ds.Location.Function != nil {
-		fr.Func = ds.Location.Function.Name_
+	fr.PC = ds.PC
+	fr.File = fsx.RelativeFilePath(ds.File, gd.rootPath)
+	fr.Line = ds.Line
+	fr.FPath = ds.File
+	if ds.Function != nil {
+		fr.Func = ds.Function.Name_
 	}
 	fr.Vars = gd.cvtVars(ds.Locals)
 	fr.Args = gd.cvtVars(ds.Arguments)
@@ -163,7 +163,7 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *cdebug.Frame {
 }
 
 func (gd *GiDelve) cvtStack(ds []api.Stackframe, taskID int) []*cdebug.Frame {
-	if ds == nil || len(ds) == 0 {
+	if len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
@@ -176,8 +176,7 @@ func (gd *GiDelve) cvtStack(ds []api.Stackframe, taskID int) []*cdebug.Frame {
 }
 
 func ShortType(typ string) string {
-	si := strings.Index(typ, "/")
-	if si < 0 {
+	if !strings.Contains(typ, "/") {
 		return typ
 	}
 	tnm := lexer.TrimLeftToAlpha(typ)
@@ -230,7 +229,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 		elk := syms.ReflectKindMap[el.Kind]
 		if elk.IsPrimitiveNonPtr() {
 			vr.Map = make(map[string]string, mapn)
-			for i := 0; i < mapn; i++ {
+			for i := range mapn {
 				k := &ds.Children[2*i]
 				el = &ds.Children[2*i+1]
 				vr.Map[k.Value] = el.Value
@@ -239,7 +238,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 		}
 		// object map
 		vr.MapVar = make(map[string]*cdebug.Variable, mapn)
-		for i := 0; i < mapn; i++ {
+		for i := range mapn {
 			k := &ds.Children[2*i]
 			el = &ds.Children[2*i+1]
 			vr.MapVar[k.Value] = gd.cvtVar(el)
@@ -281,7 +280,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 }
 
 func (gd *GiDelve) cvtVars(ds []api.Variable) []*cdebug.Variable {
-	if ds == nil || len(ds) == 0 {
+	if len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)

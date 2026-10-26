@@ -7,6 +7,7 @@ package code
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -17,6 +18,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 
 	"cogentcore.org/cogent/code/lang"
@@ -52,6 +54,9 @@ const locationLinkPrefix = "location:"
 // without selecting it, unless sel is set.
 func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool) {
 	buf, has := cv.CmdBufs[tab]
+	var ed *textcore.Editor // existing editor to keep the view of
+	var scroll float32
+	var cursor textpos.Pos
 	if sel || !has || cv.Tabs() == nil || cv.Tabs().TabByName(tab) == nil {
 		b, tv, _ := cv.RecycleCmdTab(tab)
 		if tv == nil {
@@ -59,15 +64,47 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 		}
 		buf = b
 		tv.AutoscrollOnInput = false
+		ls := cv.LangSvc()
+		ls.mu.Lock()
+		delete(ls.locClicked, tab) // a new listing
+		ls.mu.Unlock()
 		tv.LinkHandler = func(tl *rich.Hyperlink) {
 			cv.openLocationLink(tab, tl.URL)
 		}
 	} else {
+		if fr := cv.TabByName(tab); fr != nil && fr.AsTree().HasChildren() {
+			ed, _ = fr.AsTree().Child(0).(*textcore.Editor)
+		}
+		if ed != nil {
+			scroll, cursor = ed.ScrollPos(), ed.CursorPos
+		}
 		buf.SetText(nil)
 	}
 	sortLocationItems(items)
-	cv.LangSvc().setLocationItems(tab, items)
-	buf.AppendTextMarkup(locationsMarkup(cv, buf.FontStyle(), header, items))
+	ls := cv.LangSvc()
+	ls.setLocationItems(tab, items)
+	lns, mus, itemLines := locationsMarkup(cv, buf.FontStyle(), header, items)
+	if ed != nil {
+		// the output editor styling turns autoscroll back on, which would
+		// go to the end on the Input from appending:
+		ed.AutoscrollOnInput = false
+	}
+	buf.AppendTextMarkup(lns, mus)
+	if ed == nil {
+		return
+	}
+	// keep the view where it was, with the last clicked item visible:
+	ed.CursorPos = buf.ValidPos(cursor)
+	ed.SetScrollPos(scroll)
+	ls.mu.Lock()
+	clicked, has := ls.locClicked[tab]
+	ls.mu.Unlock()
+	if !has {
+		return
+	}
+	if i := slices.Index(items, clicked); i >= 0 {
+		ed.SetCursorShow(textpos.Pos{Line: itemLines[i]})
+	}
 }
 
 // sortLocationItems sorts the location items by file and position.
@@ -80,8 +117,9 @@ func sortLocationItems(items []locationItem) {
 }
 
 // locationsMarkup returns the text lines and markup for the given
-// header and sorted location items, for [Code.showLocations].
-func locationsMarkup(cv *Code, sty *rich.Style, header string, items []locationItem) ([][]rune, []rich.Text) {
+// header and sorted location items, for [Code.showLocations], and the
+// line of each item.
+func locationsMarkup(cv *Code, sty *rich.Style, header string, items []locationItem) ([][]rune, []rich.Text, []int) {
 	bold := sty.Clone().SetWeight(rich.Bold)
 	link := sty.Clone().SetLinkStyle()
 	match := sty.Clone().SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
@@ -91,6 +129,7 @@ func locationsMarkup(cv *Code, sty *rich.Style, header string, items []locationI
 	}
 	var lns [][]rune
 	var mus []rich.Text
+	itemLines := make([]int, len(items))
 	add := func(ln []rune, mu rich.Text) {
 		lns = append(lns, ln)
 		mus = append(mus, mu)
@@ -133,9 +172,10 @@ func locationsMarkup(cv *Code, sty *rich.Style, header string, items []locationI
 			}
 			mu.AddSpan(sty, txt[:mst]).AddSpan(match, txt[mst:med]).AddSpan(sty, txt[med:])
 		}
+		itemLines[i] = len(lns)
 		add(append([]rune(pos), txt...), mu)
 	}
-	return lns, mus
+	return lns, mus, itemLines
 }
 
 // setLocationItems records the location items shown in the given tab,
@@ -145,6 +185,7 @@ func (ls *LangService) setLocationItems(tab string, items []locationItem) {
 	defer ls.mu.Unlock()
 	if ls.locItems == nil {
 		ls.locItems = make(map[string][]locationItem)
+		ls.locClicked = make(map[string]locationItem)
 	}
 	ls.locItems[tab] = items
 }
@@ -161,6 +202,9 @@ func (cv *Code) openLocationLink(tab, url string) {
 	items := ls.locItems[tab]
 	ls.mu.Unlock()
 	if idx >= 0 && idx < len(items) {
+		ls.mu.Lock()
+		ls.locClicked[tab] = items[idx]
+		ls.mu.Unlock()
 		cv.openLoc(items[idx].loc)
 	}
 }
@@ -246,15 +290,17 @@ func (cv *Code) showReferences(sym string, locs []lang.Location) {
 ////////   Problems
 
 // ShowProblems shows the problems (errors and warnings) reported by the
-// language servers for all of the open files in the Problems tab, where
-// they can be clicked to go to them. The tab is updated as the problems
-// change, while it is open.
-func (cv *Code) ShowProblems() { //types:add
+// language servers for the files in the given scope in the Problems tab,
+// where they can be clicked to go to them. The tab is updated as the
+// problems change, while it is open.
+func (cv *Code) ShowProblems(scope Locations) { //types:add
+	cv.Settings.ProblemsLoc = scope
 	ls := cv.LangSvc()
 	ls.mu.Lock()
 	ls.problemsShown = true
 	ls.mu.Unlock()
 	ls.updateProblems(true)
+	ls.pullProblems()
 }
 
 // updateProblems updates the Problems tab if it is being shown, selecting
@@ -263,15 +309,6 @@ func (ls *LangService) updateProblems(sel bool) {
 	cv := ls.cv
 	ls.mu.Lock()
 	shown := ls.problemsShown
-	var items []locationItem
-	for fname, diags := range ls.diagCache {
-		for _, d := range diags {
-			if d.Severity != lang.DiagErr && d.Severity != lang.DiagWarn {
-				continue
-			}
-			items = append(items, locationItem{loc: lang.Location{Filename: fname, Region: d.Region}, sev: diagWord(d.Severity), msg: d.Msg})
-		}
-	}
 	ls.mu.Unlock()
 	if !shown {
 		return
@@ -282,25 +319,166 @@ func (ls *LangService) updateProblems(sel bool) {
 		ls.mu.Unlock()
 		return
 	}
-	header := "Problems in open files: " + diagSummaryText(items)
+	inScope, desc := cv.problemsScope(cv.Settings.ProblemsLoc)
+	ls.mu.Lock()
+	var items []locationItem
+	files := slices.Collect(maps.Keys(ls.diagCache))
+	for fname := range ls.pulled {
+		if _, has := ls.diagCache[fname]; !has {
+			files = append(files, fname)
+		}
+	}
+	for _, fname := range files {
+		if !inScope(fname) {
+			continue
+		}
+		diags := ls.diagCache[fname]
+		if pd, has := ls.pulled[fname]; has && cv.GetOpenFile(fname) == nil {
+			diags = mergeDiags(pd, diags)
+		}
+		for _, d := range filterIgnored(diags, ls.ignore) {
+			if !showSeverity(d.Severity, ls.hints) {
+				continue
+			}
+			items = append(items, locationItem{loc: lang.Location{Filename: fname, Region: d.Region}, sev: diagWord(d.Severity), msg: d.Msg})
+		}
+	}
+	ls.mu.Unlock()
+	header := "Problems in " + desc + ": " + diagSummaryText(items)
 	cv.showLocations(problemsTab, header, items, sel)
 }
 
-// diagSummaryText returns a summary of the numbers of errors and
-// warnings in the given problem items.
-func diagSummaryText(items []locationItem) string {
-	nerr, nwarn := 0, 0
-	for _, it := range items {
-		if it.sev == "error" {
-			nerr++
-		} else {
-			nwarn++
+// mergeDiags returns the pulled diagnostics of a file plus those of the
+// published ones that are not among them.
+func mergeDiags(pulled, published []lang.Diagnostic) []lang.Diagnostic {
+	out := slices.Clone(pulled)
+	for _, d := range published {
+		if !slices.ContainsFunc(pulled, func(p lang.Diagnostic) bool {
+			return p.Msg == d.Msg && p.Region.Start == d.Region.Start
+		}) {
+			out = append(out, d)
 		}
 	}
-	if nerr+nwarn == 0 {
+	return out
+}
+
+// pullProblems requests the diagnostics of the files that are not open
+// in the directories of the Problems tab scope, in the background, from
+// the servers that provide them on request, and then updates the tab.
+// Servers such as gopls only publish some of the problems of files that
+// are not open: type errors, but not the results of the analyzers.
+// The All scope only uses the published problems, as it would take too
+// long. Must be called from the event loop.
+func (ls *LangService) pullProblems() {
+	cv := ls.cv
+	var dirs []string
+	switch cv.Settings.ProblemsLoc {
+	case Dir:
+		if tv := cv.ActiveEditor(); tv != nil && tv.Lines != nil {
+			dirs = []string{filepath.Dir(tv.Lines.Filename())}
+		}
+	case Open:
+		if cv.Files != nil {
+			dirs = cv.Files.OpenPaths()
+		}
+	}
+	// an open buffer with a language server, for each file extension:
+	servers := map[string]*lines.Lines{}
+	for _, ln := range cv.OpenFiles.Values {
+		if ext := filepath.Ext(ln.Filename()); servers[ext] == nil && ls.LSPActive(ln) {
+			servers[ext] = ln
+		}
+	}
+	files := map[string][]string{}
+	for _, dir := range dirs {
+		des, _ := os.ReadDir(dir)
+		for _, de := range des {
+			fname := filepath.Join(dir, de.Name())
+			ext := filepath.Ext(fname)
+			if de.IsDir() || servers[ext] == nil || cv.GetOpenFile(fname) != nil {
+				continue
+			}
+			files[ext] = append(files[ext], fname)
+		}
+	}
+	if len(files) == 0 {
+		return
+	}
+	go func() {
+		var fds []lang.FileDiags
+		for ext, fnames := range files {
+			fds = append(fds, ls.lspB.FileDiagnostics(servers[ext], fnames)...)
+		}
+		ls.mu.Lock()
+		for _, fd := range fds {
+			if len(fd.Diags) == 0 {
+				delete(ls.pulled, fd.Filename)
+			} else {
+				ls.pulled[fd.Filename] = fd.Diags
+			}
+		}
+		ls.mu.Unlock()
+		if cv.Scene == nil {
+			return
+		}
+		cv.AsyncLock()
+		ls.updateProblems(false)
+		cv.AsyncUnlock()
+	}()
+}
+
+// problemsScope returns a function that reports whether the problems of
+// a file are shown for the given scope, with the same meaning as for
+// [Code.Find], and a description of the scope.
+func (cv *Code) problemsScope(scope Locations) (func(fname string) bool, string) {
+	afile := ""
+	if tv := cv.ActiveEditor(); tv != nil && tv.Lines != nil {
+		afile = tv.Lines.Filename()
+	}
+	switch scope {
+	case File:
+		return func(fname string) bool { return fname == afile }, relativePath(cv, afile)
+	case Dir:
+		adir := filepath.Dir(afile)
+		return func(fname string) bool { return afile != "" && filepath.Dir(fname) == adir }, relativePath(cv, adir)
+	case Open:
+		dirs := map[string]bool{}
+		if cv.Files != nil {
+			for _, p := range cv.Files.OpenPaths() {
+				dirs[filepath.Clean(p)] = true
+			}
+		}
+		return func(fname string) bool { return dirs[filepath.Dir(fname)] }, "open directories"
+	}
+	root := ""
+	if cv.Files != nil {
+		root = filepath.Clean(string(cv.Files.Filepath)) + string(filepath.Separator)
+	}
+	return func(fname string) bool { return root != "" && strings.HasPrefix(fname, root) }, "all files"
+}
+
+// diagSummaryText returns a summary of the numbers of errors, warnings,
+// and info and hints, if any, in the given problem items.
+func diagSummaryText(items []locationItem) string {
+	nerr, nwarn, nhint := 0, 0, 0
+	for _, it := range items {
+		switch it.sev {
+		case "error":
+			nerr++
+		case "warning":
+			nwarn++
+		default:
+			nhint++
+		}
+	}
+	if nerr+nwarn+nhint == 0 {
 		return "none"
 	}
-	return fmt.Sprintf("%d error%s, %d warning%s", nerr, plural(nerr), nwarn, plural(nwarn))
+	s := fmt.Sprintf("%d error%s, %d warning%s", nerr, plural(nerr), nwarn, plural(nwarn))
+	if nhint > 0 {
+		s += fmt.Sprintf(", %d hint%s", nhint, plural(nhint))
+	}
+	return s
 }
 
 ////////   Occurrences

@@ -163,10 +163,7 @@ func (cv *Code) Init() {
 				w.OpenDepth = 4
 				cv.Files = w
 				w.FilterFunc = func(path string, info fs.FileInfo) bool {
-					if info.Name() == ".DS_Store" {
-						return false
-					}
-					return true
+					return info.Name() != ".DS_Store"
 				}
 				w.FileNodeType = types.For[FileNode]()
 

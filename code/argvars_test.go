@@ -15,8 +15,7 @@ import (
 )
 
 func TestBind(t *testing.T) {
-	tv := textcore.Editor{}
-	tv.CursorPos = textpos.Pos{22, 44}
+	tv := textcore.Editor{CursorPos: textpos.Pos{22, 44}}
 	tv.SelectRegion.Start = textpos.Pos{11, 14}
 	tv.SelectRegion.End = textpos.Pos{55, 0}
 

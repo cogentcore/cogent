@@ -355,6 +355,7 @@ func (s *Server) InitParams() *InitializeParams {
 	td := &TextDocumentClientCapab{
 		Synchronization:    &TextDocumentSyncCapability{DidSave: true},
 		PublishDiagnostics: &PublishDiagnosticsCapability{RelatedInformation: true, VersionSupport: true},
+		Diagnostic:         &DiagnosticClientCapability{},
 		Completion: &CompletionClientCapability{
 			CompletionItem: &CompletionItemCapability{
 				SnippetSupport:      true,
@@ -971,6 +972,25 @@ func (s *Server) InlayHint(params *InlayHintParams) ([]InlayHint, error) {
 		return nil, err
 	}
 	return hints, nil
+}
+
+// supportsPullDiagnostics reports whether the server provides the
+// diagnostics of files on request (textDocument/diagnostic).
+func (s *Server) supportsPullDiagnostics() bool {
+	return jsonEnabled(s.Caps().DiagnosticProvider)
+}
+
+// DocumentDiagnostic sends a textDocument/diagnostic request for the
+// file, which need not be open, returning its current diagnostics.
+func (s *Server) DocumentDiagnostic(uri DocumentURI) ([]Diagnostic, error) {
+	var rep DocumentDiagnosticReport
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCallTimeout)
+	defer cancel()
+	params := &DocumentDiagnosticParams{TextDocument: TextDocumentIdentifier{URI: uri}}
+	if err := s.request(ctx, "textDocument/diagnostic", params, &rep); err != nil {
+		return nil, err
+	}
+	return rep.Items, nil
 }
 
 // SemanticTokensLegend returns the legend the server advertised for

@@ -46,7 +46,7 @@ func (cv *Code) ActiveLines() *lines.Lines {
 
 // EditorIndex finds index of given texteditor (0 or 1)
 func (cv *Code) EditorIndex(av *TextEditor) int {
-	for i := 0; i < NTextEditors; i++ {
+	for i := range NTextEditors {
 		tv := cv.EditorByIndex(i)
 		if tv.This == av.This {
 			return i
@@ -58,7 +58,7 @@ func (cv *Code) EditorIndex(av *TextEditor) int {
 // EditorForLines finds a Editor that is viewing given Lines,
 // and its index, or false if none is
 func (cv *Code) EditorForLines(ln *lines.Lines) (*TextEditor, int, bool) {
-	for i := 0; i < NTextEditors; i++ {
+	for i := range NTextEditors {
 		tv := cv.EditorByIndex(i)
 		if tv != nil && tv.Lines == ln && cv.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
@@ -161,7 +161,7 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
 	tv.NeedsLayout()
-	return tv, true
+	return tv, ok
 }
 
 // OpenFindURL opens given find:/// url from Find; delegates to FindPanel

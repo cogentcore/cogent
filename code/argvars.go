@@ -196,9 +196,7 @@ func (avp *ArgVarVals) Bind(arg string) string {
 			break
 		}
 		eb += ci + 1
-		vnm := string(bs[ci : eb+1])
-		// fmt.Printf("%v\n", vnm)
-		if val, ok := (*avp)[vnm]; ok {
+		if val, ok := (*avp)[string(bs[ci:eb+1])]; ok {
 			end := make([]byte, sz-(eb+1))
 			copy(end, bs[eb+1:])
 			bs = append(bs[:ci], []byte(val)...)

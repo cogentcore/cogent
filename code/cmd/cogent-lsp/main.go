@@ -110,42 +110,67 @@ func Check(c *Config) error {
 		orig[abs] = f
 		pend[abs] = true
 	}
-	nerr := 0
-	for len(pend) > 0 {
-		rem := time.Until(deadline)
-		if rem <= 0 {
-			break
+	latest, pend := settledDiags(b, pend, deadline)
+	if len(pend) > 0 {
+		for f := range pend {
+			fmt.Fprintf(os.Stderr, "timed out waiting for diagnostics of %s\n", orig[f])
 		}
-		select {
-		case fd, ok := <-b.Diagnostics():
-			if !ok {
-				return fmt.Errorf("diagnostics channel closed unexpectedly")
+		return fmt.Errorf("timed out waiting for %d file(s)", len(pend))
+	}
+	nerr := 0
+	for _, f := range c.Args {
+		abs, _ := filepath.Abs(f)
+		for _, d := range latest[abs] {
+			fmt.Printf("%s: %s: %s\n", posString(f, d.Region), sevWord(d.Severity), d.Msg)
+			if d.Severity == lang.DiagErr {
+				nerr++
 			}
-			if !pend[fd.Filename] {
-				continue
-			}
-			delete(pend, fd.Filename)
-			for _, d := range fd.Diags {
-				name := orig[fd.Filename]
-				if name == "" {
-					name = fd.Filename
-				}
-				fmt.Printf("%s: %s: %s\n", posString(name, d.Region), sevWord(d.Severity), d.Msg)
-				if d.Severity == lang.DiagErr {
-					nerr++
-				}
-			}
-		case <-time.After(rem):
-			for f := range pend {
-				fmt.Fprintf(os.Stderr, "timed out waiting for diagnostics of %s\n", orig[f])
-			}
-			return fmt.Errorf("timed out waiting for %d file(s)", len(pend))
 		}
 	}
 	if nerr > 0 {
 		return fmt.Errorf("%d error(s) found", nerr)
 	}
 	return nil
+}
+
+// settledDiags waits until diagnostics have been published for all of
+// the pend files (full paths, removed from pend as they arrive), and then
+// until publishes settle, returning the latest diagnostics per file.
+// Servers can publish more than once per file: gopls sends an early
+// empty set on open, and then the type-checked set.
+func settledDiags(b *lsp.Backend, pend map[string]bool, deadline time.Time) (map[string][]lang.Diagnostic, map[string]bool) {
+	const settle = 1500 * time.Millisecond
+	latest := make(map[string][]lang.Diagnostic)
+	names := make(map[string]string, len(pend)) // normalized -> pend name
+	for f := range pend {
+		names[cliNormalize(f)] = f
+	}
+	var quiet <-chan time.Time
+	for {
+		rem := time.Until(deadline)
+		if rem <= 0 {
+			return latest, pend
+		}
+		select {
+		case fd, ok := <-b.Diagnostics():
+			if !ok {
+				return latest, pend
+			}
+			f, ok := names[cliNormalize(fd.Filename)]
+			if !ok {
+				continue
+			}
+			delete(pend, f)
+			latest[f] = fd.Diags
+			if len(pend) == 0 {
+				quiet = time.After(settle)
+			}
+		case <-quiet:
+			return latest, pend
+		case <-time.After(rem):
+			return latest, pend
+		}
+	}
 }
 
 // Sig shows the signature help for the callable at FILE:LINE:COL,
@@ -430,24 +455,9 @@ func Actions(c *Config) error {
 	}
 	b.Open(ln)
 	// collect the diagnostics published for this file as context:
-	var diags []lang.Diagnostic
-	done := false
-	for !done && time.Now().Before(deadline) {
-		rem := time.Until(deadline)
-		select {
-		case fd, ok := <-b.Diagnostics():
-			if !ok {
-				return fmt.Errorf("diagnostics channel closed unexpectedly")
-			}
-			if cliNormalize(fd.Filename) != cliNormalize(abs) {
-				continue
-			}
-			diags = fd.Diags
-			done = true
-		case <-time.After(rem):
-			done = true
-		}
-	}
+	latest, pend := settledDiags(b, map[string]bool{abs: true}, deadline)
+	diags := latest[abs]
+	done := len(pend) == 0
 	if !done {
 		fmt.Fprintf(os.Stderr, "no diagnostics published for %s (continuing without context)\n", path)
 	}

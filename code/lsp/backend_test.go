@@ -192,6 +192,41 @@ func TestHandleDiagsNoDeadlock(t *testing.T) {
 	}
 }
 
+// TestHandleDiagsUntracked checks that diagnostics for files that are
+// not open are only reported with AllDiagnostics, with positions
+// converted from UTF-16 using the file on disk.
+func TestHandleDiagsUntracked(t *testing.T) {
+	fpath := filepath.Join(t.TempDir(), "x.go")
+	if err := os.WriteFile(fpath, []byte("package x\n\nvar s = \"🙂\"; var y = z\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b := NewBackend(nil)
+	defer b.Stop()
+	diag := []Diagnostic{{
+		Range:    Range{Start: Position{Line: 2, Character: 22}, End: Position{Line: 2, Character: 23}},
+		Severity: SeverityError,
+		Message:  "undefined: z",
+	}}
+	b.handleDiags(URIFromPath(fpath), diag) // returns without sending
+	select {
+	case fd := <-b.Diagnostics():
+		t.Fatalf("diagnostics reported for untracked file without AllDiagnostics: %v", fd)
+	default:
+	}
+
+	b.AllDiagnostics = true
+	go b.handleDiags(URIFromPath(fpath), diag)
+	select {
+	case fd := <-b.Diagnostics():
+		assert.Equal(t, fpath, fd.Filename)
+		if assert.Len(t, fd.Diags, 1) {
+			assert.Equal(t, textpos.Region{Start: textpos.Pos{Line: 2, Char: 21}, End: textpos.Pos{Line: 2, Char: 22}}, fd.Diags[0].Region)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no diagnostics delivered for untracked file")
+	}
+}
+
 func TestLinesConcurrencyStress(t *testing.T) {
 	ln, fpath := testLines(t)
 	b := NewBackend(nil)
@@ -204,9 +239,7 @@ func TestLinesConcurrencyStress(t *testing.T) {
 	var diagsRcvd atomic.Int64
 
 	// consume diagnostics so handleDiags never blocks on the channel:
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -215,12 +248,10 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				diagsRcvd.Add(1)
 			}
 		}
-	}()
+	})
 
 	// goroutine converting positions (jsonrpc read goroutine proxy):
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -233,11 +264,10 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				regionFromLSP(ln, Range{Start: Position{Line: 1, Character: 0}, End: Position{Line: 3, Character: 4}})
 			}
 		}
-	}()
+	})
 
 	// goroutine applying diagnostic tags (applyDiags pattern from code pkg):
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		defer wg.Done()
 		for {
 			select {
@@ -257,11 +287,10 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				ln.MarkupLines(4, 4)
 			}
 		}
-	}()
+	})
 
 	// goroutine editing text (UI typing proxy):
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		defer wg.Done()
 		for {
 			select {
@@ -272,13 +301,12 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				ln.DeleteText(textpos.Pos{Line: 1, Char: 0}, textpos.Pos{Line: 1, Char: 4})
 			}
 		}
-	}()
+	})
 
 	// goroutine triggering core's own asynchronous markup pass, which
 	// holds the Lines lock internally -- this was one of the parties in
 	// the original deadlock:
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		defer wg.Done()
 		for {
 			select {
@@ -289,11 +317,10 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				time.Sleep(time.Millisecond)
 			}
 		}
-	}()
+	})
 
 	// goroutine publishing diagnostics (server read loop proxy):
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		defer wg.Done()
 		for {
 			select {
@@ -308,7 +335,7 @@ func TestLinesConcurrencyStress(t *testing.T) {
 				time.Sleep(time.Millisecond)
 			}
 		}
-	}()
+	})
 
 	time.Sleep(500 * time.Millisecond)
 	close(stop)
@@ -1254,4 +1281,29 @@ func TestInlayHintsConfig(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestFileDiagnosticsGopls checks that pull diagnostics report analyzer
+// results for a file that is not open, which gopls does not publish.
+func TestFileDiagnosticsGopls(t *testing.T) {
+	src := "package main\n\nfunc main() {}\n"
+	b, ln, srcPath := goplsSetup(t, src)
+	other := filepath.Join(filepath.Dir(srcPath), "other.go")
+	if err := os.WriteFile(other, []byte("package main\n\nimport \"net\"\n\nvar p = net.TCPAddr{nil, 1, \"\"}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	var fds []lang.FileDiags
+	waitUntil(t, 60*time.Second, "pulled analyzer diagnostic", func() bool {
+		fds = b.FileDiagnostics(ln, []string{other})
+		return len(fds) == 1 && len(fds[0].Diags) > 0
+	})
+	assert.Equal(t, other, fds[0].Filename)
+	found := false
+	for _, d := range fds[0].Diags {
+		if strings.Contains(d.Msg, "unkeyed fields") {
+			found = true
+			assert.Equal(t, 4, d.Region.Start.Line)
+		}
+	}
+	assert.True(t, found, "no unkeyed fields diagnostic in %v", fds[0].Diags)
 }

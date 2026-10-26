@@ -266,13 +266,8 @@ func (ls *LangService) lookupMenu(tv *TextEditor, pos textpos.Pos, fixesOnly boo
 	ls.Change(ln) // make sure the server has the current text
 
 	var items []core.ChooserItem
-	if len(diags) > 0 {
-		actions, _ := ls.lspB.CodeActionsQuick(ln, diags[0].Region, diags)
-		for _, ca := range actions {
-			if ca.IsQuickFix() || len(ca.Diagnostics) > 0 {
-				items = append(items, core.ChooserItem{Text: "Fix: " + actionTitle(&ca), Tooltip: ca.Description(), Value: ca})
-			}
-		}
+	for _, ca := range ls.quickFixes(ln, diags) {
+		items = append(items, core.ChooserItem{Text: "Fix: " + actionTitle(&ca), Tooltip: ca.Description(), Value: ca})
 	}
 	if fixesOnly && len(items) == 0 {
 		return false
@@ -397,6 +392,40 @@ func (cv *Code) QuickFix() { //types:add
 // refactorings, and source actions such as browsing the assembly or
 // documentation. This is used for a submenu, which is populated when
 // it is opened.
+// quickFixes returns the quick fixes for the given diagnostics, which
+// are those at a position in the given buffer.
+func (ls *LangService) quickFixes(ln *lines.Lines, diags []lang.Diagnostic) []lsp.CodeAction {
+	if len(diags) == 0 {
+		return nil
+	}
+	actions, _ := ls.lspB.CodeActionsQuick(ln, diags[0].Region, diags)
+	return slices.DeleteFunc(actions, func(ca lsp.CodeAction) bool {
+		return !ca.IsQuickFix() && len(ca.Diagnostics) == 0
+	})
+}
+
+// quickFixButtons adds buttons to the given context menu for the quick
+// fixes of the problems shown at the cursor of the editor.
+func (ls *LangService) quickFixButtons(m *core.Scene, tv *TextEditor) {
+	ln := tv.Lines
+	ls.mu.Lock()
+	hints := ls.hints
+	ls.mu.Unlock()
+	diags := slices.DeleteFunc(ls.diagsAt(ln, tv.CursorPos), func(d lang.Diagnostic) bool {
+		return !showSeverity(d.Severity, hints)
+	})
+	if len(diags) == 0 {
+		return
+	}
+	ls.Change(ln) // make sure the server has the current text
+	for _, ca := range ls.quickFixes(ln, diags) {
+		core.NewButton(m).SetText("Fix: "+actionTitle(&ca)).SetIcon(icons.Bolt).SetTooltip(ca.Description()).
+			SetState(ca.Disabled != nil, states.Disabled).OnClick(func(e events.Event) {
+			ls.applyCodeAction(ln, &ca)
+		})
+	}
+}
+
 func (ls *LangService) codeActionsMenu(m *core.Scene, tv *TextEditor) {
 	ln := tv.Lines
 	reg := actionRegion(tv)
@@ -789,9 +818,13 @@ func (cv *Code) ShowSignatureHelp() { //types:add
 		if i > 0 {
 			sb.WriteString("\n---\n")
 		}
-		sb.WriteString("```go\n" + lsp.SignatureText(sh, i, sh.ActiveParam(), mark, unmark) + "\n```\n")
+		sb.WriteString("```go\n")
+		sb.WriteString(lsp.SignatureText(sh, i, sh.ActiveParam(), mark, unmark))
+		sb.WriteString("\n```\n")
 		if sig.Documentation != nil && sig.Documentation.Value != "" {
-			sb.WriteString("\n" + sig.Documentation.Value + "\n")
+			sb.WriteString("\n")
+			sb.WriteString(sig.Documentation.Value)
+			sb.WriteString("\n")
 		}
 	}
 	name, _, _ := strings.Cut(sh.Signatures[max(act, 0)].Label, "(")
