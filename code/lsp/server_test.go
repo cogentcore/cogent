@@ -101,11 +101,9 @@ func Demo() {
 
 	// completion: fmt.Pr should produce items (Println etc):
 	list, err := srv.Completion(&CompletionParams{
-		TextDocumentPositionParams: TextDocumentPositionParams{
-			TextDocument: TextDocumentIdentifier{URI: uri},
-			Position:     Position{Line: 5, Character: 6},
-		},
-		Context: &CompletionContext{TriggerKind: CompleteTriggerCharacter, TriggerCharacter: "."},
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Position:     Position{Line: 5, Character: 6},
+		Context:      &CompletionContext{TriggerKind: CompleteTriggerCharacter, TriggerCharacter: "."},
 	})
 	if err != nil {
 		t.Fatalf("completion: %v", err)

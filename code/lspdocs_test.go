@@ -71,7 +71,7 @@ func TestLocationsMarkup(t *testing.T) {
 	}
 	sortLocationItems(items)
 	buf := lines.NewLines()
-	lns, mus := locationsMarkup(cv, buf.FontStyle(), "Header", items)
+	lns, mus, _ := locationsMarkup(cv, buf.FontStyle(), "Header", items)
 	var texts []string
 	for i, ln := range lns {
 		texts = append(texts, string(ln))
@@ -121,4 +121,32 @@ func TestSymNodeIcons(t *testing.T) {
 		sn := NewSymNode().SetSymbol(syms.Symbol{Kind: kind})
 		assert.Equal(t, ic, sn.GetIcon(), kind.String())
 	}
+}
+
+func TestIgnoreAndMergeProblems(t *testing.T) {
+	at := func(line int) textpos.Region { return textpos.Region{Start: textpos.Pos{Line: line}} }
+	unkeyed := lang.Diagnostic{Region: at(1), Msg: "image.Point struct literal uses unkeyed fields", Severity: lang.DiagWarn}
+	typeErr := lang.Diagnostic{Region: at(2), Msg: "undefined: x", Severity: lang.DiagErr}
+	other := lang.Diagnostic{Region: at(3), Msg: "undefined: y", Severity: lang.DiagErr}
+
+	diags := []lang.Diagnostic{unkeyed, typeErr}
+	assert.Equal(t, diags, filterIgnored(diags, nil))
+	assert.Equal(t, []lang.Diagnostic{typeErr}, filterIgnored(diags, []string{"uses unkeyed fields"}))
+	assert.Len(t, diags, 2, "filterIgnored must not modify its argument")
+
+	// pulled has everything at the time; published adds a newer error:
+	assert.Equal(t, []lang.Diagnostic{unkeyed, typeErr, other}, mergeDiags(diags, []lang.Diagnostic{typeErr, other}))
+
+	var se ProjectSettings
+	se.addStandardIgnores()
+	assert.Len(t, se.IgnoreProblems, len(StandardIgnoreProblems))
+	assert.False(t, se.IgnoreProblems["struct literal uses unkeyed fields"])
+	se.IgnoreProblems["struct literal uses unkeyed fields"] = true
+	se.addStandardIgnores()
+	assert.True(t, se.IgnoreProblems["struct literal uses unkeyed fields"], "user setting kept")
+
+	assert.False(t, showSeverity(lang.DiagHint, false))
+	assert.True(t, showSeverity(lang.DiagHint, true))
+	assert.True(t, showSeverity(lang.DiagWarn, false))
+	assert.Equal(t, "1 error, 0 warnings, 2 hints", diagSummaryText([]locationItem{{sev: "error"}, {sev: "hint"}, {sev: "info"}}))
 }

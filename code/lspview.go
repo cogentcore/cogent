@@ -6,6 +6,7 @@ package code
 
 import (
 	"image"
+	"slices"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -348,13 +349,13 @@ func (ls *LangService) SigHelpUpdate(tv *TextEditor) {
 func callParen(prefix string) int {
 	rn := []rune(prefix)
 	depth := 0
-	for i := len(rn) - 1; i >= 0; i-- {
-		switch rn[i] {
+	for i, r := range slices.Backward(rn) {
+		switch r {
 		case ')', ']', '}':
 			depth++
 		case '(', '[', '{':
 			if depth == 0 {
-				if rn[i] == '(' {
+				if r == '(' {
 					return i
 				}
 				return -1

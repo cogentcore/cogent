@@ -102,7 +102,7 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 	var res []search.Results
 	for _, ln := range of.Values {
 		path := filepath.Dir(ln.Filename())
-		if !(paths == nil || slices.Contains(paths, path)) {
+		if paths != nil && !slices.Contains(paths, path) {
 			continue
 		}
 		if !search.LangCheck(ln.FileInfo(), langs) {
@@ -123,7 +123,7 @@ func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, lang
 	var res []search.Results
 	for _, ln := range of.Values {
 		path := filepath.Dir(ln.Filename())
-		if !(paths == nil || slices.Contains(paths, path)) {
+		if paths != nil && !slices.Contains(paths, path) {
 			continue
 		}
 		if !search.LangCheck(ln.FileInfo(), langs) {
@@ -511,7 +511,7 @@ func (cv *Code) ShowFile(fpath string, ln int) (*TextEditor, error) {
 		tv.SetCursorTarget(textpos.Pos{Line: ln - 1})
 		return tv, nil
 	}
-	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fpath)
+	return nil, fmt.Errorf("ShowFile: file named: %v not found", fpath)
 }
 
 // SelectOpenFile pops up a menu to select an open file to view

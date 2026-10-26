@@ -61,6 +61,14 @@ type Backend struct {
 	// server connection goroutines and must not block.
 	Progress func(msg string)
 
+	// AllDiagnostics enables reporting of the diagnostics that servers
+	// publish for files that are not open, such as the type errors that
+	// gopls reports for all of the packages in the workspace, with their
+	// positions converted using the file contents on disk. Otherwise only
+	// diagnostics for open files are reported. Set it only if the
+	// [Backend.Diagnostics] channel is always being received from.
+	AllDiagnostics bool
+
 	// Verbose enables detailed logging of the backend.
 	Verbose bool
 
@@ -480,18 +488,16 @@ func (b *Backend) handleDiags(uri DocumentURI, diags []Diagnostic) {
 	b.mu.Lock()
 	ref := b.docs[normalizePath(fname)]
 	b.mu.Unlock()
-	if ref == nil {
-		return // only report for currently-tracked files
-	}
-	fd := lang.FileDiags{Filename: ref.fname}
-	for _, d := range diags {
-		fd.Diags = append(fd.Diags, lang.Diagnostic{
-			Region:   regionFromLSP(ref.ln, d.Range),
-			Msg:      cleanMessage(d.Message),
-			Severity: diagSeverity(d.Severity),
-			Source:   d.Source,
-			Code:     codeString(d.Code),
-		})
+	fd := lang.FileDiags{Filename: fname}
+	switch {
+	case ref != nil:
+		fd.Filename = ref.fname
+		fd.Diags = convertDiags(diags, func(r Range) textpos.Region { return regionFromLSP(ref.ln, r) })
+	case !b.AllDiagnostics:
+		return
+	default:
+		rc := b.newRegionConverter()
+		fd.Diags = convertDiags(diags, func(r Range) textpos.Region { return rc.region(fname, r) })
 	}
 	b.sendMu.RLock()
 	defer b.sendMu.RUnlock()
@@ -506,6 +512,61 @@ func (b *Backend) handleDiags(uri DocumentURI, diags []Diagnostic) {
 			log.Printf("lsp: dropping diagnostics for %s: channel full\n", fname)
 		}
 	}
+}
+
+// convertDiags converts LSP diagnostics, using the given function to
+// convert their ranges into editor units.
+func convertDiags(diags []Diagnostic, region func(r Range) textpos.Region) []lang.Diagnostic {
+	var out []lang.Diagnostic
+	for _, d := range diags {
+		out = append(out, lang.Diagnostic{
+			Region:   region(d.Range),
+			Msg:      cleanMessage(d.Message),
+			Severity: diagSeverity(d.Severity),
+			Source:   d.Source,
+			Code:     codeString(d.Code),
+		})
+	}
+	return out
+}
+
+// FileDiagnostics returns the current diagnostics of the given files,
+// which need not be open, from the server for the given open buffer,
+// if it supports pull diagnostics (gopls, with its pullDiagnostics
+// option), and nil otherwise. Unlike the diagnostics that servers
+// publish for files that are not open, these include the results of
+// all of the checks, such as the gopls analyzers. Files whose request
+// fails are omitted.
+func (b *Backend) FileDiagnostics(ln *lines.Lines, files []string) []lang.FileDiags {
+	srv, ok := b.readyServer(ln)
+	if !ok || !srv.supportsPullDiagnostics() {
+		return nil
+	}
+	diags := make([][]Diagnostic, len(files))
+	errs := make([]error, len(files))
+	sem := make(chan struct{}, 8) // gopls analyzes each package once anyway
+	var wg sync.WaitGroup
+	for i, f := range files {
+		wg.Go(func() {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			diags[i], errs[i] = srv.DocumentDiagnostic(URIFromPath(f))
+		})
+	}
+	wg.Wait()
+	rc := b.newRegionConverter()
+	var out []lang.FileDiags
+	for i, f := range files {
+		if errs[i] != nil {
+			if b.Verbose {
+				log.Printf("lsp: diagnostics of %s: %v\n", f, errs[i])
+			}
+			continue
+		}
+		out = append(out, lang.FileDiags{Filename: f,
+			Diags: convertDiags(diags[i], func(r Range) textpos.Region { return rc.region(f, r) })})
+	}
+	return out
 }
 
 // cleanMessage collapses multi-line diagnostic messages onto one line,

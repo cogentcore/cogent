@@ -3,14 +3,13 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.6
-	cogentcore.org/lab v0.2.4
+	cogentcore.org/core v0.5.7
+	cogentcore.org/lab v0.2.5
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/cogentcore/yaegi v0.0.0-20261024142200-c0b92ec4f6b6
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
@@ -23,7 +22,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.11.1
 	github.com/yuin/goldmark v1.7.3
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 	golang.org/x/oauth2 v0.28.0
 	gonum.org/v1/gonum v0.17.0
 )
@@ -38,10 +37,10 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bogdanfinn/utls v1.6.1 // indirect
-	github.com/bramvdbogaerde/go-scp v1.6.0 // indirect
 	github.com/chewxy/math32 v1.11.2 // indirect
 	github.com/cilium/ebpf v0.22.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cogentcore/mvm v0.0.0-20261026193832-5ebd19c3fa21 // indirect
 	github.com/cogentcore/readline v0.1.3 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -60,6 +59,7 @@ require (
 	github.com/hack-pad/safejs v0.1.1 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240226150601-1dcf7310316a // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -70,6 +70,7 @@ require (
 	github.com/oliverbestmann/webgpu/libs-ios v0.0.0-20260628152757-fe2537e7ddac // indirect
 	github.com/oliverbestmann/webgpu/libs-linux v0.0.0-20260628152803-421b8a341d08 // indirect
 	github.com/oliverbestmann/webgpu/libs-windows v0.0.0-20260628152801-f47d1b682eb8 // indirect
+	github.com/pkg/sftp v1.13.12 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/quic-go/quic-go v0.48.2 // indirect
@@ -82,14 +83,14 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.28.0 // indirect
-	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260908163034-4bcc4b2ee518 // indirect
-	golang.org/x/text v0.42.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
+	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

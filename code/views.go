@@ -159,7 +159,7 @@ func (cv *Code) VCSLog() (vcs.Log, error) { //types:add
 			return cv.Files.LogVCS(true, since)
 		}
 		core.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
-		return nil, errors.New("No VCS Repository found in current active file or Root path")
+		return nil, errors.New("no VCS repository found in current active file or root path")
 	}
 	return ond.LogVCS(true, since)
 }

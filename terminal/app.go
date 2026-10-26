@@ -31,7 +31,6 @@ import (
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/lab/goal/interpreter"
-	"github.com/cogentcore/yaegi/interp"
 )
 
 // App is a GUI view of a terminal command.
@@ -197,7 +196,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	cmds.Update()
 
-	in := interpreter.NewInterpreter(interp.Options{Stdin: ir, Stdout: ow, Stderr: ow})
+	in := interpreter.NewInterpreter(interpreter.Options{Stdin: ir, Stdout: ow, Stderr: ow})
 	go in.Eval(cmd)
 	return nil
 }

@@ -90,6 +90,12 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(cv.ShowProblems).SetIcon(icons.BugReport).SetText("Problems")
+		w.OnFirst(events.Click, func(e events.Event) {
+			w.Args[0].SetValue(cv.Settings.ProblemsLoc) // prompt with the saved scope
+		})
+	})
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Lookup).SetIcon(icons.Bolt).
 			SetShortcut(KeyQuickFix.Chord())
 	})
@@ -129,7 +135,6 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 		w.SetMenu(func(m *core.Scene, pos image.Point) {
 			ec := ExecCmds(cv)
 			for _, cc := range ec {
-				cc := cc
 				cat := cc[0]
 				icon := CommandIcons[cat]
 				core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene, pos image.Point) {

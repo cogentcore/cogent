@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -336,14 +337,7 @@ func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 	if err != nil {
 		return cur, nil, err
 	}
-	hasCur := false
-	for _, b := range br {
-		if b == cur {
-			hasCur = true
-			break
-		}
-	}
-	if !hasCur {
+	if !slices.Contains(br, cur) {
 		br = append(br, cur)
 	}
 	return cur, br, nil
@@ -604,7 +598,7 @@ func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err erro
 		if err != nil {
 			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
-		lns := [][]rune{[]rune{}, finstat.Join()}
+		lns := [][]rune{{}, finstat.Join()}
 		mu := []rich.Text{rich.NewText(sty, nil), finstat}
 		if len(outstr) > 0 {
 			rout := []rune(outstr)
@@ -849,7 +843,6 @@ func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) fu
 	}
 	return func(mm *core.Scene, pos image.Point) {
 		for _, cc := range cmds {
-			cc := cc
 			n := len(cc)
 			if n < 2 {
 				continue

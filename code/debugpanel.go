@@ -256,7 +256,7 @@ func (dv *DebugPanel) InitTabs() {
 // panelIsValid checks if panel is valid for use.
 // for outside functions calling in, e.g., textbuf.
 func (dv *DebugPanel) panelIsValid() bool {
-	return !(dv.This == nil || dv.Code == nil || dv.Code.This == nil || dv.Tabs() == nil)
+	return dv.This != nil && dv.Code != nil && dv.Code.This != nil && dv.Tabs() != nil
 }
 
 // DbgIsActive means debugger is started.
@@ -298,10 +298,8 @@ func (dv *DebugPanel) Destroy() {
 
 // Detach from debugger
 func (dv *DebugPanel) Detach() {
-	killProc := true
-	if dv.State.Mode == cdebug.Attach {
-		killProc = false
-	}
+	killProc := dv.State.Mode != cdebug.Attach
+
 	if dv.DbgIsAvail() {
 		dv.Dbg.Detach(killProc)
 	} else if dv.DbgIsActive() {
@@ -432,7 +430,7 @@ func (dv *DebugPanel) StepOut() { //types:add
 	dv.InitState(ds)
 }
 
-// StepSingle steps a single CPU instruction.
+// SingleStep steps a single CPU instruction.
 func (dv *DebugPanel) SingleStep() { //types:add
 	if !dv.DbgCanStep() {
 		return
@@ -599,9 +597,7 @@ func (dv *DebugPanel) UpdateAllBreaks() {
 // BackupBreaks makes a backup copy of current breaks
 func (dv *DebugPanel) BackupBreaks() {
 	dv.BBreaks = make([]*cdebug.Break, len(dv.State.Breaks))
-	for i, b := range dv.State.Breaks {
-		dv.BBreaks[i] = b
-	}
+	copy(dv.BBreaks, dv.State.Breaks)
 }
 
 // InitState updates the State and View from given debug state
@@ -617,7 +613,7 @@ func (dv *DebugPanel) InitState(ds *cdebug.State) {
 		dv.SetStatus(cdebug.Stopped)
 	}
 	err := dv.Dbg.InitAllState(&dv.State)
-	if err == cdebug.IsRunningErr {
+	if err == cdebug.ErrIsRunning {
 		dv.SetStatus(cdebug.Running)
 		return
 	}

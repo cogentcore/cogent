@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package cdebug provides the general interface for a debugger.
 package cdebug
 
 //go:generate core generate
@@ -15,9 +16,9 @@ import (
 )
 
 var (
-	NotStartedErr = errors.New("debugger not started")
+	ErrNotStarted = errors.New("debugger not started")
 
-	IsRunningErr = errors.New("debugger is currently running and cannot return info")
+	ErrIsRunning = errors.New("debugger is currently running and cannot return info")
 
 	// Debuggers is the list of supported debuggers
 	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *lines.Lines, pars *Params) (GiDebug, error){}

@@ -313,9 +313,10 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 			var fields []syms.Symbol
 			for _, x := range sy.Children {
 				if symMatch(x.Name, match, ignoreCase) {
-					if x.Kind == token.NameMethod {
+					switch x.Kind {
+					case token.NameMethod:
 						methods = append(methods, *x)
-					} else if x.Kind == token.NameField {
+					case token.NameField:
 						fields = append(fields, *x)
 					}
 				}
@@ -373,11 +374,11 @@ type SymNode struct {
 }
 
 // GetIcon returns the appropriate Icon for this symbol type
-func (sy *SymNode) GetIcon() icons.Icon {
+func (sn *SymNode) GetIcon() icons.Icon {
 	// note: sub-categories include the specific kinds from language
 	// servers, e.g., NameStruct and NameInterface are NameType, and
 	// NameConstant is also in the NameType sub-category, so it is first.
-	switch k := sy.Symbol.Kind; {
+	switch k := sn.Symbol.Kind; {
 	case k == token.NameConstant || k == token.NameEnumMember:
 		return icons.Constant
 	case k == token.NameField:

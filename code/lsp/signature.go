@@ -151,7 +151,9 @@ func SignatureText(sh *SignatureHelp, sig, activeParam int, mark, unmark string)
 		st := prev + off
 		sb.WriteString(si.Label[prev:st])
 		if i == activeParam {
-			sb.WriteString(mark + txt + unmark)
+			sb.WriteString(mark)
+			sb.WriteString(txt)
+			sb.WriteString(unmark)
 		} else {
 			sb.WriteString(txt)
 		}

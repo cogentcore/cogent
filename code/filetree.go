@@ -49,6 +49,38 @@ func (fn *FileNode) Init() {
 	})
 }
 
+// OnOpen updates the Problems tab for the newly opened directory.
+func (fn *FileNode) OnOpen() {
+	fn.Node.OnOpen()
+	fn.dirOpenChanged()
+}
+
+// OnClose updates the Problems tab for the closed directory.
+func (fn *FileNode) OnClose() {
+	fn.Node.OnClose()
+	fn.dirOpenChanged()
+}
+
+// dirOpenChanged updates the Problems tab when a directory is opened or
+// closed, if it is showing the problems in the open directories.
+func (fn *FileNode) dirOpenChanged() {
+	if !fn.IsDir() {
+		return
+	}
+	cv, ok := ParentCode(fn.This)
+	if !ok || cv.langSvc == nil || cv.Settings.ProblemsLoc != Open {
+		return
+	}
+	ls := cv.langSvc
+	ls.mu.Lock()
+	shown := ls.problemsShown
+	ls.mu.Unlock()
+	if shown {
+		ls.updateProblems(false)
+		ls.pullProblems()
+	}
+}
+
 // EditFile pulls up this file in Code
 func (fn *FileNode) EditFile() {
 	if fn.IsDir() {
@@ -87,7 +119,7 @@ func (fn *FileNode) ExecCmdFile() { //types:add
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		cv.ExecCmdNameFile(string(fn.Node.Filepath), CmdName(cmdNm))
+		cv.ExecCmdNameFile(string(fn.Filepath), CmdName(cmdNm))
 	}
 }
 

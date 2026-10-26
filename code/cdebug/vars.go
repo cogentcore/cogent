@@ -117,7 +117,7 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 	lln := len(vr.List)
 	if lln > 0 {
 		for i, el := range vr.List {
-			b.WriteString(fmt.Sprintf("%d: %s", i, el))
+			fmt.Fprintf(&b, "%d: %s", i, el)
 			if i < lln-1 {
 				b.WriteString(", ")
 			}
@@ -126,7 +126,7 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 	lln = len(vr.Map)
 	if lln > 0 {
 		for k, v := range vr.Map {
-			b.WriteString(fmt.Sprintf("%s: %s, ", k, v))
+			fmt.Fprintf(&b, "%s: %s, ", k, v)
 		}
 	}
 	lln = len(vr.MapVar)
@@ -136,7 +136,8 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 				b.WriteString("\n")
 				b.WriteString(indent.String(ichr, ident+1, tabSz))
 			}
-			b.WriteString(k + ": ")
+			b.WriteString(k)
+			b.WriteString(": ")
 			b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen, false))
 			if b.Len() > maxlen {
 				b.WriteString("...")
@@ -153,7 +154,8 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 			b.WriteString(indent.String(ichr, ident+1, tabSz))
 		}
 		if ve.Name != "" {
-			b.WriteString(ve.Name + ": ")
+			b.WriteString(ve.Name)
+			b.WriteString(": ")
 		}
 		b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen, true))
 		if b.Len() > maxlen {

@@ -19,6 +19,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/text/textpos"
+
+	"cogentcore.org/cogent/code/lang"
 )
 
 // TestCodeOccurrencesClick checks occurrence highlighting in a real Code
@@ -149,6 +151,65 @@ func TestCodeSymbolsClick(t *testing.T) {
 		b.AsyncUnlock()
 		if !same {
 			t.Error("symbol tree was replaced")
+		}
+	})
+}
+
+// TestNextProblem checks going through the problems with NextProblem,
+// and that the next problem becomes current when the current one goes
+// away, as after applying a fix for it.
+func TestNextProblem(t *testing.T) {
+	tmp := t.TempDir()
+	fpath := filepath.Join(tmp, "a.txt")
+	os.WriteFile(fpath, []byte("one\ntwo\nthree\nfour\n"), 0644)
+	b := core.NewBody()
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	problem := func(line int) locationItem {
+		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}, sev: "warning", msg: "problem"}
+	}
+	imagex.UpdateTestImages = true
+	defer func() { imagex.UpdateTestImages = false }()
+	b.AssertRender(t, "next-problem", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		ls := cv.LangSvc()
+		ls.problemsShown = true
+		cv.showLocations(problemsTab, "Problems", []locationItem{problem(0), problem(1), problem(3)}, true)
+		cursorLine := func() int {
+			tv := cv.ActiveEditor()
+			if tv == nil || tv.Lines == nil || tv.Lines.Filename() != fpath {
+				return -1
+			}
+			return tv.CursorPos.Line
+		}
+		cv.NextProblem()
+		if l := cursorLine(); l != 0 {
+			t.Fatalf("first NextProblem: cursor line %d, want 0", l)
+		}
+		cv.NextProblem()
+		if l := cursorLine(); l != 1 {
+			t.Fatalf("second NextProblem: cursor line %d, want 1", l)
+		}
+		// the problems of the file are briefly gone, as servers can
+		// publish no problems for a changed file before the full set:
+		// the current problem stays the same
+		cv.showLocations(problemsTab, "Problems", nil, false)
+		cv.showLocations(problemsTab, "Problems", []locationItem{problem(0), problem(1), problem(3)}, false)
+		if cur := ls.locCurrent[problemsTab]; cur != problem(1) {
+			t.Fatalf("current after a transient refresh: %v, want line 1", cur.loc)
+		}
+		// the problem at line 1 is fixed: NextProblem goes to the next one
+		cv.showLocations(problemsTab, "Problems", []locationItem{problem(0), problem(3)}, false)
+		cv.NextProblem()
+		if l := cursorLine(); l != 3 {
+			t.Fatalf("NextProblem after fix: cursor line %d, want 3", l)
+		}
+		cv.NextProblem() // no more
+		if l := cursorLine(); l != 3 {
+			t.Errorf("NextProblem at the end: cursor line %d, want 3", l)
 		}
 	})
 }

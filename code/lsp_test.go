@@ -133,9 +133,7 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -145,11 +143,9 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				ls.applyDiags(ln, nil)
 			}
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -159,11 +155,9 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				time.Sleep(time.Millisecond)
 			}
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -173,7 +167,7 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				ln.DeleteText(textpos.Pos{Line: 0, Char: 0}, textpos.Pos{Line: 0, Char: 4})
 			}
 		}
-	}()
+	})
 
 	time.Sleep(300 * time.Millisecond)
 	close(stop)
@@ -239,6 +233,11 @@ func TestDiagsFlowWithGopls(t *testing.T) {
 	if err := os.WriteFile(demoPath, []byte(badSrc), 0644); err != nil {
 		t.Fatal(err)
 	}
+	// a file that is never opened, whose type errors gopls also reports:
+	otherPath := filepath.Join(tmp, "other.go")
+	if err := os.WriteFile(otherPath, []byte("package demo\n\nvar s = \"🙂\"; var y = undefinedOther\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv("GOWORK", "off")
 
 	cv := NewCode()
@@ -267,6 +266,26 @@ func TestDiagsFlowWithGopls(t *testing.T) {
 	if !strings.Contains(msg, "undefinedThing") {
 		t.Errorf("recorded diagnostic message %q does not mention undefinedThing", msg)
 	}
+	var other []lang.Diagnostic
+	waitCode(t, 60*time.Second, "problems of the unopened file cached", func() bool {
+		ls.mu.Lock()
+		defer ls.mu.Unlock()
+		other = ls.diagCache[otherPath]
+		return len(other) > 0
+	})
+	found := false
+	for _, d := range other {
+		if strings.Contains(d.Msg, "undefinedOther") {
+			found = true
+			// `var s = "🙂"; var y = ` is 22 UTF-16 units but 21 runes:
+			if want := (textpos.Pos{Line: 2, Char: 21}); d.Region.Start != want {
+				t.Errorf("unopened file diagnostic at %v, want %v", d.Region.Start, want)
+			}
+		}
+	}
+	if !found {
+		t.Errorf("no undefinedOther diagnostic for the unopened file: %v", other)
+	}
 
 	fixed := "package demo\n\nfunc Demo() {\n}\n"
 	ln.SetText([]byte(fixed))
@@ -289,11 +308,11 @@ func TestDiagsFlowWithGopls(t *testing.T) {
 	ls.Closed(ln)
 	ls.mu.Lock()
 	_, hasStatus := ls.diagStatus[demoPath]
-	_, hasCache := ls.diagCache[demoPath]
 	ls.mu.Unlock()
-	if hasStatus || hasCache {
-		t.Errorf("diagnostics state remains after close: status %v, cache %v", hasStatus, hasCache)
+	if hasStatus {
+		t.Error("diagnostics status remains after close")
 	}
+	// the cached problems are kept for the Problems tab
 	if ls.lspB.Filename(ln) != "" {
 		t.Error("buffer still tracked by the backend after close")
 	}

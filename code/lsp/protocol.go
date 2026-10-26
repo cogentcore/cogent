@@ -232,6 +232,7 @@ type TextDocumentClientCapab struct {
 	SignatureHelp      *SignatureHelpClientCapability   `json:"signatureHelp,omitempty"`
 	InlayHint          *InlayHintClientCapability       `json:"inlayHint,omitempty"`
 	SemanticTokens     *SemanticTokensClientCapability  `json:"semanticTokens,omitempty"`
+	Diagnostic         *DiagnosticClientCapability      `json:"diagnostic,omitempty"`
 }
 
 // TextDocumentSyncCapability declares text sync support.
@@ -243,6 +244,11 @@ type TextDocumentSyncCapability struct {
 type PublishDiagnosticsCapability struct {
 	RelatedInformation bool `json:"relatedInformation,omitempty"`
 	VersionSupport     bool `json:"versionSupport,omitempty"`
+}
+
+// DiagnosticClientCapability declares pull diagnostics support.
+type DiagnosticClientCapability struct {
+	RelatedDocumentSupport bool `json:"relatedDocumentSupport"`
 }
 
 // CompletionClientCapability declares completion support.
@@ -342,6 +348,7 @@ type ServerCapabilities struct {
 	SignatureHelpProvider      rawJSON `json:"signatureHelpProvider,omitempty"`
 	InlayHintProvider          rawJSON `json:"inlayHintProvider,omitempty"`
 	SemanticTokensProvider     rawJSON `json:"semanticTokensProvider,omitempty"`
+	DiagnosticProvider         rawJSON `json:"diagnosticProvider,omitempty"`
 }
 
 // rawJSON holds raw JSON for union-typed protocol fields,
@@ -432,6 +439,19 @@ type PublishDiagnosticsParams struct {
 	URI         DocumentURI  `json:"uri"`
 	Version     int          `json:"version,omitempty"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
+}
+
+// DocumentDiagnosticParams request the diagnostics for a file
+// (textDocument/diagnostic, pull diagnostics).
+type DocumentDiagnosticParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+// DocumentDiagnosticReport is the result of a textDocument/diagnostic
+// request: Kind is "full", with the Items, or "unchanged".
+type DocumentDiagnosticReport struct {
+	Kind  string       `json:"kind"`
+	Items []Diagnostic `json:"items"`
 }
 
 ////////   Completion

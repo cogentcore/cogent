@@ -155,7 +155,7 @@ func parseFindURL(ur string) (fpath string, reg textpos.Region, resultIndex, mat
 	fpath = up.Path[1:] // has double //
 	pos := up.Fragment
 	if pos == "" {
-		err = errors.New("No position fragment")
+		err = errors.New("no position fragment")
 		return
 	}
 	lidx := strings.Index(pos, "L")
@@ -163,7 +163,7 @@ func parseFindURL(ur string) (fpath string, reg textpos.Region, resultIndex, mat
 		reg.FromStringURL(pos[lidx:])
 		pos = pos[:lidx]
 	} else {
-		err = errors.New("No Line element")
+		err = errors.New("no Line element")
 		return
 	}
 	fmt.Sscanf(pos, "R%d-%d", &resultIndex, &matchIndex)
@@ -173,7 +173,7 @@ func parseFindURL(ur string) (fpath string, reg textpos.Region, resultIndex, mat
 // parseFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (fv *FindPanel) parseFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg textpos.Region, resultIndex, matchIndex int, ok bool) {
+func (fv *FindPanel) parseFindURL(ur string) (tv *TextEditor, reg textpos.Region, resultIndex, matchIndex int, ok bool) {
 	cv := fv.Code
 	var fpath string
 	fpath, reg, resultIndex, matchIndex, err := parseFindURL(ur)
@@ -286,7 +286,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 			return false
 		}
 	}
-	tv, reg, _, _, ok := fv.parseFindURL(tl.URL, ftv)
+	tv, reg, _, _, ok := fv.parseFindURL(tl.URL)
 	if !ok {
 		return false
 	}
@@ -299,7 +299,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		if tl == nil {
 			return false
 		}
-		tv, reg, _, _, ok = fv.parseFindURL(tl.URL, ftv)
+		tv, reg, _, _, ok = fv.parseFindURL(tl.URL)
 		if !ok || reg.IsNil() {
 			return false
 		}
@@ -440,7 +440,7 @@ func (fv *FindPanel) PrevFind() {
 
 // OpenFindURL opens given find:/// url from Find
 func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
-	tv, reg, resultIndex, _, ok := fv.parseFindURL(ur, ftv)
+	tv, reg, resultIndex, _, ok := fv.parseFindURL(ur)
 	if !ok {
 		return false
 	}
@@ -474,7 +474,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, res *search.Result
 
 ////////    GUI config
 
-// TextEditorLay returns the find results TextEditor
+// TextEditor returns the find results TextEditor
 func (fv *FindPanel) TextEditor() *textcore.Editor {
 	return textcore.AsEditor(fv.ChildByName("findtext", 1))
 }

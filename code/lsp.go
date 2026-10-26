@@ -7,6 +7,7 @@ package code
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -57,8 +58,23 @@ type LangService struct {
 	diagStatus map[string]string
 
 	// diagCache is the full diagnostic list per file, from the latest
-	// publish, used as code action context for quick fixes.
+	// publish, used as code action context for quick fixes, and for the
+	// Problems tab. It includes files that are not open, and keeps the
+	// last diagnostics of files when they are closed.
 	diagCache map[string][]lang.Diagnostic
+
+	// pulled are the diagnostics of files that are not open, requested
+	// from the servers for the Problems tab, which can include problems
+	// that servers do not publish for files that are not open.
+	pulled map[string][]lang.Diagnostic
+
+	// ignore are the enabled [ProjectSettings.IgnoreProblems]: problems
+	// whose message contains any of them are not shown.
+	ignore []string
+
+	// hints is [ProjectSettings.ShowHints]: info and hint problems are
+	// shown, in addition to errors and warnings.
+	hints bool
 
 	hover hoverCache
 
@@ -101,6 +117,13 @@ type LangService struct {
 	// locItems are the location items shown in the References and
 	// Problems tabs, by tab name, for opening their links.
 	locItems map[string][]locationItem
+
+	// locCurrent are the current location items in the References and
+	// Problems tabs, by tab name: the last one clicked or gone to, which
+	// is highlighted and kept visible when the tabs are refreshed.
+	// locLines are the lines of the location items in the tabs.
+	locCurrent map[string]locationItem
+	locLines   map[string][]int
 
 	// progressStatus is the message for the most recent language server
 	// operation in progress, shown in the status bar, and progressPending
@@ -175,6 +198,7 @@ func NewLangService(cv *Code) *LangService {
 		prevDiags:      make(map[string][]tagPos),
 		diagStatus:     make(map[string]string),
 		diagCache:      make(map[string][]lang.Diagnostic),
+		pulled:         make(map[string][]lang.Diagnostic),
 		semanticTagged: make(map[string]bool),
 		semGen:         make(map[string]int),
 		selectHooked:   make(map[*core.Complete]bool),
@@ -183,6 +207,7 @@ func NewLangService(cv *Code) *LangService {
 	ls.lspB.ShowDocument = ls.showDocument
 	ls.lspB.Renamed = ls.renamed
 	ls.lspB.Progress = ls.progress
+	ls.lspB.AllDiagnostics = true
 	ls.lspB.SetOptions(serverOptions(cv.Settings.InlayHints))
 	ls.lspB.RootFunc = func(fpath string) string {
 		root := filepath.Clean(string(cv.Settings.ProjectRoot))
@@ -191,6 +216,8 @@ func NewLangService(cv *Code) *LangService {
 		}
 		return ""
 	}
+	cv.Settings.addStandardIgnores()
+	ls.setProblemFilter(cv.Settings.IgnoreProblems, cv.Settings.ShowHints)
 	go ls.consumeEvents()
 	return ls
 }
@@ -432,6 +459,12 @@ func (ls *LangService) Saved(ln *lines.Lines) {
 	}
 	ls.Change(ln)
 	ls.lspB.Save(ln)
+	ls.mu.Lock()
+	shown := ls.problemsShown
+	ls.mu.Unlock()
+	if shown { // saving can change the problems of other files
+		ls.pullProblems()
+	}
 }
 
 // Closed should be called when a file is closed in the editor.
@@ -449,6 +482,9 @@ func (ls *LangService) Closed(ln *lines.Lines) {
 	}
 	ls.clearSigHelp()
 	ls.forgetFile(ln, fname)
+	ls.mu.Lock()
+	delete(ls.pulled, fname) // stale: the published problems are current
+	ls.mu.Unlock()
 	ls.lspB.Close(ln)
 	ls.needsRender(ln)
 	ls.updateProblems(false)
@@ -459,11 +495,14 @@ func (ls *LangService) Closed(ln *lines.Lines) {
 // for the old filename. It can be called from any goroutine.
 func (ls *LangService) renamed(ln *lines.Lines, old string) {
 	ls.forgetFile(ln, old)
+	ls.mu.Lock()
+	delete(ls.diagCache, old)
+	ls.mu.Unlock()
 }
 
 // forgetFile removes all of the state for the given filename of the
-// given buffer: diagnostic and semantic token tags, cached diagnostics,
-// and pending updates. Only uses self-locking Lines methods, so it can
+// given buffer: diagnostic and semantic token tags, and pending updates,
+// but not the cached diagnostics for the Problems tab. Only uses self-locking Lines methods, so it can
 // be called from any goroutine.
 func (ls *LangService) forgetFile(ln *lines.Lines, fname string) {
 	ls.clearDiags(ln, fname)
@@ -527,21 +566,32 @@ func (ls *LangService) needsRender(ln *lines.Lines) {
 // receiveDiags applies newly published diagnostics for a file.
 // Called from the consumeEvents goroutine.
 func (ls *LangService) receiveDiags(fd lang.FileDiags) {
+	ls.mu.Lock()
+	if len(fd.Diags) == 0 {
+		delete(ls.diagCache, fd.Filename)
+	} else {
+		ls.diagCache[fd.Filename] = fd.Diags
+	}
+	shown := filterIgnored(fd.Diags, ls.ignore)
+	ls.mu.Unlock()
 	ln := ls.cv.GetOpenFile(fd.Filename)
-	if ln == nil {
+	if ln == nil { // only for the Problems tab
+		if ls.cv.Scene != nil {
+			ls.cv.AsyncLock()
+			ls.updateProblems(false)
+			ls.cv.AsyncUnlock()
+		}
 		return
 	}
 	// applyDiags only uses self-locking Lines methods, which is safe from
 	// this goroutine (same pattern as the async markup in lines itself):
-	ls.applyDiags(ln, fd.Diags)
-	summary := diagSummary(fd.Diags)
+	ls.applyDiags(ln, shown)
+	summary := diagSummary(shown)
 	ls.mu.Lock()
 	if summary == "" {
 		delete(ls.diagStatus, fd.Filename)
-		delete(ls.diagCache, fd.Filename)
 	} else {
 		ls.diagStatus[fd.Filename] = summary
-		ls.diagCache[fd.Filename] = fd.Diags
 	}
 	ls.mu.Unlock()
 	if ls.cv.Scene == nil {
@@ -554,6 +604,61 @@ func (ls *LangService) receiveDiags(fd lang.FileDiags) {
 	ls.cv.UpdateStatusText()
 	ls.updateProblems(false)
 	ls.cv.AsyncUnlock()
+}
+
+// setProblemFilter sets the problem messages to ignore from the given
+// [ProjectSettings.IgnoreProblems], and whether hints are shown, and
+// updates the diagnostics shown for the open files and in the Problems
+// tab if they changed. Must be called from the event loop.
+func (ls *LangService) setProblemFilter(ignore map[string]bool, hints bool) {
+	var ig []string
+	for msg, on := range ignore {
+		if on && msg != "" {
+			ig = append(ig, msg)
+		}
+	}
+	slices.Sort(ig)
+	ls.mu.Lock()
+	same := slices.Equal(ig, ls.ignore) && hints == ls.hints
+	ls.ignore, ls.hints = ig, hints
+	ls.mu.Unlock()
+	if same {
+		return
+	}
+	for _, ln := range ls.cv.OpenFiles.Values {
+		if !ls.LSPActive(ln) {
+			continue
+		}
+		fname := ln.Filename()
+		ls.mu.Lock()
+		shown := filterIgnored(ls.diagCache[fname], ig)
+		if summary := diagSummary(shown); summary == "" {
+			delete(ls.diagStatus, fname)
+		} else {
+			ls.diagStatus[fname] = summary
+		}
+		ls.mu.Unlock()
+		ls.applyDiags(ln, shown)
+		ls.needsRender(ln)
+	}
+	ls.updateProblems(false)
+}
+
+// showSeverity returns whether problems of the given severity are shown:
+// errors and warnings, and info and hints if hints is set.
+func showSeverity(sev lang.DiagSeverity, hints bool) bool {
+	return hints || sev == lang.DiagErr || sev == lang.DiagWarn
+}
+
+// filterIgnored returns the diagnostics whose messages do not contain
+// any of the given ignored messages.
+func filterIgnored(diags []lang.Diagnostic, ignore []string) []lang.Diagnostic {
+	if len(ignore) == 0 {
+		return diags
+	}
+	return slices.DeleteFunc(slices.Clone(diags), func(d lang.Diagnostic) bool {
+		return slices.ContainsFunc(ignore, func(ig string) bool { return strings.Contains(d.Msg, ig) })
+	})
 }
 
 // diagSummary returns a short status-bar summary of diagnostics,
@@ -582,7 +687,7 @@ func diagSummary(diags []lang.Diagnostic) string {
 }
 
 func plural(n int) string {
-	if n > 1 {
+	if n != 1 {
 		return "s"
 	}
 	return ""
@@ -608,13 +713,13 @@ func (ls *LangService) applyDiags(ln *lines.Lines, diags []lang.Diagnostic) {
 	ls.mu.Lock()
 	prev := ls.prevDiags[fname]
 	delete(ls.prevDiags, fname)
+	hints := ls.hints
 	ls.mu.Unlock()
 	removeErrorTags(ln, prev)
 
 	cur := make([]tagPos, 0, len(diags))
 	for _, d := range diags {
-		// info and hints are not tagged in the buffer:
-		if d.Severity != lang.DiagErr && d.Severity != lang.DiagWarn {
+		if !showSeverity(d.Severity, hints) {
 			continue
 		}
 		lnum := d.Region.Start.Line
@@ -684,14 +789,13 @@ func diagWord(s lang.DiagSeverity) string {
 }
 
 // clearDiags removes all diagnostic tags previously applied to the
-// buffer for the given filename, and the cached diagnostics for it.
+// buffer for the given filename, and its status summary.
 // Lines methods lock internally, so it can be called from any goroutine.
 func (ls *LangService) clearDiags(ln *lines.Lines, fname string) {
 	ls.mu.Lock()
 	prev := ls.prevDiags[fname]
 	delete(ls.prevDiags, fname)
 	delete(ls.diagStatus, fname)
-	delete(ls.diagCache, fname)
 	ls.mu.Unlock()
 	removeErrorTags(ln, prev)
 }
@@ -707,7 +811,7 @@ func (ls *LangService) diagsAt(ln *lines.Lines, pos textpos.Pos) []lang.Diagnost
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 	var out []lang.Diagnostic
-	for _, d := range ls.diagCache[ln.Filename()] {
+	for _, d := range filterIgnored(ls.diagCache[ln.Filename()], ls.ignore) {
 		if diagCovers(d, pos) {
 			out = append(out, d)
 		}

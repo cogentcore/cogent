@@ -30,10 +30,8 @@ func init() {
 
 // Settings are the overall Code settings
 var Settings = &SettingsData{
-	SettingsBase: core.SettingsBase{
-		Name: "Code",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
-	},
+	Name: "Code",
+	File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
 }
 
 // LangBackends specifies which system provides the language services:
@@ -217,6 +215,12 @@ type ProjectSettings struct { //types:add
 	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and the Show Inlay Hints command can display them; running servers pick the change up immediately through dynamic reconfiguration
 	InlayHints bool
 
+	// problem messages to ignore: the problems (diagnostics) from language servers whose message contains a key whose value is true are not shown, in the Problems tab or in the editor; commonly ignored Go warnings are listed, disabled, so that they are easy to enable
+	IgnoreProblems map[string]bool
+
+	// if set, info and hint problems from language servers (e.g., gopls modernize suggestions) are shown in the editor and the Problems tab, in addition to errors and warnings
+	ShowHints bool
+
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
 	VersionControl vcs.Types
@@ -257,6 +261,9 @@ type ProjectSettings struct { //types:add
 	// saved structure params
 	Symbols SymbolsParams `display:"-"`
 
+	// saved scope of the problems shown in the Problems tab
+	ProblemsLoc Locations `display:"-"`
+
 	// directory properties
 	Dirs filetree.DirFlagMap `display:"-"`
 
@@ -268,6 +275,48 @@ type ProjectSettings struct { //types:add
 
 	// current tabUnder setting for splits
 	TabsUnder bool `display:"-"`
+}
+
+// StandardIgnoreProblems are commonly ignored Go warnings, which are
+// added to [ProjectSettings.IgnoreProblems], disabled, so that they are
+// easy to enable.
+var StandardIgnoreProblems = []string{
+	"struct literal uses unkeyed fields",
+	"copies lock value",
+	"passes lock by value",
+	"non-constant format string",
+	"error strings should not be capitalized",
+	"error strings should not end with punctuation",
+	"should not use dot imports",
+	"methods on the same type should have the same receiver name",
+	"receiver name should be",
+	"could use tagged switch",
+	"could remove embedded field",
+	"should merge variable declaration with assignment",
+	"unused parameter",
+
+	// hints, shown with [ProjectSettings.ShowHints]:
+	"can be modernized",
+	"interface{} can be replaced by any",
+	"can be simplified using",
+	"ReplaceAll instead",
+	"could apply De Morgan's law",
+	"could lift into loop condition",
+	"could merge conditional assignment",
+	"could eliminate this type assertion",
+}
+
+// addStandardIgnores adds the [StandardIgnoreProblems] that are not in
+// IgnoreProblems to it, disabled.
+func (se *ProjectSettings) addStandardIgnores() {
+	if se.IgnoreProblems == nil {
+		se.IgnoreProblems = make(map[string]bool)
+	}
+	for _, ig := range StandardIgnoreProblems {
+		if _, has := se.IgnoreProblems[ig]; !has {
+			se.IgnoreProblems[ig] = false
+		}
+	}
 }
 
 func (se *ProjectSettings) Update() {
@@ -343,7 +392,7 @@ func (cv *Code) GrabSettings() {
 	sv := cv.Splits()
 	copy(cv.Settings.Splits[:], sv.Splits())
 	cv.Settings.TabsUnder = len(sv.Tiles) == 2
-	cv.Settings.Dirs = cv.Files.Dirs
+	cv.Settings.Dirs.Copy(&cv.Files.Dirs)
 }
 
 // ApplySettings applies current project preference settings into places where
@@ -352,11 +401,11 @@ func (cv *Code) ApplySettings() {
 	cv.ProjectFilename = cv.Settings.ProjectFilename
 	cv.ProjectRoot = cv.Settings.ProjectRoot
 	if cv.Files != nil {
-		cv.Files.Dirs = cv.Settings.Dirs
+		cv.Files.Dirs.Copy(&cv.Settings.Dirs)
 		cv.Files.DirsOnTop = cv.Settings.Files.DirsOnTop
 	}
 	if len(cv.Children) > 0 {
-		for i := 0; i < NTextEditors; i++ {
+		for i := range NTextEditors {
 			tv := cv.EditorByIndex(i)
 			if tv.Lines != nil {
 				cv.ConfigLines(tv.Lines)
@@ -368,6 +417,10 @@ func (cv *Code) ApplySettings() {
 		cv.ApplySplitsSettings(cv.Splits())
 	}
 	UpdateParserUse(cv)
+	cv.Settings.addStandardIgnores()
+	if cv.langSvc != nil {
+		cv.langSvc.setProblemFilter(cv.Settings.IgnoreProblems, cv.Settings.ShowHints)
+	}
 	// core.UpdateAll() // note: this is not necessary and is very slow
 }
 
@@ -390,6 +443,7 @@ func (cv *Code) ApplySettingsAction() {
 
 // EditProjectSettings allows editing of project settings (settings specific to this project)
 func (cv *Code) EditProjectSettings() { //types:add
+	cv.Settings.addStandardIgnores()
 	sv := ProjectSettingsEditor(&cv.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
