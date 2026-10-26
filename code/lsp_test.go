@@ -133,9 +133,7 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -145,11 +143,9 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				ls.applyDiags(ln, nil)
 			}
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -159,11 +155,9 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				time.Sleep(time.Millisecond)
 			}
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -173,7 +167,7 @@ func TestDiagsTaggingConcurrentMarkup(t *testing.T) {
 				ln.DeleteText(textpos.Pos{Line: 0, Char: 0}, textpos.Pos{Line: 0, Char: 4})
 			}
 		}
-	}()
+	})
 
 	time.Sleep(300 * time.Millisecond)
 	close(stop)

@@ -118,10 +118,12 @@ type LangService struct {
 	// Problems tabs, by tab name, for opening their links.
 	locItems map[string][]locationItem
 
-	// locClicked are the last clicked location items in the References
-	// and Problems tabs, by tab name, which are kept visible when the
-	// tabs are refreshed.
-	locClicked map[string]locationItem
+	// locCurrent are the current location items in the References and
+	// Problems tabs, by tab name: the last one clicked or gone to, which
+	// is highlighted and kept visible when the tabs are refreshed.
+	// locLines are the lines of the location items in the tabs.
+	locCurrent map[string]locationItem
+	locLines   map[string][]int
 
 	// progressStatus is the message for the most recent language server
 	// operation in progress, shown in the status bar, and progressPending

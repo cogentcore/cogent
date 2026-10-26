@@ -177,7 +177,7 @@ func (cv *Code) Init() {
 			})
 		})
 		w.Maker(func(p *tree.Plan) {
-			for i := 0; i < NTextEditors; i++ {
+			for i := range NTextEditors {
 				cv.makeTextEditor(p, i)
 			}
 		})

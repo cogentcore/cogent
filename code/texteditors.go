@@ -177,7 +177,7 @@ func (cv *Code) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 // Doesn't do anything unless a change is required, so safe to call frequently.
 func (cv *Code) UpdateTextButtons() {
 	ati := cv.ActiveEditorIndex
-	for i := 0; i < NTextEditors; i++ {
+	for i := range NTextEditors {
 		tv := cv.EditorByIndex(i)
 		mb := cv.EditorButtonByIndex(i)
 		txnm := "<no file>"

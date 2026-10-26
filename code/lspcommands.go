@@ -189,7 +189,7 @@ func (ls *LangService) explicitMatches(ln *lines.Lines, text string, pos textpos
 	var loc *lang.Location
 	var items []complete.Completion
 	if locs := ls.lspB.Definition(ln, pos); len(locs) > 0 &&
-		!(lsp.SameFile(locs[0].Filename, ln.Filename()) && locs[0].Region.Start.Line == pos.Line) {
+		(!lsp.SameFile(locs[0].Filename, ln.Filename()) || locs[0].Region.Start.Line != pos.Line) {
 		loc = &locs[0]
 		items = append(items, complete.Completion{
 			Text:  gotoDefCompletion,

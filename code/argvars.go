@@ -208,7 +208,7 @@ func (avp *ArgVarVals) Bind(arg string) string {
 		sz = len(bs)
 	}
 	if gotquote {
-		bs = bytes.Replace(bs, []byte("\\{"), []byte("{"), -1)
+		bs = bytes.ReplaceAll(bs, []byte("\\{"), []byte("{"))
 	}
 
 	if runtime.GOOS == "windows" {

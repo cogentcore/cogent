@@ -493,7 +493,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 	if err != nil {
 		return gd.LogErr(err)
 	}
-	for itr := 0; itr < 2; itr++ {
+	for range 2 {
 		update := false
 		for _, b := range *brk {
 			c, ci := cdebug.BreakByFile(cb, b.FPath, b.Line)

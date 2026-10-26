@@ -255,16 +255,18 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 			}
 		}
 		if allPrim {
-			vstr := ""
+			var vstr strings.Builder
 			for i := range ds.Children {
 				el := &ds.Children[i]
-				vstr += el.Name + ": " + el.Value
+				vstr.WriteString(el.Name)
+				vstr.WriteString(": ")
+				vstr.WriteString(el.Value)
 				if i < nkids-1 {
-					vstr += ", "
+					vstr.WriteString(", ")
 				}
 			}
-			vr.Value = vstr
-			vr.ElementValue = vstr
+			vr.Value = vstr.String()
+			vr.ElementValue = vstr.String()
 			return vr
 		}
 	}

@@ -268,7 +268,6 @@ func TestLinesConcurrencyStress(t *testing.T) {
 
 	// goroutine applying diagnostic tags (applyDiags pattern from code pkg):
 	wg.Go(func() {
-		defer wg.Done()
 		for {
 			select {
 			case <-stop:
@@ -291,7 +290,6 @@ func TestLinesConcurrencyStress(t *testing.T) {
 
 	// goroutine editing text (UI typing proxy):
 	wg.Go(func() {
-		defer wg.Done()
 		for {
 			select {
 			case <-stop:
@@ -307,7 +305,6 @@ func TestLinesConcurrencyStress(t *testing.T) {
 	// holds the Lines lock internally -- this was one of the parties in
 	// the original deadlock:
 	wg.Go(func() {
-		defer wg.Done()
 		for {
 			select {
 			case <-stop:
@@ -321,7 +318,6 @@ func TestLinesConcurrencyStress(t *testing.T) {
 
 	// goroutine publishing diagnostics (server read loop proxy):
 	wg.Go(func() {
-		defer wg.Done()
 		for {
 			select {
 			case <-stop:
@@ -1306,4 +1302,66 @@ func TestFileDiagnosticsGopls(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "no unkeyed fields diagnostic in %v", fds[0].Diags)
+}
+
+// TestWaitGroupFixAutosave applies the gopls "Simplify by using
+// WaitGroup.Go" quick fix, which has several edits, to a buffer with
+// autosave on, as in the editor: the autosave of each edit runs in a
+// goroutine, which used to read the lines while the next edit changed
+// them (index out of range; run with -race).
+func TestWaitGroupFixAutosave(t *testing.T) {
+	if _, err := exec.LookPath("gopls"); err != nil {
+		t.Skip("gopls not found in PATH:", err)
+	}
+	block := "\tvar wg sync.WaitGroup\n\twg.Add(1)\n\tgo func() {\n\t\tdefer wg.Done()\n\t\tfor i := range 10 {\n\t\t\tprintln(i)\n\t\t}\n\t}()\n\twg.Wait()\n"
+	src := "package main\n\nimport \"sync\"\n\nfunc main() {\n" + strings.Repeat("\t{\n"+block+"\t}\n", 20) + "}\n"
+	tmp := t.TempDir()
+	t.Setenv("GOWORK", "off")
+	// WaitGroup.Go needs go 1.25:
+	if err := os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.25\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	srcPath := filepath.Join(tmp, "main.go")
+	if err := os.WriteFile(srcPath, []byte(src), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b := NewBackend(nil)
+	b.RootFunc = func(string) string { return tmp }
+	t.Cleanup(b.Stop)
+	ln := lines.NewLines()
+	ln.SetFilename(srcPath)
+	ln.SetText([]byte(src))
+	ln.Autosave = true
+	b.Open(ln)
+
+	const title = "Simplify by using WaitGroup.Go"
+	fixes := 0
+	for range 20 {
+		var fix *CodeAction
+		waitUntil(t, 60*time.Second, "WaitGroup.Go fix", func() bool {
+			fd := <-b.Diagnostics()
+			for _, d := range fd.Diags {
+				acts, _ := b.CodeActions(ln, d.Region, []lang.Diagnostic{d})
+				for _, ca := range acts {
+					if ca.Title == title {
+						fix = &ca
+						return true
+					}
+				}
+			}
+			return false
+		})
+		if _, err := b.RunCodeAction(ln, fix); err != nil {
+			t.Fatal(err)
+		}
+		fixes++
+		if !strings.Contains(ln.String(), "wg.Add(1)") {
+			break
+		}
+	}
+	txt := ln.String()
+	assert.Equal(t, 20, fixes)
+	assert.Equal(t, 20, strings.Count(txt, "wg.Go(func() {"))
+	assert.NotContains(t, txt, "wg.Done()")
+	assert.NotContains(t, txt, "wg.Add(1)")
 }

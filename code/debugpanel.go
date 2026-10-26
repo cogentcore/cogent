@@ -298,10 +298,8 @@ func (dv *DebugPanel) Destroy() {
 
 // Detach from debugger
 func (dv *DebugPanel) Detach() {
-	killProc := true
-	if dv.State.Mode == cdebug.Attach {
-		killProc = false
-	}
+	killProc := dv.State.Mode != cdebug.Attach
+
 	if dv.DbgIsAvail() {
 		dv.Dbg.Detach(killProc)
 	} else if dv.DbgIsActive() {

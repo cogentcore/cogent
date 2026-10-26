@@ -30,10 +30,8 @@ func init() {
 
 // Settings are the overall Code settings
 var Settings = &SettingsData{
-	SettingsBase: core.SettingsBase{
-		Name: "Code",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
-	},
+	Name: "Code",
+	File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
 }
 
 // LangBackends specifies which system provides the language services:
@@ -407,7 +405,7 @@ func (cv *Code) ApplySettings() {
 		cv.Files.DirsOnTop = cv.Settings.Files.DirsOnTop
 	}
 	if len(cv.Children) > 0 {
-		for i := 0; i < NTextEditors; i++ {
+		for i := range NTextEditors {
 			tv := cv.EditorByIndex(i)
 			if tv.Lines != nil {
 				cv.ConfigLines(tv.Lines)

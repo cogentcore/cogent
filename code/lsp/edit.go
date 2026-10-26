@@ -48,21 +48,19 @@ func sortEdits(edits []TextEdit) {
 	})
 }
 
-// applyTextEdits applies the given LSP edits to the buffer, in reverse
-// position order so earlier positions stay valid. It only uses
-// self-locking Lines methods, so it is safe from any goroutine
-// (not under ln.Lock). It returns whether any edits were applied.
-// The edits are sorted in place.
+// applyTextEdits applies the given LSP edits to the buffer as one batch
+// update, which is undone as one, in reverse position order so earlier
+// positions stay valid: their regions can all be converted first.
+// It only uses self-locking Lines methods, so it is safe from any
+// goroutine (not under ln.Lock). It returns whether any edits were
+// applied. The edits are sorted in place.
 func applyTextEdits(ln *lines.Lines, edits []TextEdit) bool {
 	sortEdits(edits)
-	did := false
+	reps := make([]lines.Replacement, 0, len(edits))
 	for _, e := range slices.Backward(edits) {
-		r := regionFromLSP(ln, e.Range)
-		if ln.ReplaceText(r.Start, r.End, r.Start, e.NewText, lines.ReplaceNoMatchCase) != nil {
-			did = true
-		}
+		reps = append(reps, lines.Replacement{Region: regionFromLSP(ln, e.Range), Text: e.NewText})
 	}
-	return did
+	return ln.ReplaceTexts(reps, lines.ReplaceNoMatchCase) > 0
 }
 
 // convertEdits converts LSP edits to editor units for the buffer.

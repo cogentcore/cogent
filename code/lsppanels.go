@@ -54,36 +54,31 @@ const locationLinkPrefix = "location:"
 // without selecting it, unless sel is set.
 func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool) {
 	buf, has := cv.CmdBufs[tab]
+	ls := cv.LangSvc()
 	var ed *textcore.Editor // existing editor to keep the view of
 	var scroll float32
 	var cursor textpos.Pos
-	if sel || !has || cv.Tabs() == nil || cv.Tabs().TabByName(tab) == nil {
+	if sel || !has || cv.tabEditor(tab) == nil {
 		b, tv, _ := cv.RecycleCmdTab(tab)
 		if tv == nil {
 			return
 		}
 		buf = b
 		tv.AutoscrollOnInput = false
-		ls := cv.LangSvc()
 		ls.mu.Lock()
-		delete(ls.locClicked, tab) // a new listing
+		delete(ls.locCurrent, tab) // a new listing
 		ls.mu.Unlock()
 		tv.LinkHandler = func(tl *rich.Hyperlink) {
 			cv.openLocationLink(tab, tl.URL)
 		}
 	} else {
-		if fr := cv.TabByName(tab); fr != nil && fr.AsTree().HasChildren() {
-			ed, _ = fr.AsTree().Child(0).(*textcore.Editor)
-		}
-		if ed != nil {
-			scroll, cursor = ed.ScrollPos(), ed.CursorPos
-		}
+		ed = cv.tabEditor(tab)
+		scroll, cursor = ed.ScrollPos(), ed.CursorPos
 		buf.SetText(nil)
 	}
 	sortLocationItems(items)
-	ls := cv.LangSvc()
-	ls.setLocationItems(tab, items)
 	lns, mus, itemLines := locationsMarkup(cv, buf.FontStyle(), header, items)
+	ls.setLocationItems(tab, items, itemLines)
 	if ed != nil {
 		// the output editor styling turns autoscroll back on, which would
 		// go to the end on the Input from appending:
@@ -93,27 +88,96 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 	if ed == nil {
 		return
 	}
-	// keep the view where it was, with the last clicked item visible:
+	// keep the view where it was, with the current item visible:
 	ed.CursorPos = buf.ValidPos(cursor)
 	ed.SetScrollPos(scroll)
 	ls.mu.Lock()
-	clicked, has := ls.locClicked[tab]
+	cur, has := ls.locCurrent[tab]
 	ls.mu.Unlock()
 	if !has {
 		return
 	}
-	if i := slices.Index(items, clicked); i >= 0 {
-		ed.SetCursorShow(textpos.Pos{Line: itemLines[i]})
+	i := slices.Index(items, cur)
+	if i < 0 {
+		// gone, e.g., fixed: show the next one, but keep the current one,
+		// as servers can briefly publish no problems for a changed file
+		i = nextLocationIndex(items, cur)
 	}
+	cv.highlightLocation(tab, i)
+}
+
+// tabEditor returns the editor of the tab with the given name,
+// or nil if there is none.
+func (cv *Code) tabEditor(tab string) *textcore.Editor {
+	if cv.Tabs() == nil {
+		return nil
+	}
+	if fr := cv.Tabs().TabByName(tab); fr != nil && fr.AsTree().HasChildren() {
+		ed, _ := fr.AsTree().Child(0).(*textcore.Editor)
+		return ed
+	}
+	return nil
+}
+
+// compareLocationItems compares location items by file and position.
+func compareLocationItems(a, b locationItem) int {
+	return cmp.Or(strings.Compare(a.loc.Filename, b.loc.Filename),
+		cmp.Compare(a.loc.Region.Start.Line, b.loc.Region.Start.Line),
+		cmp.Compare(a.loc.Region.Start.Char, b.loc.Region.Start.Char))
 }
 
 // sortLocationItems sorts the location items by file and position.
 func sortLocationItems(items []locationItem) {
-	slices.SortStableFunc(items, func(a, b locationItem) int {
-		return cmp.Or(strings.Compare(a.loc.Filename, b.loc.Filename),
-			cmp.Compare(a.loc.Region.Start.Line, b.loc.Region.Start.Line),
-			cmp.Compare(a.loc.Region.Start.Char, b.loc.Region.Start.Char))
-	})
+	slices.SortStableFunc(items, compareLocationItems)
+}
+
+// nextLocationIndex returns the index of the first of the sorted items
+// after the given item, which is not among them, or of the last item if
+// there is none after it, or -1 if there are no items.
+func nextLocationIndex(items []locationItem, it locationItem) int {
+	for i, o := range items {
+		if compareLocationItems(o, it) > 0 {
+			return i
+		}
+	}
+	return len(items) - 1
+}
+
+// setCurrentLocation makes the location item with the given index the
+// current one in the given tab, highlighting its line and making it
+// visible. Must be called from the event loop.
+func (cv *Code) setCurrentLocation(tab string, i int) {
+	ls := cv.LangSvc()
+	ls.mu.Lock()
+	items := ls.locItems[tab]
+	if i < 0 || i >= len(items) {
+		ls.mu.Unlock()
+		return
+	}
+	ls.locCurrent[tab] = items[i]
+	ls.mu.Unlock()
+	cv.highlightLocation(tab, i)
+}
+
+// highlightLocation highlights the line of the location item with the
+// given index in the given tab, and makes it visible.
+// Must be called from the event loop.
+func (cv *Code) highlightLocation(tab string, i int) {
+	ls := cv.LangSvc()
+	ls.mu.Lock()
+	lines := ls.locLines[tab]
+	ls.mu.Unlock()
+	if i < 0 || i >= len(lines) {
+		return
+	}
+	ed := cv.tabEditor(tab)
+	if ed == nil || ed.Lines == nil {
+		return
+	}
+	ln := lines[i]
+	ed.SetCursorShow(textpos.Pos{Line: ln})
+	ed.Highlights = []textpos.Region{{Start: textpos.Pos{Line: ln}, End: textpos.Pos{Line: ln, Char: ed.Lines.LineLen(ln)}}}
+	ed.NeedsRender()
 }
 
 // locationsMarkup returns the text lines and markup for the given
@@ -179,34 +243,41 @@ func locationsMarkup(cv *Code, sty *rich.Style, header string, items []locationI
 }
 
 // setLocationItems records the location items shown in the given tab,
-// for opening their links.
-func (ls *LangService) setLocationItems(tab string, items []locationItem) {
+// and their lines, for opening their links.
+func (ls *LangService) setLocationItems(tab string, items []locationItem, lines []int) {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 	if ls.locItems == nil {
 		ls.locItems = make(map[string][]locationItem)
-		ls.locClicked = make(map[string]locationItem)
+		ls.locLines = make(map[string][]int)
+		ls.locCurrent = make(map[string]locationItem)
 	}
 	ls.locItems[tab] = items
+	ls.locLines[tab] = lines
 }
 
 // openLocationLink opens the location of the given location link URL
-// in the given tab.
+// in the given tab, making it the current one.
 func (cv *Code) openLocationLink(tab, url string) {
 	idx, err := strconv.Atoi(strings.TrimPrefix(url, locationLinkPrefix))
 	if err != nil {
 		return
 	}
+	cv.openLocationItem(tab, idx)
+}
+
+// openLocationItem opens the location of the location item with the
+// given index in the given tab, making it the current one.
+func (cv *Code) openLocationItem(tab string, idx int) {
 	ls := cv.LangSvc()
 	ls.mu.Lock()
 	items := ls.locItems[tab]
 	ls.mu.Unlock()
-	if idx >= 0 && idx < len(items) {
-		ls.mu.Lock()
-		ls.locClicked[tab] = items[idx]
-		ls.mu.Unlock()
-		cv.openLoc(items[idx].loc)
+	if idx < 0 || idx >= len(items) {
+		return
 	}
+	cv.setCurrentLocation(tab, idx)
+	cv.openLoc(items[idx].loc)
 }
 
 // relativePath returns the path of the file relative to the project
@@ -455,6 +526,44 @@ func (cv *Code) problemsScope(scope Locations) (func(fname string) bool, string)
 		root = filepath.Clean(string(cv.Files.Filepath)) + string(filepath.Separator)
 	}
 	return func(fname string) bool { return root != "" && strings.HasPrefix(fname, root) }, "all files"
+}
+
+// NextProblem goes to the current problem in the Problems tab, if the
+// cursor is not already on it in the active editor, and otherwise to the
+// next one. The current problem is the last one clicked or gone to, and
+// when it goes away, e.g., after applying a fix for it, NextProblem goes
+// to the next one, which is highlighted. The Problems tab is shown if it is not already.
+func (cv *Code) NextProblem() { //types:add
+	ls := cv.LangSvc()
+	if cv.tabEditor(problemsTab) == nil {
+		cv.ShowProblems(cv.Settings.ProblemsLoc)
+	}
+	ls.mu.Lock()
+	items := ls.locItems[problemsTab]
+	cur, has := ls.locCurrent[problemsTab]
+	ls.mu.Unlock()
+	if len(items) == 0 {
+		cv.SetStatus("No problems")
+		return
+	}
+	if !has {
+		cv.openLocationItem(problemsTab, 0)
+		return
+	}
+	i := slices.Index(items, cur)
+	if i < 0 { // gone, e.g., fixed
+		cv.openLocationItem(problemsTab, nextLocationIndex(items, cur))
+		return
+	}
+	if tv := cv.ActiveEditor(); tv == nil || tv.Lines == nil || tv.Lines.Filename() != cur.loc.Filename || tv.CursorPos.Line != cur.loc.Region.Start.Line {
+		cv.openLocationItem(problemsTab, i) // not there yet
+		return
+	}
+	if i+1 >= len(items) {
+		cv.SetStatus("No more problems")
+		return
+	}
+	cv.openLocationItem(problemsTab, i+1)
 }
 
 // diagSummaryText returns a summary of the numbers of errors, warnings,
