@@ -257,20 +257,21 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 		core.NewButton(m).SetText("Code actions").SetIcon(icons.Bolt).SetMenu(func(m *core.Scene, pos image.Point) {
 			ed.Code.LangSvc().codeActionsMenu(m, ed)
 		})
-		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition")
-		core.NewFuncButton(m).SetFunc(ed.Code.GotoTypeDefinition).SetText("Go to type definition")
-		core.NewFuncButton(m).SetFunc(ed.Code.FindImplementations).SetText("Find implementations")
-		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references")
-		core.NewFuncButton(m).SetFunc(ed.Code.ShowProblems).SetText("Show problems")
-		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...")
-		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file")
-		core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoDefinition).SetText("Go to definition").SetIcon(icons.Directions)
+		core.NewFuncButton(m).SetFunc(ed.Code.GotoTypeDefinition).SetText("Go to type").SetIcon(icons.Title)
+		core.NewFuncButton(m).SetFunc(ed.Code.FindImplementations).SetText("Find implementations").SetIcon(icons.SearchCheck)
+		core.NewFuncButton(m).SetFunc(ed.Code.FindReferences).SetText("Find references").SetIcon(icons.ManageSearch)
+		core.NewFuncButton(m).SetFunc(ed.Code.ShowProblems).SetText("Show problems").SetIcon(icons.BugReport)
+		core.NewFuncButton(m).SetFunc(ed.Code.RenameSymbol).SetText("Rename symbol...").SetIcon(icons.SwapHoriz)
+		core.NewFuncButton(m).SetFunc(ed.Code.LangFormat).SetText("Format file").SetIcon(icons.TextFormat)
+		// core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")
 	} else {
 		core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
 	}
 
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
 	if fn != nil {
+		core.NewSeparator(m)
 		fn.SelectEvent(events.SelectOne)
 		fn.VCSContextMenu(m, pos)
 	}

@@ -90,6 +90,9 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(cv.ShowProblems).SetIcon(icons.BugReport).SetText("Problems")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Lookup).SetIcon(icons.Bolt).
 			SetShortcut(KeyQuickFix.Chord())
 	})

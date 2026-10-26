@@ -55,6 +55,8 @@ const (
 	KeyBuildProject
 	// run overall project
 	KeyRunProject
+	// report problems with open files.
+	KeyProblems
 	// lookup at the cursor: quick fixes if there is an error there,
 	// and otherwise completions and go to definition (see [Code.Lookup])
 	KeyQuickFix
@@ -91,6 +93,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+C Control+C":     KeyExecCmd,
 		"Control+C o":             KeyBufClone,
 		"Control+C Control+O":     KeyBufClone,
+		"Control+C p":             KeyProblems,
+		"Control+C Control+P":     KeyProblems,
 		"Control+X x":             KeyRegCopy,
 		"Control+X g":             KeyRegPaste,
 		"Control+X Control+X":     KeyRectCut,
@@ -136,6 +140,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+C Control+C":     KeyExecCmd,
 		"Control+C o":             KeyBufClone,
 		"Control+C Control+O":     KeyBufClone,
+		"Control+C p":             KeyProblems,
+		"Control+C Control+P":     KeyProblems,
 		"Control+X x":             KeyRegCopy,
 		"Control+X g":             KeyRegPaste,
 		"Control+X Control+X":     KeyRectCut,
@@ -181,6 +187,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+C Control+C":     KeyExecCmd,
 		"Control+C o":             KeyBufClone,
 		"Control+C Control+O":     KeyBufClone,
+		"Control+C p":             KeyProblems,
+		"Control+C Control+P":     KeyProblems,
 		"Control+X x":             KeyRegCopy,
 		"Control+X g":             KeyRegPaste,
 		"Control+X Control+X":     KeyRectCut,
@@ -227,6 +235,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+B Control+C":     KeyExecCmd,
 		"Control+B o":             KeyBufClone,
 		"Control+B Control+O":     KeyBufClone,
+		"Control+B p":             KeyProblems,
+		"Control+B Control+P":     KeyProblems,
 		"Control+E x":             KeyRegCopy,
 		"Control+E g":             KeyRegPaste,
 		"Control+E Control+X":     KeyRectCut,
@@ -274,6 +284,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+B Control+C":     KeyExecCmd,
 		"Control+B o":             KeyBufClone,
 		"Control+B Control+O":     KeyBufClone,
+		"Control+B p":             KeyProblems,
+		"Control+B Control+P":     KeyProblems,
 		"Control+E x":             KeyRegCopy,
 		"Control+E g":             KeyRegPaste,
 		"Control+E Control+X":     KeyRectCut,
@@ -321,6 +333,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+B Control+C":     KeyExecCmd,
 		"Control+B o":             KeyBufClone,
 		"Control+B Control+O":     KeyBufClone,
+		"Control+B p":             KeyProblems,
+		"Control+B Control+P":     KeyProblems,
 		"Control+E x":             KeyRegCopy,
 		"Control+E g":             KeyRegPaste,
 		"Control+E Control+X":     KeyRectCut,
