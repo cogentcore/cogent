@@ -343,7 +343,7 @@ func (cv *Code) GrabSettings() {
 	sv := cv.Splits()
 	copy(cv.Settings.Splits[:], sv.Splits())
 	cv.Settings.TabsUnder = len(sv.Tiles) == 2
-	cv.Settings.Dirs = cv.Files.Dirs
+	cv.Settings.Dirs.Copy(&cv.Files.Dirs)
 }
 
 // ApplySettings applies current project preference settings into places where
@@ -352,7 +352,7 @@ func (cv *Code) ApplySettings() {
 	cv.ProjectFilename = cv.Settings.ProjectFilename
 	cv.ProjectRoot = cv.Settings.ProjectRoot
 	if cv.Files != nil {
-		cv.Files.Dirs = cv.Settings.Dirs
+		cv.Files.Dirs.Copy(&cv.Settings.Dirs)
 		cv.Files.DirsOnTop = cv.Settings.Files.DirsOnTop
 	}
 	if len(cv.Children) > 0 {

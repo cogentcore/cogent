@@ -4,6 +4,8 @@
 
 //go:build !js
 
+// Package cdelve provides the low-level implementation of the
+// cdebug interface, for the the delve Go debugger.
 package cdelve
 
 import (
@@ -128,7 +130,7 @@ func (gd *GiDelve) SetParams(params *cdebug.Params) {
 // StartedCheck checks that delve client is running properly
 func (gd *GiDelve) StartedCheck() error {
 	if gd.cmd == nil || gd.dlv == nil {
-		err := cdebug.NotStartedErr
+		err := cdebug.ErrNotStarted
 		return gd.LogErr(err)
 	}
 	return nil
@@ -210,10 +212,10 @@ func (gd *GiDelve) IsActive() bool {
 	return gd.cmd != nil && gd.dlv != nil
 }
 
-// Returns the pid of the process we are debugging.
+// ProcessPid Returns the pid of the process we are debugging.
 func (gd *GiDelve) ProcessPid() int {
 	if err := gd.StartedCheck(); err != nil {
-		log.Println(cdebug.NotStartedErr)
+		log.Println(cdebug.ErrNotStarted)
 		return -1
 	}
 	return gd.dlv.ProcessPid()
@@ -222,7 +224,7 @@ func (gd *GiDelve) ProcessPid() int {
 // LastModified returns the time that the process' executable was modified.
 func (gd *GiDelve) LastModified() time.Time {
 	if err := gd.StartedCheck(); err != nil {
-		log.Println(cdebug.NotStartedErr)
+		log.Println(cdebug.ErrNotStarted)
 		return time.Time{}
 	}
 	return gd.dlv.LastModified()
@@ -251,7 +253,7 @@ func (gd *GiDelve) Disconnect(cont bool) error {
 	return nil
 }
 
-// Restarts program.
+// Restart the program.
 func (gd *GiDelve) Restart() error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
@@ -260,7 +262,7 @@ func (gd *GiDelve) Restart() error {
 	return gd.LogErr(err)
 }
 
-// Restarts program from the specified position.
+// RestartFrom the program from the specified position.
 func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
@@ -464,7 +466,7 @@ func (gd *GiDelve) ClearBreakByName(name string) (*cdebug.Break, error) {
 	return gd.cvtBreak(ds), err
 }
 
-// AmmendBreak allows user to update an existing breakpoint for example
+// AmendBreak allows user to update an existing breakpoint for example
 // to change the information retrieved when the breakpoint is hit or to change,
 // add or remove the break condition
 func (gd *GiDelve) AmendBreak(id int, fname string, line int, cond string, trace bool) error {
@@ -530,10 +532,11 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 		}
 	}
 	cdebug.SortBreaks(*brk)
-	return nil
+	return err
 }
 
-// Cancels a Next or Step call that was interrupted by a manual stop or by another breakpoint
+// CancelNext for a Next or Step call that was interrupted
+// by a manual stop or by another breakpoint
 func (gd *GiDelve) CancelNext() error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
@@ -726,7 +729,8 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*cdebug.Variable, error)
 	return cv, err
 }
 
-// GetVariable returns a variable based on expression in the context of the current thread.
+// GetVar returns a variable based on expression in the context
+// of the current thread.
 func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*cdebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
@@ -812,7 +816,8 @@ func (gd *GiDelve) ListTypes(filter string) ([]string, error) {
 	return ds, err
 }
 
-// Returns whether we attached to a running process or not
+// AttachedToExistingProcess returns whether we attached to a
+// running process or not
 func (gd *GiDelve) AttachedToExistingProcess() bool {
 	if err := gd.StartedCheck(); err != nil {
 		return false

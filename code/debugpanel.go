@@ -432,7 +432,7 @@ func (dv *DebugPanel) StepOut() { //types:add
 	dv.InitState(ds)
 }
 
-// StepSingle steps a single CPU instruction.
+// SingleStep steps a single CPU instruction.
 func (dv *DebugPanel) SingleStep() { //types:add
 	if !dv.DbgCanStep() {
 		return
@@ -599,9 +599,7 @@ func (dv *DebugPanel) UpdateAllBreaks() {
 // BackupBreaks makes a backup copy of current breaks
 func (dv *DebugPanel) BackupBreaks() {
 	dv.BBreaks = make([]*cdebug.Break, len(dv.State.Breaks))
-	for i, b := range dv.State.Breaks {
-		dv.BBreaks[i] = b
-	}
+	copy(dv.BBreaks, dv.State.Breaks)
 }
 
 // InitState updates the State and View from given debug state
@@ -617,7 +615,7 @@ func (dv *DebugPanel) InitState(ds *cdebug.State) {
 		dv.SetStatus(cdebug.Stopped)
 	}
 	err := dv.Dbg.InitAllState(&dv.State)
-	if err == cdebug.IsRunningErr {
+	if err == cdebug.ErrIsRunning {
 		dv.SetStatus(cdebug.Running)
 		return
 	}
