@@ -23,7 +23,6 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -138,15 +137,12 @@ func (cv *Code) Init() {
 		cv.UpdateFiles()
 	})
 	cv.On(events.Drop, func(e events.Event) {
-		de := e.(*events.DragDrop)
-		md := de.Data.(mimedata.Mimes)
-		for _, d := range md {
-			if d.Type != fileinfo.TextPlain {
-				continue
+		for _, path := range core.DroppedFiles(e.(*events.DragDrop)) {
+			if info, err := os.Stat(path); err == nil && !info.IsDir() {
+				cv.ViewFile(core.Filename(path))
 			}
-			path := string(d.Data)
-			cv.ViewFile(core.Filename(path))
 		}
+		e.SetHandled()
 	})
 	cv.Updater(func() {
 		if cv.NeedsRebuild() {
