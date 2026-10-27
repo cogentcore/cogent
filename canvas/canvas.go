@@ -17,8 +17,6 @@ import (
 	"sync/atomic"
 
 	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -68,15 +66,7 @@ func (cv *Canvas) Init() {
 		s.Grow.Set(1, 1)
 	})
 	cv.On(events.Drop, func(e events.Event) {
-		de := e.(*events.DragDrop)
-		md := de.Data.(mimedata.Mimes)
-		for _, d := range md {
-			if d.Type != fileinfo.TextPlain {
-				continue
-			}
-			path := string(d.Data)
-			NewWindow(path)
-		}
+		cv.openDropped(e.(*events.DragDrop))
 	})
 	cv.AddCloseDialog(func(d *core.Body) bool {
 		if !cv.EditState.Changed {
@@ -799,4 +789,14 @@ func (cv *Canvas) AutosaveCheck(fnm core.Filename) bool {
 		return false // does not exist
 	}
 	return true
+}
+
+// openDropped opens the SVG files dropped on the canvas in new windows.
+func (cv *Canvas) openDropped(de *events.DragDrop) {
+	de.SetHandled()
+	for _, path := range core.DroppedFiles(de) {
+		if strings.EqualFold(filepath.Ext(path), ".svg") {
+			NewWindow(path)
+		}
+	}
 }
