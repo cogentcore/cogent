@@ -347,6 +347,9 @@ func (s *Server) InitParams() *InitializeParams {
 		// needed for gopls to run its didChangeConfiguration handler
 		// (settings re-fetch) when we send that notification:
 		DidChangeConfiguration: &DidChangeConfigurationCapability{},
+		// the editor watches the project files and sends their changes
+		// (no dynamic registration of server-specified watch patterns):
+		DidChangeWatchedFiles: &DidChangeWatchedFilesCapability{},
 	}
 	params.Capabilities.Window = &WindowClientCapabilities{
 		WorkDoneProgress: true,
@@ -607,6 +610,12 @@ func (s *Server) DidSave(uri DocumentURI) {
 	_ = s.notify("textDocument/didSave", &DidSaveTextDocumentParams{
 		TextDocument: TextDocumentIdentifier{URI: uri},
 	})
+}
+
+// DidChangeWatchedFiles sends a workspace/didChangeWatchedFiles
+// notification for files that changed on disk.
+func (s *Server) DidChangeWatchedFiles(changes []FileEvent) error {
+	return s.notify("workspace/didChangeWatchedFiles", &DidChangeWatchedFilesParams{Changes: changes})
 }
 
 // isOpen reports whether the server is currently tracking

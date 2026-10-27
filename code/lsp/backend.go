@@ -171,6 +171,54 @@ func (b *Backend) Reconfigure() {
 	}
 }
 
+// FileChange is a change to a file on disk, for [Backend.FilesChanged].
+type FileChange struct {
+
+	// Path is the absolute path of the file.
+	Path string
+
+	// Type is the type of change.
+	Type FileChangeType
+}
+
+// FilesChanged notifies the running servers of changes to files on
+// disk (workspace/didChangeWatchedFiles), such as edits by other
+// programs or a version control checkout: servers do not watch files
+// themselves, and otherwise use stale contents for files that are not
+// open. Each server gets the changes within its workspace root.
+func (b *Backend) FilesChanged(changes []FileChange) {
+	b.mu.Lock()
+	if b.stopped {
+		b.mu.Unlock()
+		return
+	}
+	servers := b.serverList()
+	b.mu.Unlock()
+	for _, srv := range servers {
+		if !srv.Ready() {
+			continue
+		}
+		var evs []FileEvent
+		for _, c := range changes {
+			if inDir(c.Path, srv.Root) {
+				evs = append(evs, FileEvent{URI: URIFromPath(c.Path), Type: c.Type})
+			}
+		}
+		if len(evs) == 0 {
+			continue
+		}
+		if err := srv.DidChangeWatchedFiles(evs); err != nil {
+			log.Printf("lsp: %s: didChangeWatchedFiles: %v\n", srv.Cfg.ID, err)
+		}
+	}
+}
+
+// inDir returns whether path is within directory dir.
+func inDir(path, dir string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
 // Stop shuts down all server processes and closes the
 // [Backend.Diagnostics] and [Backend.AppliedEdits] channels.
 // The backend cannot be used after this. It is safe to call more

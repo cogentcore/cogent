@@ -405,6 +405,26 @@ type DidCloseTextDocumentParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
+// FileChangeType is the type of a change to a watched file.
+type FileChangeType int
+
+const (
+	FileCreated FileChangeType = 1
+	FileChanged FileChangeType = 2
+	FileDeleted FileChangeType = 3
+)
+
+// FileEvent is a change to a watched file.
+type FileEvent struct {
+	URI  DocumentURI    `json:"uri"`
+	Type FileChangeType `json:"type"`
+}
+
+// DidChangeWatchedFilesParams are sent when files change on disk.
+type DidChangeWatchedFilesParams struct {
+	Changes []FileEvent `json:"changes"`
+}
+
 ////////   Diagnostics
 
 // DiagnosticSeverity indicates how severe a diagnostic is.

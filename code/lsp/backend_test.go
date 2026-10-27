@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1364,4 +1365,58 @@ func TestWaitGroupFixAutosave(t *testing.T) {
 	assert.Equal(t, 20, strings.Count(txt, "wg.Go(func() {"))
 	assert.NotContains(t, txt, "wg.Done()")
 	assert.NotContains(t, txt, "wg.Add(1)")
+}
+
+// TestFilesChangedGopls changes an unopened file on disk that an open
+// file depends on: gopls keeps using its old contents until it gets
+// workspace/didChangeWatchedFiles via [Backend.FilesChanged].
+func TestFilesChangedGopls(t *testing.T) {
+	src := "package main\n\nfunc main() { helper() }\n"
+	b, ln, srcPath := goplsSetup(t, src)
+	helper := filepath.Join(filepath.Dir(srcPath), "helper.go")
+	if err := os.WriteFile(helper, []byte("package main\n\nfunc helper() {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b.FilesChanged([]FileChange{{Path: helper, Type: FileCreated}})
+	errs := func() []string {
+		var msgs []string
+		for _, fd := range b.FileDiagnostics(ln, []string{srcPath}) {
+			for _, d := range fd.Diags {
+				if d.Severity == lang.DiagErr {
+					msgs = append(msgs, d.Msg)
+				}
+			}
+		}
+		return msgs
+	}
+	waitUntil(t, 60*time.Second, "no errors with helper.go", func() bool { return len(errs()) == 0 })
+
+	if err := os.WriteFile(helper, []byte("package main\n\nfunc helper2() {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// a change to the open file makes a new snapshot, still with the old helper.go:
+	ln.SetText([]byte(src + "\n"))
+	b.Change(ln)
+	time.Sleep(time.Second)
+	t.Logf("errors before FilesChanged: %v", errs())
+
+	b.FilesChanged([]FileChange{{Path: helper, Type: FileChanged}})
+	waitUntil(t, 30*time.Second, "undefined: helper error", func() bool {
+		return slices.ContainsFunc(errs(), func(m string) bool { return strings.Contains(m, "undefined: helper") })
+	})
+
+	if err := os.Remove(helper); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(helper, []byte("package main\n\nfunc helper() {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	b.FilesChanged([]FileChange{{Path: helper, Type: FileChanged}})
+	waitUntil(t, 30*time.Second, "error fixed by changed helper.go", func() bool { return len(errs()) == 0 })
+
+	if err := os.Remove(helper); err != nil {
+		t.Fatal(err)
+	}
+	b.FilesChanged([]FileChange{{Path: helper, Type: FileDeleted}})
+	waitUntil(t, 30*time.Second, "error after deleting helper.go", func() bool { return len(errs()) > 0 })
 }
