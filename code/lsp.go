@@ -452,6 +452,22 @@ func (ls *LangService) Change(ln *lines.Lines) {
 	ls.scheduleSemantic(ln)
 }
 
+// FilesChanged notifies the language servers of changes to files on
+// disk, and refreshes the problems of files that are not open if the
+// Problems tab is shown. Must be called from the event loop.
+func (ls *LangService) FilesChanged(changes []lsp.FileChange) {
+	if ls.cv.Settings.LangBackend != LangBackendLSP || len(changes) == 0 {
+		return
+	}
+	ls.lspB.FilesChanged(changes)
+	ls.mu.Lock()
+	shown := ls.problemsShown
+	ls.mu.Unlock()
+	if shown {
+		ls.pullProblems()
+	}
+}
+
 // Saved should be called after a file has been saved.
 func (ls *LangService) Saved(ln *lines.Lines) {
 	if ln == nil || ln.Filename() == "" || !ls.LSPActive(ln) {

@@ -108,6 +108,10 @@ type Code struct {
 	// language service backends (LSP / parse) for this window
 	langSvc *LangService `set:"-" json:"-" xml:"-"`
 
+	// deletedAsked records the open files that the user has been
+	// prompted about being deleted on disk, while they are deleted.
+	deletedAsked map[*lines.Lines]bool
+
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`
 
@@ -166,6 +170,7 @@ func (cv *Code) Init() {
 					return info.Name() != ".DS_Store"
 				}
 				w.FileNodeType = types.For[FileNode]()
+				w.WatchFunc = cv.filesChanged
 
 				w.OnSelect(func(e events.Event) {
 					e.SetHandled()
