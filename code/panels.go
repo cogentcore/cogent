@@ -7,9 +7,11 @@ package code
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/tree"
 )
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail
@@ -47,17 +49,42 @@ func (cv *Code) FocusOnPanel(panel int) bool {
 		cv.SetActiveEditorIndex(1)
 	case TabsIndex:
 		tv := cv.Tabs()
-		ct, _ := tv.CurrentTab()
-		if ct != nil {
-			cv.Scene.Events.FocusNextFrom(ct)
-		} else {
+		ct, idx := tv.CurrentTab()
+		if ct == nil {
 			return false
 		}
+		if !focusWithin(ct) { // such as the preview: the tab itself
+			_, tab := tv.TabAtIndex(idx)
+			tab.SetFocus()
+		}
 	default:
-		cw := core.AsWidget(sv.Children[panel])
-		cv.Scene.Events.FocusNextFrom(cw)
+		if !focusWithin(core.AsWidget(sv.Children[panel])) {
+			return false
+		}
 	}
 	cv.NeedsRender()
+	return true
+}
+
+// focusWithin focuses the first focusable widget within the given widget
+// (or the widget itself), returning false if there is none. This is unlike
+// [core.Events.FocusNextFrom], which goes on to the widgets after it.
+func focusWithin(w core.Widget) bool {
+	var foc core.Widget
+	w.AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		if foc != nil {
+			return tree.Break
+		}
+		if cwb.IsDisplayable() && !cwb.StateIs(states.Disabled) && cwb.AbilityIs(abilities.Focusable) {
+			foc = cw
+			return tree.Break
+		}
+		return tree.Continue
+	})
+	if foc == nil {
+		return false
+	}
+	foc.AsWidget().SetFocus()
 	return true
 }
 
