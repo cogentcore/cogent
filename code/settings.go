@@ -516,11 +516,26 @@ func (cv *Code) LangDefaults() {
 			cv.Settings.BuildCmds = CmdNames{"Build: Make"}
 		}
 	}
-	if cv.Settings.VersionControl == vcs.NoVCS {
-		repo, _ := cv.Files.FirstVCS()
-		if repo != nil {
-			cv.Settings.VersionControl = repo.Type()
-		}
+	cv.guessVersionControl()
+}
+
+// guessVersionControl sets the version control system, if not set, to that
+// of the repository containing the project root, or else the first one within
+// it in the file tree, which is not built when a project is first opened:
+// this is called again after it is (see [Code.UpdateFiles]).
+func (cv *Code) guessVersionControl() {
+	if cv.Settings.VersionControl != vcs.NoVCS {
+		return
+	}
+	if _, typ := vcs.DetectRepoRoot(string(cv.Settings.ProjectRoot)); typ != vcs.NoVCS {
+		cv.Settings.VersionControl = typ
+		return
+	}
+	if cv.Files == nil {
+		return
+	}
+	if repo, _ := cv.Files.FirstVCS(); repo != nil {
+		cv.Settings.VersionControl = repo.Type()
 	}
 }
 
