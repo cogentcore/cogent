@@ -7,6 +7,7 @@ package code
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -78,7 +79,7 @@ func (cv *Code) SetActiveFileInfo(ln *lines.Lines) {
 		cv.ActiveVCS = repo
 		cur, err := repo.Current()
 		if err == nil {
-			cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
+			cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", strings.ToLower(repo.Type().String()), cur)
 		}
 	}
 	fn := cv.FileNodeForFile(ln.Filename())
