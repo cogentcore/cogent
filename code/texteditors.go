@@ -7,6 +7,7 @@ package code
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -71,20 +72,27 @@ func (cv *Code) EditorForLines(ln *lines.Lines) (*TextEditor, int, bool) {
 func (cv *Code) SetActiveFileInfo(ln *lines.Lines) {
 	cv.ActiveFilename = fsx.Filename(ln.Filename())
 	cv.ActiveLang = ln.FileInfo().Known
-	cv.ActiveVCSInfo = ""
-	cv.ActiveVCS = nil
-	repo := GetVCSRepo(ln)
-	if repo != nil {
-		cv.ActiveVCS = repo
-		cur, err := repo.Current()
-		if err == nil {
-			cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
-		}
-	}
+	cv.ActiveVCS = GetVCSRepo(ln)
+	cv.updateVCSInfo()
 	fn := cv.FileNodeForFile(ln.Filename())
 	if fn != nil {
 		fn.ScrollToThis()
 	}
+}
+
+// updateVCSInfo sets [Code.ActiveVCSInfo] to the version control system
+// and current branch of [Code.ActiveVCS], and returns whether it changed,
+// as when the branch is switched.
+func (cv *Code) updateVCSInfo() bool {
+	info := ""
+	if repo := cv.ActiveVCS; repo != nil {
+		if cur, err := repo.Current(); err == nil {
+			info = fmt.Sprintf("%s: <i>%s</i>", strings.ToLower(repo.Type().String()), cur)
+		}
+	}
+	changed := info != cv.ActiveVCSInfo
+	cv.ActiveVCSInfo = info
+	return changed
 }
 
 // SetActiveEditor sets the given texteditor as the active one,

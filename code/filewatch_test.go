@@ -6,7 +6,9 @@ package code
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCodeFilesChanged changes and deletes open files on disk in a real
@@ -79,5 +82,57 @@ func TestCodeFilesChanged(t *testing.T) {
 		b.AsyncLock()
 		assert.GreaterOrEqual(t, cv.OpenFiles.IndexByKey(path("d.txt")), 0)
 		b.AsyncUnlock()
+	})
+}
+
+// TestCodeBranchSwitch tests that the version control branch in the
+// status bar is updated when a git switch changes an open file on disk,
+// which reverts it.
+func TestCodeBranchSwitch(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not available")
+	}
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	path := func(name string) string { return filepath.Join(tmp, name) }
+	git := func(args ...string) {
+		cmd := exec.Command("git", append([]string{"-c", "user.name=test", "-c", "user.email=test@example.com"}, args...)...)
+		cmd.Dir = tmp
+		out, err := cmd.CombinedOutput()
+		require.NoError(t, err, string(out))
+	}
+	require.NoError(t, os.WriteFile(path("a.txt"), []byte("main\n"), 0o644))
+	git("init", "-q", "-b", "main")
+	git("add", ".")
+	git("commit", "-q", "-m", "main")
+	git("switch", "-q", "-c", "dev")
+	require.NoError(t, os.WriteFile(path("a.txt"), []byte("dev\n"), 0o644))
+	git("commit", "-q", "-am", "dev")
+	git("switch", "-q", "main")
+
+	b := core.NewBody()
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	imagex.UpdateTestImages = true
+	defer func() { imagex.UpdateTestImages = false }()
+	b.AssertRender(t, "branch-switch", func() {
+		b.AsyncLock()
+		ta, _, _ := cv.ViewFileInIndex(path("a.txt"), 0)
+		ln := ta.Lines
+		assert.Contains(t, cv.ActiveVCSInfo, "main")
+		b.AsyncUnlock()
+		time.Sleep(500 * time.Millisecond) // watcher start
+
+		git("switch", "-q", "dev")
+		waitCode(t, 5*time.Second, "a.txt reloaded", func() bool {
+			return ln.String() == "dev\n"
+		})
+		waitCode(t, 5*time.Second, "branch updated", func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			return strings.Contains(cv.ActiveVCSInfo, "dev")
+		})
 	})
 }

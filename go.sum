@@ -1,7 +1,7 @@
 codeberg.org/go-pdf/fpdf v0.11.1 h1:U8+coOTDVLxHIXZgGvkfQEi/q0hYHYvEHFuGNX2GzGs=
 codeberg.org/go-pdf/fpdf v0.11.1/go.mod h1:Y0DGRAdZ0OmnZPvjbMp/1bYxmIPxm0ws4tfoPOc4LjU=
-cogentcore.org/core v0.5.11 h1:vibPJJP6ZZdnYUITNH7+e/AMQ8br2zXAStG92Wc2vH4=
-cogentcore.org/core v0.5.11/go.mod h1:IdQcg8V7AoWJDPsa1FMZB+aTRu/d1P6OQRBt1X5Mwvk=
+cogentcore.org/core v0.5.12 h1:bfWsl5ZMz5B4NnN1Xc+b6snzZGZwrTLyYnx6JRvSqCM=
+cogentcore.org/core v0.5.12/go.mod h1:TamUspYxi4k+wFcVLAui7I4P/ivZne6HwVL3l40apUU=
 cogentcore.org/lab v0.2.8 h1:u27lLz7ZsRwLIAC98LRmLqOPHirChZnk7Z8x/ZLQNYg=
 cogentcore.org/lab v0.2.8/go.mod h1:UBHYSh1nnpFpfWNOyO0HhmlY3+X4Plj+FTon9WsSays=
 git.sr.ht/~sbinet/overlayfs v0.1.1 h1:HvCHXT1cs8RMSjNLQXxPPosB2hgR3tRC8RniH0f3ESg=
@@ -12,8 +12,6 @@ github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f6s9Tn1Tt7/WTEg=
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
-github.com/Masterminds/vcs v1.13.3 h1:IIA2aBdXvfbIM+yl/eTnL4hb1XwdpvuQLglAix1gweE=
-github.com/Masterminds/vcs v1.13.3/go.mod h1:TiE7xuEjl1N4j016moRd6vezp6e6Lz23gypeXfzXeW8=
 github.com/aandrew-me/tgpt/v2 v2.7.2 h1:xhcglzpC+A16t40GvEPAwPATFeRY5h4lYpabN6DBK9k=
 github.com/aandrew-me/tgpt/v2 v2.7.2/go.mod h1:NlLR4bEeqNuE9K6viDqsd3ju9XHNFh2xFe/pkJi0iOU=
 github.com/adrg/strutil v0.3.1 h1:OLvSS7CSJO8lBii4YmBt8jiK9QOtB9CzCzwl4Ic/Fz4=

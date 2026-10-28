@@ -375,6 +375,7 @@ func (cv *Code) UpdateFiles() { //types:add
 	if cv.Files != nil && cv.ProjectRoot != "" {
 		cv.Files.OpenPath(string(cv.ProjectRoot))
 		cv.Files.Open()
+		cv.guessVersionControl()
 	}
 }
 
@@ -517,6 +518,7 @@ func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 			cv.GuessMainLang()
 			cv.LangDefaults()
 		}
+		cv.guessVersionControl()
 		cv.SetWindowNameTitle()
 	}
 	return cv
