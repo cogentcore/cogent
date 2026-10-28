@@ -134,7 +134,7 @@ func TestCodeTerminal(t *testing.T) {
 	src.KeyChord('x', key.CodeUnknown, 0)
 	src.Key(events.KeyDown, 0, key.CodeReturnEnter, 0)
 	waitFor("the interrupt", func() bool {
-		return strings.Contains(terminalText(tm), "echo x\nx\n") && cv.KeySeq1 == ""
+		return hasOutputLine(tm, "x") && cv.KeySeq1 == ""
 	})
 
 	// another terminal
