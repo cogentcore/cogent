@@ -58,6 +58,9 @@ type SettingsData struct { //types:add
 	// file picker settings
 	Files FileSettings
 
+	// Terminal has the settings for terminals.
+	Terminal TerminalSettings
+
 	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveLangOpts bool
 

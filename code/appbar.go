@@ -268,6 +268,13 @@ func (cv *Code) OverflowMenu(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(cv.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
 			SetShortcut(KeyBufClose.Chord())
 		core.NewFuncButton(m).SetFunc(cv.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
+
+		core.NewSeparator(m)
+
+		core.NewFuncButton(m).SetFunc(cv.OpenTerminal).SetText("Open terminal").SetIcon(icons.Terminal)
+		core.NewFuncButton(m).SetFunc(cv.NewTerminal).SetText("New terminal").SetIcon(icons.Add)
+		core.NewFuncButton(m).SetFunc(cv.TerminalCdToFile).SetText("Terminal cd to file").SetIcon(icons.Folder)
+		core.NewFuncButton(m).SetFunc(cv.TerminalCdToProject).SetText("Terminal cd to project").SetIcon(icons.FolderOpen)
 	})
 
 	core.NewButton(m).SetText("Command").SetMenu(func(m *core.Scene, pos image.Point) {

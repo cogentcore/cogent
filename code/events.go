@@ -25,6 +25,20 @@ func (cv *Code) codeKeys(e events.Event) {
 	if core.DebugSettings.KeyEventTrace {
 		slog.Info("Code KeyInput", "widget", cv, "keyFunction", kf, "keyChord", kc)
 	}
+	if tm := cv.focusedTerminal(); tm != nil {
+		// all keys go to the terminal, except for moving to another panel
+		cv.lastTerminal = tm
+		cv.KeySeq1 = ""
+		switch kf {
+		case KeyNextPanel:
+			e.SetHandled()
+			cv.FocusNextPanel()
+		case KeyPrevPanel:
+			e.SetHandled()
+			cv.FocusPrevPanel()
+		}
+		return
+	}
 	if cv.KeySeq1 != "" {
 		kc2 := string(cv.KeySeq1) + " " + string(kc)
 		kf2 := keymap.Of(key.Chord(kc2))
