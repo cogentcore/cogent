@@ -542,7 +542,7 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 // NewFile creates a new file in the project
 func (cv *Code) NewFile(filename string, addToVcs bool) { //types:add
 	np := filepath.Join(string(cv.ProjectRoot), filename)
-	f, err := os.Create(np)
+	f, err := os.OpenFile(np, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666) // not truncating an existing file
 	if err == nil {
 		err = f.Close()
 	}
