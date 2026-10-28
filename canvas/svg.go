@@ -47,6 +47,10 @@ type SVG struct {
 
 	// GridOffset is the current pixel offset in mouse coordinates.
 	GridOffset math32.Vector2 `edit:"-" set:"-"`
+
+	// dragItems are the items being dragged out of the window
+	// (see [SVG.dragOut]), which are deleted when moved.
+	dragItems []svg.Node
 }
 
 func (sv *SVG) Init() {
@@ -56,12 +60,13 @@ func (sv *SVG) Init() {
 	sv.Grid = Settings.Size.Grid
 	sv.AddContextMenu(sv.contextMenu)
 	sv.Styler(func(s *styles.Style) {
-		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended, abilities.DoubleClickable)
+		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable, abilities.ScrollableUnattended, abilities.DoubleClickable, abilities.Droppable)
 		s.ObjectFit = styles.FitNone
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
 		sv.SVG.TextShaper = sv.Scene.TextShaper()
 		s.StateLayer = 0 // always focused..
 	})
+	sv.handleDND()
 	sv.OnKeyChord(func(e events.Event) {
 		es := sv.EditState()
 		kc := e.KeyChord()
@@ -264,9 +269,10 @@ func (sv *SVG) Init() {
 		}
 		if es.HasSelected() {
 			e.SetHandled()
-			switch es.Action {
-			case NewElement:
+			switch {
+			case es.Action == NewElement:
 				sv.SpriteReshapeDrag(SpDnR, e)
+			case es.Tool == SelectTool && sv.dragOut(e):
 			default:
 				sv.DragMove(e)
 			}

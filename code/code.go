@@ -23,7 +23,6 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -138,15 +137,12 @@ func (cv *Code) Init() {
 		cv.UpdateFiles()
 	})
 	cv.On(events.Drop, func(e events.Event) {
-		de := e.(*events.DragDrop)
-		md := de.Data.(mimedata.Mimes)
-		for _, d := range md {
-			if d.Type != fileinfo.TextPlain {
-				continue
+		for _, path := range core.DroppedFiles(e.(*events.DragDrop)) {
+			if info, err := os.Stat(path); err == nil && !info.IsDir() {
+				cv.ViewFile(core.Filename(path))
 			}
-			path := string(d.Data)
-			cv.ViewFile(core.Filename(path))
 		}
+		e.SetHandled()
 	})
 	cv.Updater(func() {
 		if cv.NeedsRebuild() {
@@ -546,7 +542,10 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 // NewFile creates a new file in the project
 func (cv *Code) NewFile(filename string, addToVcs bool) { //types:add
 	np := filepath.Join(string(cv.ProjectRoot), filename)
-	_, err := os.Create(np)
+	f, err := os.OpenFile(np, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666) // not truncating an existing file
+	if err == nil {
+		err = f.Close()
+	}
 	if err != nil {
 		core.MessageDialog(cv, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
 		return

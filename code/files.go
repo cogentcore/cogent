@@ -168,7 +168,8 @@ func GetVCSRepo(obj any) vcs.Repo {
 func (cv *Code) OpenLines(fpath string) *lines.Lines {
 	ln := lines.NewLines()
 	err := ln.Open(fpath)
-	if errors.Log(err) != nil {
+	if err != nil {
+		core.ErrorSnackbar(cv, err, "Error opening file")
 		return nil
 	}
 	cv.ConfigLines(ln)
@@ -218,7 +219,9 @@ func (cv *Code) SaveActiveView() { //types:add
 	}
 	cv.LastSaveTStamp = time.Now()
 	if tv.Lines.Filename() != "" {
-		tv.Save()
+		if tv.Save() != nil || tv.Lines.IsNotSaved() { // error reported, or prompting
+			return
+		}
 		fname := tv.Lines.Filename()
 		cv.SetStatus("File Saved: " + fname)
 		fpath, _ := filepath.Split(fname)
