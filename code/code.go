@@ -241,14 +241,18 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 		})
 		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
+			// before the stylers of the editor, which make it focusable
+			// (editable) depending on whether it is read-only
+			w.FirstStyler(func(s *styles.Style) {
+				if w.Lines != nil {
+					w.SetReadOnly(w.Lines.FileInfo().Generated)
+				}
+			})
 			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
 				s.SetAbilities(true, abilities.ScrollableUnattended)
-				if w.Lines != nil {
-					w.SetReadOnly(w.Lines.FileInfo().Generated)
-				}
 			})
 			w.OnFocus(func(e events.Event) {
 				cv.ActiveEditorIndex = i
