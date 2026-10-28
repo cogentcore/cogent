@@ -7,6 +7,7 @@
 package main
 
 import (
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/keymap"
@@ -18,7 +19,7 @@ func main() {
 	fp := core.NewFilePicker(b)
 	fp.Scene.OnKeyChord(func(e events.Event) {
 		if keymap.Of(e.KeyChord()) == keymap.Accept {
-			core.TheApp.OpenURL("file://" + fp.SelectedFile())
+			core.TheApp.OpenURL(fsx.FileURL(fp.SelectedFile()))
 		}
 	})
 	b.AddTopBar(func(bar *core.Frame) {
