@@ -12,23 +12,12 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
 
 func (cv *Code) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
-	})
-	tree.Add(p, func(w *core.Switch) {
-		w.SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
-		w.Styler(func(s *styles.Style) {
-			w.SetChecked(cv.Settings.GoMod) // todo: update
-		})
-		w.OnChange(func(e events.Event) {
-			cv.Settings.GoMod = w.IsChecked()
-			SetGoMod(cv.Settings.GoMod)
-		})
 	})
 
 	tree.Add(p, func(w *core.Separator) {})
@@ -275,6 +264,8 @@ func (cv *Code) OverflowMenu(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(cv.NewTerminal).SetText("New terminal").SetIcon(icons.Add)
 		core.NewFuncButton(m).SetFunc(cv.TerminalCdToFile).SetText("Terminal cd to file").SetIcon(icons.Folder)
 		core.NewFuncButton(m).SetFunc(cv.TerminalCdToProject).SetText("Terminal cd to project").SetIcon(icons.FolderOpen)
+		core.NewFuncButton(m).SetFunc(cv.PrevTab).SetText("Previous tab").SetIcon(icons.ArrowBack)
+		core.NewFuncButton(m).SetFunc(cv.NextTab).SetText("Next tab").SetIcon(icons.ArrowForward)
 	})
 
 	core.NewButton(m).SetText("Command").SetMenu(func(m *core.Scene, pos image.Point) {

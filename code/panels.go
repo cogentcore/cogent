@@ -5,11 +5,17 @@
 package code
 
 import (
+	"image"
+
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/terminal"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/tree"
 )
@@ -162,6 +168,56 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Ed
 		txv.SetLines(buf)
 	}
 	ConfigOutputTextEditor(txv)
+	// the editor has the keys after a click, although it is not focusable
+	// (as it is read-only), and the tab button after moving to the panel
+	// (see [Code.clearOutputTab])
+	txv.OnKeyChord(func(e events.Event) {
+		if isKillKey(e) {
+			e.SetHandled()
+			txv.Clear()
+		}
+	})
+	txv.ContextMenus = nil // with the keys
+	txv.AddContextMenu(func(m *core.Scene, pos image.Point) {
+		core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
+			SetKey(keymap.Copy).SetState(!txv.HasSelection(), states.Disabled).
+			OnClick(func(e events.Event) {
+				txv.Copy(true)
+			})
+		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+			SetShortcut(terminal.ShortcutChord(keymap.Kill)).
+			OnClick(func(e events.Event) {
+				txv.Clear()
+			})
+	})
 	tv.Update()
 	return txv
+}
+
+// isKillKey returns whether the given key event is the [keymap.Kill]
+// key, which clears output tabs and terminals, in either its usual
+// binding, or the one that works in terminals (see [terminal.KeyFunction]),
+// so that the same key clears both.
+func isKillKey(e events.Event) bool {
+	return keymap.Of(e.KeyChord()) == keymap.Kill || terminal.KeyFunction(e) == keymap.Kill
+}
+
+// clearOutputTab clears the output of the current tab, if the focus is in
+// the tabs panel (and not in editable text), such as on the tab button,
+// and the tab is a read-only editor, such as the console and command
+// outputs, returning whether it was cleared.
+func (cv *Code) clearOutputTab() bool {
+	if !cv.tabKeysActive() {
+		return false
+	}
+	ct, _ := cv.Tabs().CurrentTab()
+	if ct == nil || !ct.AsTree().HasChildren() {
+		return false
+	}
+	ed, ok := ct.AsTree().Child(0).(*textcore.Editor)
+	if !ok || !ed.IsReadOnly() {
+		return false
+	}
+	ed.Clear()
+	return true
 }
