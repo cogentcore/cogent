@@ -29,7 +29,8 @@ import (
 // have been edited prompt about it if they are shown in an editor (and
 // otherwise when they are next shown). Deleted open files are closed,
 // prompting first if they have been edited, and the language servers
-// are notified of all of the changes.
+// are notified of all of the changes. The current version control branch
+// in the status bar is updated, as it can be switched.
 func (cv *Code) filesChanged(changes []filetree.FileChange) {
 	var lspChanges []lsp.FileChange
 	for _, c := range changes {
@@ -68,6 +69,9 @@ func (cv *Code) filesChanged(changes []filetree.FileChange) {
 	}
 	if len(deleted) > 0 {
 		cv.promptDeleted(deleted)
+	}
+	if cv.updateVCSInfo() { // such as the branch, after git switch
+		cv.UpdateStatusText()
 	}
 }
 
