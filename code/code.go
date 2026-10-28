@@ -542,7 +542,10 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 // NewFile creates a new file in the project
 func (cv *Code) NewFile(filename string, addToVcs bool) { //types:add
 	np := filepath.Join(string(cv.ProjectRoot), filename)
-	_, err := os.Create(np)
+	f, err := os.Create(np)
+	if err == nil {
+		err = f.Close()
+	}
 	if err != nil {
 		core.MessageDialog(cv, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
 		return

@@ -176,7 +176,7 @@ func (fn *FileNode) DeleteFiles() {
 		return
 	}
 	d := core.NewBody("Delete Files?")
-	core.NewText(d).SetType(core.TextSupporting).SetText("OK to delete file(s)?  This is not undoable and files are not moving to trash / recycle bin. If any selections are directories all files and subdirectories will also be deleted.")
+	core.NewText(d).SetType(core.TextSupporting).SetText("OK to delete file(s)? They are moved to the trash / recycle bin where available, and otherwise permanently deleted. If any selections are directories, all files and subdirectories in them are also deleted.")
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Delete Files").OnClick(func(e events.Event) {

@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/strcase"
@@ -300,7 +299,8 @@ func (cv *Code) DiffFiles(fnmA, fnmB core.Filename) { //types:add
 func (cv *Code) DiffFileLines(lna *lines.Lines, fnmB string) { //types:add
 	lnb := lines.NewLines()
 	err := lnb.Open(fnmB)
-	if errors.Log(err) != nil {
+	if err != nil {
+		core.ErrorSnackbar(cv, err, "Error opening file")
 		return
 	}
 	dif := lna.DiffsUnified(lnb, 3)
