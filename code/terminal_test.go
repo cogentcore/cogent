@@ -28,6 +28,21 @@ import (
 // TestCodeTerminal tests the default terminal tab, making another
 // one, changing to the directory of the active file, and that keys
 // go to a focused terminal rather than the Code key bindings.
+func terminalText(tm *terminal.Terminal) string {
+	return tm.LinesView().Lines.String()
+}
+
+// hasOutputLine returns whether a line of the terminal text is s, allowing for
+// a leading prompt: dash (sh on Ubuntu) echoes typed-ahead input after the prompt.
+func hasOutputLine(tm *terminal.Terminal, s string) bool {
+	for _, ln := range strings.Split(terminalText(tm), "\n") {
+		if strings.TrimPrefix(strings.TrimRight(ln, " "), "$ ") == s {
+			return true
+		}
+	}
+	return false
+}
+
 func TestCodeTerminal(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("uses sh")
@@ -70,10 +85,12 @@ func TestCodeTerminal(t *testing.T) {
 			}
 			time.Sleep(20 * time.Millisecond)
 		}
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		for _, tm := range cv.Terminals() {
+			t.Logf("%s text:\n%s", tm.Name, terminalText(tm))
+		}
 		t.Fatalf("timeout waiting for %s", what)
-	}
-	text := func(tm *terminal.Terminal) string {
-		return tm.LinesView().Lines.String()
 	}
 
 	var tm *terminal.Terminal
@@ -89,13 +106,13 @@ func TestCodeTerminal(t *testing.T) {
 	cv.ViewFileInIndex(filepath.Join(sub, "a.txt"), 0)
 	cv.OpenTerminal()
 	b.AsyncUnlock()
-	waitFor("the shell", func() bool { return tm.IsRunning() && strings.Contains(text(tm), "$") })
+	waitFor("the shell", func() bool { return tm.IsRunning() && strings.Contains(terminalText(tm), "$") })
 
 	b.AsyncLock()
 	cv.TerminalCdToFile()
 	tm.Run("pwd")
 	b.AsyncUnlock()
-	waitFor("the directory of the file", func() bool { return strings.Contains(text(tm), "\n"+sub+"\n") })
+	waitFor("the directory of the file", func() bool { return hasOutputLine(tm, sub) })
 
 	// keys go to the focused terminal: Control+C interrupts the command
 	// rather than starting a key sequence
@@ -117,7 +134,7 @@ func TestCodeTerminal(t *testing.T) {
 	src.KeyChord('x', key.CodeUnknown, 0)
 	src.Key(events.KeyDown, 0, key.CodeReturnEnter, 0)
 	waitFor("the interrupt", func() bool {
-		return strings.Contains(text(tm), "echo x\nx\n") && cv.KeySeq1 == ""
+		return strings.Contains(terminalText(tm), "echo x\nx\n") && cv.KeySeq1 == ""
 	})
 
 	// another terminal
