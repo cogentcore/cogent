@@ -35,6 +35,7 @@ import (
 	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/spell"
+	"cogentcore.org/core/text/terminal"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -107,6 +108,9 @@ type Code struct {
 	// language service backends (LSP / parse) for this window
 	langSvc *LangService `set:"-" json:"-" xml:"-"`
 
+	// lastTerminal is the last terminal used, for terminal commands.
+	lastTerminal *terminal.Terminal
+
 	// deletedAsked records the open files that the user has been
 	// prompted about being deleted on disk, while they are deleted.
 	deletedAsked map[*lines.Lines]bool
@@ -134,6 +138,7 @@ func (cv *Code) Init() {
 	cv.OnFirst(events.KeyChord, cv.codeKeys)
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
+		cv.recycleTerminal(TerminalTabName)
 		cv.UpdateFiles()
 	})
 	cv.On(events.Drop, func(e events.Event) {

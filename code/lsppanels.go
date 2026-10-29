@@ -74,23 +74,21 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 	} else {
 		ed = cv.tabEditor(tab)
 		scroll, cursor = ed.ScrollPos(), ed.CursorPos
-		buf.SetText(nil)
 	}
 	sortLocationItems(items)
 	lns, mus, itemLines := locationsMarkup(cv, buf.FontStyle(), header, items)
 	ls.setLocationItems(tab, items, itemLines)
-	if ed != nil {
-		// the output editor styling turns autoscroll back on, which would
-		// go to the end on the Input from appending:
-		ed.AutoscrollOnInput = false
-	}
-	buf.AppendTextMarkup(lns, mus)
 	if ed == nil {
+		buf.AppendTextMarkup(lns, mus)
 		return
 	}
-	// keep the view where it was, with the current item visible:
+	// replace the text in place, without the Input events of editing,
+	// which would scroll the view (with the trailing blank line that
+	// appending makes); keep the view where it was:
+	buf.ReplaceLinesMarkup(0, -1, append(lns, []rune{}), mus)
 	ed.CursorPos = buf.ValidPos(cursor)
 	ed.SetScrollPos(scroll)
+	ed.NeedsLayout()
 	ls.mu.Lock()
 	cur, has := ls.locCurrent[tab]
 	ls.mu.Unlock()
