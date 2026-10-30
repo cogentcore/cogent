@@ -200,5 +200,5 @@ func TestCodeTerminal(t *testing.T) {
 		}
 		return tree.Continue
 	})
-	assert.Equal(t, []string{"New terminal", "Cd to project", "Previous tab", "Next tab", "Copy", "Paste", "Clear scrollback"}, items)
+	assert.Equal(t, []string{"New terminal", "Cd to project", "Previous tab", "Next tab", "Copy", "Select all", "Paste", "Clear scrollback"}, items)
 }
