@@ -5,8 +5,6 @@
 package code
 
 import (
-	"strings"
-
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
@@ -56,7 +54,6 @@ func (sv *SpellPanel) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	sv.CheckNext() // todo: on start
 
 	tree.AddChildAt(sv, "spellbar", func(w *core.Toolbar) {
 		tree.AddChild(w, func(w *core.Button) {
@@ -68,25 +65,6 @@ func (sv *SpellPanel) Init() {
 					sf := sv.ChangeText()
 					sf.SetText("")
 					sv.Code.Spell()
-				})
-		})
-		tree.AddChild(w, func(w *core.Button) {
-			w.SetText("Train").
-				SetTooltip("add additional text to the training corpus").
-				OnClick(func(e events.Event) {
-					cur := ""
-					d := core.NewBody("Select a Text File to Add to Corpus")
-					fv := core.NewFilePicker(d).SetFilename(cur).SetExtensions(".txt")
-					fv.OnSelect(func(e events.Event) {
-						cur = fv.SelectedFile()
-					})
-					d.AddBottomBar(func(bar *core.Frame) {
-						d.AddCancel(bar)
-						d.AddOK(bar).OnClick(func(e events.Event) {
-							spell.Spell.AddWord(cur)
-						})
-					})
-					d.RunWindowDialog(sv)
 				})
 		})
 	})
@@ -109,9 +87,8 @@ func (sv *SpellPanel) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Button) {
-			w.SetText("Learn").OnClick(func(e events.Event) {
-				nw := strings.ToLower(sv.UnkWord)
-				spell.Spell.AddWord(nw)
+			w.SetText("Learn").SetTooltip("add the word to the user dictionary").OnClick(func(e events.Event) {
+				spell.Spell.AddWord(sv.UnkWord)
 				sv.LastAction = w
 				sv.CheckNext()
 			})
@@ -223,6 +200,11 @@ func (sv *SpellPanel) CheckNext() {
 		}
 	}
 	if done {
+		sv.UnkWord = ""
+		sv.UnknownText().SetText("")
+		sv.ChangeText().SetText("")
+		sv.Suggest = nil
+		sv.SuggestView().Update()
 		tv.HighlightsReset()
 		core.MessageSnackbar(sv, "End of file, spelling check complete")
 		return

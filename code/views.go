@@ -47,6 +47,7 @@ func (cv *Code) Spell() { //types:add
 	sv := core.RecycleTabWidget[SpellPanel](tv, "Spell")
 	sv.Config(cv, txv)
 	sv.Update()
+	sv.CheckNext()
 	cv.FocusOnPanel(TabsIndex)
 }
 
