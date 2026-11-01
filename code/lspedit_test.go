@@ -310,7 +310,8 @@ func TestEditorOccurrences(t *testing.T) {
 	et := newEditorTest(t, src, textpos.Pos{Line: 3, Char: 1}) // on x
 	ed := et.ed
 	regs := et.ls.occurrences(ed, ed.Lines, ed.CursorPos)
-	if len(regs) != 3 {
+	// the other occurrences, without the one at the cursor
+	if len(regs) != 2 || regs[0].Start.Line != 4 || regs[1].Start.Line != 5 {
 		t.Fatalf("occurrences of x: %v", regs)
 	}
 	et.ls.setOccurrences(ed, regs)

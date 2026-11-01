@@ -70,8 +70,8 @@ func TestCodeOccurrencesClick(t *testing.T) {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		src.MouseButton(events.MouseDown, events.Left, pt, 0)
 		src.MouseButton(events.MouseUp, events.Left, pt, 0)
-		waitCode(t, 5*time.Second, "occurrences of x highlighted", func() bool {
-			return len(highlights()) == 3
+		waitCode(t, 5*time.Second, "the other occurrences of x highlighted", func() bool {
+			return len(highlights()) == 2
 		})
 
 		// after an edit, the highlights are on the lines of the
@@ -86,7 +86,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 		b.AsyncUnlock()
 		waitCode(t, 5*time.Second, "occurrences of x highlighted after an edit", func() bool {
 			hl := highlights()
-			if len(hl) != 3 {
+			if len(hl) != 2 {
 				return false
 			}
 			b.AsyncLock()
