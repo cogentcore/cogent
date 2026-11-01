@@ -318,7 +318,8 @@ func (s *Server) initialize(ctx context.Context) error {
 // applied after the server started. An unknown section gets null,
 // meaning "use defaults".
 func (s *Server) configResult(section string) any {
-	if section == "" || section == s.Cfg.ID || strings.HasPrefix(section, s.Cfg.ID+".") {
+	sec := s.Cfg.SettingsSection()
+	if section == "" || section == sec || strings.HasPrefix(section, sec+".") {
 		return s.Options()
 	}
 	return nil
@@ -510,7 +511,7 @@ func (s *Server) notify(method string, params any) error {
 // with a Change sync of open buffers, or expect the new settings to
 // apply on the next edit.
 func (s *Server) DidChangeConfiguration() error {
-	return s.notify("workspace/didChangeConfiguration", map[string]any{s.Cfg.ID: s.Options()})
+	return s.notify("workspace/didChangeConfiguration", map[string]any{s.Cfg.SettingsSection(): s.Options()})
 }
 
 ////////   Document sync

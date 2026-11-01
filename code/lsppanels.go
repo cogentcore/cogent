@@ -174,7 +174,9 @@ func (cv *Code) highlightLocation(tab string, i int) {
 	}
 	ln := lines[i]
 	ed.SetCursorShow(textpos.Pos{Line: ln})
-	ed.Highlights = []textpos.Region{{Start: textpos.Pos{Line: ln}, End: textpos.Pos{Line: ln, Char: ed.Lines.LineLen(ln)}}}
+	hl := textpos.Region{Start: textpos.Pos{Line: ln}, End: textpos.Pos{Line: ln, Char: ed.Lines.LineLen(ln)}}
+	hl.TimeNow() // for the current text
+	ed.Highlights = []textpos.Region{hl}
 	ed.NeedsRender()
 }
 
@@ -626,17 +628,31 @@ func (ls *LangService) scheduleOccurrences(tv *TextEditor) {
 	})
 }
 
-// occurrences returns the regions of the occurrences of the symbol at
-// the given position, if they should be highlighted, and nil otherwise:
-// when there is a selection, or no symbol, or only one occurrence.
+// occurrences returns the regions of the other occurrences of the symbol
+// at the given position, if they should be highlighted, and nil otherwise:
+// when there is a selection, or no symbol, or only one occurrence. The
+// position must be within one of the occurrences or at its end, where it
+// is when typing it, not at its start, next to the space before it, for
+// which servers also return them. The occurrence at the position is not
+// highlighted, as the cursor shows it.
 func (ls *LangService) occurrences(tv *TextEditor, ln *lines.Lines, pos textpos.Pos) []textpos.Region {
 	if tv.HasSelection() {
 		return nil
 	}
 	regs := ls.lspB.Occurrences(ln, pos)
-	if len(regs) < 2 {
+	within := func(r textpos.Region) bool {
+		return r.Start.IsLess(pos) && !r.End.IsLess(pos)
+	}
+	if !slices.ContainsFunc(regs, within) {
 		return nil
 	}
+	regs = slices.DeleteFunc(regs, within)
+	if len(regs) == 0 {
+		return nil
+	}
+	slices.SortFunc(regs, func(a, b textpos.Region) int { // servers do not sort them
+		return cmp.Or(cmp.Compare(a.Start.Line, b.Start.Line), cmp.Compare(a.Start.Char, b.Start.Char))
+	})
 	return regs
 }
 
@@ -654,6 +670,11 @@ func (ls *LangService) setOccurrences(tv *TextEditor, regs []textpos.Region) {
 	owned := len(tv.Highlights) == 0 || (ls.occurEditor == tv && slices.Equal(tv.Highlights, ls.occurRegs))
 	if !owned {
 		return
+	}
+	// The regions are for the current text, not adjusted for the
+	// edits before now (see [lines.Lines.AdjustRegion]).
+	for i := range regs {
+		regs[i].TimeNow()
 	}
 	ls.occurEditor, ls.occurRegs = tv, regs
 	tv.Highlights = slices.Clone(regs)

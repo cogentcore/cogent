@@ -34,7 +34,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	t.Setenv("GOWORK", "off")
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.go")
-	os.WriteFile(fpath, []byte("package main\n\nfunc main() {\n\tx := 1\n\tx++\n\t_ = x\n}\n"), 0644)
+	os.WriteFile(fpath, []byte("package main\n\nfunc main() {\n\txy := 1\n\txy++\n\t_ = xy\n}\n"), 0644)
 	b := core.NewBody()
 	cv := NewCode(b)
 	cv.Defaults()
@@ -60,18 +60,43 @@ func TestCodeOccurrencesClick(t *testing.T) {
 			defer b.AsyncUnlock()
 			return append([]textpos.Region{}, tv.Highlights...)
 		}
-		if hl := highlights(); len(hl) != 1 || hl[0] != jump {
+		if hl := highlights(); len(hl) != 1 || hl[0].Start != jump.Start || hl[0].End != jump.End {
 			t.Fatalf("jump highlight: %v", hl)
 		}
 		b.AsyncLock()
-		pt := tv.CharStartPos(textpos.Pos{Line: 4, Char: 1}).ToPoint() // the x in x++
+		pt := tv.CharStartPos(textpos.Pos{Line: 4, Char: 2}).ToPoint() // within xy in xy++
 		b.AsyncUnlock()
 		pt.Y += 4
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		src.MouseButton(events.MouseDown, events.Left, pt, 0)
 		src.MouseButton(events.MouseUp, events.Left, pt, 0)
-		waitCode(t, 5*time.Second, "occurrences of x highlighted", func() bool {
-			return len(highlights()) == 3
+		waitCode(t, 5*time.Second, "the other occurrences of xy highlighted", func() bool {
+			return len(highlights()) == 2
+		})
+
+		// after an edit, the highlights are on the lines of the
+		// occurrences, as rendered: they are not adjusted for the edits
+		// before they were made
+		b.AsyncLock()
+		tv.Lines.InsertText(textpos.Pos{Line: 3}, []rune("\t// x\n"))
+		cv.LangSvc().Change(tv.Lines)
+		tv.Highlights = nil // only the new ones
+		tv.SetCursorShow(textpos.Pos{Line: 6, Char: 6}) // within xy in _ = xy
+		cv.LangSvc().scheduleOccurrences(tv)
+		b.AsyncUnlock()
+		waitCode(t, 5*time.Second, "occurrences of xy highlighted after an edit", func() bool {
+			hl := highlights()
+			if len(hl) != 2 {
+				return false
+			}
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			for i, h := range hl {
+				if tv.Lines.AdjustRegion(h).Start.Line != 4+i {
+					return false
+				}
+			}
+			return true
 		})
 	})
 }

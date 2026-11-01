@@ -35,7 +35,10 @@ const semanticChangeDelay = 750 * time.Millisecond
 // tokens refresh following an edit.
 func (ls *LangService) scheduleSemantic(ln *lines.Lines) {
 	ls.mu.Lock()
-	resetTimer(ls.semantic, ln.Filename(), semanticChangeDelay, func() { ls.SemanticRefresh(ln) })
+	resetTimer(ls.semantic, ln.Filename(), semanticChangeDelay, func() {
+		ls.SemanticRefresh(ln)
+		ls.InlayRefresh(ln)
+	})
 	ls.mu.Unlock()
 }
 

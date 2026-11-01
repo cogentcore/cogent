@@ -306,13 +306,18 @@ func TestEditorExpandSelection(t *testing.T) {
 // TestEditorOccurrences checks the highlighting of the occurrences of
 // the symbol at the cursor, which does not replace other highlights.
 func TestEditorOccurrences(t *testing.T) {
-	src := "package main\n\nfunc main() {\n\tx := 1\n\tx++\n\t_ = x\n}\n"
-	et := newEditorTest(t, src, textpos.Pos{Line: 3, Char: 1}) // on x
+	src := "package main\n\nfunc main() {\n\txy := 1\n\txy++\n\t_ = xy\n}\n"
+	et := newEditorTest(t, src, textpos.Pos{Line: 3, Char: 2}) // within xy
 	ed := et.ed
 	regs := et.ls.occurrences(ed, ed.Lines, ed.CursorPos)
-	if len(regs) != 3 {
-		t.Fatalf("occurrences of x: %v", regs)
+	// the other occurrences, without the one at the cursor
+	if len(regs) != 2 || regs[0].Start.Line != 4 || regs[1].Start.Line != 5 {
+		t.Fatalf("occurrences of xy: %v", regs)
 	}
+	// the same at the end of xy, where the cursor is when typing it,
+	// but none at its start, next to the space before it
+	assert.Equal(t, regs, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 3, Char: 3}))
+	assert.Empty(t, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 3, Char: 1}))
 	et.ls.setOccurrences(ed, regs)
 	assert.Equal(t, regs, ed.Highlights)
 	// moving to a symbol with one occurrence clears them:

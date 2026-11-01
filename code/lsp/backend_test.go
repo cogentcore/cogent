@@ -1220,12 +1220,12 @@ func TestInlayHintsConfig(t *testing.T) {
 		t.Skip("gopls not found in PATH:", err)
 	}
 	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\tx := 1\n\t_, _ = x, strings.Split(\"a,b\", \",\")\n}\n"
-	hintOpts := map[string]map[string]any{
-		"gopls": {"hints": map[string]any{
-			"parameterNames":      true,
-			"assignVariableTypes": true,
-		}},
-	}
+	hints := map[string]any{"hints": map[string]any{
+		"parameterNames":      true,
+		"assignVariableTypes": true,
+	}}
+	// for gopls, or goalls, which runs it, if it is installed
+	hintOpts := map[string]map[string]any{"gopls": hints, "goalls": hints}
 
 	// startup path: options must be on the registry before the server
 	// starts -- the editor applies the setting in NewLangService, before
@@ -1419,4 +1419,22 @@ func TestFilesChangedGopls(t *testing.T) {
 	}
 	b.FilesChanged([]FileChange{{Path: helper, Type: FileDeleted}})
 	waitUntil(t, 30*time.Second, "error after deleting helper.go", func() bool { return len(errs()) > 0 })
+}
+
+// TestFormatRegion tests formatting the lines of a region with gopls,
+// which only formats whole files: only the edits within them are applied.
+func TestFormatRegion(t *testing.T) {
+	src := "package main\n\nfunc main() {\nx := 1\n        x++\n\tif x > 0 {\n\t\t\tx--\n\t}\n}\n\nfunc f() {\ny := 2\n_ = y\n}\n"
+	b, ln, _ := goplsSetup(t, src)
+	waitUntil(t, 60*time.Second, "server ready", func() bool { return b.Ready(ln) })
+	ok, err := b.FormatRegion(ln, 3, 7) // the body of main
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	want := "package main\n\nfunc main() {\n\tx := 1\n\tx++\n\tif x > 0 {\n\t\tx--\n\t}\n}\n\nfunc f() {\ny := 2\n_ = y\n}\n"
+	assert.Equal(t, want, ln.String(), "only the region is formatted")
+
+	// code that cannot be formatted is an error
+	ln.SetString("package main\n\nfunc main() {\nx := \n}\n")
+	_, err = b.FormatRegion(ln, 3, 3)
+	assert.Error(t, err)
 }

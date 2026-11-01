@@ -1054,11 +1054,37 @@ func (b *Backend) SelectionRanges(ln *lines.Lines, pos textpos.Pos) []textpos.Re
 
 // InlayHints returns the inlay hints the server provides for the
 // current contents of the buffer within the given region.
-// Note: the editor does not render these; this is for programmatic use.
 func (b *Backend) InlayHints(ln *lines.Lines, reg textpos.Region) ([]InlayHint, error) {
 	srv, ok := b.readyServer(ln)
 	if !ok {
 		return nil, nil
 	}
 	return srv.InlayHint(&InlayHintParams{TextDocument: docID(ln), Range: toLSPRange(ln, reg)})
+}
+
+// InlayHintTexts returns the inlay hints the server provides for the
+// current contents of the buffer within the given region, at their
+// positions in the buffer, with their text including padding spaces,
+// for showing them as virtual text.
+func (b *Backend) InlayHintTexts(ln *lines.Lines, reg textpos.Region) ([]lang.InlayHint, error) {
+	hints, err := b.InlayHints(ln, reg)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]lang.InlayHint, 0, len(hints))
+	for i := range hints {
+		h := &hints[i]
+		txt := h.LabelText()
+		if txt == "" {
+			continue
+		}
+		if h.PaddingLeft {
+			txt = " " + txt
+		}
+		if h.PaddingRight {
+			txt += " "
+		}
+		out = append(out, lang.InlayHint{Pos: posFromLSP(ln, h.Position), Text: txt})
+	}
+	return out, nil
 }

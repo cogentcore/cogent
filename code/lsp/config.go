@@ -50,10 +50,16 @@ type ServerConfig struct {
 	// and returned for workspace/configuration requests.
 	InitOptions map[string]any
 
-	// Optional marks an alternative server used only when a preferred
-	// server for the same languages is unavailable (e.g., pylsp after
-	// pyright). Bulk operations like installs skip these unless they
-	// are explicitly included.
+	// Section is the name of the section of the settings of the server,
+	// in its workspace/configuration requests, which is its ID if empty.
+	// It is "gopls" for goalls, which passes the requests of gopls on.
+	Section string
+
+	// Optional marks a server that bulk operations like installs skip
+	// unless it is explicitly included: an alternative server used only
+	// when a preferred server for the same languages is unavailable
+	// (e.g., pylsp after pyright), or one that is preferred when it is
+	// installed, but is not needed (e.g., goalls, for Goal files).
 	Optional bool
 
 	// VersionArgs are the args to get the version of the executable,
@@ -110,9 +116,50 @@ type InstallMethod struct {
 	Desc string
 }
 
+// goplsOptions are the initialization options of gopls, which are also
+// those of goalls, which passes them to gopls.
+var goplsOptions = map[string]any{
+	// these are the CLI defaults from the sample gopls client:
+	"analyses": map[string]any{
+		"fillreturns":    true,
+		"nonewvars":      true,
+		"noresultvalues": true,
+	},
+	"completeUnimported": true,
+	// placeholders insert the parameter names as text, as the
+	// editor cannot select them for typing over; the signature
+	// help shows the parameters instead:
+	"usePlaceholders": false,
+	"staticcheck":     true,
+	// gopls only returns semantic tokens when explicitly
+	// enabled (it is off by default in the settings;
+	// Options.Set uses the last segment of a dotted name):
+	"semanticTokens": true,
+	// pull diagnostics (textDocument/diagnostic) report the
+	// results of all of the analyzers for files that are not
+	// open, while the published diagnostics of those files only
+	// have type errors; this does not change the publishing:
+	"pullDiagnostics": true,
+}
+
 // DefaultServers is the list of standard language server configurations,
 // in order of preference when multiple servers support the same language.
 var DefaultServers = []*ServerConfig{
+	{
+		ID:          "goalls",
+		Desc:        "goalls, the Goal language server, a proxy for gopls for Go and Goal files",
+		Exec:        "goalls",
+		Args:        []string{"serve"}, // for gopls
+		Langs:       []fileinfo.Known{fileinfo.Go, fileinfo.Goal},
+		RootMarkers: []string{"go.work", "go.mod"},
+		InitOptions: goplsOptions,
+		Section:     "gopls", // goalls passes the configuration requests of gopls on
+		Optional:    true,
+		Install: &InstallSpec{
+			GoModule: "cogentcore.org/lab/goal/cmd/goalls",
+			Docs:     "https://pkg.go.dev/cogentcore.org/lab/goal/goalls",
+		},
+	},
 	{
 		ID:          "gopls",
 		Desc:        "gopls, the official Go language server",
@@ -120,29 +167,7 @@ var DefaultServers = []*ServerConfig{
 		Args:        []string{"serve"},
 		Langs:       []fileinfo.Known{fileinfo.Go},
 		RootMarkers: []string{"go.work", "go.mod"},
-		InitOptions: map[string]any{
-			// these are the CLI defaults from the sample gopls client:
-			"analyses": map[string]any{
-				"fillreturns":    true,
-				"nonewvars":      true,
-				"noresultvalues": true,
-			},
-			"completeUnimported": true,
-			// placeholders insert the parameter names as text, as the
-			// editor cannot select them for typing over; the signature
-			// help shows the parameters instead:
-			"usePlaceholders": false,
-			"staticcheck":     true,
-			// gopls only returns semantic tokens when explicitly
-			// enabled (it is off by default in the settings;
-			// Options.Set uses the last segment of a dotted name):
-			"semanticTokens": true,
-			// pull diagnostics (textDocument/diagnostic) report the
-			// results of all of the analyzers for files that are not
-			// open, while the published diagnostics of those files only
-			// have type errors; this does not change the publishing:
-			"pullDiagnostics": true,
-		},
+		InitOptions: goplsOptions,
 		Install: &InstallSpec{
 			GoModule: "golang.org/x/tools/gopls",
 			Brew:     "gopls",
@@ -384,6 +409,15 @@ func (rg *Registry) ExecPath(sc *ServerConfig) (string, error) {
 		return "", fmt.Errorf("lsp: language server %q executable %q not found in PATH: %w", sc.ID, sc.Exec, err)
 	}
 	return p, nil
+}
+
+// SettingsSection returns the name of the section of the settings of
+// the server (see [ServerConfig.Section]).
+func (sc *ServerConfig) SettingsSection() string {
+	if sc.Section != "" {
+		return sc.Section
+	}
+	return sc.ID
 }
 
 // mergeOptions merges the override options over a base options map,

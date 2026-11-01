@@ -90,6 +90,17 @@ type FileEdits struct {
 	Edits []TextEdit
 }
 
+// InlayHint is a hint about the code that is shown inline in it, such as
+// the name of a parameter before an argument, or the type of a variable.
+type InlayHint struct {
+
+	// position of the hint, using 0-based lines and rune positions
+	Pos textpos.Pos
+
+	// text of the hint, including any padding spaces around it
+	Text string
+}
+
 // Symbol represents a named language symbol: function, variable, type, etc.
 // It corresponds to the LSP DocumentSymbol / SymbolInformation structures,
 // and the [syms.Symbol] type used by the parse system.
