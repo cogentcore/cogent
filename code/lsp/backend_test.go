@@ -1220,12 +1220,12 @@ func TestInlayHintsConfig(t *testing.T) {
 		t.Skip("gopls not found in PATH:", err)
 	}
 	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\tx := 1\n\t_, _ = x, strings.Split(\"a,b\", \",\")\n}\n"
-	hintOpts := map[string]map[string]any{
-		"gopls": {"hints": map[string]any{
-			"parameterNames":      true,
-			"assignVariableTypes": true,
-		}},
-	}
+	hints := map[string]any{"hints": map[string]any{
+		"parameterNames":      true,
+		"assignVariableTypes": true,
+	}}
+	// for gopls, or goalls, which runs it, if it is installed
+	hintOpts := map[string]map[string]any{"gopls": hints, "goalls": hints}
 
 	// startup path: options must be on the registry before the server
 	// starts -- the editor applies the setting in NewLangService, before

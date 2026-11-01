@@ -19,8 +19,8 @@ import (
 )
 
 // TestCodeInlayHints checks that the inlay hints of gopls are shown as
-// virtual text in a real Code window when the InlayHints setting is on,
-// and removed when it is turned off.
+// virtual text in a real Code window when the InlayHints setting is
+// turned on, with gopls running, and removed when it is turned off.
 func TestCodeInlayHints(t *testing.T) {
 	if _, err := exec.LookPath("gopls"); err != nil {
 		t.Skip("gopls not found in PATH:", err)
@@ -36,7 +36,6 @@ func TestCodeInlayHints(t *testing.T) {
 	cv.Defaults()
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
-	cv.Settings.InlayHints = true
 	imagex.UpdateTestImages = true // the image is for looking at
 	defer func() { imagex.UpdateTestImages = false }()
 	b.AssertRender(t, "inlay-hints", func() {
@@ -56,8 +55,15 @@ func TestCodeInlayHints(t *testing.T) {
 			}
 			return m
 		}
+		// turning the setting on with gopls running configures it then,
+		// and they are shown without any change
+		waitCode(t, 60*time.Second, "gopls loaded", func() bool {
+			return len(cv.LangSvc().lspB.Symbols(ln)) > 0
+		})
+		b.AsyncLock()
+		cv.SetInlayHints(true)
+		b.AsyncUnlock()
 		waitCode(t, 60*time.Second, "inlay hints", func() bool {
-			cv.LangSvc().InlayRefresh(ln) // until gopls has loaded
 			return len(hints()) > 0
 		})
 		hs := hints()

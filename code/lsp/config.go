@@ -50,6 +50,11 @@ type ServerConfig struct {
 	// and returned for workspace/configuration requests.
 	InitOptions map[string]any
 
+	// Section is the name of the section of the settings of the server,
+	// in its workspace/configuration requests, which is its ID if empty.
+	// It is "gopls" for goalls, which passes the requests of gopls on.
+	Section string
+
 	// Optional marks a server that bulk operations like installs skip
 	// unless it is explicitly included: an alternative server used only
 	// when a preferred server for the same languages is unavailable
@@ -148,6 +153,7 @@ var DefaultServers = []*ServerConfig{
 		Langs:       []fileinfo.Known{fileinfo.Go, fileinfo.Goal},
 		RootMarkers: []string{"go.work", "go.mod"},
 		InitOptions: goplsOptions,
+		Section:     "gopls", // goalls passes the configuration requests of gopls on
 		Optional:    true,
 		Install: &InstallSpec{
 			GoModule: "cogentcore.org/lab/goal/cmd/goalls",
@@ -403,6 +409,15 @@ func (rg *Registry) ExecPath(sc *ServerConfig) (string, error) {
 		return "", fmt.Errorf("lsp: language server %q executable %q not found in PATH: %w", sc.ID, sc.Exec, err)
 	}
 	return p, nil
+}
+
+// SettingsSection returns the name of the section of the settings of
+// the server (see [ServerConfig.Section]).
+func (sc *ServerConfig) SettingsSection() string {
+	if sc.Section != "" {
+		return sc.Section
+	}
+	return sc.ID
 }
 
 // mergeOptions merges the override options over a base options map,
