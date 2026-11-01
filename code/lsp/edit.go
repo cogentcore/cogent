@@ -38,6 +38,29 @@ func (b *Backend) Format(ln *lines.Lines) bool {
 	return applyTextEdits(ln, edits)
 }
 
+// FormatRegion formats the given lines (inclusive) of the buffer with the
+// language server, applying only the edits of its formatting of the whole
+// file that are within them, such as their indentation, as servers like
+// gopls do not format ranges. It returns whether any edits were applied,
+// and the error of the server, such as for code it cannot format.
+func (b *Backend) FormatRegion(ln *lines.Lines, st, ed int) (bool, error) {
+	srv, ok := b.readyServer(ln)
+	if !ok {
+		return false, fmt.Errorf("no language server for %s", ln.Filename())
+	}
+	uri := docID(ln).URI
+	srv.DidChange(uri, currentText(ln))
+	edits, err := srv.Formatting(uri, FormattingOptions{TabSize: 4, InsertSpaces: false})
+	if err != nil {
+		return false, err
+	}
+	edits = slices.DeleteFunc(edits, func(e TextEdit) bool {
+		r := e.Range
+		return r.Start.Line < st || r.End.Line > ed+1 || (r.End.Line == ed+1 && r.End.Character > 0)
+	})
+	return applyTextEdits(ln, edits), nil
+}
+
 // sortEdits sorts the edits by start position, keeping the order of
 // edits at the same position, which the spec says must be applied in
 // the given order.

@@ -215,7 +215,10 @@ func (cv *Code) CommentOut() bool { //types:add
 	return true
 }
 
-// Indent indents selected lines in active view
+// Indent indents selected lines in active view. With a language server,
+// such as gopls (or goalls for Goal files), they are formatted by it, as
+// it formats the whole file, which indents them; otherwise their indentation
+// comes from the brackets of the lines before them.
 func (cv *Code) Indent() bool { //types:add
 	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
@@ -225,7 +228,23 @@ func (cv *Code) Indent() bool { //types:add
 	if sel == nil {
 		return false
 	}
-	tv.Lines.AutoIndentRegion(sel.Region.Start.Line, sel.Region.End.Line)
+	reg := sel.Region
+	if ls := cv.LangSvc(); ls.LSPActive(tv.Lines) {
+		// The language server formats the lines, as for the whole file.
+		ed := reg.End.Line
+		if reg.End.Char == 0 && ed > reg.Start.Line {
+			ed-- // not the line after the selection
+		}
+		ls.Change(tv.Lines)
+		if _, err := ls.lspB.FormatRegion(tv.Lines, reg.Start.Line, ed); err != nil {
+			cv.SetStatus("Indent: " + strings.Split(err.Error(), "\n")[0])
+			return false
+		}
+		ls.Change(tv.Lines)
+		tv.SelectReset()
+		return true
+	}
+	tv.Lines.AutoIndentRegion(reg.Start.Line, reg.End.Line)
 	tv.SelectReset()
 	return true
 }
