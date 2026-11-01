@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.19-0.20261101113940-fa0b6f306230
-	cogentcore.org/lab v0.2.13-0.20261101153430-0fb4a6072723
+	cogentcore.org/core v0.5.19
+	cogentcore.org/lab v0.2.13
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
