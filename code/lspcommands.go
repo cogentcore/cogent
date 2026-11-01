@@ -870,12 +870,8 @@ func (cv *Code) SetInlayHints(on bool) { //types:add
 		return
 	}
 	cv.Settings.InlayHints = on
-	ls := cv.LangSvc()
-	go func() {
-		ls.lspB.SetOptions(serverOptions(on))
-		ls.lspB.Reconfigure()
-	}()
-	cv.SetStatus(fmt.Sprintf("Inlay hints: %v (displayed by the Show Inlay Hints command)", on))
+	cv.LangSvc().applyInlayHints(on)
+	cv.SetStatus(fmt.Sprintf("Inlay hints: %v", on))
 }
 
 // ShowInlayHints requests the language server's inlay hints for the

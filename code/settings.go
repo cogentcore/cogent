@@ -215,7 +215,7 @@ type ProjectSettings struct { //types:add
 	// backend that provides language services (diagnostics, completion, hover, navigation, symbols) for this project -- LSP uses external language servers such as gopls, except for languages set to use the parser in the Languages settings (Markdown and TeX by default)
 	LangBackend LangBackends
 
-	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and the Show Inlay Hints command can display them; running servers pick the change up immediately through dynamic reconfiguration
+	// if set, language servers that support inlay hints (e.g. gopls) are configured to return them, and they are shown inline in the editor, such as parameter names and variable types; running servers pick the change up immediately through dynamic reconfiguration
 	InlayHints bool
 
 	// problem messages to ignore: the problems (diagnostics) from language servers whose message contains a key whose value is true are not shown, in the Problems tab or in the editor; commonly ignored Go warnings are listed, disabled, so that they are easy to enable
@@ -423,6 +423,7 @@ func (cv *Code) ApplySettings() {
 	cv.Settings.addStandardIgnores()
 	if cv.langSvc != nil {
 		cv.langSvc.setProblemFilter(cv.Settings.IgnoreProblems, cv.Settings.ShowHints)
+		cv.langSvc.applyInlayHints(cv.Settings.InlayHints)
 	}
 	// core.UpdateAll() // note: this is not necessary and is very slow
 }

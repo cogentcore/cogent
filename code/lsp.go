@@ -87,6 +87,14 @@ type LangService struct {
 	// passes can see that their results are stale.
 	semGen map[string]int
 
+	// inlayGen is bumped whenever an inlay hints request is superseded,
+	// as semGen is for semantic tokens.
+	inlayGen map[string]int
+
+	// inlayHints is the [ProjectSettings.InlayHints] setting that the
+	// servers are configured with.
+	inlayHints bool
+
 	// sigHelp is the single-entry signature help cache for the typing
 	// hot path, and sigStatus is the last signature shown in the status
 	// bar, so it can be cleared when the parameter context is exited.
@@ -201,6 +209,7 @@ func NewLangService(cv *Code) *LangService {
 		pulled:         make(map[string][]lang.Diagnostic),
 		semanticTagged: make(map[string]bool),
 		semGen:         make(map[string]int),
+		inlayGen:       make(map[string]int),
 		selectHooked:   make(map[*core.Complete]bool),
 		quit:           make(chan struct{}),
 	}
@@ -208,7 +217,8 @@ func NewLangService(cv *Code) *LangService {
 	ls.lspB.Renamed = ls.renamed
 	ls.lspB.Progress = ls.progress
 	ls.lspB.AllDiagnostics = true
-	ls.lspB.SetOptions(serverOptions(cv.Settings.InlayHints))
+	ls.inlayHints = cv.Settings.InlayHints
+	ls.lspB.SetOptions(serverOptions(ls.inlayHints))
 	ls.lspB.RootFunc = func(fpath string) string {
 		root := filepath.Clean(string(cv.Settings.ProjectRoot))
 		if root != "." && strings.HasPrefix(fpath, root+string(filepath.Separator)) {
@@ -297,6 +307,7 @@ func (ls *LangService) Activated(tv *TextEditor) {
 	}
 	ls.lspB.Open(ln)
 	ls.SemanticRefresh(ln)
+	ls.InlayRefresh(ln)
 	c := tv.Complete
 	if c == nil {
 		return
@@ -447,8 +458,9 @@ func (ls *LangService) Change(ln *lines.Lines) {
 		return
 	}
 	ls.lspB.Change(ln)
-	// semantic token regions are stale once the text changes:
+	// semantic token regions and inlay hints are stale once the text changes:
 	ls.bumpSemantic(ln.Filename())
+	ls.bumpInlay(ln.Filename())
 	ls.scheduleSemantic(ln)
 }
 
@@ -528,6 +540,7 @@ func (ls *LangService) forgetFile(ln *lines.Lines, fname string) {
 	stopTimer(ls.debounce, fname)
 	stopTimer(ls.semantic, fname)
 	delete(ls.semGen, fname)
+	ls.inlayGen[fname]++ // stale, and not deleted, so that a pass in flight sees it
 	ls.mu.Unlock()
 }
 
