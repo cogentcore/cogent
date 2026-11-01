@@ -5,14 +5,11 @@
 package code
 
 import (
-	"bytes"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/text/lines"
-	"cogentcore.org/lab/goal/goalfmt"
 )
 
 // The language services for Goal files come from goalls, the language
@@ -33,19 +30,4 @@ func isGoalFile(ln *lines.Lines) bool {
 func (ls *LangService) goalServer() bool {
 	sc, ok := ls.lspB.Reg.Server(fileinfo.Go)
 	return ok && sc.ID == "goalls"
-}
-
-// formatGoal formats the given saved Goal file and fixes its imports,
-// as goimports does for Go files, with goalfmt, writing it if it changed,
-// and returns whether it did.
-func formatGoal(fname string) (bool, error) {
-	src, err := os.ReadFile(fname)
-	if err != nil {
-		return false, err
-	}
-	res, err := goalfmt.Source(fname, src, nil)
-	if err != nil || bytes.Equal(src, res) {
-		return false, err
-	}
-	return true, os.WriteFile(fname, res, 0666)
 }
