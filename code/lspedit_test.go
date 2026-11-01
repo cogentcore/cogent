@@ -314,9 +314,10 @@ func TestEditorOccurrences(t *testing.T) {
 	if len(regs) != 2 || regs[0].Start.Line != 4 || regs[1].Start.Line != 5 {
 		t.Fatalf("occurrences of xy: %v", regs)
 	}
-	// none at the start or end of xy, next to the space around it
+	// the same at the end of xy, where the cursor is when typing it,
+	// but none at its start, next to the space before it
+	assert.Equal(t, regs, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 3, Char: 3}))
 	assert.Empty(t, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 3, Char: 1}))
-	assert.Empty(t, et.ls.occurrences(ed, ed.Lines, textpos.Pos{Line: 3, Char: 3}))
 	et.ls.setOccurrences(ed, regs)
 	assert.Equal(t, regs, ed.Highlights)
 	// moving to a symbol with one occurrence clears them:

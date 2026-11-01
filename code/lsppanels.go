@@ -631,16 +631,17 @@ func (ls *LangService) scheduleOccurrences(tv *TextEditor) {
 // occurrences returns the regions of the other occurrences of the symbol
 // at the given position, if they should be highlighted, and nil otherwise:
 // when there is a selection, or no symbol, or only one occurrence. The
-// position must be within one of the occurrences, not at its start or end,
-// next to the space around it, for which servers also return them. The
-// occurrence at the position is not highlighted, as the cursor shows it.
+// position must be within one of the occurrences or at its end, where it
+// is when typing it, not at its start, next to the space before it, for
+// which servers also return them. The occurrence at the position is not
+// highlighted, as the cursor shows it.
 func (ls *LangService) occurrences(tv *TextEditor, ln *lines.Lines, pos textpos.Pos) []textpos.Region {
 	if tv.HasSelection() {
 		return nil
 	}
 	regs := ls.lspB.Occurrences(ln, pos)
 	within := func(r textpos.Region) bool {
-		return r.Start.IsLess(pos) && pos.IsLess(r.End)
+		return r.Start.IsLess(pos) && !r.End.IsLess(pos)
 	}
 	if !slices.ContainsFunc(regs, within) {
 		return nil
