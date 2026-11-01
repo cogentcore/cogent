@@ -163,6 +163,9 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	if tv == nil {
 		return nil, false
 	}
+	if tr.Time.IsZero() { // for the current text (see [lines.Lines.AdjustRegion])
+		tr.TimeNow()
+	}
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
 	cv.LangSvc().replaceableHighlights(tv)

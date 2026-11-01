@@ -174,7 +174,9 @@ func (cv *Code) highlightLocation(tab string, i int) {
 	}
 	ln := lines[i]
 	ed.SetCursorShow(textpos.Pos{Line: ln})
-	ed.Highlights = []textpos.Region{{Start: textpos.Pos{Line: ln}, End: textpos.Pos{Line: ln, Char: ed.Lines.LineLen(ln)}}}
+	hl := textpos.Region{Start: textpos.Pos{Line: ln}, End: textpos.Pos{Line: ln, Char: ed.Lines.LineLen(ln)}}
+	hl.TimeNow() // for the current text
+	ed.Highlights = []textpos.Region{hl}
 	ed.NeedsRender()
 }
 
@@ -654,6 +656,11 @@ func (ls *LangService) setOccurrences(tv *TextEditor, regs []textpos.Region) {
 	owned := len(tv.Highlights) == 0 || (ls.occurEditor == tv && slices.Equal(tv.Highlights, ls.occurRegs))
 	if !owned {
 		return
+	}
+	// The regions are for the current text, not adjusted for the
+	// edits before now (see [lines.Lines.AdjustRegion]).
+	for i := range regs {
+		regs[i].TimeNow()
 	}
 	ls.occurEditor, ls.occurRegs = tv, regs
 	tv.Highlights = slices.Clone(regs)

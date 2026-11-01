@@ -60,7 +60,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 			defer b.AsyncUnlock()
 			return append([]textpos.Region{}, tv.Highlights...)
 		}
-		if hl := highlights(); len(hl) != 1 || hl[0] != jump {
+		if hl := highlights(); len(hl) != 1 || hl[0].Start != jump.Start || hl[0].End != jump.End {
 			t.Fatalf("jump highlight: %v", hl)
 		}
 		b.AsyncLock()
@@ -72,6 +72,31 @@ func TestCodeOccurrencesClick(t *testing.T) {
 		src.MouseButton(events.MouseUp, events.Left, pt, 0)
 		waitCode(t, 5*time.Second, "occurrences of x highlighted", func() bool {
 			return len(highlights()) == 3
+		})
+
+		// after an edit, the highlights are on the lines of the
+		// occurrences, as rendered: they are not adjusted for the edits
+		// before they were made
+		b.AsyncLock()
+		tv.Lines.InsertText(textpos.Pos{Line: 3}, []rune("\t// x\n"))
+		cv.LangSvc().Change(tv.Lines)
+		tv.Highlights = nil // only the new ones
+		tv.SetCursorShow(textpos.Pos{Line: 6, Char: 5}) // the x in _ = x
+		cv.LangSvc().scheduleOccurrences(tv)
+		b.AsyncUnlock()
+		waitCode(t, 5*time.Second, "occurrences of x highlighted after an edit", func() bool {
+			hl := highlights()
+			if len(hl) != 3 {
+				return false
+			}
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			for i, h := range hl {
+				if tv.Lines.AdjustRegion(h).Start.Line != 4+i {
+					return false
+				}
+			}
+			return true
 		})
 	})
 }
