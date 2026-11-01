@@ -650,6 +650,9 @@ func (ls *LangService) occurrences(tv *TextEditor, ln *lines.Lines, pos textpos.
 	if len(regs) == 0 {
 		return nil
 	}
+	slices.SortFunc(regs, func(a, b textpos.Region) int { // servers do not sort them
+		return cmp.Or(cmp.Compare(a.Start.Line, b.Start.Line), cmp.Compare(a.Start.Char, b.Start.Char))
+	})
 	return regs
 }
 
