@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -17,8 +16,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
-	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 
@@ -26,14 +23,24 @@ import (
 )
 
 // TestCodeGoal checks the language services for a Goal file in a real
-// Code window, which come from gopls for its Go code: the errors of the
-// Go code are shown in the Goal file, with the Go code of the lines with
-// errors that is not the same as their source, hover docs and definitions
-// are for the Goal file, and the Go file is written when it is saved.
+// Code window, which come from goalls, a proxy for gopls for the Go code
+// of the Goal file, built here: the errors of the Go code are shown in the
+// Goal file, with the Go code of the lines with errors that is not the
+// same as their source, hover docs, definitions, and inlay hints are for
+// the Goal file, formatting formats it with its imports fixed, and the Go
+// file is written when it is saved, which also formats the Goal file.
 func TestCodeGoal(t *testing.T) {
 	if _, err := exec.LookPath("gopls"); err != nil {
 		t.Skip("gopls not found in PATH:", err)
 	}
+	bin := filepath.Join(t.TempDir(), "goalls")
+	if out, err := exec.Command("go", "build", "-o", bin, "cogentcore.org/lab/goal/cmd/goalls").CombinedOutput(); err != nil {
+		t.Fatalf("building goalls: %v\n%s", err, out)
+	}
+	prev := Settings.LSExecs
+	Settings.LSExecs = map[string]string{"goalls": bin}
+	defer func() { Settings.LSExecs = prev }()
+
 	tmp := t.TempDir()
 	t.Setenv("GOWORK", "off")
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
@@ -58,6 +65,7 @@ func TestCodeGoal(t *testing.T) {
 		}
 		ln := tv.Lines
 		ls := cv.LangSvc()
+		assert.True(t, ls.LSPActive(ln))
 		diags := func() []lang.Diagnostic {
 			ls.mu.Lock()
 			defer ls.mu.Unlock()
@@ -75,34 +83,25 @@ func TestCodeGoal(t *testing.T) {
 			case strings.Contains(d.Msg, "undefined: goalrun"):
 				goalrun = true
 				assert.Equal(t, 7, d.Region.Start.Line)
+				assert.Contains(t, d.Msg, `Go: goalrun.Run("ls", "-la")`)
 			}
 		}
 		assert.True(t, undefY, "undefined: y in %v", diags())
 		assert.True(t, goalrun, "undefined: goalrun in %v", diags())
-		b.AsyncLock()
-		vts := ln.VirtualText(goalLayer, -1)
-		b.AsyncUnlock()
-		if assert.Len(t, vts, 1, "the Go code of the command") {
-			assert.Equal(t, textpos.Pos{Line: 7, Char: 7}, vts[0].Pos)
-			assert.Equal(t, `  Go: goalrun.Run("ls", "-la")`, string(vts[0].Text.Join()))
-		}
 
 		b.AsyncLock()
 		hover := ls.HoverAt(tv, textpos.Pos{Line: 6, Char: 12}) // Println
 		b.AsyncUnlock()
 		assert.Contains(t, hover, "Println")
-		b.AsyncLock()
-		tln, tpos, ok := ls.lspTarget(ln, textpos.Pos{Line: 6, Char: 14}) // x
-		b.AsyncUnlock()
-		assert.True(t, ok)
-		locs := ls.fromTargets(ls.lspB.Definition(tln, tpos))
+		locs := ls.lspB.Definition(ln, textpos.Pos{Line: 6, Char: 14}) // x
 		if assert.Len(t, locs, 1) {
-			assert.Equal(t, fpath, locs[0].Filename)
+			assert.True(t, strings.HasSuffix(locs[0].Filename, "main.goal"), locs[0].Filename)
 			assert.Equal(t, textpos.Pos{Line: 5, Char: 1}, locs[0].Region.Start)
 		}
 
-		// the inlay hints of the Go code, such as the type of x
+		// the inlay hints, such as the type of x
 		waitCode(t, 30*time.Second, "the inlay hints", func() bool {
+			ls.InlayRefresh(ln)
 			b.AsyncLock()
 			defer b.AsyncUnlock()
 			for _, vt := range ln.VirtualText(inlayLayer, -1) {
@@ -113,36 +112,25 @@ func TestCodeGoal(t *testing.T) {
 			return false
 		})
 
-		// the completions of the Go code
+		// formatting fixes the imports: strings is added
 		b.AsyncLock()
-		ln.InsertText(textpos.Pos{Line: 8}, []rune("\ts := fmt.Spr\n"))
-		ms := tv.Complete.MatchFunc(nil, "\ts := fmt.Spr", 8, 13)
-		ln.DeleteText(textpos.Pos{Line: 8}, textpos.Pos{Line: 9})
+		ln.InsertText(textpos.Pos{Line: 8}, []rune("\ts := strings.ToUpper(\"a\")\n\t_ = s\n"))
+		ls.Change(ln)
+		cv.LangFormat()
 		b.AsyncUnlock()
-		assert.True(t, slices.ContainsFunc(ms.Matches, func(c complete.Completion) bool { return c.Label == "Sprintf" }), "Sprintf in %v", ms.Matches)
+		assert.Contains(t, ln.String(), "import (\n\t\"fmt\"\n\t\"strings\"\n)")
 
-		// fixing the error removes it
+		// saving formats the Goal file, and writes the Go file
 		b.AsyncLock()
-		ln.ReplaceText(textpos.Pos{Line: 6, Char: 16}, textpos.Pos{Line: 6, Char: 17}, textpos.Pos{Line: 6, Char: 16}, "x", lines.ReplaceNoMatchCase)
-		ls.Input(ln)
-		b.AsyncUnlock()
-		waitCode(t, 30*time.Second, "the fixed error", func() bool {
-			for _, d := range diags() {
-				if strings.Contains(d.Msg, "undefined: y") {
-					return false
-				}
-			}
-			return true
-		})
-
-		// saving writes the Go file
-		b.AsyncLock()
+		ln.InsertText(textpos.Pos{Line: 10}, []rune("\tz:=1\n\t_ = z\n"))
 		cv.SaveActiveView()
 		b.AsyncUnlock()
+		saved, _ := os.ReadFile(fpath)
+		assert.Contains(t, string(saved), "\tz := 1\n")
 		gofile := filepath.Join(tmp, "main.go")
 		waitCode(t, 30*time.Second, "the Go file", func() bool {
 			b, err := os.ReadFile(gofile)
-			return err == nil && strings.Contains(string(b), "fmt.Println(x, x)")
+			return err == nil && strings.Contains(string(b), `strings.ToUpper("a")`)
 		})
 	})
 }

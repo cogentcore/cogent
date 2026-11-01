@@ -305,9 +305,24 @@ func (cv *Code) CloseActiveView() { //types:add
 // RunPostCmds runs any registered post commands on the given open file.
 // Returns true if commands were run and file was reverted after that.
 // Uses MainLang to disambiguate if multiple languages associated with extension.
+// For a Goal file, if Go files have post commands (goimports by default),
+// it is formatted and its imports fixed with goalfmt instead.
 func (cv *Code) RunPostCmds(ln *lines.Lines) bool {
-	if ln == nil || isGoalFile(ln) { // the Go commands are not for Goal files, of type Go
+	if ln == nil {
 		return false
+	}
+	if isGoalFile(ln) { // the Go commands are not for Goal files, of type Go
+		if len(AvailableLanguages[fileinfo.Go].PostSaveCmds) == 0 {
+			return false
+		}
+		changed, err := formatGoal(ln.Filename())
+		if err != nil {
+			cv.SetStatus("Formatting " + filepath.Base(ln.Filename()) + ": " + strings.Split(err.Error(), "\n")[0])
+		}
+		if changed {
+			ln.Revert()
+		}
+		return changed
 	}
 	lang := ln.FileInfo().Known
 	lopt, has := AvailableLanguages[lang]
