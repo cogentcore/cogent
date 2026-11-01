@@ -43,6 +43,22 @@ func (cv *Code) lspEditor(cmd string) *TextEditor {
 	return tv
 }
 
+// lspTargetEditor returns the active editor for the given command, which
+// is a request to the language server for a position in it (see
+// [LangService.lspTarget]), including a Goal file, whose requests are for
+// its Go code, or nil, with a status message, if it has no language server.
+func (cv *Code) lspTargetEditor(cmd string) *TextEditor {
+	tv := cv.ActiveEditor()
+	if tv == nil || tv.Lines == nil {
+		return nil
+	}
+	if ls := cv.LangSvc(); !ls.LSPActive(tv.Lines) && ls.goalDocFor(tv.Lines) == nil {
+		cv.SetStatus(cmd + ": requires an LSP language server for this file")
+		return nil
+	}
+	return tv
+}
+
 // cursorWordPos returns a position on the word at the cursor,
 // preferring the end of the word, for definition-type queries.
 func cursorWordPos(tv *TextEditor) (textpos.Pos, bool) {
@@ -468,7 +484,7 @@ func (cv *Code) FindImplementations() { //types:add
 // cursor, going to the location if there is one, and otherwise showing
 // a menu of the locations. The cmd is the name of the command.
 func (cv *Code) gotoLocations(cmd string, req func(*lsp.Backend, *lines.Lines, textpos.Pos) []lang.Location) {
-	tv := cv.lspEditor(cmd)
+	tv := cv.lspTargetEditor(cmd)
 	if tv == nil {
 		return
 	}
@@ -476,8 +492,14 @@ func (cv *Code) gotoLocations(cmd string, req func(*lsp.Backend, *lines.Lines, t
 	if !ok {
 		return
 	}
+	ls := cv.LangSvc()
+	tln, tpos, ok := ls.lspTarget(tv.Lines, pos)
+	if !ok {
+		cv.SetStatus(cmd + ": not in the code")
+		return
+	}
 	cv.SetStatus(cmd + "...")
-	locs := req(cv.LangSvc().lspB, tv.Lines, pos)
+	locs := ls.fromTargets(req(ls.lspB, tln, tpos))
 	switch len(locs) {
 	case 0:
 		cv.SetStatus(cmd + ": none found")

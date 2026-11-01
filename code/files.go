@@ -306,7 +306,7 @@ func (cv *Code) CloseActiveView() { //types:add
 // Returns true if commands were run and file was reverted after that.
 // Uses MainLang to disambiguate if multiple languages associated with extension.
 func (cv *Code) RunPostCmds(ln *lines.Lines) bool {
-	if ln == nil {
+	if ln == nil || isGoalFile(ln) { // the Go commands are not for Goal files, of type Go
 		return false
 	}
 	lang := ln.FileInfo().Known

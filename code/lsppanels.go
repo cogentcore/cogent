@@ -325,7 +325,7 @@ func (fc *fileLineCache) line(fname string, line int) string {
 // using the language server, in the References tab, where they can be
 // clicked to go to them.
 func (cv *Code) FindReferences() { //types:add
-	tv := cv.lspEditor("Find references")
+	tv := cv.lspTargetEditor("Find references")
 	if tv == nil {
 		return
 	}
@@ -333,8 +333,14 @@ func (cv *Code) FindReferences() { //types:add
 	if !ok {
 		return
 	}
+	ls := cv.LangSvc()
+	tln, tpos, ok := ls.lspTarget(tv.Lines, pos)
+	if !ok {
+		cv.SetStatus("Find references: not in the code")
+		return
+	}
 	cv.SetStatus("Finding references...")
-	locs := cv.LangSvc().lspB.References(tv.Lines, pos)
+	locs := ls.fromTargets(ls.lspB.References(tln, tpos))
 	if len(locs) == 0 {
 		cv.SetStatus("Find references: none found")
 		return

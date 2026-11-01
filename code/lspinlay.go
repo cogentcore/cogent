@@ -21,18 +21,24 @@ const inlayLayer = "inlay"
 // virtual text, which is display-only, when the InlayHints setting is
 // on, and otherwise removes any. The results are discarded if a newer
 // request (or a change/close) has superseded this one.
+// The hints of a Goal file are those of its Go code (see [goalDoc]).
 func (ls *LangService) InlayRefresh(ln *lines.Lines) {
 	if ln == nil || ln.Filename() == "" {
 		return
 	}
-	if !ls.cv.Settings.InlayHints || !ls.LSPActive(ln) {
+	doc := ls.goalDocFor(ln)
+	if !ls.cv.Settings.InlayHints || (doc == nil && !ls.LSPActive(ln)) {
 		ls.bumpInlay(ln.Filename())
 		if len(ln.VirtualText(inlayLayer, -1)) > 0 {
 			ln.ClearVirtualText(inlayLayer, -1)
 		}
 		return
 	}
-	if !ls.lspB.Ready(ln) {
+	tln := ln
+	if doc != nil {
+		tln = doc.goLines
+	}
+	if !ls.lspB.Ready(tln) {
 		return // server still loading: the next change re-triggers
 	}
 	fname := ln.Filename()
@@ -40,7 +46,7 @@ func (ls *LangService) InlayRefresh(ln *lines.Lines) {
 	ls.inlayGen[fname]++
 	gen := ls.inlayGen[fname]
 	ls.mu.Unlock()
-	go ls.inlayPass(ln, fname, gen)
+	go ls.inlayPass(ln, doc, fname, gen)
 }
 
 // bumpInlay marks any in-flight inlay hints request for this file stale.
@@ -50,16 +56,24 @@ func (ls *LangService) bumpInlay(fname string) {
 	ls.mu.Unlock()
 }
 
-// inlayPass runs one inlay hints request and shows the hints.
-func (ls *LangService) inlayPass(ln *lines.Lines, fname string, gen int) {
+// inlayPass runs one inlay hints request and shows the hints, for the
+// given buffer, or the given Goal file, if it is non-nil.
+func (ls *LangService) inlayPass(ln *lines.Lines, doc *goalDoc, fname string, gen int) {
 	stale := func() bool {
 		ls.mu.Lock()
 		defer ls.mu.Unlock()
 		return ls.inlayGen[fname] != gen || ls.cv.Scene == nil
 	}
-	hints, err := ls.lspB.InlayHintTexts(ln, textpos.Region{End: textpos.Pos{Line: ln.NumLines()}})
+	tln := ln
+	if doc != nil {
+		tln = doc.goLines
+	}
+	hints, err := ls.lspB.InlayHintTexts(tln, textpos.Region{End: textpos.Pos{Line: tln.NumLines()}})
 	if err != nil || stale() {
 		return
+	}
+	if doc != nil {
+		hints = ls.goalHints(doc, hints)
 	}
 	ls.cv.AsyncLock()
 	defer ls.cv.AsyncUnlock()

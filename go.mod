@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.18
+	cogentcore.org/core v0.5.19-0.20261101113940-fa0b6f306230
 	cogentcore.org/lab v0.2.12
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
@@ -24,6 +24,7 @@ require (
 	github.com/yuin/goldmark v1.7.3
 	golang.org/x/net v0.60.0
 	golang.org/x/oauth2 v0.28.0
+	golang.org/x/tools v0.51.0
 	gonum.org/v1/gonum v0.17.0
 )
 
@@ -101,6 +102,5 @@ require (
 	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/tools v0.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

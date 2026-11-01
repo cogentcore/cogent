@@ -91,6 +91,10 @@ type LangService struct {
 	// as semGen is for semantic tokens.
 	inlayGen map[string]int
 
+	// goals are the open Goal files, whose language services come from
+	// the Go language server, for their Go code (see [goalDoc]).
+	goals map[*lines.Lines]*goalDoc
+
 	// inlayHints is the [ProjectSettings.InlayHints] setting that the
 	// servers are configured with.
 	inlayHints bool
@@ -210,6 +214,7 @@ func NewLangService(cv *Code) *LangService {
 		semanticTagged: make(map[string]bool),
 		semGen:         make(map[string]int),
 		inlayGen:       make(map[string]int),
+		goals:          make(map[*lines.Lines]*goalDoc),
 		selectHooked:   make(map[*core.Complete]bool),
 		quit:           make(chan struct{}),
 	}
@@ -248,8 +253,8 @@ func (cv *Code) LangSvc() *LangService {
 // language. Otherwise, the built-in parse system provides whatever
 // features it can through the standard editor machinery.
 func (ls *LangService) LSPActive(ln *lines.Lines) bool {
-	if ls.cv.Settings.LangBackend != LangBackendLSP || ln == nil {
-		return false
+	if ls.cv.Settings.LangBackend != LangBackendLSP || ln == nil || isGoalFile(ln) {
+		return false // Goal files are not sent to the servers: see [goalDoc]
 	}
 	return !parserLanguage(ln.FileInfo().Known) && ls.lspB.Supported(ln)
 }
@@ -302,6 +307,11 @@ func (ls *LangService) Stop() {
 // functions to use the active backend.
 func (ls *LangService) Activated(tv *TextEditor) {
 	ln := tv.Lines
+	if ls.goalActive(ln) {
+		ls.openGoal(ln)
+		ls.goalCompleter(tv, ls.goalDocFor(ln))
+		return
+	}
 	if ln == nil || !ls.LSPActive(ln) {
 		return // textcore.UpdateNewFile already set up parse completers
 	}
@@ -419,6 +429,10 @@ func (ls *LangService) showDocument(uri string, loc *lang.Location) bool {
 // Input should be called on editor Input events, to sync changed
 // text to the language server with a debounce delay.
 func (ls *LangService) Input(ln *lines.Lines) {
+	if doc := ls.goalDocFor(ln); doc != nil {
+		ls.goalInput(doc)
+		return
+	}
 	if ln == nil || ln.Filename() == "" || !ls.LSPActive(ln) {
 		return
 	}
@@ -449,6 +463,13 @@ func stopTimer(timers map[string]*time.Timer, key string) {
 // Change syncs the current contents of the buffer to the backend now.
 func (ls *LangService) Change(ln *lines.Lines) {
 	if ln == nil || ln.Filename() == "" {
+		return
+	}
+	if doc := ls.goalDocFor(ln); doc != nil {
+		ls.mu.Lock()
+		stopTimer(ls.debounce, doc.filename)
+		ls.mu.Unlock()
+		ls.goalUpdate(doc)
 		return
 	}
 	ls.mu.Lock()
@@ -482,6 +503,10 @@ func (ls *LangService) FilesChanged(changes []lsp.FileChange) {
 
 // Saved should be called after a file has been saved.
 func (ls *LangService) Saved(ln *lines.Lines) {
+	if doc := ls.goalDocFor(ln); doc != nil {
+		ls.goalSaved(doc)
+		return
+	}
 	if ln == nil || ln.Filename() == "" || !ls.LSPActive(ln) {
 		return
 	}
@@ -502,6 +527,12 @@ func (ls *LangService) Saved(ln *lines.Lines) {
 // its filename. Must be called from the event loop.
 func (ls *LangService) Closed(ln *lines.Lines) {
 	if ln == nil {
+		return
+	}
+	if doc := ls.goalDocFor(ln); doc != nil {
+		ls.closeGoal(doc)
+		ls.needsRender(ln)
+		ls.updateProblems(false)
 		return
 	}
 	fname := ls.lspB.Filename(ln) // the filename it was opened under
@@ -595,6 +626,10 @@ func (ls *LangService) needsRender(ln *lines.Lines) {
 // receiveDiags applies newly published diagnostics for a file.
 // Called from the consumeEvents goroutine.
 func (ls *LangService) receiveDiags(fd lang.FileDiags) {
+	if doc := ls.goalDocForGo(fd.Filename); doc != nil {
+		ls.receiveGoalDiags(doc, fd.Diags)
+		return
+	}
 	ls.mu.Lock()
 	if len(fd.Diags) == 0 {
 		delete(ls.diagCache, fd.Filename)
@@ -873,7 +908,11 @@ func (ls *LangService) diagsIn(ln *lines.Lines, reg textpos.Region) []lang.Diagn
 // by the available quick fixes.
 func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	ln := tv.Lines
-	if ln == nil || !ls.LSPActive(ln) || !ln.IsValidLine(pos.Line) {
+	if ln == nil || !ln.IsValidLine(pos.Line) {
+		return ""
+	}
+	tln, tpos, ok := ls.lspTarget(ln, pos) // the Go code of a Goal file
+	if !ok {
 		return ""
 	}
 	diag := ls.diagAt(ln, pos)
@@ -887,8 +926,8 @@ func (ls *LangService) HoverAt(tv *TextEditor, pos textpos.Pos) string {
 	}
 	ls.mu.Unlock()
 
-	txt := lsp.MarkdownText(ls.lspB.Hover(ln, pos))
-	if diag != "" {
+	txt := lsp.MarkdownText(ls.lspB.Hover(tln, tpos))
+	if diag != "" && tln == ln {
 		txt += ls.quickFixHint(ln, pos)
 	}
 
