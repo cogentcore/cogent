@@ -22,6 +22,10 @@ import (
 	"cogentcore.org/core/text/textpos"
 
 	"cogentcore.org/cogent/code/lang"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/tree"
 )
 
 // Tab names for the language service panels.
@@ -71,6 +75,7 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 		tv.LinkHandler = func(tl *rich.Hyperlink) {
 			cv.openLocationLink(tab, tl.URL)
 		}
+		cv.locationToolbar(tab, tv)
 	} else {
 		ed = cv.tabEditor(tab)
 		scroll, cursor = ed.ScrollPos(), ed.CursorPos
@@ -102,6 +107,72 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 		i = nextLocationIndex(items, cur)
 	}
 	cv.highlightLocation(tab, i)
+}
+
+// locationToolbar adds the toolbar of the given location tab under its
+// editor, if it does not have it, with buttons to go to the previous and
+// next locations, which can be used from the keyboard, as in the Find
+// tab: a button keeps the focus after going to a location, so that it
+// can be pressed again.
+func (cv *Code) locationToolbar(tab string, ed *textcore.Editor) {
+	fr := ed.Parent.(core.Widget).AsWidget()
+	if fr.NumChildren() > 1 {
+		return
+	}
+	core.NewToolbar(fr).Maker(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.Button) {
+			w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to the previous location").
+				OnClick(func(e events.Event) {
+					cv.moveLocation(tab, -1)
+					w.SetFocus()
+				})
+		})
+		tree.Add(p, func(w *core.Button) {
+			w.SetIcon(icons.KeyboardArrowDown).SetTooltip("go to the next location").
+				OnClick(func(e events.Event) {
+					cv.moveLocation(tab, 1)
+					w.SetFocus()
+				})
+		})
+	})
+	fr.Update()
+}
+
+// moveLocation goes to the previous (delta -1) or next (delta 1) location
+// item of the current one in the given tab, wrapping around, as in the
+// Find tab, or to the first or last one if there is no current one. If
+// the current one is gone, as a fixed problem, the next one is the one
+// after where it was.
+func (cv *Code) moveLocation(tab string, delta int) {
+	ls := cv.LangSvc()
+	ls.mu.Lock()
+	items := ls.locItems[tab]
+	cur, has := ls.locCurrent[tab]
+	ls.mu.Unlock()
+	n := len(items)
+	if n == 0 {
+		return
+	}
+	i := -1
+	if has {
+		i = slices.Index(items, cur)
+		if i < 0 { // gone
+			i = nextLocationIndex(items, cur)
+			if delta > 0 {
+				cv.openLocationItem(tab, i)
+				return
+			}
+		}
+	}
+	switch {
+	case i < 0 && delta > 0:
+		i = 0
+	case i < 0:
+		i = n - 1
+	default:
+		i = (i + delta + n) % n
+	}
+	cv.openLocationItem(tab, i)
 }
 
 // tabEditor returns the editor of the tab with the given name,

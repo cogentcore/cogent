@@ -21,6 +21,10 @@ import (
 	"cogentcore.org/core/text/textpos"
 
 	"cogentcore.org/cogent/code/lang"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles/states"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCodeOccurrencesClick checks occurrence highlighting in a real Code
@@ -80,7 +84,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 		b.AsyncLock()
 		tv.Lines.InsertText(textpos.Pos{Line: 3}, []rune("\t// x\n"))
 		cv.LangSvc().Change(tv.Lines)
-		tv.Highlights = nil // only the new ones
+		tv.Highlights = nil                             // only the new ones
 		tv.SetCursorShow(textpos.Pos{Line: 6, Char: 6}) // within xy in _ = xy
 		cv.LangSvc().scheduleOccurrences(tv)
 		b.AsyncUnlock()
@@ -236,5 +240,69 @@ func TestNextProblem(t *testing.T) {
 		if l := cursorLine(); l != 3 {
 			t.Errorf("NextProblem at the end: cursor line %d, want 3", l)
 		}
+	})
+}
+
+// TestLocationButtons tests the previous and next buttons of the location
+// tabs, which go to the locations from the keyboard, wrapping around, and
+// keep the focus, in the References tab and the Problems tab.
+func TestLocationButtons(t *testing.T) {
+	tmp := t.TempDir()
+	fpath := filepath.Join(tmp, "a.txt")
+	os.WriteFile(fpath, []byte("one\ntwo\nthree\nfour\n"), 0644)
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	ref := func(line int) locationItem {
+		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}}
+	}
+	buttons := func(tab string) (prev, next *core.Button) {
+		fr := cv.Tabs().TabByName(tab)
+		require.NotNil(t, fr, tab)
+		require.Equal(t, 2, fr.NumChildren(), "the editor and the toolbar of "+tab)
+		fr.Child(1).(core.Widget).AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if bt, ok := cw.(*core.Button); ok {
+				switch bt.Icon {
+				case icons.KeyboardArrowUp:
+					prev = bt
+				case icons.KeyboardArrowDown:
+					next = bt
+				}
+			}
+			return true
+		})
+		require.NotNil(t, prev, tab)
+		require.NotNil(t, next, tab)
+		return
+	}
+	imagex.UpdateTestImages = true
+	defer func() { imagex.UpdateTestImages = false }()
+	b.AssertRender(t, "location-buttons", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		cv.showLocations(referencesTab, "References", []locationItem{ref(0), ref(2), ref(3)}, true)
+		cursorLine := func() int {
+			tv := cv.ActiveEditor()
+			if tv == nil || tv.Lines == nil || tv.Lines.Filename() != fpath {
+				return -1
+			}
+			return tv.CursorPos.Line
+		}
+		prev, next := buttons(referencesTab)
+		for _, want := range []int{0, 2, 3, 0} { // wraps around
+			next.Send(events.Click)
+			assert.Equal(t, want, cursorLine(), "next")
+			assert.True(t, next.StateIs(states.Focused), "the next button keeps the focus")
+		}
+		prev.Send(events.Click)
+		assert.Equal(t, 3, cursorLine(), "previous, wrapping around")
+		assert.True(t, prev.StateIs(states.Focused))
+
+		cv.LangSvc().problemsShown = true
+		cv.showLocations(problemsTab, "Problems", nil, true)
+		buttons(problemsTab)
 	})
 }
