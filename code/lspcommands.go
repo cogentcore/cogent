@@ -138,13 +138,17 @@ func (ls *LangService) Lookup(tv *TextEditor) bool {
 	return false
 }
 
-// gotoDefCompletion and docsCompletion are the Text of the go to
-// definition and docs completion items, which are handled by a select
-// listener, without editing the text.
+// gotoDefCompletion, findRefsCompletion, and docsCompletion are the Text
+// of the go to definition, find references, and docs completion items,
+// which are handled by a select listener, without editing the text.
 const (
-	gotoDefCompletion = "\x00goto-definition"
-	docsCompletion    = "\x00docs"
+	gotoDefCompletion  = "\x00goto-definition"
+	findRefsCompletion = "\x00find-references"
+	docsCompletion     = "\x00docs"
 )
+
+// findRefsItem is the value of the find references item of [LangService.lookupMenu].
+type findRefsItem struct{}
 
 // offerCompletion shows the completions for the text up to the cursor,
 // like the editor does while typing, for an explicit request, which
@@ -180,8 +184,8 @@ func (ls *LangService) takeExplicit(ln *lines.Lines, pos textpos.Pos) bool {
 
 // explicitMatches returns the completions for an explicit request at
 // the given position, headed by a go to definition item for the symbol
-// at the position, if it is defined elsewhere, and a docs item that
-// shows its docs, if any.
+// at the position, if it is defined elsewhere, a find references item
+// for it, and a docs item that shows its docs, if any.
 func (ls *LangService) explicitMatches(ln *lines.Lines, text string, pos textpos.Pos) complete.Matches {
 	ms := ls.lspB.CompletionsExplicit(ln, text, pos.Line, pos.Char)
 	md := ls.lspB.Hover(ln, pos)
@@ -196,6 +200,14 @@ func (ls *LangService) explicitMatches(ln *lines.Lines, text string, pos textpos
 			Label: "Go to definition: " + locString(ls.cv, *loc),
 			Icon:  icons.JumpToElement,
 			Desc:  tip,
+		})
+	}
+	if sym := symbolAt(ln, pos); sym != "" {
+		items = append(items, complete.Completion{
+			Text:  findRefsCompletion,
+			Label: "Find references: " + sym,
+			Icon:  icons.ManageSearch,
+			Desc:  "List all references to " + sym + " in the References tab",
 		})
 	}
 	if md != "" {
@@ -277,6 +289,9 @@ func (ls *LangService) lookupMenu(tv *TextEditor, pos textpos.Pos, fixesOnly boo
 	if locs := ls.lspB.Definition(ln, pos); len(locs) > 0 && !lsp.SameFile(locs[0].Filename, ln.Filename()) {
 		items = append(items, core.ChooserItem{Text: "Go to definition: " + locString(ls.cv, locs[0]), Tooltip: tip, Value: locs[0]})
 	}
+	if sym := symbolAt(ln, pos); sym != "" {
+		items = append(items, core.ChooserItem{Text: "Find references: " + sym, Tooltip: "List all references to " + sym + " in the References tab", Value: findRefsItem{}})
+	}
 	if docs != "" {
 		items = append(items, core.ChooserItem{Text: "Docs: " + docsSummary(tip), Tooltip: tip, Value: docs})
 	}
@@ -292,6 +307,8 @@ func (ls *LangService) lookupMenu(tv *TextEditor, pos textpos.Pos, fixesOnly boo
 					ls.applyCodeAction(ln, &v)
 				case lang.Location:
 					ls.cv.openLoc(v)
+				case findRefsItem:
+					ls.cv.FindReferences()
 				case string:
 					docsDialog(tv, docsWindow+": "+symbolAt(ln, pos), v)
 				}

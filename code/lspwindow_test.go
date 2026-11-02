@@ -21,6 +21,11 @@ import (
 	"cogentcore.org/core/text/textpos"
 
 	"cogentcore.org/cogent/code/lang"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textcore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCodeOccurrencesClick checks occurrence highlighting in a real Code
@@ -42,8 +47,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	// the window is only used for its event handling, not its image,
 	// which varies with timing:
-	imagex.UpdateTestImages = true
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t)
 	b.AssertRender(t, "occurrences-click", func() {
 		jump := textpos.Region{Start: textpos.Pos{Line: 2, Char: 5}, End: textpos.Pos{Line: 2, Char: 9}}
 		b.AsyncLock()
@@ -80,7 +84,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 		b.AsyncLock()
 		tv.Lines.InsertText(textpos.Pos{Line: 3}, []rune("\t// x\n"))
 		cv.LangSvc().Change(tv.Lines)
-		tv.Highlights = nil // only the new ones
+		tv.Highlights = nil                             // only the new ones
 		tv.SetCursorShow(textpos.Pos{Line: 6, Char: 6}) // within xy in _ = xy
 		cv.LangSvc().scheduleOccurrences(tv)
 		b.AsyncUnlock()
@@ -122,8 +126,7 @@ func TestCodeSymbolsClick(t *testing.T) {
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	cv.Settings.Symbols.Scope = SymScopePackage
-	imagex.UpdateTestImages = true
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t)
 	b.AssertRender(t, "symbols-click", func() {
 		b.AsyncLock()
 		tv, _, ok := cv.ViewFile(core.Filename(fpath))
@@ -195,8 +198,7 @@ func TestNextProblem(t *testing.T) {
 	problem := func(line int) locationItem {
 		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}, sev: "warning", msg: "problem"}
 	}
-	imagex.UpdateTestImages = true
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t)
 	b.AssertRender(t, "next-problem", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -236,5 +238,75 @@ func TestNextProblem(t *testing.T) {
 		if l := cursorLine(); l != 3 {
 			t.Errorf("NextProblem at the end: cursor line %d, want 3", l)
 		}
+	})
+}
+
+// TestLocationButtons tests the previous and next buttons of the location
+// tabs, which go to the locations from the keyboard, wrapping around, and
+// keep the focus, in the References tab and the Problems tab.
+func TestLocationButtons(t *testing.T) {
+	tmp := t.TempDir()
+	fpath := filepath.Join(tmp, "a.txt")
+	os.WriteFile(fpath, []byte("one\ntwo\nthree\nfour\n"), 0644)
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	ref := func(line int) locationItem {
+		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}}
+	}
+	buttons := func(tab string) (prev, next *core.Button) {
+		fr := cv.Tabs().TabByName(tab)
+		require.NotNil(t, fr, tab)
+		require.Equal(t, 2, fr.NumChildren(), "the toolbar and the editor of "+tab)
+		require.IsType(t, &textcore.Editor{}, fr.Child(1), "the editor under the toolbar")
+		fr.Child(0).(core.Widget).AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if bt, ok := cw.(*core.Button); ok {
+				switch bt.Icon {
+				case icons.KeyboardArrowUp:
+					prev = bt
+				case icons.KeyboardArrowDown:
+					next = bt
+				}
+			}
+			return true
+		})
+		require.NotNil(t, prev, tab)
+		require.NotNil(t, next, tab)
+		return
+	}
+	imagex.UpdateTestImagesFor(t)
+	b.AssertRender(t, "location-buttons", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		cv.ActiveEditor().SetFocus() // a focus that showing the tabs keeps
+		cv.showLocations(referencesTab, "References", []locationItem{ref(0), ref(2), ref(3)}, true)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		prev, next := buttons(referencesTab)
+		assert.False(t, next.StateIs(states.Focused), "showing the tab does not take the focus")
+		assert.False(t, prev.StateIs(states.Focused))
+		cursorLine := func() int {
+			tv := cv.ActiveEditor()
+			if tv == nil || tv.Lines == nil || tv.Lines.Filename() != fpath {
+				return -1
+			}
+			return tv.CursorPos.Line
+		}
+		for _, want := range []int{0, 2, 3, 0} { // wraps around
+			next.Send(events.Click)
+			assert.Equal(t, want, cursorLine(), "next")
+			assert.True(t, next.StateIs(states.Focused), "the next button keeps the focus")
+		}
+		prev.Send(events.Click)
+		assert.Equal(t, 3, cursorLine(), "previous, wrapping around")
+		assert.True(t, prev.StateIs(states.Focused), "the previous button keeps the focus")
+
+		// the next button is first, so that moving into the tab focuses it
+		tb := cv.Tabs().TabByName(referencesTab).Child(0).(*core.Toolbar)
+		require.Same(t, next, tb.Child(0), "the next button is first")
 	})
 }

@@ -6,25 +6,36 @@
 // with powerful navigation and searching support.
 package main
 
+//go:generate core generate
+
 import (
-	"cogentcore.org/core/base/fsx"
+	_ "embed"
+	"os"
+	"strings"
+
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
-	"cogentcore.org/core/keymap"
 )
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	TheConsole.Init()
+	core.AppIcon = appIcon
+	root, err := os.UserHomeDir()
+	if err != nil {
+		root = "."
+	}
+	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
+		root = os.Args[1]
+	}
 	b := core.NewBody("Cogent Files")
-
-	fp := core.NewFilePicker(b)
-	fp.Scene.OnKeyChord(func(e events.Event) {
-		if keymap.Of(e.KeyChord()) == keymap.Accept {
-			core.TheApp.OpenURL(fsx.FileURL(fp.SelectedFile()))
-		}
-	})
+	fl := NewFiles(b).SetRoot(root)
 	b.AddTopBar(func(bar *core.Frame) {
-		core.NewToolbar(bar).Maker(fp.MakeToolbar)
+		core.NewToolbar(bar).Maker(fl.MakeToolbar)
 	})
-
 	b.RunMainWindow()
 }

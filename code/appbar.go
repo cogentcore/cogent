@@ -86,7 +86,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Lookup).SetIcon(icons.Bolt).
-			SetShortcut(KeyQuickFix.Chord())
+			SetShortcut(KeyLookup.Chord())
 	})
 
 	tree.Add(p, func(w *core.Separator) {})

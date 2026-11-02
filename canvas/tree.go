@@ -324,7 +324,7 @@ func (cv *Canvas) CutSelected() { //types:add
 
 // PasteClip pastes clipboard, using cur layer etc
 func (cv *Canvas) PasteClip() { //types:add
-	md := cv.Clipboard().Read([]string{fileinfo.DataJson})
+	md := cv.Clipboard().Read([]string{fileinfo.DataJSON})
 	if md == nil {
 		return
 	}

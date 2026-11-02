@@ -262,7 +262,7 @@ var DefaultServers = []*ServerConfig{
 		Desc:        "JSON language server",
 		Exec:        "vscode-json-language-server",
 		Args:        []string{"--stdio"},
-		Langs:       []fileinfo.Known{fileinfo.Json},
+		Langs:       []fileinfo.Known{fileinfo.JSON},
 		InitOptions: map[string]any{},
 		Install: &InstallSpec{
 			Npm:  []string{"vscode-langservers-extracted"},
@@ -280,11 +280,11 @@ var langExtIDs = map[fileinfo.Known]string{
 	fileinfo.Rust:       "rust",
 	fileinfo.C:          "c",
 	fileinfo.Bash:       "shellscript",
-	fileinfo.Json:       "json",
-	fileinfo.Html:       "html",
-	fileinfo.Css:        "css",
+	fileinfo.JSON:       "json",
+	fileinfo.HTML:       "html",
+	fileinfo.CSS:        "css",
 	fileinfo.Markdown:   "markdown",
-	fileinfo.Toml:       "toml",
+	fileinfo.TOML:       "toml",
 }
 
 // fileExtIDs maps file extensions to LSP languageId strings, used as a

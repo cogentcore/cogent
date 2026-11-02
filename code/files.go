@@ -696,11 +696,11 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 
 // CatNoEdit are the files to NOT edit from categories: Doc, Data
 var CatNoEdit = map[fileinfo.Known]bool{
-	fileinfo.Rtf:          true,
+	fileinfo.RTF:          true,
 	fileinfo.MSWord:       true,
 	fileinfo.OpenText:     true,
 	fileinfo.OpenPres:     true,
-	fileinfo.MSPowerpoint: true,
+	fileinfo.MSPowerPoint: true,
 	fileinfo.EBook:        true,
-	fileinfo.EPub:         true,
+	fileinfo.EPUB:         true,
 }

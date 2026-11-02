@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.19
-	cogentcore.org/lab v0.2.14
+	cogentcore.org/core v0.5.22
+	cogentcore.org/lab v0.2.15
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
@@ -19,6 +19,7 @@ require (
 	github.com/go-delve/delve v1.27.2
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/sgtdi/fswatcher v1.3.0
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.11.1
 	github.com/yuin/goldmark v1.7.3
@@ -83,7 +84,6 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/quic-go/quic-go v0.48.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sgtdi/fswatcher v1.3.0 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tam7t/hpkp v0.0.0-20160821193359-2b70b4024ed5 // indirect
 	github.com/tdewolff/parse/v2 v2.8.5 // indirect

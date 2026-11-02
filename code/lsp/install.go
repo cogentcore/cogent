@@ -347,7 +347,7 @@ var samples = map[fileinfo.Known][]sampleFile{
 	fileinfo.Bash: {
 		{Rel: "main.sh", Content: "#!/bin/bash\nhello() {\n\techo hi\n}\nhello\n", Source: true},
 	},
-	fileinfo.Json: {
+	fileinfo.JSON: {
 		{Rel: "data.json", Content: "{\n\t\"hello\": \"world\"\n}\n", Source: true},
 	},
 }

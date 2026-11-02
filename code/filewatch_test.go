@@ -37,8 +37,7 @@ func TestCodeFilesChanged(t *testing.T) {
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	// the window is only used for its event handling, not its image:
-	imagex.UpdateTestImages = true
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t)
 	b.AssertRender(t, "files-changed", func() {
 		b.AsyncLock()
 		ta, _, _ := cv.ViewFileInIndex(path("a.txt"), 0)
@@ -115,8 +114,7 @@ func TestCodeBranchSwitch(t *testing.T) {
 	cv.Defaults()
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
-	imagex.UpdateTestImages = true
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t)
 	b.AssertRender(t, "branch-switch", func() {
 		b.AsyncLock()
 		ta, _, _ := cv.ViewFileInIndex(path("a.txt"), 0)

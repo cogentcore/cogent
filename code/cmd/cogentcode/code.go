@@ -5,6 +5,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"os"
 	"path/filepath"
@@ -17,7 +18,14 @@ import (
 	_ "cogentcore.org/core/text/highlighting/alllexers"
 )
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	pdir := core.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
 	_ = lfnm

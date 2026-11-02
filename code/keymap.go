@@ -83,7 +83,7 @@ const (
 
 	// lookup at the cursor: quick fixes if there is an error there,
 	// and otherwise completions and go to definition (see [Code.Lookup])
-	KeyQuickFix
+	KeyLookup
 
 	// show signature help for the callable at the cursor
 	KeySignatureHelp
@@ -141,7 +141,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M":     KeyBuildProject,
 		"Control+X r":             KeyRunProject,
 		"Control+X Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
@@ -190,7 +190,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M":     KeyBuildProject,
 		"Control+X r":             KeyRunProject,
 		"Control+X Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
@@ -239,7 +239,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+M":     KeyBuildProject,
 		"Control+X r":             KeyRunProject,
 		"Control+X Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
@@ -290,7 +290,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M":     KeyBuildProject,
 		"Control+E r":             KeyRunProject,
 		"Control+E Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
@@ -341,7 +341,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M":     KeyBuildProject,
 		"Control+E r":             KeyRunProject,
 		"Control+E Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
@@ -392,7 +392,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+M":     KeyBuildProject,
 		"Control+E r":             KeyRunProject,
 		"Control+E Control+R":     KeyRunProject,
-		"Control+.":               KeyQuickFix,
+		"Control+.":               KeyLookup,
 		"Control+Shift+Space":     KeySignatureHelp,
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
