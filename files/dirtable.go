@@ -208,32 +208,15 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		OnClick(func(e events.Event) {
 			dt.openSelected()
 		})
-	core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
-		SetTooltip("Open a new terminal in the selected directory, or in this one").
-		OnClick(func(e events.Event) {
-			fl, ok := ParentFiles(dt)
-			if !ok {
-				return
-			}
-			dir := dt.Dir
-			if fi != nil && fi.IsDir() {
-				dir = fi.Path
-			}
-			fl.NewTerminal(dir)
-		})
-	core.NewButton(m).SetText("Add to favorites").SetIcon(icons.Favorite).
-		SetTooltip("Add the selected directory, or this one, to the favorite paths").
-		OnClick(func(e events.Event) {
-			fl, ok := ParentFiles(dt)
-			if !ok {
-				return
-			}
-			dir := dt.Dir
-			if fi != nil && fi.IsDir() {
-				dir = fi.Path
-			}
-			fl.AddFavorite(dir)
-		})
+	if fi == nil || fi.IsDir() { // the selected directory, or this one
+		dir := dt.Dir
+		if fi != nil {
+			dir = fi.Path
+		}
+		if fl, ok := ParentFiles(dt); ok {
+			fl.dirMenuItems(m, dir)
+		}
+	}
 	if fi == nil {
 		core.NewSeparator(m)
 		core.NewFuncButton(m).SetFunc(dt.NewFolder).SetIcon(icons.CreateNewFolder)

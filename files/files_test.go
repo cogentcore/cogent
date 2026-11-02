@@ -5,6 +5,7 @@
 package main
 
 import (
+	"image"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -214,5 +215,63 @@ func TestSplitsSettings(t *testing.T) {
 		fl.setSplits("Compact")
 		assert.Equal(t, SplitName("Compact"), Settings.Splits)
 		assert.InDeltaSlice(t, []float32{.2, .6, .4}, fl.Splits().Splits(), .01)
+	})
+}
+
+// menuItems returns the texts of the buttons of the given context menu.
+func menuItems(menu func(m *core.Scene, pos image.Point)) []string {
+	m := core.NewScene()
+	menu(m, image.Point{})
+	var items []string
+	for _, c := range m.Children {
+		if bt, ok := c.(*core.Button); ok {
+			items = append(items, bt.Text)
+		}
+	}
+	return items
+}
+
+// TestContextMenus tests that the directory items of the context menus,
+// Terminal here and Add to favorites, are only for directories.
+func TestContextMenus(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	b := core.NewBody()
+	fl := NewFiles(b).SetRoot(root)
+	b.AssertRender(t, "menus", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		dt := fl.CurrentDirTable()
+		dirItems := []string{"Terminal here", "Add to favorites"}
+
+		dt.table.SelectedIndex = -1 // this directory
+		assert.Subset(t, menuItems(dt.contextMenu), dirItems)
+		dt.table.SelectedIndex = 0 // docs
+		assert.Subset(t, menuItems(dt.contextMenu), dirItems)
+		dt.table.SelectedIndex = 2 // a.go
+		for _, it := range dirItems {
+			assert.NotContains(t, menuItems(dt.contextMenu), it)
+		}
+
+		nodes := map[string]*FileNode{}
+		fl.Tree.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if fn, ok := cw.(*FileNode); ok {
+				nodes[fn.Name] = fn
+			}
+			return true
+		})
+		require.Contains(t, nodes, "docs")
+		require.Contains(t, nodes, "a.go")
+		var docsMenu, fileMenu []string
+		for _, menu := range nodes["docs"].ContextMenus {
+			docsMenu = append(docsMenu, menuItems(menu)...)
+		}
+		for _, menu := range nodes["a.go"].ContextMenus {
+			fileMenu = append(fileMenu, menuItems(menu)...)
+		}
+		assert.Subset(t, docsMenu, dirItems)
+		for _, it := range dirItems {
+			assert.NotContains(t, fileMenu, it)
+		}
 	})
 }

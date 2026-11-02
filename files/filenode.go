@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/icons"
 )
 
 // FileNode is the node of the file tree, which shows the files of a
@@ -27,14 +26,10 @@ func (fn *FileNode) Init() {
 		if !fn.IsDir() {
 			return
 		}
-		core.NewButton(m).SetText("Add to favorites").SetIcon(icons.Favorite).
-			SetTooltip("Add this directory to the favorite paths").
-			OnClick(func(e events.Event) {
-				if fl, ok := ParentFiles(fn.This); ok {
-					fl.AddFavorite(string(fn.Filepath))
-				}
-			})
-		core.NewSeparator(m)
+		if fl, ok := ParentFiles(fn.This); ok {
+			fl.dirMenuItems(m, string(fn.Filepath))
+			core.NewSeparator(m)
+		}
 	})
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()

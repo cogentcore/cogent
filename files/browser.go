@@ -285,6 +285,21 @@ func (fl *Files) TerminalHere() { //types:add
 	fl.NewTerminal(fl.CurrentDir())
 }
 
+// dirMenuItems adds the context menu items for the given directory,
+// in the directory tables and the file tree: Terminal here and Add to favorites.
+func (fl *Files) dirMenuItems(m *core.Scene, dir string) {
+	core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+		SetTooltip("Open a new terminal in " + dir).
+		OnClick(func(e events.Event) {
+			fl.NewTerminal(dir)
+		})
+	core.NewButton(m).SetText("Add to favorites").SetIcon(icons.Favorite).
+		SetTooltip("Add " + dir + " to the favorite paths").
+		OnClick(func(e events.Event) {
+			fl.AddFavorite(dir)
+		})
+}
+
 func (fl *Files) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(fl.DirUp).SetText("Up").SetIcon(icons.ArrowUpward)
