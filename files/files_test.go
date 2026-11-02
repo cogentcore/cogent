@@ -269,9 +269,21 @@ func TestContextMenus(t *testing.T) {
 		for _, menu := range nodes["a.go"].ContextMenus {
 			fileMenu = append(fileMenu, menuItems(menu)...)
 		}
-		assert.Subset(t, docsMenu, dirItems)
-		for _, it := range dirItems {
+		assert.Subset(t, docsMenu, append([]string{"View"}, dirItems...))
+		for _, it := range append([]string{"View"}, dirItems...) {
 			assert.NotContains(t, fileMenu, it)
 		}
+
+		// View shows the files of the directory, as double-clicking does
+		m := core.NewScene()
+		for _, menu := range nodes["docs"].ContextMenus {
+			menu(m, image.Point{})
+		}
+		for _, c := range m.Children {
+			if bt, ok := c.(*core.Button); ok && bt.Text == "View" {
+				bt.Send(events.Click)
+			}
+		}
+		assert.Equal(t, filepath.Join(root, "docs"), fl.CurrentDir())
 	})
 }
