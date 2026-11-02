@@ -16,9 +16,17 @@ import (
 	"cogentcore.org/core/xyz"
 	_ "cogentcore.org/core/xyz/io/obj"
 	"cogentcore.org/core/xyz/xyzcore"
+	_ "embed"
 )
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Craft")
 
 	se := xyzcore.NewSceneEditor(b)

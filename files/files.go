@@ -16,7 +16,8 @@ import (
 	"cogentcore.org/core/core"
 )
 
-// appIcon is the icon of the app, in the Dock on macOS.
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
 //
 //go:embed icon.svg
 var appIcon string

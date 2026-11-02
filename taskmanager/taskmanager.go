@@ -7,6 +7,7 @@ package main
 //go:generate core generate
 
 import (
+	_ "embed"
 	"time"
 
 	"cogentcore.org/core/base/datasize"
@@ -44,7 +45,14 @@ type Task struct { //types:add
 	PID int32
 }
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)

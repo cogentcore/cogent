@@ -5,6 +5,7 @@
 package main
 
 import (
+	_ "embed"
 	"os"
 
 	"cogentcore.org/cogent/canvas"
@@ -12,7 +13,14 @@ import (
 	"cogentcore.org/core/system"
 )
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	ofs := core.TheApp.OpenFiles() // note: on mac, this doesn't happen in time here
 	// so you need to check in the OnShow for the first window and open then.
 
