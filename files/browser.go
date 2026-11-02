@@ -12,7 +12,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/terminal"
@@ -31,7 +30,7 @@ type Files struct {
 	Root string `set:"-"`
 
 	// Tree is the tree of the files in the Root directory.
-	Tree *filetree.Tree `set:"-" json:"-"`
+	Tree *FileTree `set:"-" json:"-"`
 
 	// lastTerminal is the last terminal used.
 	lastTerminal *terminal.Terminal
@@ -81,7 +80,7 @@ func (fl *Files) Init() {
 					s.Direction = styles.Column
 					s.Overflow.Set(styles.OverflowAuto)
 				})
-				tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+				tree.AddChildAt(w, "filetree", func(w *FileTree) {
 					fl.Tree = w
 					w.OpenDepth = 1
 					w.FileNodeType = types.For[FileNode]()

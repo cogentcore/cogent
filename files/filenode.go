@@ -17,13 +17,32 @@ import (
 // FileNode is the node of the file tree, which shows the files of a
 // directory in a directory tab, and opens a file in its default app,
 // when double-clicked; View in the context menu of a directory also
-// shows its files.
+// shows its files (see [initNode]).
 type FileNode struct {
 	filetree.Node
 }
 
 func (fn *FileNode) Init() {
 	fn.Node.Init()
+	initNode(&fn.Node)
+}
+
+// FileTree is the file tree, whose root node is a directory node like
+// the [FileNode]s (see [initNode]).
+type FileTree struct {
+	filetree.Tree
+}
+
+func (ft *FileTree) Init() {
+	ft.Tree.Init()
+	initNode(&ft.Node)
+}
+
+// initNode adds the handlers of the nodes of the file tree to the given one:
+// double-clicking shows the files of a directory in a directory tab, and
+// opens a file in its default app, and the context menu of a directory has
+// View, which also shows its files, and the [Files.dirMenuItems].
+func initNode(fn *filetree.Node) {
 	fn.AddContextMenu(func(m *core.Scene, pos image.Point) {
 		if !fn.IsDir() {
 			return

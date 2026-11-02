@@ -274,6 +274,18 @@ func TestContextMenus(t *testing.T) {
 			assert.NotContains(t, fileMenu, it)
 		}
 
+		// the root of the file tree is a directory node too
+		var rootMenu []string
+		for _, menu := range fl.Tree.ContextMenus {
+			rootMenu = append(rootMenu, menuItems(menu)...)
+		}
+		assert.Subset(t, rootMenu, append([]string{"View"}, dirItems...))
+		fl.DirTabs().DeleteTabIndex(0)
+		require.Equal(t, 0, fl.DirTabs().NumTabs())
+		fl.Tree.Parts.Send(events.DoubleClick)
+		require.Equal(t, 1, fl.DirTabs().NumTabs())
+		assert.Equal(t, root, fl.CurrentDir())
+
 		// View shows the files of the directory, as double-clicking does
 		m := core.NewScene()
 		for _, menu := range nodes["docs"].ContextMenus {

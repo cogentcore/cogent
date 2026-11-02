@@ -16,20 +16,28 @@ var _ = types.AddType(&types.Type{Name: "main.Files", IDName: "files", Doc: "Fil
 // of them, or under them in the compact layout (see [SettingsData.Splits]).
 func NewFiles(parent ...tree.Node) *Files { return tree.New[Files](parent...) }
 
-var _ = types.AddType(&types.Type{Name: "main.DirTable", IDName: "dir-table", Doc: "DirTable is a table of the files in a directory, the table of files of\n[core.FilePicker] without its other parts. Double-clicking a directory\nshows its files, and a file opens it in its default app.", Methods: []types.Method{{Name: "NewFolder", Doc: "NewFolder makes a new folder with the given name in the directory.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"name"}, Returns: []string{"error"}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Dir", Doc: "Dir is the absolute path of the directory (see [DirTable.SetDir])."}, {Name: "files", Doc: "files are the files in the directory."}, {Name: "table", Doc: "table is the table of the files."}, {Name: "watched", Doc: "watched is the directory being watched for changes."}, {Name: "stopWatch", Doc: "stopWatch stops watching the directory for changes, if set."}}})
+var _ = types.AddType(&types.Type{Name: "main.DirTable", IDName: "dir-table", Doc: "DirTable is a table of the files in a directory, under its full path:\nthe table of files of [core.FilePicker] without its other parts. Double-clicking a directory\nshows its files, and a file opens it in its default app.", Methods: []types.Method{{Name: "NewFolder", Doc: "NewFolder makes a new folder with the given name in the directory.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"name"}, Returns: []string{"error"}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Dir", Doc: "Dir is the absolute path of the directory (see [DirTable.SetDir])."}, {Name: "files", Doc: "files are the files in the directory."}, {Name: "table", Doc: "table is the table of the files."}, {Name: "watched", Doc: "watched is the directory being watched for changes."}, {Name: "stopWatch", Doc: "stopWatch stops watching the directory for changes, if set."}}})
 
 // NewDirTable returns a new [DirTable] with the given optional parent:
-// DirTable is a table of the files in a directory, the table of files of
-// [core.FilePicker] without its other parts. Double-clicking a directory
+// DirTable is a table of the files in a directory, under its full path:
+// the table of files of [core.FilePicker] without its other parts. Double-clicking a directory
 // shows its files, and a file opens it in its default app.
 func NewDirTable(parent ...tree.Node) *DirTable { return tree.New[DirTable](parent...) }
 
-var _ = types.AddType(&types.Type{Name: "main.FileNode", IDName: "file-node", Doc: "FileNode is the node of the file tree, which shows the files of a\ndirectory in a directory tab, and opens a file in its default app,\nwhen double-clicked.", Embeds: []types.Field{{Name: "Node"}}})
+var _ = types.AddType(&types.Type{Name: "main.FileNode", IDName: "file-node", Doc: "FileNode is the node of the file tree, which shows the files of a\ndirectory in a directory tab, and opens a file in its default app,\nwhen double-clicked; View in the context menu of a directory also\nshows its files (see [initNode]).", Embeds: []types.Field{{Name: "Node"}}})
 
 // NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is the node of the file tree, which shows the files of a
 // directory in a directory tab, and opens a file in its default app,
-// when double-clicked.
+// when double-clicked; View in the context menu of a directory also
+// shows its files (see [initNode]).
 func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[FileNode](parent...) }
 
-var _ = types.AddType(&types.Type{Name: "main.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type of the [Settings].", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Splits", Doc: "Splits is the layout of the panels: the file tree, the directory tabs,\nand the command tabs, which are to the right of the directory tabs,\nor under them in a compact layout."}, {Name: "ShowHidden", Doc: "ShowHidden shows the hidden files, whose names start with a dot."}, {Name: "Terminal", Doc: "Terminal is the command to run in terminals, with its arguments,\nsuch as goal; the default is the user's shell."}}})
+var _ = types.AddType(&types.Type{Name: "main.FileTree", IDName: "file-tree", Doc: "FileTree is the file tree, whose root node is a directory node like\nthe [FileNode]s (see [initNode]).", Embeds: []types.Field{{Name: "Tree"}}})
+
+// NewFileTree returns a new [FileTree] with the given optional parent:
+// FileTree is the file tree, whose root node is a directory node like
+// the [FileNode]s (see [initNode]).
+func NewFileTree(parent ...tree.Node) *FileTree { return tree.New[FileTree](parent...) }
+
+var _ = types.AddType(&types.Type{Name: "main.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type of the [Settings].", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Splits", Doc: "Splits is the layout of the panels: the file tree, the directory tabs,\nand the command tabs, which are to the right of the directory tabs,\nor under them in a compact layout."}, {Name: "SplitValues", Doc: "SplitValues are the proportions of the panels in the Splits layout,\nas last set by moving them, which are restored at startup.\nThey are reset to those of the layout when a layout is chosen."}, {Name: "TreeSplits", Doc: "TreeSplits are the proportions of the file tree and the favorites,\nas last set by moving them, which are restored at startup."}, {Name: "ShowHidden", Doc: "ShowHidden shows the hidden files, whose names start with a dot."}, {Name: "Terminal", Doc: "Terminal is the command to run in terminals, with its arguments,\nsuch as goal; the default is the user's shell."}}})
