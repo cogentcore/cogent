@@ -1,0 +1,8 @@
+Name = "Cogent Canvas"
+
+Opens = ["SVG"]
+
+# installed App makes a symlink into ~/go/bin version of app, so it is updated
+# with a simple go install.
+AppGoSymlink = true
+
