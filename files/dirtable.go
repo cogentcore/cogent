@@ -15,7 +15,6 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -157,7 +156,7 @@ func (dt *DirTable) openSelected() {
 		dt.SetDir(fi.Path)
 		return
 	}
-	core.TheApp.OpenURL(fsx.FileURL(fi.Path))
+	openFile(fi.Path)
 }
 
 // readFiles reads the files in the directory, with the directories first.

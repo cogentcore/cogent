@@ -44,7 +44,7 @@ func (ft *FileTree) Init() {
 // initNode adds the handlers of the nodes of the file tree to the given one:
 // double-clicking shows the files of a directory in a directory tab, as the
 // right arrow on an open directory does, and opens a file in its default
-// app, and the context menu of a directory has
+// app, as Enter does, and the context menu of a directory has
 // View, which also shows its files, and the [Files.dirMenuItems], and that
 // of a file has the items of [openWithMenuItems].
 func initNode(fn *filetree.Node) {
@@ -67,15 +67,22 @@ func initNode(fn *filetree.Node) {
 		core.NewSeparator(m)
 	})
 	fn.OnFirst(events.KeyChord, func(e events.Event) {
-		// the right arrow on an open directory shows its files; the keys of
-		// the focused node go to the handlers of its parents first
-		if keymap.Of(e.KeyChord()) != keymap.MoveRight || !fn.IsDir() || fn.Closed || !isFocus(fn) {
+		// the keys of the focused node go to the handlers of its parents first
+		if !isFocus(fn) {
 			return
 		}
-		if fl, ok := ParentFiles(fn.This); ok {
+		switch kf := keymap.Of(e.KeyChord()); {
+		case kf == keymap.Enter && !fn.IsDir():
+			// opens the file, as double-clicking does (directories toggle)
 			e.SetHandled()
-			if dt := fl.OpenDir(string(fn.Filepath)); dt != nil {
-				dt.FocusTable()
+			openFile(string(fn.Filepath))
+		case kf == keymap.MoveRight && fn.IsDir() && !fn.Closed:
+			// shows the files of the open directory
+			if fl, ok := ParentFiles(fn.This); ok {
+				e.SetHandled()
+				if dt := fl.OpenDir(string(fn.Filepath)); dt != nil {
+					dt.FocusTable()
+				}
 			}
 		}
 	})
@@ -87,8 +94,14 @@ func initNode(fn *filetree.Node) {
 			}
 			return
 		}
-		core.TheApp.OpenURL(fsx.FileURL(string(fn.Filepath)))
+		openFile(string(fn.Filepath))
 	})
+}
+
+// openFile opens the given file in its default app.
+// It is a variable for the tests, which do not open apps.
+var openFile = func(path string) {
+	core.TheApp.OpenURL(fsx.FileURL(path))
 }
 
 // isFocus returns whether the given node has the keyboard focus itself,

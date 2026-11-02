@@ -12,6 +12,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
@@ -29,6 +30,7 @@ func TestPanelFocus(t *testing.T) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
 	fl := NewFiles(b).SetRoot(root)
+	prevOpenFile := openFile
 	b.AssertRender(t, "panel-focus", func() {
 		prevMap := keymap.ActiveMapName
 		keymap.SetActiveMapName("MacEmacs") // with Control+X key sequences
@@ -147,5 +149,29 @@ func TestPanelFocus(t *testing.T) {
 		fl.FocusPrevPanel()
 		b.AsyncUnlock()
 		expect("prev from the docs table, favorites collapsed", fileTree)
+
+		// Enter on a file opens it, and on a directory opens or closes it
+		var opened []string
+		openFile = func(path string) { opened = append(opened, path) }
+		defer func() { openFile = prevOpenFile }()
+		node := func(name string) *filetree.Node {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			n, ok := fl.Tree.FindFile(filepath.Join(root, name))
+			require.True(t, ok, name)
+			n.SelectEvent(events.SelectOne)
+			n.SetFocus()
+			return n
+		}
+		node("b.txt")
+		chord(0, key.CodeReturnEnter, 0)
+		time.Sleep(200 * time.Millisecond) // the key goes to b.txt
+		sn := node("docs")
+		chord(0, key.CodeReturnEnter, 0)
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		assert.Equal(t, []string{filepath.Join(root, "b.txt")}, opened)
+		assert.True(t, sn.Closed, "Enter closes the open docs")
+		b.AsyncUnlock()
 	})
 }
