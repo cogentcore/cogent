@@ -12,6 +12,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/terminal"
@@ -38,6 +39,10 @@ type Files struct {
 	// terminalDirs are the working directories of the terminals,
 	// for the labels of their tabs.
 	terminalDirs map[*terminal.Terminal]*terminalDir
+
+	// keySeq1 is the first key of a key sequence being entered,
+	// such as Control+X (see [Files.filesKeys]).
+	keySeq1 key.Chord
 }
 
 // openFiles are the open [Files], to which the settings are applied.
@@ -58,6 +63,7 @@ func (fl *Files) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
+	fl.OnFirst(events.KeyChord, fl.filesKeys)
 	fl.OnShow(func(e events.Event) {
 		fl.applySplits()
 		fl.Tree.OpenPath(fl.Root)
