@@ -79,7 +79,7 @@ func (sv *SVG) handleDND() {
 		de := e.(*events.DragDrop)
 		e.SetHandled()
 		md, _ := de.Data.(mimedata.Mimes)
-		if md.HasType(fileinfo.DataJson) {
+		if md.HasType(fileinfo.DataJSON) {
 			sv.dropItems(de, md)
 			return
 		}

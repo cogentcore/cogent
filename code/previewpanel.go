@@ -55,9 +55,9 @@ func (pp *PreviewPanel) Init() {
 		switch ed.Lines.FileInfo().Known {
 		case fileinfo.Markdown:
 			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
-		case fileinfo.Html:
+		case fileinfo.HTML:
 			htmlcore.ReadHTML(htmlcore.NewContext(), pp, bytes.NewReader(current))
-		case fileinfo.Svg:
+		case fileinfo.SVG:
 			errors.Log(core.NewSVG(pp).Read(bytes.NewReader(current)))
 		}
 	})

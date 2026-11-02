@@ -55,7 +55,7 @@ func (ls *LangService) SemanticRefresh(ln *lines.Lines) {
 		return // server still loading: the next change re-triggers
 	}
 	switch ln.FileInfo().Known {
-	case fileinfo.Markdown, fileinfo.Html, fileinfo.Xml, fileinfo.Json, fileinfo.Toml, fileinfo.Yaml, fileinfo.Css, fileinfo.Svg:
+	case fileinfo.Markdown, fileinfo.HTML, fileinfo.XML, fileinfo.JSON, fileinfo.TOML, fileinfo.YAML, fileinfo.CSS, fileinfo.SVG:
 		return // markup-based files keep their own markup
 	}
 	if ln.NumLines() > semanticMaxLines {
