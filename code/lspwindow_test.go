@@ -286,6 +286,11 @@ func TestLocationButtons(t *testing.T) {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		cv.showLocations(referencesTab, "References", []locationItem{ref(0), ref(2), ref(3)}, true)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		_, next := buttons(referencesTab)
+		assert.True(t, next.StateIs(states.Focused), "the next button has the focus when the tab is shown")
 		cursorLine := func() int {
 			tv := cv.ActiveEditor()
 			if tv == nil || tv.Lines == nil || tv.Lines.Filename() != fpath {
@@ -306,5 +311,10 @@ func TestLocationButtons(t *testing.T) {
 		cv.LangSvc().problemsShown = true
 		cv.showLocations(problemsTab, "Problems", nil, true)
 		buttons(problemsTab)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		_, next := buttons(problemsTab)
+		assert.True(t, next.StateIs(states.Focused), "the next button of another tab shown")
 	})
 }
