@@ -70,6 +70,7 @@ func TestFiles(t *testing.T) {
 		require.Equal(t, 1, fl.DirTabs().NumTabs())
 		dt := fl.CurrentDirTable()
 		assert.Equal(t, root, dt.Dir)
+		assert.Equal(t, root, dt.Child(0).(*core.Text).Text)
 		assert.Equal(t, []string{"docs", "src", "a.go", "b.txt"}, names(dt))
 		_, terminal := fl.Tabs().TabAtIndex(1)
 		assert.Equal(t, TerminalTabName, terminal.Text)
@@ -105,6 +106,12 @@ func TestFiles(t *testing.T) {
 		dt.openSelected()
 		assert.Equal(t, filepath.Join(root, "src"), dt.Dir)
 		assert.Equal(t, "src", tab.Text)
+		assert.Equal(t, dt.Dir, dt.Child(0).(*core.Text).Text)
+
+		// back in docs, for the image
+		fl.DirUp()
+		dt.table.SelectedIndex = 0 // docs
+		dt.openSelected()
 	})
 
 	Settings.Splits = "Compact"

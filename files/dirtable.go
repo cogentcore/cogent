@@ -27,8 +27,8 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// DirTable is a table of the files in a directory, the table of files of
-// [core.FilePicker] without its other parts. Double-clicking a directory
+// DirTable is a table of the files in a directory, under its full path:
+// the table of files of [core.FilePicker] without its other parts. Double-clicking a directory
 // shows its files, and a file opens it in its default app.
 type DirTable struct {
 	core.Frame
@@ -70,6 +70,15 @@ func (dt *DirTable) Init() {
 			e.SetHandled()
 			dt.openSelected()
 		}
+	})
+	tree.AddChildAt(dt, "path", func(w *core.Text) {
+		w.SetType(core.TextTitleSmall)
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+		})
+		w.Updater(func() {
+			w.SetText(dt.Dir)
+		})
 	})
 	tree.AddChildAt(dt, "files", func(w *core.Table) {
 		dt.table = w
