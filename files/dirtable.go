@@ -93,6 +93,7 @@ func (dt *DirTable) Init() {
 			e.SetHandled()
 			dt.openSelected()
 		})
+		dt.handleDND(w)
 		w.ContextMenus = nil
 		w.AddContextMenu(dt.contextMenu)
 	})
