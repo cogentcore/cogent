@@ -34,6 +34,10 @@ type Files struct {
 
 	// lastTerminal is the last terminal used.
 	lastTerminal *terminal.Terminal
+
+	// terminalDirs are the working directories of the terminals,
+	// for the labels of their tabs.
+	terminalDirs map[*terminal.Terminal]*terminalDir
 }
 
 // openFiles are the open [Files], to which the settings are applied.

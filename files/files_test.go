@@ -99,7 +99,7 @@ func TestFiles(t *testing.T) {
 		assert.Equal(t, root, dt.Child(0).(*core.Text).Text)
 		assert.Equal(t, []string{"docs", "src", "a.go", "b.txt"}, names(dt))
 		_, terminal := fl.Tabs().TabAtIndex(1)
-		assert.Equal(t, TerminalTabName, terminal.Text)
+		assert.Equal(t, filepath.Base(root), terminal.Text, "labeled with its directory")
 
 		// double-clicking docs in the file tree opens it in a new tab
 		var docs *FileNode
