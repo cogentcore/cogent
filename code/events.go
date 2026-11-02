@@ -176,7 +176,7 @@ func (cv *Code) codeKeys(e events.Event) {
 	case KeyNextProblem:
 		e.SetHandled()
 		cv.NextProblem()
-	case KeyQuickFix:
+	case KeyLookup:
 		e.SetHandled()
 		cv.Lookup()
 	case KeySignatureHelp:

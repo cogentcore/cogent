@@ -954,5 +954,5 @@ func (ls *LangService) quickFixHint(ln *lines.Lines, pos textpos.Pos) string {
 	if len(ts) == 0 {
 		return ""
 	}
-	return "\n⚡ quick fix: " + strings.Join(ts, "; ") + "  (" + string(KeyQuickFix.Chord()) + ")"
+	return "\n⚡ quick fix: " + strings.Join(ts, "; ") + "  (" + string(KeyLookup.Chord()) + ")"
 }

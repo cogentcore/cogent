@@ -253,7 +253,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 
 	core.NewSeparator(m)
 	if ed.Lines != nil && ed.Code != nil && ed.Code.LangSvc().LSPActive(ed.Lines) {
-		core.NewFuncButton(m).SetFunc(ed.Code.Lookup).SetIcon(icons.Search).SetShortcut(KeyQuickFix.Chord())
+		core.NewFuncButton(m).SetFunc(ed.Code.Lookup).SetIcon(icons.Search).SetShortcut(KeyLookup.Chord())
 		ed.Code.LangSvc().quickFixButtons(m, ed)
 		core.NewButton(m).SetText("Code actions").SetIcon(icons.Build).SetMenu(func(m *core.Scene, pos image.Point) {
 			ed.Code.LangSvc().codeActionsMenu(m, ed)
