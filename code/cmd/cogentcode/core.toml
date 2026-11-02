@@ -1,1 +1,6 @@
 Name = "Cogent Code"
+
+# the types of files that Cogent Code opens, for the Open with choices of
+# the systems: all source code and text files, and the text documents and
+# data files (see cogentcore.org/core/base/fileinfo)
+Opens = ["Code", "Text", "Markdown", "TeX", "BibTeX", "Html", "Css", "Csv", "Tsv", "Json", "Xml", "Yaml", "Toml", "Ini", "Protobuf"]
