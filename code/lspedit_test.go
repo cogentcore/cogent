@@ -216,8 +216,9 @@ func TestEditorSignatureHelp(t *testing.T) {
 }
 
 // TestEditorLookup checks the Ctrl+. lookup: completions for the text
-// up to the cursor, headed by go to definition, when there is no error,
-// and quick fixes when there is an error with fixes.
+// up to the cursor, headed by go to definition, find references, and
+// docs, when there is no error, and quick fixes when there is an error
+// with fixes.
 func TestEditorLookup(t *testing.T) {
 	src := "package main\n\nimport \"strings\"\n\nfunc main() {\n\t_ = strings.Split(\"a\", \",\")\n}\n"
 	et := newEditorTest(t, src, textpos.Pos{Line: 5, Char: 16}) // strings.Spl|it
@@ -242,8 +243,11 @@ func TestEditorLookup(t *testing.T) {
 	if et.ls.gotoLoc == nil || filepath.Base(et.ls.gotoLoc.Filename) != "strings.go" {
 		t.Errorf("go to definition location: %v", et.ls.gotoLoc)
 	}
-	if len(et.matches) < 2 || et.matches[1].Text != docsCompletion || !strings.HasPrefix(et.matches[1].Label, "Docs: func strings.Split") {
-		t.Errorf("second completion is not docs: %s", et.labels(3))
+	if len(et.matches) < 2 || et.matches[1].Text != findRefsCompletion || et.matches[1].Label != "Find references: Split" {
+		t.Errorf("second completion is not find references: %s", et.labels(3))
+	}
+	if len(et.matches) < 3 || et.matches[2].Text != docsCompletion || !strings.HasPrefix(et.matches[2].Label, "Docs: func strings.Split") {
+		t.Errorf("third completion is not docs: %s", et.labels(4))
 	}
 	if !strings.Contains(et.ls.docsMD, "```go") {
 		t.Errorf("docs markdown: %q", et.ls.docsMD)

@@ -334,9 +334,10 @@ func (ls *LangService) Activated(tv *TextEditor) {
 	if !hooked {
 		// select listeners run most recent first, so this one runs before
 		// the editor's own listener, which it preempts for the go to
-		// definition and docs items, so that the text is not edited:
+		// definition, find references, and docs items, so that the text
+		// is not edited:
 		c.OnSelect(func(e events.Event) {
-			if c.Completion != gotoDefCompletion && c.Completion != docsCompletion {
+			if c.Completion != gotoDefCompletion && c.Completion != findRefsCompletion && c.Completion != docsCompletion {
 				return
 			}
 			e.SetHandled()
@@ -346,6 +347,8 @@ func (ls *LangService) Activated(tv *TextEditor) {
 			switch {
 			case c.Completion == docsCompletion:
 				docsDialog(tv, docsWindow+": "+sym, md)
+			case c.Completion == findRefsCompletion:
+				ls.cv.FindReferences()
 			case loc != nil:
 				ls.cv.openLoc(*loc)
 			}
