@@ -156,7 +156,7 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Ed
 
 	fr := tv.RecycleTab(name)
 	if fr.HasChildren() {
-		return fr.Child(0).(*textcore.Editor)
+		return tabFrameEditor(fr)
 	}
 	txv := textcore.NewEditor(fr)
 	txv.SetName(fr.Name)
@@ -202,6 +202,18 @@ func isKillKey(e events.Event) bool {
 	return keymap.Of(e.KeyChord()) == keymap.Kill || terminal.KeyFunction(e) == keymap.Kill
 }
 
+// tabFrameEditor returns the text editor in the given tab frame, which
+// can also have a toolbar above it, as the location tabs do
+// (see [Code.locationToolbar]), or nil if it has none.
+func tabFrameEditor(fr tree.Node) *textcore.Editor {
+	for _, c := range fr.AsTree().Children {
+		if ed, ok := c.(*textcore.Editor); ok {
+			return ed
+		}
+	}
+	return nil
+}
+
 // clearOutputTab clears the output of the current tab, if the focus is in
 // the tabs panel (and not in editable text), such as on the tab button,
 // and the tab is a read-only editor, such as the console and command
@@ -214,8 +226,8 @@ func (cv *Code) clearOutputTab() bool {
 	if ct == nil || !ct.AsTree().HasChildren() {
 		return false
 	}
-	ed, ok := ct.AsTree().Child(0).(*textcore.Editor)
-	if !ok || !ed.IsReadOnly() {
+	ed := tabFrameEditor(ct)
+	if ed == nil || !ed.IsReadOnly() {
 		return false
 	}
 	ed.Clear()

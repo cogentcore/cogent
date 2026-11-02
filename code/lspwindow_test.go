@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/cogent/code/lang"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textcore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -262,8 +263,9 @@ func TestLocationButtons(t *testing.T) {
 	buttons := func(tab string) (prev, next *core.Button) {
 		fr := cv.Tabs().TabByName(tab)
 		require.NotNil(t, fr, tab)
-		require.Equal(t, 2, fr.NumChildren(), "the editor and the toolbar of "+tab)
-		fr.Child(1).(core.Widget).AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		require.Equal(t, 2, fr.NumChildren(), "the toolbar and the editor of "+tab)
+		require.IsType(t, &textcore.Editor{}, fr.Child(1), "the editor under the toolbar")
+		fr.Child(0).(core.Widget).AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if bt, ok := cw.(*core.Button); ok {
 				switch bt.Icon {
 				case icons.KeyboardArrowUp:

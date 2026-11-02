@@ -109,7 +109,7 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 	cv.highlightLocation(tab, i)
 }
 
-// locationToolbar adds the toolbar of the given location tab under its
+// locationToolbar adds the toolbar of the given location tab above its
 // editor, if it does not have it, with buttons to go to the previous and
 // next locations, which can be used from the keyboard, as in the Find
 // tab: a button keeps the focus after going to a location, so that it
@@ -119,7 +119,9 @@ func (cv *Code) locationToolbar(tab string, ed *textcore.Editor) {
 	if fr.NumChildren() > 1 {
 		return
 	}
-	core.NewToolbar(fr).Maker(func(p *tree.Plan) {
+	tb := core.NewToolbar()
+	fr.InsertChild(tb, 0)
+	tb.Maker(func(p *tree.Plan) {
 		tree.Add(p, func(w *core.Button) {
 			w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to the previous location").
 				OnClick(func(e events.Event) {
@@ -181,9 +183,8 @@ func (cv *Code) tabEditor(tab string) *textcore.Editor {
 	if cv.Tabs() == nil {
 		return nil
 	}
-	if fr := cv.Tabs().TabByName(tab); fr != nil && fr.AsTree().HasChildren() {
-		ed, _ := fr.AsTree().Child(0).(*textcore.Editor)
-		return ed
+	if fr := cv.Tabs().TabByName(tab); fr != nil {
+		return tabFrameEditor(fr)
 	}
 	return nil
 }
