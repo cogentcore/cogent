@@ -83,7 +83,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/quic-go/quic-go v0.48.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sgtdi/fswatcher v1.3.0 // indirect
+	github.com/sgtdi/fswatcher v1.3.0
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tam7t/hpkp v0.0.0-20160821193359-2b70b4024ed5 // indirect
 	github.com/tdewolff/parse/v2 v2.8.5 // indirect
