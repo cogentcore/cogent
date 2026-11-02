@@ -5,10 +5,13 @@
 package main
 
 import (
+	"image"
+
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/icons"
 )
 
 // FileNode is the node of the file tree, which shows the files of a
@@ -20,6 +23,19 @@ type FileNode struct {
 
 func (fn *FileNode) Init() {
 	fn.Node.Init()
+	fn.AddContextMenu(func(m *core.Scene, pos image.Point) {
+		if !fn.IsDir() {
+			return
+		}
+		core.NewButton(m).SetText("Add to favorites").SetIcon(icons.Favorite).
+			SetTooltip("Add this directory to the favorite paths").
+			OnClick(func(e events.Event) {
+				if fl, ok := ParentFiles(fn.This); ok {
+					fl.AddFavorite(string(fn.Filepath))
+				}
+			})
+		core.NewSeparator(m)
+	})
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
 		if fn.IsDir() {

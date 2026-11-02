@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/types"
+	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,21 +40,18 @@ func testSettings(t *testing.T, favs ...string) {
 	imagex.UpdateTestImages = true // the images are for viewing the layout
 	t.Cleanup(func() { imagex.UpdateTestImages = false })
 	file, splits := Settings.File, Settings.Splits
-	sys := core.SystemSettings.FavPaths
+	sysFile, sys := core.SystemSettings.File, core.SystemSettings.FavPaths
 	t.Cleanup(func() {
 		Settings.File, Settings.Splits = file, splits
 		Settings.SplitValues, Settings.TreeSplits = nil, nil
-		core.SystemSettings.FavPaths = sys
+		core.SystemSettings.File, core.SystemSettings.FavPaths = sysFile, sys
 	})
 	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	core.SystemSettings.File = filepath.Join(t.TempDir(), "system.toml") // the favorites are saved there
 	Settings.Splits, Settings.SplitValues, Settings.TreeSplits = "Wide", nil, nil
 	core.SystemSettings.FavPaths = core.SystemSettings.FavPaths[:0:0]
 	for _, f := range favs {
-		item := reflect.New(reflect.TypeOf(core.SystemSettings.FavPaths).Elem()).Elem()
-		item.FieldByName("Name").SetString(filepath.Base(f))
-		item.FieldByName("Path").SetString(f)
-		fv := reflect.ValueOf(&core.SystemSettings.FavPaths).Elem()
-		fv.Set(reflect.Append(fv, item))
+		addFavorite(filepath.Base(f), f)
 	}
 }
 
@@ -162,7 +160,24 @@ func TestFavorites(t *testing.T) {
 		fv.SelectIndexEvent(1, events.SelectOne)
 		assert.Equal(t, docs, fl.Root)
 		assert.Equal(t, docs, string(fl.Tree.Filepath))
+
+		// adding a favorite, once, with ~ for the home directory
+		src := filepath.Join(root, "src")
+		fl.AddFavorite(src)
+		fl.AddFavorite(src)
+		home, err := homedir.Dir()
+		require.NoError(t, err)
+		fl.AddFavorite(filepath.Join(home, "projects"))
+		var paths []string
+		for _, fav := range core.SystemSettings.FavPaths {
+			paths = append(paths, fav.Path)
+		}
+		assert.Equal(t, []string{root, docs, src, "~/projects"}, paths)
+		assert.Equal(t, 4, fv.SliceSize)
 	})
+	saved, err := os.ReadFile(core.SystemSettings.File)
+	require.NoError(t, err)
+	assert.Contains(t, string(saved), "~/projects")
 }
 
 // TestSplitsSettings tests that the proportions of the splits are saved

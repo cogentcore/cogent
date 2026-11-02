@@ -10,9 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
@@ -20,7 +18,6 @@ import (
 	"cogentcore.org/core/text/terminal"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"github.com/mitchellh/go-homedir"
 )
 
 // Files is the file explorer, laid out as in Cogent Code: a tree of the
@@ -131,28 +128,6 @@ func (fl *Files) SetRoot(root string) *Files {
 func ParentFiles(n tree.Node) (*Files, bool) {
 	fl := tree.ParentByType[*Files](n)
 	return fl, fl != nil
-}
-
-// initFavorites configures the table of the favorite paths, which are those
-// of [core.FilePicker]: selecting one makes it the Root of the file tree.
-func (fl *Files) initFavorites(w *core.Table) {
-	w.SetReadOnly(true)
-	w.SelectedIndex = -1
-	w.SetSlice(&core.SystemSettings.FavPaths)
-	w.Styler(func(s *styles.Style) {
-		s.Cursor = cursors.Pointer
-		s.Grow.Set(1, 1)
-	})
-	w.OnSelect(func(e events.Event) {
-		fav := core.SystemSettings.FavPaths
-		if w.SelectedIndex < 0 || w.SelectedIndex >= len(fav) {
-			return
-		}
-		fl.SetRoot(errors.Log1(homedir.Expand(fav[w.SelectedIndex].Path)))
-	})
-	w.Updater(func() {
-		w.ResetSelectedIndexes() // so that the same one can be selected again
-	})
 }
 
 // Splits returns the splits of the panels, nil if the tree has not been built.

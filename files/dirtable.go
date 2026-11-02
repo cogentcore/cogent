@@ -220,6 +220,19 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 			}
 			fl.NewTerminal(dir)
 		})
+	core.NewButton(m).SetText("Add to favorites").SetIcon(icons.Favorite).
+		SetTooltip("Add the selected directory, or this one, to the favorite paths").
+		OnClick(func(e events.Event) {
+			fl, ok := ParentFiles(dt)
+			if !ok {
+				return
+			}
+			dir := dt.Dir
+			if fi != nil && fi.IsDir() {
+				dir = fi.Path
+			}
+			fl.AddFavorite(dir)
+		})
 	if fi == nil {
 		core.NewSeparator(m)
 		core.NewFuncButton(m).SetFunc(dt.NewFolder).SetIcon(icons.CreateNewFolder)
