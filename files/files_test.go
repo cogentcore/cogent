@@ -325,11 +325,28 @@ func TestContextMenus(t *testing.T) {
 			var sub []string
 			m.Child(0).(*core.Button).Menu(m, image.Point{}) // adds the apps to m
 			for _, c := range m.Children[2:] {
-				sub = append(sub, c.(*core.Button).Text)
+				if bt, ok := c.(*core.Button); ok {
+					sub = append(sub, bt.Text)
+				}
 			}
 			assert.Equal(t, as[0].Name+" (default)", sub[0])
-			assert.Len(t, sub, len(as))
+			assert.Len(t, sub, len(as)+1)
+			assert.Equal(t, otherApps, sub[len(sub)-1])
 			t.Logf("Open with: %v", sub)
+
+			// the chooser of the apps has all of them for Other...
+			ch := newAppChooser(core.NewBody(), as)
+			assert.Len(t, ch.Items, len(as)+1)
+			app, ok := chosenApp(ch)
+			assert.True(t, ok)
+			assert.Equal(t, as[0], app, "the default")
+			ch.SetCurrentValue(otherApps)
+			ch.SendChange()
+			all, err := apps.All()
+			require.NoError(t, err)
+			assert.Len(t, ch.Items, len(all))
+			assert.Greater(t, len(all), len(as))
+			assert.Len(t, newAppChooser(core.NewBody(), nil).Items, len(all), "all, with no apps for the file")
 		}
 		for _, it := range openItems {
 			assert.NotContains(t, docsMenu, it)
