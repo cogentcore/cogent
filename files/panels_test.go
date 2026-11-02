@@ -5,6 +5,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -13,7 +14,10 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPanelFocus tests moving the keyboard focus around the panels with
@@ -61,7 +65,7 @@ func TestPanelFocus(t *testing.T) {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		chord := func(rn rune, code key.Codes, mods key.Modifiers) {
 			src.Key(events.KeyDown, rn, code, mods)
-			if mods == 0 { // a character: the KeyChord is from text input
+			if mods == 0 && rn != 0 { // a character: the KeyChord is from text input
 				src.KeyChord(rn, code, mods)
 			}
 			src.Key(events.KeyUp, rn, code, mods)
@@ -80,6 +84,9 @@ func TestPanelFocus(t *testing.T) {
 		chord('x', key.CodeX, ctrl)
 		chord('o', key.CodeO, 0)
 		expect("Control+X o", dirTabs)
+		b.AsyncLock()
+		assert.True(t, fl.CurrentDirTable().table.StateIs(states.Focused), "the table of the files has the focus")
+		b.AsyncUnlock()
 		chord('x', key.CodeX, ctrl)
 		chord('o', key.CodeO, ctrl)
 		expect("Control+X Control+O", tabs)
@@ -93,8 +100,18 @@ func TestPanelFocus(t *testing.T) {
 		expect("Control+Tab from the terminal, around", fileTree)
 		chord(0, key.CodeTab, ctrlShift)
 		expect("Control+Shift+Tab, around", tabs)
+		chord('x', key.CodeX, ctrl)
+		chord('o', key.CodeO, 0)
+		expect("Control+X o from the terminal", fileTree)
+		chord('x', key.CodeX, ctrl)
+		chord('p', key.CodeP, 0)
+		expect("Control+X p, around", tabs)
+		chord('x', key.CodeX, ctrl)
+		chord('p', key.CodeP, ctrl)
+		expect("Control+X Control+P from the terminal", dirTabs)
+		chord(0, key.CodeTab, ctrl)
 		chord(0, key.CodeTab, ctrlShift)
-		expect("Control+Shift+Tab from the terminal", dirTabs)
+		expect("Control+Tab, Control+Shift+Tab from the terminal", dirTabs)
 		chord('x', key.CodeX, ctrl)
 		chord('p', key.CodeP, 0)
 		expect("Control+X p", favorites)
@@ -103,11 +120,32 @@ func TestPanelFocus(t *testing.T) {
 		chord('p', key.CodeP, 0)
 		expect("Control+X Escape aborts", favorites)
 
+		// the right arrow on an open directory shows its files
+		docs := filepath.Join(root, "docs")
+		b.AsyncLock()
+		dn, ok := fl.Tree.FindFile(docs)
+		require.True(t, ok)
+		dn.SelectEvent(events.SelectOne) // which focuses it quietly
+		b.AsyncUnlock()
+		expect("the docs node", fileTree)
+		chord(0, key.CodeRightArrow, 0) // opens it
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		assert.False(t, dn.Closed, "docs is open")
+		b.AsyncUnlock()
+		chord(0, key.CodeRightArrow, 0)
+		expect("right arrow on the open docs", dirTabs)
+		b.AsyncLock()
+		dt := fl.CurrentDirTable()
+		assert.Equal(t, docs, dt.Dir)
+		assert.True(t, dt.table.StateIs(states.Focused), "the table of docs has the focus")
+		b.AsyncUnlock()
+
 		// a collapsed panel is skipped
 		b.AsyncLock()
 		fl.LeftSplits().SetSplits(1, 0)
 		fl.FocusPrevPanel()
 		b.AsyncUnlock()
-		expect("prev, favorites collapsed", tabs-1) // the panels are one fewer
+		expect("prev from the docs table, favorites collapsed", fileTree)
 	})
 }

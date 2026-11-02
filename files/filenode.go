@@ -6,12 +6,15 @@ package main
 
 import (
 	"image"
+	"slices"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/tree"
 )
 
 // FileNode is the node of the file tree, which shows the files of a
@@ -39,8 +42,9 @@ func (ft *FileTree) Init() {
 }
 
 // initNode adds the handlers of the nodes of the file tree to the given one:
-// double-clicking shows the files of a directory in a directory tab, and
-// opens a file in its default app, and the context menu of a directory has
+// double-clicking shows the files of a directory in a directory tab, as the
+// right arrow on an open directory does, and opens a file in its default
+// app, and the context menu of a directory has
 // View, which also shows its files, and the [Files.dirMenuItems], and that
 // of a file has the items of [openWithMenuItems].
 func initNode(fn *filetree.Node) {
@@ -62,6 +66,19 @@ func initNode(fn *filetree.Node) {
 		fl.dirMenuItems(m, string(fn.Filepath))
 		core.NewSeparator(m)
 	})
+	fn.OnFirst(events.KeyChord, func(e events.Event) {
+		// the right arrow on an open directory shows its files; the keys of
+		// the focused node go to the handlers of its parents first
+		if keymap.Of(e.KeyChord()) != keymap.MoveRight || !fn.IsDir() || fn.Closed || !isFocus(fn) {
+			return
+		}
+		if fl, ok := ParentFiles(fn.This); ok {
+			e.SetHandled()
+			if dt := fl.OpenDir(string(fn.Filepath)); dt != nil {
+				dt.FocusTable()
+			}
+		}
+	})
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
 		if fn.IsDir() {
@@ -71,5 +88,13 @@ func initNode(fn *filetree.Node) {
 			return
 		}
 		core.TheApp.OpenURL(fsx.FileURL(string(fn.Filepath)))
+	})
+}
+
+// isFocus returns whether the given node has the keyboard focus itself,
+// not one of its children.
+func isFocus(fn *filetree.Node) bool {
+	return fn.ContainsFocus() && !slices.ContainsFunc(fn.Children, func(c tree.Node) bool {
+		return core.AsWidget(c).ContainsFocus()
 	})
 }

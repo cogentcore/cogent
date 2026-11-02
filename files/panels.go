@@ -41,7 +41,7 @@ func (fl *Files) panels() []core.Widget {
 // keyboard focus, or -1 if none does.
 func (fl *Files) currentPanel(ps []core.Widget) int {
 	return slices.IndexFunc(ps, func(w core.Widget) bool {
-		return w.AsWidget().HasStateWithin(states.Focused)
+		return w.AsWidget().ContainsFocus()
 	})
 }
 

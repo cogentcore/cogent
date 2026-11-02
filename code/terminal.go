@@ -117,7 +117,7 @@ func (cv *Code) Terminals() []*terminal.Terminal {
 // focusedTerminal returns the terminal that has the keyboard focus, or nil.
 func (cv *Code) focusedTerminal() *terminal.Terminal {
 	for _, tm := range cv.Terminals() {
-		if tm.HasStateWithin(states.Focused) {
+		if tm.ContainsFocus() {
 			return tm
 		}
 	}

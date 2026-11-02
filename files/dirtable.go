@@ -135,6 +135,17 @@ func (dt *DirTable) SelectedFile() *fileinfo.FileInfo {
 	return dt.files[idx]
 }
 
+// FocusTable moves the keyboard focus to the table of the files, after
+// it is next rendered, as it may have just been made or shown.
+func (dt *DirTable) FocusTable() {
+	dt.Defer(func() {
+		if dt.table != nil {
+			dt.table.SetFocus()
+		}
+	})
+	dt.NeedsRender()
+}
+
 // openSelected shows the files of the selected directory,
 // or opens the selected file in its default app.
 func (dt *DirTable) openSelected() {
