@@ -328,7 +328,11 @@ func TestContextMenus(t *testing.T) {
 					sub = append(sub, bt.Text)
 				}
 			}
-			assert.Equal(t, as[0].Name+" (default)", sub[0])
+			first := as[0].Name
+			if as[0].Default { // not on linux without a default app for the type
+				first += " (default)"
+			}
+			assert.Equal(t, first, sub[0])
 			assert.Len(t, sub, len(as)+1)
 			assert.Equal(t, otherApps, sub[len(sub)-1])
 			t.Logf("Open with: %v", sub)
