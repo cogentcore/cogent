@@ -59,7 +59,11 @@ func splitByName(name SplitName) Split {
 	return StandardSplits[0]
 }
 
-// applySplits applies the layout of the [Settings] to the splits.
+// treeSplits are the default proportions of the file tree and the favorites.
+var treeSplits = []float32{.75, .25}
+
+// applySplits applies the layout of the [Settings] to the splits:
+// the Splits layout, with its SplitValues if set, and the TreeSplits.
 func (fl *Files) applySplits() {
 	sv := fl.Splits()
 	if sv == nil {
@@ -71,6 +75,38 @@ func (fl *Files) applySplits() {
 	} else {
 		sv.SetTiles(core.TileSpan, core.TileSpan, core.TileSpan)
 	}
-	sv.SetSplits(sp.Splits[:]...)
+	if len(Settings.SplitValues) == len(sp.Splits) {
+		sv.SetSplits(Settings.SplitValues...)
+	} else {
+		sv.SetSplits(sp.Splits[:]...)
+	}
 	sv.Update()
+	if lt := fl.LeftSplits(); lt != nil {
+		if len(Settings.TreeSplits) == len(treeSplits) {
+			lt.SetSplits(Settings.TreeSplits...)
+		} else {
+			lt.SetSplits(treeSplits...)
+		}
+		lt.Update()
+	}
+}
+
+// setSplits sets the Splits layout of the [Settings] to the given one,
+// with its proportions, applies it, and saves the settings.
+func (fl *Files) setSplits(name SplitName) {
+	Settings.Splits = name
+	Settings.SplitValues = nil
+	fl.applySplits()
+	fl.saveSplits()
+}
+
+// saveSplits saves the current proportions of the splits in the [Settings].
+func (fl *Files) saveSplits() {
+	if sv := fl.Splits(); sv != nil {
+		Settings.SplitValues = sv.Splits()
+	}
+	if lt := fl.LeftSplits(); lt != nil {
+		Settings.TreeSplits = lt.Splits()
+	}
+	core.ErrorSnackbar(fl, core.SaveSettings(Settings), "Error saving settings")
 }

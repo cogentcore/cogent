@@ -12,13 +12,13 @@ import (
 
 func init() {
 	core.TheApp.SetName("Cogent Files")
+	Settings.File = filepath.Join(core.TheApp.AppDataDir(), "settings.toml") // makes the directory
 	core.AddAppSettings(Settings)
 }
 
 // Settings are the settings of Cogent Files.
 var Settings = &SettingsData{
 	Name: "Files",
-	File: filepath.Join(core.TheApp.DataDir(), "Cogent Files", "settings.toml"),
 }
 
 // SettingsData is the data type of the [Settings].
@@ -29,6 +29,15 @@ type SettingsData struct { //types:add
 	// and the command tabs, which are to the right of the directory tabs,
 	// or under them in a compact layout.
 	Splits SplitName `default:"Wide"`
+
+	// SplitValues are the proportions of the panels in the Splits layout,
+	// as last set by moving them, which are restored at startup.
+	// They are reset to those of the layout when a layout is chosen.
+	SplitValues []float32 `display:"-"`
+
+	// TreeSplits are the proportions of the file tree and the favorites,
+	// as last set by moving them, which are restored at startup.
+	TreeSplits []float32 `display:"-"`
 
 	// ShowHidden shows the hidden files, whose names start with a dot.
 	ShowHidden bool

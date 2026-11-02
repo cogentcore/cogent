@@ -10,7 +10,9 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
@@ -18,6 +20,7 @@ import (
 	"cogentcore.org/core/text/terminal"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
+	"github.com/mitchellh/go-homedir"
 )
 
 // Files is the file explorer, laid out as in Cogent Code: a tree of the
@@ -40,7 +43,8 @@ type Files struct {
 // openFiles are the open [Files], to which the settings are applied.
 var openFiles []*Files
 
-// These are the indexes of the panels in the [Files.Splits].
+// These are the indexes of the panels in the [Files.Splits]: the first
+// is the [Files.LeftSplits] of the file tree and the favorites.
 const (
 	FileTreeIndex = iota
 	DirTabsIndex
@@ -65,19 +69,31 @@ func (fl *Files) Init() {
 	})
 
 	tree.AddChildAt(fl, "splits", func(w *core.Splits) {
-		tree.AddChildAt(w, "filetree", func(w *core.Frame) {
+		w.OnChange(func(e events.Event) {
+			fl.saveSplits()
+		})
+		tree.AddChildAt(w, "left", func(w *core.Splits) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
-				s.Overflow.Set(styles.OverflowAuto)
 			})
-			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
-				fl.Tree = w
-				w.OpenDepth = 1
-				w.FileNodeType = types.For[FileNode]()
-				w.FilterFunc = func(path string, info fs.FileInfo) bool {
-					return Settings.ShowHidden || !strings.HasPrefix(info.Name(), ".")
-				}
+			w.OnChange(func(e events.Event) {
+				fl.saveSplits()
 			})
+			tree.AddChildAt(w, "filetree", func(w *core.Frame) {
+				w.Styler(func(s *styles.Style) {
+					s.Direction = styles.Column
+					s.Overflow.Set(styles.OverflowAuto)
+				})
+				tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+					fl.Tree = w
+					w.OpenDepth = 1
+					w.FileNodeType = types.For[FileNode]()
+					w.FilterFunc = func(path string, info fs.FileInfo) bool {
+						return Settings.ShowHidden || !strings.HasPrefix(info.Name(), ".")
+					}
+				})
+			})
+			tree.AddChildAt(w, "favorites", fl.initFavorites)
 		})
 		tree.AddChildAt(w, "dirtabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
@@ -117,10 +133,53 @@ func ParentFiles(n tree.Node) (*Files, bool) {
 	return fl, fl != nil
 }
 
+// initFavorites configures the table of the favorite paths, which are those
+// of [core.FilePicker]: selecting one makes it the Root of the file tree.
+func (fl *Files) initFavorites(w *core.Table) {
+	w.SetReadOnly(true)
+	w.SelectedIndex = -1
+	w.SetSlice(&core.SystemSettings.FavPaths)
+	w.Styler(func(s *styles.Style) {
+		s.Cursor = cursors.Pointer
+		s.Grow.Set(1, 1)
+	})
+	w.OnSelect(func(e events.Event) {
+		fav := core.SystemSettings.FavPaths
+		if w.SelectedIndex < 0 || w.SelectedIndex >= len(fav) {
+			return
+		}
+		fl.SetRoot(errors.Log1(homedir.Expand(fav[w.SelectedIndex].Path)))
+	})
+	w.Updater(func() {
+		w.ResetSelectedIndexes() // so that the same one can be selected again
+	})
+}
+
 // Splits returns the splits of the panels, nil if the tree has not been built.
 func (fl *Files) Splits() *core.Splits {
 	sv, _ := fl.ChildByName("splits", 0).(*core.Splits)
 	return sv
+}
+
+// LeftSplits returns the splits of the file tree and the favorites,
+// nil if the tree has not been built.
+func (fl *Files) LeftSplits() *core.Splits {
+	sv := fl.Splits()
+	if sv == nil {
+		return nil
+	}
+	lt, _ := sv.Child(FileTreeIndex).(*core.Splits)
+	return lt
+}
+
+// Favorites returns the table of the favorite paths, nil if the tree has not been built.
+func (fl *Files) Favorites() *core.Table {
+	lt := fl.LeftSplits()
+	if lt == nil {
+		return nil
+	}
+	tb, _ := lt.Child(1).(*core.Table)
+	return tb
 }
 
 // DirTabs returns the directory tabs, nil if the tree has not been built.
@@ -262,9 +321,7 @@ func (fl *Files) MakeToolbar(p *tree.Plan) {
 		w.SetStrings(splitNames()...).SetCurrentValue(string(splitByName(Settings.Splits).Name))
 		w.SetTooltip("The layout of the panels")
 		w.OnChange(func(e events.Event) {
-			Settings.Splits = SplitName(w.CurrentItem.Value.(string))
-			core.ErrorSnackbar(w, core.SaveSettings(Settings), "Error saving settings")
-			fl.applySplits()
+			fl.setSplits(SplitName(w.CurrentItem.Value.(string)))
 		})
 	})
 }

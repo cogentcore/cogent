@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"cogentcore.org/core/base/iox/imagex"
+	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
@@ -29,6 +30,30 @@ func init() {
 		if strings.HasPrefix(name, "main.") {
 			types.Types[pkg+strings.TrimPrefix(name, "main")] = typ
 		}
+	}
+}
+
+// testSettings makes the tests use a settings file of their own,
+// and the default settings, with the given favorite paths.
+func testSettings(t *testing.T, favs ...string) {
+	imagex.UpdateTestImages = true // the images are for viewing the layout
+	t.Cleanup(func() { imagex.UpdateTestImages = false })
+	file, splits := Settings.File, Settings.Splits
+	sys := core.SystemSettings.FavPaths
+	t.Cleanup(func() {
+		Settings.File, Settings.Splits = file, splits
+		Settings.SplitValues, Settings.TreeSplits = nil, nil
+		core.SystemSettings.FavPaths = sys
+	})
+	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	Settings.Splits, Settings.SplitValues, Settings.TreeSplits = "Wide", nil, nil
+	core.SystemSettings.FavPaths = core.SystemSettings.FavPaths[:0:0]
+	for _, f := range favs {
+		item := reflect.New(reflect.TypeOf(core.SystemSettings.FavPaths).Elem()).Elem()
+		item.FieldByName("Name").SetString(filepath.Base(f))
+		item.FieldByName("Path").SetString(f)
+		fv := reflect.ValueOf(&core.SystemSettings.FavPaths).Elem()
+		fv.Set(reflect.Append(fv, item))
 	}
 }
 
@@ -57,12 +82,10 @@ func names(dt *DirTable) []string {
 // double-clicking a directory in the file tree, and the navigation in them.
 func TestFiles(t *testing.T) {
 	root := testRoot(t)
-	Settings.Splits = "Wide"
+	testSettings(t, filepath.Join(root, "docs"))
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
 	fl := NewFiles(b).SetRoot(root)
-	imagex.UpdateTestImages = true // the images are for viewing the layout
-	defer func() { imagex.UpdateTestImages = false }()
 	b.AssertRender(t, "wide", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -115,9 +138,66 @@ func TestFiles(t *testing.T) {
 	})
 
 	Settings.Splits = "Compact"
-	defer func() { Settings.Splits = "Wide" }()
 	b = core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1000), units.Dp(700)) })
 	fl = NewFiles(b).SetRoot(root)
 	b.AssertRender(t, "compact")
+}
+
+// TestFavorites tests that selecting a favorite path makes it the root
+// of the file tree.
+func TestFavorites(t *testing.T) {
+	root := testRoot(t)
+	docs := filepath.Join(root, "docs")
+	testSettings(t, root, docs)
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
+	fl := NewFiles(b).SetRoot(root)
+	b.AssertRender(t, "favorites", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		fv := fl.Favorites()
+		require.NotNil(t, fv)
+		assert.Equal(t, 2, fv.SliceSize)
+		fv.SelectIndexEvent(1, events.SelectOne)
+		assert.Equal(t, docs, fl.Root)
+		assert.Equal(t, docs, string(fl.Tree.Filepath))
+	})
+}
+
+// TestSplitsSettings tests that the proportions of the splits are saved
+// in the settings when they are moved, and restored when the app starts,
+// and that they are reset when a layout is chosen.
+func TestSplitsSettings(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	b := core.NewBody()
+	fl := NewFiles(b).SetRoot(root)
+	b.AssertRender(t, "splits-moved", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		fl.Splits().SetSplits(.3, .4, .3) // as when moved
+		fl.LeftSplits().SetSplits(.6, .4)
+		fl.saveSplits()
+	})
+	saved, err := os.ReadFile(Settings.File)
+	require.NoError(t, err)
+	assert.Contains(t, string(saved), "SplitValues")
+
+	// restored at startup: from the file, in a new window
+	Settings.SplitValues, Settings.TreeSplits = nil, nil
+	require.NoError(t, tomlx.Open(Settings, Settings.File))
+	b = core.NewBody()
+	fl = NewFiles(b).SetRoot(root)
+	b.AssertRender(t, "splits-restored", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.InDeltaSlice(t, []float32{.3, .4, .3}, fl.Splits().Splits(), .01)
+		assert.InDeltaSlice(t, []float32{.6, .4}, fl.LeftSplits().Splits(), .01)
+
+		// choosing a layout resets them to its own
+		fl.setSplits("Compact")
+		assert.Equal(t, SplitName("Compact"), Settings.Splits)
+		assert.InDeltaSlice(t, []float32{.2, .6, .4}, fl.Splits().Splits(), .01)
+	})
 }
