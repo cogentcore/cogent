@@ -29,6 +29,9 @@ const (
 
 	// KeyPrevPanel moves the keyboard focus to the previous panel.
 	KeyPrevPanel
+
+	// KeySetSplit prompts for the layout of the panels.
+	KeySetSplit
 )
 
 // StandardKeyMaps are the key maps of Files, merged into the standard
@@ -42,6 +45,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+O": KeyNextPanel,
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
+		"Control+X v":         KeySetSplit,
+		"Control+X Control+V": KeySetSplit,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -50,6 +55,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+O": KeyNextPanel,
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
+		"Control+X v":         KeySetSplit,
+		"Control+X Control+V": KeySetSplit,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -58,6 +65,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X Control+O": KeyNextPanel,
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
+		"Control+X v":         KeySetSplit,
+		"Control+X Control+V": KeySetSplit,
 	}},
 	{"LinuxStandard", "Standard Linux key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -66,6 +75,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+O": KeyNextPanel,
 		"Control+E p":         KeyPrevPanel,
 		"Control+E Control+P": KeyPrevPanel,
+		"Control+E v":         KeySetSplit,
+		"Control+E Control+V": KeySetSplit,
 	}},
 	{"WindowsStandard", "Standard Windows key map", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -74,6 +85,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+O": KeyNextPanel,
 		"Control+E p":         KeyPrevPanel,
 		"Control+E Control+P": KeyPrevPanel,
+		"Control+E v":         KeySetSplit,
+		"Control+E Control+V": KeySetSplit,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", keymap.Map{
 		"Control+Tab":         KeyNextPanel,
@@ -82,6 +95,8 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E Control+O": KeyNextPanel,
 		"Control+E p":         KeyPrevPanel,
 		"Control+E Control+P": KeyPrevPanel,
+		"Control+E v":         KeySetSplit,
+		"Control+E Control+V": KeySetSplit,
 	}},
 }
 
@@ -132,6 +147,8 @@ func (fl *Files) keyFunction(kf keymap.Functions) bool {
 		fl.FocusNextPanel()
 	case KeyPrevPanel:
 		fl.FocusPrevPanel()
+	case KeySetSplit:
+		fl.callSplitsSetView()
 	default:
 		return false
 	}
@@ -143,6 +160,7 @@ func (fl *Files) keyFunction(kf keymap.Functions) bool {
 var terminalFunctions = map[keymap.Functions]bool{
 	KeyNextPanel: true,
 	KeyPrevPanel: true,
+	KeySetSplit:  true,
 }
 
 // terminalKeys handles the keys of a focused terminal, which get all of

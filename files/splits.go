@@ -91,6 +91,24 @@ func (fl *Files) applySplits() {
 	}
 }
 
+// SplitsSetView sets the layout of the panels to the given one
+// of the [StandardSplits].
+func (fl *Files) SplitsSetView(split SplitName) { //types:add
+	fl.setSplits(split)
+	if ch := fl.splitsChooser; ch != nil {
+		ch.SetCurrentValue(string(splitByName(split).Name))
+		ch.Update()
+	}
+}
+
+// callSplitsSetView prompts for the layout of the panels to set,
+// starting with the current one.
+func (fl *Files) callSplitsSetView() {
+	fb := core.NewSoloFuncButton(fl).SetFunc(fl.SplitsSetView)
+	fb.Args[0].SetValue(Settings.Splits)
+	fb.CallFunc()
+}
+
 // setSplits sets the Splits layout of the [Settings] to the given one,
 // with its proportions, applies it, and saves the settings.
 func (fl *Files) setSplits(name SplitName) {

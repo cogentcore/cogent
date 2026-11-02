@@ -40,6 +40,9 @@ type Files struct {
 	// for the labels of their tabs.
 	terminalDirs map[*terminal.Terminal]*terminalDir
 
+	// splitsChooser is the chooser of the layout of the panels in the toolbar.
+	splitsChooser *core.Chooser
+
 	// keySeq1 is the first key of a key sequence being entered,
 	// such as Control+X (see [Files.filesKeys]).
 	keySeq1 key.Chord
@@ -317,8 +320,10 @@ func (fl *Files) MakeToolbar(p *tree.Plan) {
 		w.SetFunc(fl.TerminalHere).SetText("Terminal").SetIcon(icons.Terminal)
 	})
 	tree.Add(p, func(w *core.Chooser) {
+		fl.splitsChooser = w
 		w.SetStrings(splitNames()...).SetCurrentValue(string(splitByName(Settings.Splits).Name))
-		w.SetTooltip("The layout of the panels")
+		chord, _, _ := strings.Cut(string(KeySetSplit.Chord()), "\n")
+		w.SetTooltip("The layout of the panels (" + chord + ")")
 		w.OnChange(func(e events.Event) {
 			fl.setSplits(SplitName(w.CurrentItem.Value.(string)))
 		})

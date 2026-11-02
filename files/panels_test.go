@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -173,5 +174,68 @@ func TestPanelFocus(t *testing.T) {
 		assert.Equal(t, []string{filepath.Join(root, "b.txt")}, opened)
 		assert.True(t, sn.Closed, "Enter closes the open docs")
 		b.AsyncUnlock()
+	})
+}
+
+// TestSplitsKey tests choosing the layout of the panels in the dialog of
+// the Control+X v keys, which the toolbar shows.
+func TestSplitsKey(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	b := core.NewBody()
+	fl := NewFiles(b).SetRoot(root)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(fl.MakeToolbar)
+	})
+	b.AssertRender(t, "splits-key", func() {
+		prevMap := keymap.ActiveMapName
+		keymap.SetActiveMapName("MacEmacs")
+		defer keymap.SetActiveMapName(prevMap)
+		b.AsyncLock()
+		fl.FocusNextPanel()
+		b.AsyncUnlock()
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		ctrl := key.Modifiers(0)
+		ctrl.SetFlag(true, key.Control)
+		src.Key(events.KeyDown, 'x', key.CodeX, ctrl)
+		src.Key(events.KeyUp, 'x', key.CodeX, ctrl)
+		src.Key(events.KeyDown, 'v', key.CodeV, 0)
+		src.KeyChord('v', key.CodeV, 0)
+		src.Key(events.KeyUp, 'v', key.CodeV, 0)
+		var dlg *core.Scene
+		for range 150 {
+			b.AsyncLock()
+			dlg = b.Scene.RenderWindow().MainScene()
+			b.AsyncUnlock()
+			if dlg != b.Scene {
+				break
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		require.NotEqual(t, b.Scene, dlg, "the dialog is shown")
+		b.AsyncLock()
+		var ch *core.Chooser
+		var ok *core.Button
+		dlg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			switch w := cw.(type) {
+			case *core.Chooser:
+				ch = w
+			case *core.Button:
+				ok = w // the last one is the OK button, with the text of the function
+			}
+			return tree.Continue
+		})
+		require.NotNil(t, ch)
+		require.NotNil(t, ok)
+		assert.Equal(t, SplitName("Wide"), ch.CurrentItem.Value, "the current layout")
+		ch.SetCurrentValue(SplitName("Compact"))
+		ch.SendChange()
+		ok.Send(events.Click)
+		b.AsyncUnlock()
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, SplitName("Compact"), Settings.Splits)
+		assert.Equal(t, "Compact", fl.splitsChooser.CurrentItem.Value, "the toolbar")
 	})
 }
