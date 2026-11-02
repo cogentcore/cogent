@@ -39,8 +39,7 @@ func init() {
 // testSettings makes the tests use a settings file of their own,
 // and the default settings, with the given favorite paths.
 func testSettings(t *testing.T, favs ...string) {
-	imagex.UpdateTestImages = true // the images are for viewing the layout
-	t.Cleanup(func() { imagex.UpdateTestImages = false })
+	imagex.UpdateTestImagesFor(t) // the images are for viewing the layout
 	file, splits := Settings.File, Settings.Splits
 	sysFile, sys := core.SystemSettings.File, core.SystemSettings.FavPaths
 	t.Cleanup(func() {

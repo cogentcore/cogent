@@ -36,8 +36,7 @@ func TestCodeInlayHints(t *testing.T) {
 	cv.Defaults()
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
-	imagex.UpdateTestImages = true // the image is for looking at
-	defer func() { imagex.UpdateTestImages = false }()
+	imagex.UpdateTestImagesFor(t) // the image is for looking at
 	b.AssertRender(t, "inlay-hints", func() {
 		b.AsyncLock()
 		tv, _, ok := cv.ViewFile(core.Filename(fpath))
