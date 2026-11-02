@@ -285,12 +285,14 @@ func TestLocationButtons(t *testing.T) {
 	b.AssertRender(t, "location-buttons", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
+		cv.ActiveEditor().SetFocus() // a focus that showing the tabs keeps
 		cv.showLocations(referencesTab, "References", []locationItem{ref(0), ref(2), ref(3)}, true)
 	}, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
-		_, next := buttons(referencesTab)
-		assert.True(t, next.StateIs(states.Focused), "the next button has the focus when the tab is shown")
+		prev, next := buttons(referencesTab)
+		assert.False(t, next.StateIs(states.Focused), "showing the tab does not take the focus")
+		assert.False(t, prev.StateIs(states.Focused))
 		cursorLine := func() int {
 			tv := cv.ActiveEditor()
 			if tv == nil || tv.Lines == nil || tv.Lines.Filename() != fpath {
@@ -298,7 +300,6 @@ func TestLocationButtons(t *testing.T) {
 			}
 			return tv.CursorPos.Line
 		}
-		prev, next := buttons(referencesTab)
 		for _, want := range []int{0, 2, 3, 0} { // wraps around
 			next.Send(events.Click)
 			assert.Equal(t, want, cursorLine(), "next")
@@ -306,15 +307,10 @@ func TestLocationButtons(t *testing.T) {
 		}
 		prev.Send(events.Click)
 		assert.Equal(t, 3, cursorLine(), "previous, wrapping around")
-		assert.True(t, prev.StateIs(states.Focused))
+		assert.True(t, prev.StateIs(states.Focused), "the previous button keeps the focus")
 
-		cv.LangSvc().problemsShown = true
-		cv.showLocations(problemsTab, "Problems", nil, true)
-		buttons(problemsTab)
-	}, func() {
-		b.AsyncLock()
-		defer b.AsyncUnlock()
-		_, next := buttons(problemsTab)
-		assert.True(t, next.StateIs(states.Focused), "the next button of another tab shown")
+		// the next button is first, so that moving into the tab focuses it
+		tb := cv.Tabs().TabByName(referencesTab).Child(0).(*core.Toolbar)
+		require.Same(t, next, tb.Child(0), "the next button is first")
 	})
 }

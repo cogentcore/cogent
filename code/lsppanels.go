@@ -111,10 +111,10 @@ func (cv *Code) showLocations(tab, header string, items []locationItem, sel bool
 
 // locationToolbar adds the toolbar of the given location tab above its
 // editor, if it does not have it, with buttons to go to the previous and
-// next locations, which can be used from the keyboard, as in the Find
-// tab: the next button has the focus when the tab is shown, and a button
-// keeps the focus after going to a location, so that it can be pressed
-// again.
+// next locations, which can be used from the keyboard: the next button
+// is first, so that moving the focus into the tab focuses it, and a
+// button keeps the focus after going to a location, so that it can be
+// pressed again.
 func (cv *Code) locationToolbar(tab string, ed *textcore.Editor) {
 	fr := ed.Parent.(core.Widget).AsWidget()
 	if fr.NumChildren() > 1 {
@@ -124,25 +124,18 @@ func (cv *Code) locationToolbar(tab string, ed *textcore.Editor) {
 	fr.InsertChild(tb, 0)
 	tb.Maker(func(p *tree.Plan) {
 		tree.Add(p, func(w *core.Button) {
-			w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to the previous location").
-				OnClick(func(e events.Event) {
-					cv.moveLocation(tab, -1)
-					w.SetFocus()
-				})
-		})
-		tree.Add(p, func(w *core.Button) {
 			w.SetIcon(icons.KeyboardArrowDown).SetTooltip("go to the next location").
 				OnClick(func(e events.Event) {
 					cv.moveLocation(tab, 1)
 					w.SetFocus()
 				})
-			// it has the focus when the tab is shown, as in the Find tab:
-			// the start focus is used once, so it is set again for each show,
-			// which comes before it is activated (see [core.WidgetBase.Shown])
-			w.StartFocus()
-			w.OnShow(func(e events.Event) {
-				w.StartFocus()
-			})
+		})
+		tree.Add(p, func(w *core.Button) {
+			w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to the previous location").
+				OnClick(func(e events.Event) {
+					cv.moveLocation(tab, -1)
+					w.SetFocus()
+				})
 		})
 	})
 	fr.Update()
