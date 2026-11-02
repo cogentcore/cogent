@@ -49,6 +49,9 @@ func testSettings(t *testing.T, favs ...string) {
 	})
 	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
 	core.SystemSettings.File = filepath.Join(t.TempDir(), "system.toml") // the favorites are saved there
+	if core.AppearanceSettings.Zoom == 0 {
+		core.NewBody() // loads the settings, which happens once, before setting them here
+	}
 	Settings.Splits, Settings.SplitValues, Settings.TreeSplits = "Wide", nil, nil
 	core.SystemSettings.FavPaths = core.SystemSettings.FavPaths[:0:0]
 	for _, f := range favs {
@@ -175,10 +178,27 @@ func TestFavorites(t *testing.T) {
 		}
 		assert.Equal(t, []string{root, docs, src, "~/projects"}, paths)
 		assert.Equal(t, 4, fv.SliceSize)
+
+		// the context menu edits them, in a window that says they are shared
+		assert.Contains(t, menuItems(func(m *core.Scene, pos image.Point) {
+			for _, menu := range fv.ContextMenus {
+				menu(m, pos)
+			}
+		}), "Edit favorites")
+		d := core.NewBody()
+		fl.makeFavoritesEditor(d)
+		require.Equal(t, 2, d.NumChildren())
+		assert.Contains(t, d.Child(0).(*core.Text).Text, "shared by all Cogent Core apps")
+		assert.Equal(t, &core.SystemSettings.FavPaths, d.Child(1).(*core.Table).Slice)
 	})
 	saved, err := os.ReadFile(core.SystemSettings.File)
 	require.NoError(t, err)
 	assert.Contains(t, string(saved), "~/projects")
+
+	d := core.NewBody("Favorite paths")
+	d.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(600), units.Dp(400)) })
+	fl.makeFavoritesEditor(d)
+	d.AssertRender(t, "favorites-editor")
 }
 
 // TestSplitsSettings tests that the proportions of the splits are saved

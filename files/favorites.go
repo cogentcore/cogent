@@ -5,6 +5,7 @@
 package main
 
 import (
+	"image"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -38,6 +39,41 @@ func (fl *Files) initFavorites(w *core.Table) {
 	w.Updater(func() {
 		w.ResetSelectedIndexes() // so that the same one can be selected again
 	})
+	w.AddContextMenu(func(m *core.Scene, pos image.Point) {
+		core.NewButton(m).SetText("Edit favorites").SetIcon(icons.Edit).
+			SetTooltip("Edit the favorite paths, which are shared by all Cogent Core apps").
+			OnClick(func(e events.Event) {
+				fl.EditFavorites()
+			})
+	})
+}
+
+// EditFavorites edits the favorite paths in a window,
+// saving them when it is closed.
+func (fl *Files) EditFavorites() { //types:add
+	d := core.NewBody("Favorite paths")
+	fl.makeFavoritesEditor(d)
+	d.RunWindowDialog(fl)
+}
+
+// makeFavoritesEditor makes the editor of the favorite paths in the given
+// body, which saves them when it is closed (see [Files.saveFavorites]).
+func (fl *Files) makeFavoritesEditor(d *core.Body) {
+	core.NewText(d).SetType(core.TextSupporting).
+		SetText("The favorite paths are shared by all Cogent Core apps: they are in the Core system settings.")
+	core.NewTable(d).SetSlice(&core.SystemSettings.FavPaths)
+	d.OnClose(func(e events.Event) {
+		fl.saveFavorites()
+	})
+}
+
+// saveFavorites saves the favorite paths in the [core.SystemSettings],
+// and updates the table of them.
+func (fl *Files) saveFavorites() {
+	core.ErrorSnackbar(fl, core.SaveSettings(core.SystemSettings), "Error saving settings")
+	if fv := fl.Favorites(); fv != nil {
+		fv.Update()
+	}
 }
 
 // AddFavorite adds the given directory to the favorite paths, saving them,
@@ -55,10 +91,7 @@ func (fl *Files) AddFavorite(dir string) {
 		}
 	}
 	addFavorite(filepath.Base(dir), path)
-	core.ErrorSnackbar(fl, core.SaveSettings(core.SystemSettings), "Error saving settings")
-	if fv := fl.Favorites(); fv != nil {
-		fv.Update()
-	}
+	fl.saveFavorites()
 }
 
 // addFavorite appends a favorite path with the given name and path to the
