@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
@@ -34,17 +35,21 @@ type Console struct {
 // TheConsole is the console of the app.
 var TheConsole Console
 
-// Init redirects os.Stdout, os.Stderr, and the log to the console.
+// Init redirects os.Stdout, os.Stderr, and the log to the console,
+// except on js, which has no pipes: the output stays in the browser console.
 func (cn *Console) Init() {
+	cn.Lines = lines.NewLines()
+	cn.Lines.Settings.LineNumbers = false
+	cn.Lines.SetFilename("console-buf")
+	cn.Lines.SetReadOnly(true)
+	if runtime.GOOS == "js" {
+		return
+	}
 	outRead, outWrite := errors.Log2(os.Pipe())
 	errRead, errWrite := errors.Log2(os.Pipe())
 	cn.stdout, cn.stderr = os.Stdout, os.Stderr
 	os.Stdout, os.Stderr = outWrite, errWrite
 	log.SetOutput(errWrite)
-	cn.Lines = lines.NewLines()
-	cn.Lines.Settings.LineNumbers = false
-	cn.Lines.SetFilename("console-buf")
-	cn.Lines.SetReadOnly(true)
 	go cn.monitor(outRead, cn.stdout, false)
 	go cn.monitor(errRead, cn.stderr, true)
 }
