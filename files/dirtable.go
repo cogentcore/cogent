@@ -208,6 +208,9 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		OnClick(func(e events.Event) {
 			dt.openSelected()
 		})
+	if fi != nil && !fi.IsDir() {
+		openWithMenuItems(m, fi.Path)
+	}
 	if fi == nil || fi.IsDir() { // the selected directory, or this one
 		dir := dt.Dir
 		if fi != nil {

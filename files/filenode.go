@@ -41,10 +41,13 @@ func (ft *FileTree) Init() {
 // initNode adds the handlers of the nodes of the file tree to the given one:
 // double-clicking shows the files of a directory in a directory tab, and
 // opens a file in its default app, and the context menu of a directory has
-// View, which also shows its files, and the [Files.dirMenuItems].
+// View, which also shows its files, and the [Files.dirMenuItems], and that
+// of a file has the items of [openWithMenuItems].
 func initNode(fn *filetree.Node) {
 	fn.AddContextMenu(func(m *core.Scene, pos image.Point) {
 		if !fn.IsDir() {
+			openWithMenuItems(m, string(fn.Filepath))
+			core.NewSeparator(m)
 			return
 		}
 		fl, ok := ParentFiles(fn.This)

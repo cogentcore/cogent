@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"cogentcore.org/core/base/fileinfo/apps"
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
@@ -305,6 +306,34 @@ func TestContextMenus(t *testing.T) {
 		fl.Tree.Parts.Send(events.DoubleClick)
 		require.Equal(t, 1, fl.DirTabs().NumTabs())
 		assert.Equal(t, root, fl.CurrentDir())
+
+		// Open with, for files, when the system has apps for them
+		file := filepath.Join(root, "b.txt")
+		as, _ := apps.For(file)
+		openItems := []string{"Open with", "Change default app"}
+		dt.table.SelectedIndex = 3 // b.txt
+		tableMenu := menuItems(dt.contextMenu)
+		var nodeMenu []string
+		for _, menu := range nodes["b.txt"].ContextMenus {
+			nodeMenu = append(nodeMenu, menuItems(menu)...)
+		}
+		if len(as) > 0 {
+			assert.Subset(t, tableMenu, openItems)
+			assert.Subset(t, nodeMenu, openItems)
+			m := core.NewScene()
+			openWithMenuItems(m, file)
+			var sub []string
+			m.Child(0).(*core.Button).Menu(m, image.Point{}) // adds the apps to m
+			for _, c := range m.Children[2:] {
+				sub = append(sub, c.(*core.Button).Text)
+			}
+			assert.Equal(t, as[0].Name+" (default)", sub[0])
+			assert.Len(t, sub, len(as))
+			t.Logf("Open with: %v", sub)
+		}
+		for _, it := range openItems {
+			assert.NotContains(t, docsMenu, it)
+		}
 
 		// View shows the files of the directory, as double-clicking does
 		m := core.NewScene()
