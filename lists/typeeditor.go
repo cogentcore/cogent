@@ -44,8 +44,13 @@ func (ls *Lists) typesEdited(snap *typesSnapshot) {
 			return tree.Continue
 		}
 		if !slices.Contains(ls.Types, lt) {
-			ls.Types = append(ls.Types, lt)
-			kept = append(kept, lt.Name)
+			// a type that is moved by dragging is a copy, with the same name
+			if i := slices.IndexFunc(ls.Types, func(o *ListType) bool { return o.Name == lt.Name }); i >= 0 {
+				lt = ls.Types[i]
+			} else {
+				ls.Types = append(ls.Types, lt)
+				kept = append(kept, lt.Name)
+			}
 		}
 		l.TypeName = lt.Name
 		for _, f := range lt.Fields {
@@ -81,7 +86,8 @@ func (ls *Lists) EditType(lt *ListType) {
 	d := core.NewBody("Edit list type")
 	core.Bind(&lt.Name, core.NewTextField(d)).SetTooltip("The name of the list type")
 	core.NewText(d).SetType(core.TextSupporting).SetText(fieldsDoc)
-	core.NewTable(d).SetSlice(&lt.Fields)
+	// the indexes are for dragging the fields to reorder them
+	core.NewTable(d).SetSlice(&lt.Fields).SetShowIndexes(true).SetDragMoves(true)
 	d.OnClose(func(e events.Event) {
 		ls.typesEdited(snap)
 	})
@@ -96,7 +102,9 @@ func (ls *Lists) EditTypes() {
 	snap := ls.snapshotTypes()
 	d := core.NewBody("List types")
 	core.NewText(d).SetType(core.TextSupporting).SetText("The types of the lists, with the fields of their items. " + fieldsDoc)
-	core.NewTable(d).SetSlice(&ls.Types)
+	// the indexes are for dragging the types to reorder them,
+	// the first of which is for new lists
+	core.NewTable(d).SetSlice(&ls.Types).SetShowIndexes(true).SetDragMoves(true)
 	d.OnClose(func(e events.Event) {
 		ls.typesEdited(snap)
 	})

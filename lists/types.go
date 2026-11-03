@@ -64,7 +64,7 @@ func (ft FieldTypes) goType() (reflect.Type, string) {
 }
 
 // Field is a field of a list type, a column of its lists.
-type Field struct {
+type Field struct { //types:add
 
 	// Name is the name of the field, at the top of its column.
 	Name string
@@ -89,7 +89,7 @@ type Field struct {
 // The first field is the tree of the items, with the categories
 // of the items as their parents, such as the aisles of a store
 // in a shopping list.
-type ListType struct {
+type ListType struct { //types:add
 
 	// Name is the name of the list type.
 	Name string

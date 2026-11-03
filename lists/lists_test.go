@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -522,4 +523,37 @@ func TestSetBy(t *testing.T) {
 		ls.itemsChanged()
 		assert.Equal(t, earlier, item(1).Field(doneOn).Interface(), "not when it is set")
 	})
+}
+
+// TestFieldTooltips tests that the headers of the table of the fields of a
+// list type have the docs of the fields as their tooltips, and that the
+// table shows the indexes, for reordering the fields by dragging.
+func TestFieldTooltips(t *testing.T) {
+	b := core.NewBody()
+	lt := standardTypes()[0]
+	tb := core.NewTable(b).SetSlice(&lt.Fields).SetShowIndexes(true)
+	b.AssertRender(t, "field-tooltips", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var tips []string
+		for _, n := range tb.Child(0).AsTree().Children { // the header
+			if bt, ok := n.(*core.Button); ok {
+				tips = append(tips, bt.Tooltip)
+			}
+		}
+		require.Len(t, tips, 5)
+		assert.Contains(t, tips[4], "Set by is, for a date field, the name of a check field")
+	})
+}
+
+// TestTypeMoved tests that a list type that is moved in the library of
+// list types, which makes a copy of it, is still the type of its lists.
+func TestTypeMoved(t *testing.T) {
+	ls := testLists(t, core.NewBody())
+	snap := ls.snapshotTypes()
+	shopping := *ls.TypeOf(findList(ls, "Groceries")) // a copy, as dragging makes
+	ls.Types = append([]*ListType{&shopping}, slices.DeleteFunc(ls.Types, func(lt *ListType) bool { return lt.Name == "Shopping" })...)
+	ls.typesEdited(snap)
+	assert.Len(t, ls.Types, 5, "not kept again")
+	assert.Same(t, &shopping, ls.TypeOf(findList(ls, "Groceries")))
 }
