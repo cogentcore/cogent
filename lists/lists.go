@@ -287,6 +287,18 @@ func (ls *Lists) Init() {
 	ls.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
+	// all of the keys of undo and redo, which the widgets within
+	// do not handle, such as a text field after its edits are accepted
+	ls.OnFinal(events.KeyChord, func(e events.Event) {
+		switch keymap.Of(e.KeyChord()) {
+		case keymap.Undo:
+			ls.Undo()
+			e.SetHandled()
+		case keymap.Redo:
+			ls.Redo()
+			e.SetHandled()
+		}
+	})
 	tree.AddChild(ls, func(w *core.Splits) {
 		w.SetSplits(0.2, 0.8)
 		tree.AddChild(w, func(w *core.Frame) {

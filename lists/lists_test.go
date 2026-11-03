@@ -15,6 +15,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/types"
@@ -395,5 +396,63 @@ func TestHideGroupValues(t *testing.T) {
 		saved := NewLists(core.NewBody())
 		require.NoError(t, saved.Open(ls.Dir))
 		assert.True(t, saved.Root.FindPath("Work/Release").(*List).HideGroupValues, "saved")
+	})
+}
+
+// TestUndoKeys tests undoing an edit with each of the keys of undo, after
+// the edit is accepted in its text field, which keeps the focus, so that
+// typing goes on in it.
+func TestUndoKeys(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(ls.MakeToolbar)
+	})
+	b.AssertRender(t, "undo-keys", func() {
+		b.AsyncLock()
+		ls.SetCurrent(findList(ls, "Chores"))
+		b.AsyncUnlock()
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		cell := ls.table.ListGrid.Child(0).AsTree()
+		tf := cell.Child(cell.NumChildren() - 1).(*core.TextField)
+		bb := tf.Geom.TotalBBox
+		b.AsyncUnlock()
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		press := func(ch key.Chord) {
+			r, code, mods, err := ch.Decode()
+			require.NoError(t, err)
+			src.Key(events.KeyDown, r, code, mods)
+			src.Key(events.KeyUp, r, code, mods)
+			time.Sleep(200 * time.Millisecond)
+		}
+		chordOf := func(kf keymap.Functions) key.Chord {
+			for ch, f := range *keymap.ActiveMap {
+				if f == kf {
+					return ch
+				}
+			}
+			return ""
+		}
+		for ch, kf := range *keymap.ActiveMap {
+			if kf != keymap.Undo {
+				continue
+			}
+			pt := bb.Min.Add(bb.Size().Div(2))
+			src.MouseButton(events.MouseDown, events.Left, pt, 0)
+			src.MouseButton(events.MouseUp, events.Left, pt, 0)
+			time.Sleep(200 * time.Millisecond)
+			press("x")
+			press(chordOf(keymap.Accept))
+			press(ch)
+			b.AsyncLock()
+			assert.Equal(t, "Laundry", tf.Text(), "undone with %s", ch)
+			b.AsyncUnlock()
+			press("y")
+			b.AsyncLock()
+			assert.Equal(t, "Laundryy", tf.Text(), "typing goes on in the text field, after %s", ch)
+			tf.SetText("Laundry").SendChange()
+			b.AsyncUnlock()
+		}
 	})
 }
