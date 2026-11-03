@@ -342,7 +342,6 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Gap.X.Em(1)
-			s.Wrap = ls.Mobile // the switches under the chooser on a small screen
 		})
 		w.Maker(func(p *tree.Plan) { // the title is that of the window on mobile
 			if ls.Mobile {
@@ -372,24 +371,12 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 				w.SetCurrentValue(ls.TypeOf(ls.Current))
 			})
 		})
-		// the switches, which stay together, under the chooser on mobile
+		// the switches, with the other settings of the list in its
+		// settings (see [Lists.listSettings])
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Align.Items = styles.Center
 				s.Gap.X.Em(1)
-			})
-			tree.AddChild(w, func(w *core.Switch) {
-				w.SetText("Group values").SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
-				w.OnChange(func(e events.Event) {
-					ls.Current.HideGroupValues = !w.IsChecked()
-					if ls.table != nil {
-						ls.table.Update()
-					}
-					ls.saveChanges()
-				})
-				w.Updater(func() {
-					w.SetChecked(!ls.Current.HideGroupValues)
-				})
 			})
 			w.Maker(func(p *tree.Plan) { // only for a list type with filter values
 				if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
@@ -411,6 +398,31 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 			})
 		})
 	})
+}
+
+// listSettings edits the settings of the current list in a dialog, with
+// the given context, such as the button for it, returning its body, or nil
+// for no list.
+func (ls *Lists) listSettings(ctx core.Widget) *core.Body {
+	l := ls.Current
+	if l == nil || l.IsGroup() {
+		return nil
+	}
+	d := core.NewBody(l.Name + " settings")
+	sw := core.NewSwitch(d).SetText("Group values").SetChecked(!l.HideGroupValues)
+	sw.SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
+	sw.OnChange(func(e events.Event) {
+		l.HideGroupValues = !sw.IsChecked()
+		if ls.table != nil {
+			ls.table.Update()
+		}
+		ls.saveChanges()
+	})
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddOK(bar).SetText("Done")
+	})
+	d.RunDialog(ctx)
+	return d
 }
 
 // initTable initializes the tree table of the items of the current list.
@@ -798,6 +810,13 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Button) {
+		w.SetText("List settings").SetIcon(icons.Settings).
+			SetTooltip("Edit the settings of the current list, such as whether to show the values of the groups of items")
+		w.OnClick(func(e events.Event) {
+			ls.listSettings(w)
+		})
+	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Edit type").SetIcon(icons.Edit).
 			SetTooltip("Edit the fields of the type of the current list")

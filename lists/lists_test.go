@@ -417,7 +417,10 @@ func TestHideGroupValues(t *testing.T) {
 		rel := ls.Root.FindPath("Work/Release").(*List)
 		ls.SetCurrent(rel)
 		var sw *core.Switch
-		ls.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		d := ls.listSettings(ls)
+		require.NotNil(t, d)
+		defer d.Close()
+		d.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if s, ok := cw.(*core.Switch); ok && s.Text == "Group values" {
 				sw = s
 			}
