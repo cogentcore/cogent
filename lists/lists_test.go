@@ -14,6 +14,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -239,5 +240,27 @@ func TestDeleteField(t *testing.T) {
 		ls.Restyle()
 		assert.Len(t, ls.table.ColumnWidths, 0)
 		assert.Equal(t, `"washer"`, string(chores.Items[1].Values["Notes"]))
+	})
+}
+
+// TestUndoFocus tests that undo keeps the focus where it is.
+func TestUndoFocus(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "undo-focus", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		ls.SetCurrent(findList(ls, "Groceries"))
+		tt := ls.table
+		nw, _ := tt.RowWidgetNs()
+		cell := tt.ListGrid.Child(1 * nw).AsTree() // Apples
+		tf := cell.Child(cell.NumChildren() - 1).(*core.TextField)
+		tf.SetText("Pears").SendChange()
+		tf.SetFocus()
+		tt.SelectIndexEvent(1, events.SelectOne)
+		ls.Undo()
+		assert.Equal(t, "Apples", tf.Text(), "undone in the same text field")
+		assert.True(t, tf.StateIs(states.Focused), "which has the focus")
+		assert.Equal(t, 1, tt.SelectedIndex)
 	})
 }

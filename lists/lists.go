@@ -240,6 +240,11 @@ func (ls *Lists) SetCurrent(l *List) {
 		return
 	}
 	ls.Current = l
+	if tt := ls.table; tt != nil { // which keeps its view for items of the same type
+		tt.SelectedIndex = -1
+		tt.ResetSelectedIndexes()
+		tt.StartIndex = 0
+	}
 	ls.Update()
 }
 
