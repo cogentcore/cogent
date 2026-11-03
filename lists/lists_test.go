@@ -264,3 +264,31 @@ func TestUndoFocus(t *testing.T) {
 		assert.Equal(t, 1, tt.SelectedIndex)
 	})
 }
+
+// TestUniqueNames tests that the lists in a group have unique names,
+// for inserting new lists twice, renaming, and loading.
+func TestUniqueNames(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "unique-names", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		ls.tree.FindSyncNode(gr).InsertBefore()
+		ls.tree.FindSyncNode(gr).InsertBefore()
+		home := ls.Root.FindPath("Home").(*List)
+		var names []string
+		for _, c := range home.Children {
+			names = append(names, c.AsTree().Name)
+		}
+		assert.Equal(t, []string{"New list", "New list 2", "Groceries", "Chores"}, names)
+
+		setUniqueName(findList(ls, "Chores"), "Groceries")
+		assert.Equal(t, "Groceries 2", home.Child(3).AsTree().Name)
+
+		dup := &listData{Name: "Lists", Lists: []*listData{{Name: "A"}, {Name: "A"}}}
+		l := newList(dup)
+		assert.Equal(t, "A 2", l.Child(1).AsTree().Name)
+	})
+}

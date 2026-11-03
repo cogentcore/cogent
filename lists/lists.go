@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -133,7 +134,9 @@ func newList(ld *listData) *List {
 	l.ColumnWidths = ld.ColumnWidths
 	l.Items = ld.Items
 	for _, c := range ld.Lists {
-		l.AddChild(newList(c))
+		cl := newList(c)
+		l.AddChild(cl)
+		setUniqueName(cl, cl.Name)
 	}
 	return l
 }
@@ -371,10 +374,52 @@ func (ls *Lists) treeChanged() {
 		ls.Current = nil
 		ls.Update()
 	}
-	if ls.newLists() {
+	added := ls.newLists()
+	if uniqueNames(ls.Root) || added {
 		ls.tree.Resync()
 	}
 	ls.saveChanges()
+}
+
+// setUniqueName sets the name of the given list to the given name, with
+// a number added if another list in its group has it, as the names of the
+// lists in a group must be unique, for the tree of lists.
+func setUniqueName(l *List, name string) {
+	if l.Parent == nil {
+		l.SetName(name)
+		return
+	}
+	taken := func(nm string) bool {
+		for _, c := range l.Parent.AsTree().Children {
+			if c.AsTree() != l.AsTree() && c.AsTree().Name == nm {
+				return true
+			}
+		}
+		return false
+	}
+	nm := name
+	for i := 2; taken(nm); i++ {
+		nm = fmt.Sprintf("%s %d", name, i)
+	}
+	l.SetName(nm)
+}
+
+// uniqueNames makes the names of the lists in each group of the given
+// list unique (see [setUniqueName]), returning whether any changed.
+func uniqueNames(l *List) bool {
+	changed := false
+	for i, c := range l.Children {
+		cl := c.(*List)
+		for _, o := range l.Children[:i] {
+			if o.AsTree().Name == cl.Name {
+				setUniqueName(cl, cl.Name)
+				changed = true
+				break
+			}
+		}
+		changed = uniqueNames(cl) || changed
+	}
+	return changed
 }
 
 // newLists sets the type and name of the new lists, added by inserting
@@ -389,7 +434,7 @@ func (ls *Lists) newLists() bool {
 	ls.Root.WalkDown(func(n tree.Node) bool {
 		if l := n.(*List); !l.IsGroup() && l.TypeName == "" {
 			l.TypeName = typ
-			l.SetName("New list")
+			setUniqueName(l, "New list")
 			found = true
 		}
 		return tree.Continue
@@ -499,7 +544,6 @@ func (ls *Lists) NewList(at *List, group bool) {
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Make").OnClick(func(e events.Event) {
-			nl.SetName(name)
 			if at == nil {
 				at = ls.Root
 			}
@@ -508,6 +552,7 @@ func (ls *Lists) NewList(at *List, group bool) {
 			} else {
 				at.Parent.AsTree().InsertChild(nl, at.IndexInParent()+1)
 			}
+			setUniqueName(nl, name)
 			ls.tree.Resync()
 			if tr := ls.tree.FindSyncNode(nl); tr != nil {
 				tr.SelectEvent(events.SelectOne)
@@ -527,7 +572,7 @@ func (ls *Lists) Rename(l *List) {
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Rename").OnClick(func(e events.Event) {
-			l.SetName(name)
+			setUniqueName(l, name)
 			ls.tree.Resync()
 			ls.Update()
 			ls.saveChanges()
