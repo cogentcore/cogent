@@ -556,7 +556,7 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 		}
 	}
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Add item").SetIcon(icons.Add).
+		w.SetText("Add item").SetIcon(icons.Add).SetKey(keymap.InsertAfter).
 			SetTooltip("Add an item after the selected one, or at the end")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
 			if idx < 0 {
@@ -567,7 +567,7 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 		}))
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Add sub-item").SetIcon(icons.SubdirectoryArrowRight).
+		w.SetText("Add sub-item").SetIcon(icons.SubdirectoryArrowRight).SetKey(keymap.InsertChild).
 			SetTooltip("Add an item in the selected one, such as an item in a category")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
 			tt.AddChild(idx)
