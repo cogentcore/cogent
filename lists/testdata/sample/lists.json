@@ -1,0 +1,110 @@
+{
+ "Name": "Lists",
+ "Lists": [
+  {
+   "Name": "Home",
+   "Lists": [
+    {
+     "Name": "Groceries",
+     "Type": "Shopping",
+     "Items": [
+      {
+       "Values": {
+        "Item": "Produce"
+       },
+       "Items": [
+        {
+         "Values": {
+          "Item": "Apples",
+          "Quantity": 6,
+          "Store": "Market"
+         }
+        },
+        {
+         "Values": {
+          "Item": "Spinach",
+          "Got": true
+         }
+        }
+       ]
+      },
+      {
+       "Values": {
+        "Item": "Dairy"
+       },
+       "Items": [
+        {
+         "Values": {
+          "Item": "Milk",
+          "Quantity": 2
+         }
+        },
+        {
+         "Values": {
+          "Item": "Yogurt"
+         }
+        }
+       ]
+      },
+      {
+       "Values": {
+        "Item": "Bakery"
+       },
+       "Items": [
+        {
+         "Values": {
+          "Item": "Bread"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "Chores",
+     "Type": "To do",
+     "Items": [
+      {
+       "Values": {
+        "Task": "Laundry",
+        "Done": true
+       }
+      },
+      {
+       "Values": {
+        "Task": "Fix faucet",
+        "Priority": 5,
+        "Notes": "washer"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Name": "Work",
+   "Lists": [
+    {
+     "Name": "Release",
+     "Type": "Project",
+     "Items": [
+      {
+       "Values": {
+        "Task": "Docs"
+       },
+       "Items": [
+        {
+         "Values": {
+          "Task": "Tree table",
+          "Hours": 2,
+          "Owner": "Randy"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
