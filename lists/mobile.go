@@ -43,6 +43,11 @@ func (ls *Lists) openItems() {
 	b.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
+	// the filter switch is in the title line, after the title
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewStretch(bar)
+		core.NewFrame(bar).Maker(ls.makeFilterSwitch)
+	})
 	// the tools are at the bottom, where they have the width of the
 	// screen, with the others in the overflow menu
 	b.AddBottomBar(func(bar *core.Frame) {
@@ -138,5 +143,5 @@ func (ls *Lists) updateItems() {
 		ls.items.Scene.Close()
 		return
 	}
-	ls.items.Update()
+	ls.items.Scene.Update() // with the filter switch in the top bar
 }

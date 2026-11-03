@@ -336,66 +336,48 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 }
 
 // makeListHeader adds the header of the current list to the given plan,
-// with its title, type, and switches.
+// with its title and the filter switch, which are in the top bar of the
+// window of the items in the mobile layout (see [Lists.openItems]). The
+// other settings of the list are in its settings (see [Lists.listSettings]).
 func (ls *Lists) makeListHeader(p *tree.Plan) {
+	if ls.Mobile {
+		return
+	}
 	tree.AddAt(p, "header", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Gap.X.Em(1)
 		})
-		w.Maker(func(p *tree.Plan) { // the title is that of the window on mobile
-			if ls.Mobile {
-				return
-			}
-			tree.AddAt(p, "title", func(w *core.Text) {
-				w.SetType(core.TextHeadlineSmall)
-				w.Styler(func(s *styles.Style) {
-					s.SetTextWrap(false)
-				})
-				w.Updater(func() {
-					w.SetText(ls.Current.Name)
-				})
-			})
-		})
-		tree.AddChild(w, func(w *core.Chooser) {
-			w.SetTooltip("The type of the list, which has the fields of its items")
-			w.OnChange(func(e events.Event) {
-				ls.SetType(w.CurrentItem.Value.(*ListType))
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetType(core.TextHeadlineSmall)
+			w.Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
 			})
 			w.Updater(func() {
-				items := make([]core.ChooserItem, len(ls.Types))
-				for i, lt := range ls.Types {
-					items[i] = core.ChooserItem{Value: lt}
-				}
-				w.SetItems(items...)
-				w.SetCurrentValue(ls.TypeOf(ls.Current))
+				w.SetText(ls.Current.Name)
 			})
 		})
-		// the switches, with the other settings of the list in its
-		// settings (see [Lists.listSettings])
-		tree.AddChild(w, func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Align.Items = styles.Center
-				s.Gap.X.Em(1)
-			})
-			w.Maker(func(p *tree.Plan) { // only for a list type with filter values
-				if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
-					return
-				}
-				tree.AddAt(p, "filter", func(w *core.Switch) {
-					w.SetText("Filter").SetTooltip("Whether to hide the items with the filter values of the fields of the type of the list, such as those that are done")
-					w.OnChange(func(e events.Event) {
-						ls.Current.Filtered = w.IsChecked()
-						if ls.table != nil {
-							ls.table.Update()
-						}
-						ls.saveChanges()
-					})
-					w.Updater(func() {
-						w.SetChecked(ls.Current.Filtered)
-					})
-				})
-			})
+		w.Maker(ls.makeFilterSwitch)
+	})
+}
+
+// makeFilterSwitch adds the switch for filtering the items of the current
+// list to the given plan, for a list type with filter values.
+func (ls *Lists) makeFilterSwitch(p *tree.Plan) {
+	if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
+		return
+	}
+	tree.AddAt(p, "filter", func(w *core.Switch) {
+		w.SetText("Filter").SetTooltip("Whether to hide the items with the filter values of the fields of the type of the list, such as those that are done")
+		w.OnChange(func(e events.Event) {
+			ls.Current.Filtered = w.IsChecked()
+			if ls.table != nil {
+				ls.table.Update()
+			}
+			ls.saveChanges()
+		})
+		w.Updater(func() {
+			w.SetChecked(ls.Current.Filtered)
 		})
 	})
 }
@@ -409,6 +391,15 @@ func (ls *Lists) listSettings(ctx core.Widget) *core.Body {
 		return nil
 	}
 	d := core.NewBody(l.Name + " settings")
+	ch := core.NewChooser(d)
+	ch.SetTooltip("The type of the list, which has the fields of its items")
+	for _, lt := range ls.Types {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: lt})
+	}
+	ch.SetCurrentValue(ls.TypeOf(l))
+	ch.OnChange(func(e events.Event) {
+		ls.SetType(ch.CurrentItem.Value.(*ListType))
+	})
 	sw := core.NewSwitch(d).SetText("Group values").SetChecked(!l.HideGroupValues)
 	sw.SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
 	sw.OnChange(func(e events.Event) {
@@ -812,7 +803,7 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("List settings").SetIcon(icons.Settings).
-			SetTooltip("Edit the settings of the current list, such as whether to show the values of the groups of items")
+			SetTooltip("Edit the settings of the current list: its type, and whether to show the values of the groups of items")
 		w.OnClick(func(e events.Event) {
 			ls.listSettings(w)
 		})

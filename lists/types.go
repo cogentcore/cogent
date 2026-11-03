@@ -47,8 +47,8 @@ const (
 // and its struct tags.
 func (ft FieldTypes) goType() (reflect.Type, string) {
 	switch ft {
-	case Check:
-		return reflect.TypeFor[bool](), ""
+	case Check: // a checkbox, which is smaller than a switch
+		return reflect.TypeFor[bool](), `display:"checkbox"`
 	case Integer:
 		return reflect.TypeFor[int](), ""
 	case Number:
