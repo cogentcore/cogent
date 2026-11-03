@@ -105,6 +105,22 @@ func TestItemsRoundTrip(t *testing.T) {
 	assert.NotEqual(t, copies[0].ID, copies[1].ID)
 }
 
+// TestItemsOtherTypes tests that the values of the items whose fields have
+// other types than when they were saved, as after a change of the type of
+// a field, are the zero values, as for a check field with a text value.
+func TestItemsOtherTypes(t *testing.T) {
+	lt := standardTypes()[0] // to do
+	saved := []*Item{{Values: map[string]json.RawMessage{"Task": []byte(`"Laundry"`), "Done": []byte(`"yes"`), "Priority": []byte(`"high"`)}}}
+	items := lt.newItems(saved)
+	item := items.Elem().Index(0).Elem()
+	assert.Equal(t, "Laundry", item.Field(0).String())
+	assert.False(t, item.Field(1).Bool())
+	assert.Equal(t, int64(3), item.Field(3).Int(), "the default")
+	back := lt.savedItems(items)
+	assert.Equal(t, `false`, string(back[0].Values["Done"]))
+	lt.checkStates(items)
+}
+
 func TestOpenSave(t *testing.T) {
 	ls := testLists(t, core.NewBody())
 	assert.Len(t, ls.Types, 5, "the standard types")

@@ -16,5 +16,5 @@ import (
 // TestGoScript runs the tests of the merges in JavaScript, as for the web,
 // where they use the encoding/json of goscript.
 func TestGoScript(t *testing.T) {
-	goscript.Test(t, goscript.Options{Run: "TestMerge|TestItemsRoundTrip|TestStructType", Timeout: 10 * time.Minute, Browser: true, BrowserChannel: "chrome"})
+	goscript.Test(t, goscript.Options{Run: "TestMerge|TestItems|TestStructType", Timeout: 10 * time.Minute, Browser: true, BrowserChannel: "chrome"})
 }
