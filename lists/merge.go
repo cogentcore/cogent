@@ -239,23 +239,8 @@ func mergeFiles(base, ours, theirs map[string][]byte, oursWins bool) map[string]
 			res[typesFile] = b
 		}
 	} else {
-		typesTree := func(b []byte) *mergeTree {
-			var types []*ListType
-			json.Unmarshal(b, &types)
-			mt := newMergeTree()
-			for _, lt := range types {
-				mt.add(lt.Name, "", map[string]string{"type": string(marshal(lt))})
-			}
-			return mt
-		}
 		mt := merge3(typesTree(base[typesFile]), typesTree(ours[typesFile]), typesTree(theirs[typesFile]), oursWins)
-		var types []*ListType
-		for _, id := range mt.children[""] {
-			lt := &ListType{}
-			json.Unmarshal([]byte(mt.nodes[id].props["type"]), lt)
-			types = append(types, lt)
-		}
-		res[typesFile] = marshal(types)
+		res[typesFile] = marshal(mt.types())
 	}
 
 	// the tree of lists, in which a list that is deleted on one side is
@@ -359,6 +344,74 @@ func mergeList(base, ours, theirs []byte, name string, oursWins bool) *listFile 
 	lf.Name = name
 	lf.Items = merge3(trees[0], trees[1], trees[2], oursWins).items("")
 	return lf
+}
+
+// fieldSep separates the name of a list type from that of one of its
+// fields in the ID of the merge node of the field (see [typesTree]).
+const fieldSep = "\n"
+
+// typesTree returns the merge tree of the given file of the list types,
+// with the fields of each type in it, by name, and their settings as their
+// properties, without those that are not set, so that a setting that is
+// set on one side only, such as the Filter of a field, is merged as a
+// change, as on the first sync of a device, with no base.
+func typesTree(b []byte) *mergeTree {
+	var types []*ListType
+	json.Unmarshal(b, &types)
+	mt := newMergeTree()
+	for _, lt := range types {
+		mt.add(lt.Name, "", setProps(&ListType{Name: lt.Name}))
+		for _, f := range lt.Fields {
+			mt.add(lt.Name+fieldSep+f.Name, lt.Name, setProps(f))
+		}
+	}
+	return mt
+}
+
+// types returns the list types of the given merged tree (see [typesTree]),
+// without the fields of a deleted type, which are at the top.
+func (mt *mergeTree) types() []*ListType {
+	var types []*ListType
+	for _, id := range mt.children[""] {
+		if strings.Contains(id, fieldSep) {
+			continue
+		}
+		lt := &ListType{}
+		fromProps(mt.nodes[id].props, lt)
+		for _, fid := range mt.children[id] {
+			f := &Field{}
+			fromProps(mt.nodes[fid].props, f)
+			lt.Fields = append(lt.Fields, f)
+		}
+		types = append(types, lt)
+	}
+	return types
+}
+
+// setProps returns the properties of a merge node of the given struct:
+// the JSON of its fields by name, without those with zero values.
+func setProps(v any) map[string]string {
+	var fields map[string]json.RawMessage
+	json.Unmarshal(marshal(v), &fields)
+	props := map[string]string{}
+	for name, raw := range fields {
+		switch string(raw) {
+		case `""`, `0`, `false`, `null`, `[]`, `{}`:
+			continue
+		}
+		props[name] = string(raw)
+	}
+	return props
+}
+
+// fromProps sets the given struct from the given properties of its merge
+// node (see [setProps]).
+func fromProps(props map[string]string, v any) {
+	fields := map[string]json.RawMessage{}
+	for name, s := range props {
+		fields[name] = json.RawMessage(s)
+	}
+	json.Unmarshal(marshal(fields), v)
 }
 
 // valuePrefix is the prefix of the names of the properties of the merge

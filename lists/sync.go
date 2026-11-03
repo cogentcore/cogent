@@ -282,7 +282,8 @@ func (ls *Lists) syncOnce() error {
 				return nil
 			}
 			ls.syncs.mu.Lock()
-			oursWins := ls.syncs.lastEdit.After(date)
+			// the repository wins on the first sync of a device, with no base
+			oursWins := st.Commit != "" && ls.syncs.lastEdit.After(date)
 			ls.syncs.mu.Unlock()
 			merged = mergeFiles(base, local, remote, oursWins)
 			if st.Commit == "" && remote[treeFile] != nil && ls.isDefault() {

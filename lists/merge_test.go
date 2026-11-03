@@ -196,3 +196,25 @@ func TestMergeFiles(t *testing.T) {
 	assert.Equal(t, ours, mergeFiles(base, ours, base, false))
 	assert.Equal(t, ours, mergeFiles(ours, ours, ours, false))
 }
+
+// TestMergeTypes tests merging the list types by their fields and the
+// settings of the fields, also without a base, as on the first sync of
+// a device whose types do not have the newer settings.
+func TestMergeTypes(t *testing.T) {
+	old := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check}, {Name: "Done on", Type: Date}}}}
+	newer := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}}
+	typesOf := func(b []byte) []*ListType {
+		var types []*ListType
+		assert.NoError(t, json.Unmarshal(b, &types))
+		return types
+	}
+	merged := mergeFiles(nil, map[string][]byte{typesFile: marshal(old)}, map[string][]byte{typesFile: marshal(newer)}, true)
+	assert.Equal(t, newer, typesOf(merged[typesFile]), "the settings that are set win")
+
+	// different settings of a field, and a field added, on each side
+	ours := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}}
+	theirs := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Default: "New"}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
+	merged = mergeFiles(map[string][]byte{typesFile: marshal(newer)}, map[string][]byte{typesFile: marshal(ours)}, map[string][]byte{typesFile: marshal(theirs)}, false)
+	want := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Default: "New", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
+	assert.Equal(t, want, typesOf(merged[typesFile]))
+}

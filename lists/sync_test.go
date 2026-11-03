@@ -214,3 +214,37 @@ func TestSyncErrors(t *testing.T) {
 	assert.ErrorContains(t, err, "is not found, or the token cannot access it")
 	assert.Len(t, s.Commits("me/lists", "other"), 0, "no commit, of a README")
 }
+
+// TestSyncFirstOldTypes tests the first sync of a device that has its own
+// lists, with list types that do not have the newer settings of the fields,
+// and a recent edit, with a repository that has them, which win.
+func TestSyncFirstOldTypes(t *testing.T) {
+	s := testSync(t)
+	b := core.NewBody()
+	a := testLists(t, b)
+	other := testLists(t, b)
+	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
+	b.AssertRender(t, "sync-first-old-types", func() {
+		require.NoError(t, a.syncOnce())
+		b.AsyncLock()
+		lt := other.TypeOf(findList(other, "Chores"))
+		for _, f := range lt.Fields {
+			f.Filter, f.SetBy = "", "" // as saved before those settings
+		}
+		other.saveChanges() // a recent edit
+		b.AsyncUnlock()
+
+		require.NoError(t, other.syncOnce())
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		want := a.TypeOf(findList(a, "Chores"))
+		got := other.TypeOf(findList(other, "Chores"))
+		assert.Equal(t, want.Fields, got.Fields, "the settings of the repository")
+		var hasFilter bool
+		for _, f := range got.Fields {
+			hasFilter = hasFilter || f.Filter != ""
+		}
+		assert.True(t, hasFilter)
+		assert.NotEmpty(t, s.Files("me/lists", "main")[typesFile])
+	})
+}
