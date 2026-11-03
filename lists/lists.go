@@ -322,6 +322,7 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.TreeTable) {
 		ls.table = w
+		w.SetDragMoves(true) // reordering the items, unlike the lists
 		w.OnChange(func(e events.Event) {
 			ls.itemsChanged()
 		})
