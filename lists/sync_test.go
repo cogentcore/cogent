@@ -191,3 +191,24 @@ func TestSyncWaitsForEdits(t *testing.T) {
 		assert.Contains(t, string(chores.Items[0].Values["Task"]), "x", "with the edit")
 	})
 }
+
+// TestSyncErrors tests the errors of syncing with a token that is not
+// valid, and with a branch that is not in the repository.
+func TestSyncErrors(t *testing.T) {
+	s := testSync(t)
+	ls := testLists(t, core.NewBody())
+	assert.False(t, syncing())
+	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main"}
+	assert.False(t, syncing(), "without a token")
+	Settings.Sync.Token = "wrong"
+	err := ls.syncOnce()
+	assert.ErrorContains(t, err, "the token is not valid")
+
+	Settings.Sync.Token = "token"
+	require.NoError(t, ls.syncOnce())
+	assert.Len(t, s.Commits("me/lists", "main"), 2)
+	Settings.Sync.Branch = "other"
+	err = ls.syncOnce()
+	assert.ErrorContains(t, err, "is not found, or the token cannot access it")
+	assert.Len(t, s.Commits("me/lists", "other"), 0, "no commit, of a README")
+}

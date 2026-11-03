@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"maps"
 	"net/http"
 	"os"
@@ -137,9 +138,11 @@ type syncer struct {
 	mu sync.Mutex
 }
 
-// syncing returns whether the lists sync with a repository.
+// syncing returns whether the lists sync with a repository: whether the
+// [SyncSettings] have a repository and a token, which are needed for
+// writing to it.
 func syncing() bool {
-	return Settings.Sync.Repo != ""
+	return Settings.Sync.Repo != "" && Settings.Sync.Token != ""
 }
 
 // Sync syncs the lists with the repository of the [SyncSettings] now,
@@ -161,6 +164,9 @@ func (ls *Lists) Sync() { //types:add
 		ls.updateSyncButton()
 		for {
 			err := ls.syncOnce()
+			if err != nil {
+				slog.Error("Lists: error syncing", "repo", Settings.Sync.Repo, "err", err)
+			}
 			sy.mu.Lock()
 			sy.err = err
 			sy.lastSync = time.Now()
@@ -245,21 +251,23 @@ func (ls *Lists) syncOnce() error {
 	st := ls.readSyncState(cfg)
 	for range syncTries {
 		head, err := c.Head(cfg.Repo, cfg.Branch)
-		if status := github.StatusOf(err); status == http.StatusConflict || (status == http.StatusNotFound && st.Commit == "") {
-			// a repository without commits, which the API needs
+		switch github.StatusOf(err) {
+		case http.StatusConflict: // a repository without commits, which the API needs
 			err := c.PutFile(cfg.Repo, cfg.Branch, "README.md", "Start the lists", []byte("# Lists\n\nThe lists of [Cogent Lists](https://cogentcore.org/cogent/lists).\n"))
 			if err != nil {
-				return fmt.Errorf("making the first commit of %s: %w", cfg.Repo, err)
+				return fmt.Errorf("making the first commit of %s: %w", cfg.Repo, syncError(err))
 			}
 			continue
+		case http.StatusNotFound:
+			return fmt.Errorf("the repository %s, with the branch %s, is not found, or the token cannot access it: the token must be for this repository, with the Contents permission for Read and write: %w", cfg.Repo, cfg.Branch, err)
 		}
 		if err != nil {
-			return err
+			return syncError(err)
 		}
 		base := st.files()
 		remote, date, err := ls.remoteFiles(c, cfg.Repo, head, st, base)
 		if err != nil {
-			return err
+			return syncError(err)
 		}
 
 		// the merge of the changes, here
@@ -305,7 +313,7 @@ func (ls *Lists) syncOnce() error {
 				continue
 			}
 			if err != nil {
-				return err
+				return syncError(err)
 			}
 		}
 		st.Commit = head
@@ -326,6 +334,18 @@ func (ls *Lists) isDefault() bool {
 	}
 	l := ls.Root.Child(0).(*List)
 	return !l.IsGroup() && l.Name == "To do" && len(l.Items) == 0
+}
+
+// syncError returns the given error of a request of the GitHub API, with
+// an explanation for an error of the token.
+func syncError(err error) error {
+	switch github.StatusOf(err) {
+	case http.StatusUnauthorized:
+		return fmt.Errorf("the token is not valid, or has expired: %w", err)
+	case http.StatusForbidden:
+		return fmt.Errorf("the token cannot write the repository: it needs the Contents permission for Read and write: %w", err)
+	}
+	return err
 }
 
 // remoteFiles returns the files of the lists of the given commit of the
