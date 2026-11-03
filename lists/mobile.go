@@ -10,7 +10,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
@@ -58,11 +57,7 @@ func (ls *Lists) openItems() {
 			return
 		}
 		ls.makeListHeader(p)
-		tree.AddAt(p, "table", func(w *core.TreeTable) {
-			w.ShowField = ls.mobileField // before the items, which initTable sets
-			ls.initTable(w)
-			w.SetRowButton(icons.Edit, "Edit the item, with all of its fields", ls.editItem)
-		})
+		tree.AddAt(p, "table", ls.initTable)
 	})
 	b.Updater(func() {
 		if ls.Current != nil {
@@ -76,19 +71,42 @@ func (ls *Lists) openItems() {
 	ls.runStage(b)
 }
 
-// mobileField returns whether to show the given field of the items in the
-// mobile layout: the first field, which has the tree of the items, and the
-// first check field of the type of the current list, such as Done.
-func (ls *Lists) mobileField(field reflect.StructField) bool {
+// tableField returns whether to show the given field of the items of the
+// current list in the table (see [ListType.inTable]).
+func (ls *Lists) tableField(field reflect.StructField) bool {
 	lt := ls.TypeOf(ls.Current)
-	if lt == nil || len(field.Index) != 1 {
-		return true
+	if lt == nil || len(field.Index) != 1 || field.Index[0] >= len(lt.Fields) {
+		return true // the fields of the tree are hidden anyway
 	}
-	i := field.Index[0]
-	if i == 0 || i >= len(lt.Fields) { // the fields of the tree are hidden anyway
+	return lt.inTable(field.Index[0], ls.Mobile)
+}
+
+// inTable returns whether the field with the given index is in the table
+// of the items, in the mobile layout if mobile is true: the first field,
+// which has the tree of the items, and the others that are not detail
+// fields (see [Field.Detail]), and in the mobile layout, only the first
+// check field, such as Done. The others are only in the form of an item
+// (see [Lists.editItem]).
+func (lt *ListType) inTable(i int, mobile bool) bool {
+	switch {
+	case i == 0:
 		return true
+	case lt.Fields[i].Detail:
+		return false
 	}
-	return i == lt.firstCheck()
+	return !mobile || i == lt.firstCheck()
+}
+
+// hasFormFields returns whether the list type has fields that are only in
+// the form of an item, and not in the table, in the mobile layout if mobile
+// is true, for which the items have edit buttons.
+func (lt *ListType) hasFormFields(mobile bool) bool {
+	for i := range lt.Fields {
+		if !lt.inTable(i, mobile) {
+			return true
+		}
+	}
+	return false
 }
 
 // firstCheck returns the index of the first check field, or -1 if none.
@@ -101,9 +119,9 @@ func (lt *ListType) firstCheck() int {
 	return -1
 }
 
-// editItem opens the window of the form of the given item of the current
-// list, a pointer to its struct, in the mobile layout, with all of its
-// fields, whose edits are saved as they are made.
+// editItem opens the form of the given item of the current list, a pointer
+// to its struct, with all of its fields, whose edits are saved as they are
+// made: in its window in the mobile layout, and in a dialog otherwise.
 func (ls *Lists) editItem(item any) {
 	if ls.form != nil {
 		return
@@ -125,7 +143,14 @@ func (ls *Lists) editItem(item any) {
 			ls.table.Update()
 		}
 	})
-	ls.runStage(b)
+	if ls.Mobile {
+		ls.runStage(b)
+		return
+	}
+	b.AddBottomBar(func(bar *core.Frame) {
+		b.AddOK(bar).SetText("Done")
+	})
+	b.RunDialog(ls)
 }
 
 // updateItems updates the window of the items of the current list, and

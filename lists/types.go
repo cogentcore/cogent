@@ -87,6 +87,10 @@ type Field struct { //types:add
 	// Filter is a value of the field, such as true for a check field
 	// like Done, for which the items are hidden when the list is filtered.
 	Filter string
+
+	// Detail is whether the field is only in the form of an item, which
+	// its edit button opens, and not in the table, as for notes.
+	Detail bool
 }
 
 // ListType is a type of list, with the fields of its items.
@@ -128,6 +132,9 @@ func (lt *ListType) StructType() reflect.Type {
 		}
 		if f.Default != "" {
 			tags += fmt.Sprintf(" default:%q", f.Default)
+		}
+		if f.Detail && len(fields) > 0 { // the first field is the tree
+			tags += ` table:"-"`
 		}
 		tags += " " + f.Tags
 		fields = append(fields, reflect.StructField{Name: name, Type: typ, Tag: reflect.StructTag(strings.TrimSpace(tags))})
@@ -381,7 +388,7 @@ func standardTypes() []*ListType {
 			{Name: "Done", Type: Check, Filter: "true"},
 			{Name: "Due", Type: Date},
 			{Name: "Priority", Type: Integer, Default: "3", Tags: `min:"1" max:"5"`},
-			{Name: "Notes"},
+			{Name: "Notes", Detail: true},
 			{Name: "Done on", Type: Date, SetBy: "Done"},
 		}},
 		{Name: "Shopping", Fields: []*Field{
@@ -389,7 +396,7 @@ func standardTypes() []*ListType {
 			{Name: "Got", Type: Check, Filter: "true"},
 			{Name: "Quantity", Type: Integer, Default: "1", Tags: `min:"0"`},
 			{Name: "Store"},
-			{Name: "Notes"},
+			{Name: "Notes", Detail: true},
 		}},
 		{Name: "Project", Fields: []*Field{
 			{Name: "Task"},

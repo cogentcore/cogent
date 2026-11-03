@@ -424,6 +424,7 @@ func (ls *Lists) initTable(w *core.TreeTable) {
 	// the mobile layout fits the width of the screen, without the column
 	// widths, which are those of this device, and not synced
 	w.FitWidth = ls.Mobile
+	w.ShowField = ls.tableField // before the items
 	w.OnChange(func(e events.Event) {
 		if !ls.Mobile {
 			ls.Current.ColumnWidths = w.ColumnWidths
@@ -432,6 +433,12 @@ func (ls *Lists) initTable(w *core.TreeTable) {
 		ls.itemsChanged()
 	})
 	w.Updater(func() {
+		// the edit button of the items, for the fields only in their forms
+		if lt := ls.TypeOf(ls.Current); lt != nil && lt.hasFormFields(ls.Mobile) {
+			w.SetRowButton(icons.Edit, "Edit the item, with all of its fields", ls.editItem)
+		} else {
+			w.SetRowButton("", "", nil)
+		}
 		w.SetItems(ls.values(ls.Current))
 		w.HideGroupValues = ls.Current.HideGroupValues
 		w.ShowItem = nil

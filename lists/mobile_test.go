@@ -67,7 +67,7 @@ func TestMobile(t *testing.T) {
 		names := []string{}
 		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
 			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
-			if ls.mobileField(f) && f.Tag.Get("display") != "-" {
+			if ls.tableField(f) && f.Tag.Get("display") != "-" {
 				names = append(names, f.Name)
 			}
 		}
@@ -164,5 +164,70 @@ func TestMobileLong(t *testing.T) {
 	gr.HideGroupValues = true // the first row is a group, without values
 	b.AssertRender(t, "mobile-long", func() {
 		openMobileItems(t, b, ls, "Groceries")
+	})
+}
+
+// TestDetailField tests a detail field on desktop, which is only in the
+// form of an item, which its edit button opens, in a dialog.
+func TestDetailField(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "detail-field", func() {
+		b.AsyncLock()
+		chores := findList(ls, "Chores")
+		lt := ls.TypeOf(chores)
+		require.True(t, lt.Fields[4].Detail, "Notes")
+		ls.SetCurrent(chores)
+		b.AsyncUnlock()
+		time.Sleep(200 * time.Millisecond)
+
+		b.AsyncLock()
+		tt := ls.table
+		require.NotNil(t, tt)
+		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
+			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
+			if f.Name == "Notes" {
+				assert.Equal(t, "-", f.Tag.Get("table"), "not in the table")
+			}
+		}
+		nw, _ := tt.RowWidgetNs()
+		edit, ok := tt.ListGrid.Child(nw - 1).(*core.Button)
+		require.True(t, ok, "the edit button")
+		edit.Send(events.Click) // which is past the narrow window
+		b.AsyncUnlock()
+		time.Sleep(300 * time.Millisecond)
+
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.NotNil(t, ls.form, "the form of the item, in a dialog")
+		form := ls.form.Child(0).(*core.Form)
+		item := reflect.ValueOf(form.Struct).Elem()
+		item.FieldByName("Notes").SetString("Sort the whites")
+		form.SendChange()
+		assert.Equal(t, `"Sort the whites"`, string(chores.Items[0].Values["Notes"]), "saved")
+	})
+}
+
+// TestMobileChecklist tests that the items of a simple checklist, with
+// only a text field and a check field, have no edit buttons in the mobile
+// layout, as all of their fields are in the table.
+func TestMobileChecklist(t *testing.T) {
+	b := core.NewBody()
+	ls := testMobile(t, b)
+	ls.Types = append(ls.Types, &ListType{Name: "Checklist", Fields: []*Field{{Name: "Item"}, {Name: "Done", Type: Check}}})
+	gr := findList(ls, "Groceries") // before the window, which needs no lock
+	gr.TypeName = "Checklist"
+	gr.values = reflect.Value{}
+	b.AssertRender(t, "mobile-checklist", func() {
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		b.AsyncLock()
+		tr := ls.tree.FindSyncNode(gr)
+		b.AsyncUnlock()
+		click(src, tr)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.NotNil(t, ls.table)
+		nw, idxOff := ls.table.RowWidgetNs()
+		assert.Equal(t, 2, nw-idxOff, "the item and the check, without an edit button")
 	})
 }

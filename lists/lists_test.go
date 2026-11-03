@@ -580,8 +580,9 @@ func TestFieldTooltips(t *testing.T) {
 				tips = append(tips, bt.Tooltip)
 			}
 		}
-		require.Len(t, tips, 6)
+		require.Len(t, tips, 7)
 		assert.Contains(t, tips[4], "Set by is, for a date field, the name of a check field")
+		assert.Contains(t, tips[6], "Detail is whether the field is only in the form of an item")
 	})
 }
 
