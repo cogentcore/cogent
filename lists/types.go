@@ -83,6 +83,10 @@ type Field struct { //types:add
 	// SetBy is, for a date field, the name of a check field, such as
 	// Done, whose checking sets this date to today, if it is not set.
 	SetBy string
+
+	// Filter is a value of the field, such as true for a check field
+	// like Done, for which the items are hidden when the list is filtered.
+	Filter string
 }
 
 // ListType is a type of list, with the fields of its items.
@@ -314,6 +318,33 @@ func (lt *ListType) setDates(items reflect.Value, prev map[checkKey]bool) bool {
 	return set
 }
 
+// hasFilter returns whether a field of the list type has a filter value.
+func (lt *ListType) hasFilter() bool {
+	for _, f := range lt.Fields {
+		if strings.TrimSpace(f.Filter) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// showItem returns whether to show the given item, a pointer to a struct of
+// the [ListType.StructType], when the list is filtered: if none of its fields
+// have their filter values, which are compared as text, ignoring case.
+func (lt *ListType) showItem(item any) bool {
+	v := reflect.ValueOf(item).Elem()
+	for i, f := range lt.Fields {
+		filter := strings.TrimSpace(f.Filter)
+		if filter == "" {
+			continue
+		}
+		if strings.EqualFold(reflectx.ToString(v.Field(i).Interface()), filter) {
+			return false
+		}
+	}
+	return true
+}
+
 // renameField renames the values of the field with the old name to
 // the new name in the given saved items.
 func renameField(items []*Item, old, new string) {
@@ -331,7 +362,7 @@ func standardTypes() []*ListType {
 	return []*ListType{
 		{Name: "To do", Fields: []*Field{
 			{Name: "Task"},
-			{Name: "Done", Type: Check},
+			{Name: "Done", Type: Check, Filter: "true"},
 			{Name: "Due", Type: Date},
 			{Name: "Priority", Type: Integer, Default: "3", Tags: `min:"1" max:"5"`},
 			{Name: "Notes"},
@@ -339,14 +370,14 @@ func standardTypes() []*ListType {
 		}},
 		{Name: "Shopping", Fields: []*Field{
 			{Name: "Item"},
-			{Name: "Got", Type: Check},
+			{Name: "Got", Type: Check, Filter: "true"},
 			{Name: "Quantity", Type: Integer, Default: "1", Tags: `min:"0"`},
 			{Name: "Store"},
 			{Name: "Notes"},
 		}},
 		{Name: "Project", Fields: []*Field{
 			{Name: "Task"},
-			{Name: "Done", Type: Check},
+			{Name: "Done", Type: Check, Filter: "true"},
 			{Name: "Owner"},
 			{Name: "Due", Type: Date},
 			{Name: "Hours", Type: Number, Tags: `min:"0" step:"0.5"`},
@@ -355,12 +386,12 @@ func standardTypes() []*ListType {
 		{Name: "Reading", Fields: []*Field{
 			{Name: "Title"},
 			{Name: "Author"},
-			{Name: "Read", Type: Check},
+			{Name: "Read", Type: Check, Filter: "true"},
 			{Name: "Rating", Type: Integer, Tags: `min:"0" max:"5"`},
 		}},
 		{Name: "Simple", Fields: []*Field{
 			{Name: "Item"},
-			{Name: "Done", Type: Check},
+			{Name: "Done", Type: Check, Filter: "true"},
 		}},
 	}
 }

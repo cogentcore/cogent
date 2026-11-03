@@ -46,6 +46,10 @@ type List struct {
 	// direction (see [core.Table.SortFieldName]).
 	Sort string `display:"-"`
 
+	// Filtered is whether the items with the filter values of the fields
+	// of the type of the list are hidden (see [Field.Filter]).
+	Filtered bool `display:"-"`
+
 	// HideGroupValues is whether the items with items in them, such as
 	// categories, show only their first field
 	// (see [core.TreeTable.HideGroupValues]).
@@ -110,6 +114,7 @@ type listData struct {
 	ColumnWidths    map[string]float32 `json:",omitempty"`
 	Sort            string             `json:",omitempty"`
 	HideGroupValues bool               `json:",omitempty"`
+	Filtered        bool               `json:",omitempty"`
 	Items           []*Item            `json:",omitempty"`
 	Lists           []*listData        `json:",omitempty"`
 }
@@ -152,6 +157,7 @@ func newList(ld *listData) *List {
 	l.ColumnWidths = ld.ColumnWidths
 	l.Sort = ld.Sort
 	l.HideGroupValues = ld.HideGroupValues
+	l.Filtered = ld.Filtered
 	l.Items = ld.Items
 	for _, c := range ld.Lists {
 		cl := newList(c)
@@ -163,7 +169,7 @@ func newList(ld *listData) *List {
 
 // listData returns the saved form of the given list.
 func (ls *List) listData() *listData {
-	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Items: ls.Items}
+	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Filtered: ls.Filtered, Items: ls.Items}
 	for _, c := range ls.Children {
 		ld.Lists = append(ld.Lists, c.(*List).listData())
 	}
@@ -253,7 +259,8 @@ func (ls *Lists) values(l *List) any {
 func (ls *Lists) itemsChanged() {
 	if l := ls.Current; l != nil && l.values.IsValid() {
 		lt := ls.TypeOf(l)
-		if lt.setDates(l.values, l.checks) && ls.table != nil {
+		// with the dates set, and the items filtered by their new values
+		if (lt.setDates(l.values, l.checks) || l.Filtered) && ls.table != nil {
 			ls.table.Update()
 		}
 		l.checks = lt.checkStates(l.values)
@@ -309,8 +316,14 @@ func (ls *Lists) Init() {
 			e.SetHandled()
 		}
 	})
+	ls.OnShow(func(e events.Event) {
+		ls.applySplits()
+	})
 	tree.AddChild(ls, func(w *core.Splits) {
 		w.SetSplits(0.2, 0.8)
+		w.OnChange(func(e events.Event) {
+			ls.saveSplits()
+		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
@@ -404,6 +417,24 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 				w.SetChecked(!ls.Current.HideGroupValues)
 			})
 		})
+		w.Maker(func(p *tree.Plan) { // only for a list type with filter values
+			if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
+				return
+			}
+			tree.AddAt(p, "filter", func(w *core.Switch) {
+				w.SetText("Filter").SetTooltip("Whether to hide the items with the filter values of the fields of the type of the list, such as those that are done")
+				w.OnChange(func(e events.Event) {
+					ls.Current.Filtered = w.IsChecked()
+					if ls.table != nil {
+						ls.table.Update()
+					}
+					ls.saveChanges()
+				})
+				w.Updater(func() {
+					w.SetChecked(ls.Current.Filtered)
+				})
+			})
+		})
 	})
 	tree.Add(p, func(w *core.TreeTable) {
 		ls.table = w
@@ -417,6 +448,10 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 		w.Updater(func() {
 			w.SetItems(ls.values(ls.Current))
 			w.HideGroupValues = ls.Current.HideGroupValues
+			w.ShowItem = nil
+			if lt := ls.TypeOf(ls.Current); ls.Current.Filtered && lt.hasFilter() {
+				w.ShowItem = lt.showItem
+			}
 			if ls.tableList != ls.Current { // the table has those of the list after
 				ls.tableList = ls.Current
 				w.ColumnWidths = ls.Current.ColumnWidths

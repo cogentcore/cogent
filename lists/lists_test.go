@@ -541,7 +541,7 @@ func TestFieldTooltips(t *testing.T) {
 				tips = append(tips, bt.Tooltip)
 			}
 		}
-		require.Len(t, tips, 5)
+		require.Len(t, tips, 6)
 		assert.Contains(t, tips[4], "Set by is, for a date field, the name of a check field")
 	})
 }
@@ -556,4 +556,61 @@ func TestTypeMoved(t *testing.T) {
 	ls.typesEdited(snap)
 	assert.Len(t, ls.Types, 5, "not kept again")
 	assert.Same(t, &shopping, ls.TypeOf(findList(ls, "Groceries")))
+}
+
+// TestFilter tests filtering the items by the filter values of the fields
+// of the type of a list, such as true for Done, with the Filter switch.
+func TestFilter(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "filter", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		chores := findList(ls, "Chores")
+		ls.SetCurrent(chores)
+		var sw *core.Switch
+		ls.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if s, ok := cw.(*core.Switch); ok && s.Text == "Filter" {
+				sw = s
+			}
+			return sw == nil
+		})
+		require.NotNil(t, sw, "a switch for a list type with filter values")
+		assert.Equal(t, 2, ls.table.SliceSize)
+		sw.SetChecked(true)
+		sw.SendChange()
+		assert.True(t, chores.Filtered)
+		assert.Equal(t, 1, ls.table.SliceSize, "without Laundry, which is done")
+
+		item := reflect.ValueOf(ls.table.Items).Elem().Index(1).Elem() // Fix faucet
+		item.Field(1).SetBool(true)
+		ls.itemsChanged()
+		assert.Equal(t, 0, ls.table.SliceSize, "and now without Fix faucet")
+
+		saved := NewLists(core.NewBody())
+		require.NoError(t, saved.Open(ls.Dir))
+		assert.True(t, findList(saved, "Chores").Filtered, "saved")
+	})
+}
+
+// TestSettingsSplits tests that the proportions of the splits are saved
+// in the settings, and applied.
+func TestSettingsSplits(t *testing.T) {
+	file := Settings.File
+	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	defer func() { Settings.File = file }()
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "settings-splits", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		ls.splits().SetSplits(0.35, 0.65)
+		ls.saveSplits()
+		assert.InDeltaSlice(t, []float32{0.35, 0.65}, Settings.Splits, 0.001)
+		_, err := os.Stat(Settings.File)
+		assert.NoError(t, err, "saved")
+		ls.splits().SetSplits(0.5, 0.5)
+		ls.applySplits()
+		assert.InDeltaSlice(t, []float32{0.35, 0.65}, ls.splits().Splits(), 0.001)
+	})
 }
