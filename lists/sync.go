@@ -247,7 +247,7 @@ func (ls *Lists) syncOnce() error {
 	if cfg.Branch == "" {
 		cfg.Branch = "main"
 	}
-	c := &github.Client{API: githubAPI, Token: string(cfg.Token), HTTP: &http.Client{Timeout: 30 * time.Second}}
+	c := &github.Client{API: githubAPI, Token: string(cfg.Token), HTTP: syncHTTP}
 	st := ls.readSyncState(cfg)
 	for range syncTries {
 		head, err := c.Head(cfg.Repo, cfg.Branch)
