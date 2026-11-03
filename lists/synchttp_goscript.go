@@ -4,7 +4,7 @@
 
 //go:build goscript
 
-package main
+package lists
 
 import "net/http"
 

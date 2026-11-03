@@ -2,21 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Command lists is an app for lists, such as to-do and shopping lists,
-// in groups, with the items of each list in categories, and the fields
-// of the items given by the type of the list.
+// Command lists is Cogent Lists on desktop platforms (see package lists),
+// which opens the lists in the directory given as its argument, if any.
 package main
-
-//go:generate core generate
 
 import (
 	_ "embed"
 	"os"
 	"strings"
 
-	"cogentcore.org/core/base/errors"
+	"cogentcore.org/cogent/lists"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 )
 
 // appIcon is the icon of the app, which core build also sets, but go
@@ -28,18 +24,10 @@ var appIcon string
 func main() {
 	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Lists")
-	dir := core.TheApp.AppDataDir()
+	dir := ""
 	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
 		dir = os.Args[1]
 	}
-	ls := NewLists(b)
-	theLists = ls
-	errors.Log(ls.Open(dir))
-	b.OnShow(func(e events.Event) {
-		ls.StartSync()
-	})
-	b.AddTopBar(func(bar *core.Frame) {
-		core.NewToolbar(bar).Maker(ls.MakeToolbar)
-	})
+	lists.NewApp(b, dir)
 	b.RunMainWindow()
 }

@@ -1,5 +1,8 @@
 Name = "Cogent Lists"
 
+# the ID that the app had in the lists directory, before cmd/lists
+ID = "com.cogent.lists"
+
 # installed App makes a symlink into ~/go/bin version of app, so it is updated
 # with a simple go install.
 AppGoSymlink = true

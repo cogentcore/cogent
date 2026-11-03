@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package lists
 
 import (
 	"encoding/json"
@@ -19,21 +19,9 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func init() {
-	// In tests, the types of package main have its import path instead of
-	// main, under which typegen registers them, so they are added under it.
-	pkg := reflect.TypeFor[Lists]().PkgPath()
-	for name, typ := range types.Types {
-		if strings.HasPrefix(name, "main.") {
-			types.Types[pkg+strings.TrimPrefix(name, "main")] = typ
-		}
-	}
-}
 
 // testLists returns the app with a copy of the sample lists,
 // in the given body.
