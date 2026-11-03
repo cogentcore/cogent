@@ -330,3 +330,40 @@ func TestNewListFocus(t *testing.T) {
 		assert.Len(t, nl.Items, 1, "an item added by the insert key")
 	})
 }
+
+// TestSortSaved tests that sorting the items of a list by a column, by
+// clicking its header, is saved, and restored when the list is shown.
+func TestSortSaved(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "sort-saved", func() {
+		b.AsyncLock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		b.AsyncUnlock()
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		header := ls.table.Child(0).AsTree() // the header of Got is after Item and its handle
+		bb := header.Child(2).(core.Widget).AsWidget().Geom.TotalBBox
+		b.AsyncUnlock()
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		pt := bb.Min.Add(bb.Size().Div(2))
+		src.MouseButton(events.MouseDown, events.Left, pt, 0)
+		src.MouseButton(events.MouseUp, events.Left, pt, 0)
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, "Got:up", gr.Sort)
+		produce := gr.Items[0].Items
+		assert.Equal(t, `true`, string(produce[1].Values["Got"]), "Spinach, got, after Apples")
+
+		saved := NewLists(core.NewBody())
+		require.NoError(t, saved.Open(ls.Dir))
+		assert.Equal(t, "Got:up", findList(saved, "Groceries").Sort, "saved")
+
+		ls.SetCurrent(findList(ls, "Chores"))
+		assert.Equal(t, "", ls.table.SortFieldName(), "not for another list")
+		ls.SetCurrent(gr)
+		assert.Equal(t, "Got:up", ls.table.SortFieldName(), "restored")
+	})
+}

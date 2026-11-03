@@ -42,6 +42,10 @@ type List struct {
 	// by the names of the struct fields (see [core.Table.ColumnWidths]).
 	ColumnWidths map[string]float32 `display:"-"`
 
+	// Sort is the column the items are sorted by, if any, with its
+	// direction (see [core.Table.SortFieldName]).
+	Sort string `display:"-"`
+
 	// undos is the undo stack of the edits of the list.
 	undos undo.Stack
 
@@ -80,6 +84,9 @@ type Lists struct {
 
 	// table is the tree table of the items of the current list.
 	table *core.TreeTable
+
+	// tableList is the list whose column widths and sort the table has.
+	tableList *List
 }
 
 const (
@@ -92,6 +99,7 @@ type listData struct {
 	Name         string
 	Type         string             `json:",omitempty"`
 	ColumnWidths map[string]float32 `json:",omitempty"`
+	Sort         string             `json:",omitempty"`
 	Items        []*Item            `json:",omitempty"`
 	Lists        []*listData        `json:",omitempty"`
 }
@@ -132,6 +140,7 @@ func newList(ld *listData) *List {
 	l.Group = ld.Type == ""
 	l.TypeName = ld.Type
 	l.ColumnWidths = ld.ColumnWidths
+	l.Sort = ld.Sort
 	l.Items = ld.Items
 	for _, c := range ld.Lists {
 		cl := newList(c)
@@ -143,7 +152,7 @@ func newList(ld *listData) *List {
 
 // listData returns the saved form of the given list.
 func (ls *List) listData() *listData {
-	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Items: ls.Items}
+	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, Items: ls.Items}
 	for _, c := range ls.Children {
 		ld.Lists = append(ld.Lists, c.(*List).listData())
 	}
@@ -356,14 +365,20 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.TreeTable) {
 		ls.table = w
+		ls.tableList = nil // a new table
 		w.SetDragMoves(true) // reordering the items, unlike the lists
 		w.OnChange(func(e events.Event) {
 			ls.Current.ColumnWidths = w.ColumnWidths
+			ls.Current.Sort = w.SortFieldName()
 			ls.itemsChanged()
 		})
 		w.Updater(func() {
 			w.SetItems(ls.values(ls.Current))
-			w.ColumnWidths = ls.Current.ColumnWidths
+			if ls.tableList != ls.Current { // the table has those of the list after
+				ls.tableList = ls.Current
+				w.ColumnWidths = ls.Current.ColumnWidths
+				w.SetSortFieldName(ls.Current.Sort)
+			}
 		})
 	})
 }
