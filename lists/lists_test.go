@@ -38,6 +38,7 @@ func init() {
 // testLists returns the app with a copy of the sample lists,
 // in the given body.
 func testLists(t *testing.T, b *core.Body) *Lists {
+	Settings.Splits = nil // the standard splits, not those of other tests or the user
 	dir := t.TempDir()
 	data, err := os.ReadFile(filepath.Join("testdata", "sample", listsFile))
 	require.NoError(t, err)
@@ -612,5 +613,45 @@ func TestSettingsSplits(t *testing.T) {
 		ls.splits().SetSplits(0.5, 0.5)
 		ls.applySplits()
 		assert.InDeltaSlice(t, []float32{0.35, 0.65}, ls.splits().Splits(), 0.001)
+	})
+}
+
+// TestFocusPanels tests that the keys of the panels, such as Control+X o,
+// move the focus between the tree of lists and the table of the current list.
+func TestFocusPanels(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "focus-panels", func() {
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		b.AsyncLock()
+		chores := findList(ls, "Chores")
+		ls.SetCurrent(chores)
+		ls.tree.FindSyncNode(chores).SetFocus()
+		b.AsyncUnlock()
+		n := 0
+		var seqs []string
+		for seq, kf := range *keymap.ActiveMap {
+			if kf == KeyNextPanel || kf == KeyPrevPanel {
+				seqs = append(seqs, string(seq))
+			}
+		}
+		slices.Sort(seqs) // the same order, for the same image
+		for _, seq := range seqs {
+			for _, ch := range strings.Fields(seq) {
+				r, code, mods, err := key.Chord(ch).Decode()
+				require.NoError(t, err)
+				src.Key(events.KeyDown, r, code, mods)
+				src.Key(events.KeyUp, r, code, mods)
+				time.Sleep(100 * time.Millisecond)
+			}
+			time.Sleep(200 * time.Millisecond)
+			n++
+			b.AsyncLock()
+			inTable := n%2 == 1
+			assert.Equal(t, inTable, ls.table.ContainsFocus(), "the table has the focus after %v", seq)
+			assert.Equal(t, !inTable, ls.tree.ContainsFocus(), "the tree has the focus after %v", seq)
+			b.AsyncUnlock()
+		}
+		assert.Equal(t, 6, n)
 	})
 }

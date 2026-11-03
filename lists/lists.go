@@ -100,6 +100,10 @@ type Lists struct {
 
 	// tableList is the list whose column widths and sort the table has.
 	tableList *List
+
+	// keySeq1 is the first key of a key sequence being entered,
+	// such as Control+X (see [Lists.listsKeys]).
+	keySeq1 key.Chord
 }
 
 const (
@@ -304,6 +308,7 @@ func (ls *Lists) Init() {
 	ls.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
+	ls.OnFirst(events.KeyChord, ls.listsKeys)
 	// all of the keys of undo and redo, which the widgets within
 	// do not handle, such as a text field after its edits are accepted
 	ls.OnFinal(events.KeyChord, func(e events.Event) {
