@@ -177,3 +177,47 @@ func TestTreeInsert(t *testing.T) {
 		assert.False(t, ls.Root.Child(0).(*List).IsGroup(), "a list, not a group, before Home")
 	})
 }
+
+// TestUndo tests undoing and redoing edits of a list, including a change
+// of its type, which are saved.
+func TestUndo(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "undo", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		names := func() []string {
+			var ns []string
+			for _, it := range gr.Items {
+				ns = append(ns, string(it.Values["Item"]))
+			}
+			return ns
+		}
+		orig := names()
+		ls.table.InsertAfter(0) // after Produce, as its sibling
+		assert.Len(t, gr.Items, 4)
+		ls.SetType(ls.Types[0]) // to do
+		assert.Equal(t, "To do", gr.TypeName)
+
+		ls.Undo()
+		assert.Equal(t, "Shopping", gr.TypeName, "undo the type change")
+		assert.Len(t, gr.Items, 4)
+		ls.Undo()
+		assert.Equal(t, orig, names(), "undo the insert")
+		ls.Undo() // nothing more
+
+		ls.Redo()
+		assert.Len(t, gr.Items, 4, "redo the insert")
+		ls.Redo()
+		assert.Equal(t, "To do", gr.TypeName, "redo the type change")
+		ls.Redo() // nothing more
+		ls.Undo()
+		assert.Equal(t, "Shopping", gr.TypeName)
+
+		saved := NewLists(core.NewBody())
+		require.NoError(t, saved.Open(ls.Dir))
+		assert.Equal(t, "Shopping", findList(saved, "Groceries").TypeName, "saved")
+	})
+}

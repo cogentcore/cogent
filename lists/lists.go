@@ -16,9 +16,11 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
+	"cogentcore.org/core/undo"
 )
 
 // List is a list of items, or a group of lists, in the tree of lists.
@@ -38,6 +40,13 @@ type List struct {
 	// ColumnWidths are the widths of the columns of the list that are set,
 	// by the names of the struct fields (see [core.Table.ColumnWidths]).
 	ColumnWidths map[string]float32 `display:"-"`
+
+	// undos is the undo stack of the edits of the list.
+	undos undo.Stack
+
+	// undoState is the state of the list for undo after the last edit,
+	// which is saved as the state before the next one.
+	undoState []string
 
 	// values is the pointer to the slice of pointers to the items as
 	// structs of the type of the list, for the [core.TreeTable], or
@@ -211,6 +220,7 @@ func (ls *Lists) values(l *List) any {
 	if l.values.IsValid() && l.values.Type().Elem().Elem().Elem() == lt.StructType() {
 		return l.values.Interface()
 	}
+	initUndo(l)
 	l.values = lt.newItems(l.Items)
 	return l.values.Interface()
 }
@@ -219,6 +229,7 @@ func (ls *Lists) values(l *List) any {
 func (ls *Lists) itemsChanged() {
 	if l := ls.Current; l != nil && l.values.IsValid() {
 		l.Items = ls.TypeOf(l).savedItems(l.values)
+		saveUndo(l, "edit")
 	}
 	ls.saveChanges()
 }
@@ -239,8 +250,10 @@ func (ls *Lists) SetType(lt *ListType) {
 	if l == nil || l.IsGroup() || lt == nil || lt.Name == l.TypeName {
 		return
 	}
+	initUndo(l)
 	l.TypeName = lt.Name
 	l.values = reflect.Value{}
+	saveUndo(l, "type change to "+lt.Name)
 	ls.saveChanges()
 	ls.Update()
 }
@@ -573,6 +586,21 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
 			tt.Outdent(idx)
 		}))
+	})
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.Undo).SetKey(keymap.Undo).
+			SetTooltip("Undo the last edit of the current list, including a change of its type")
+		w.OnClick(func(e events.Event) {
+			ls.Undo()
+		})
+	})
+	tree.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.Redo).SetKey(keymap.Redo).
+			SetTooltip("Redo the last undone edit of the current list")
+		w.OnClick(func(e events.Event) {
+			ls.Redo()
+		})
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Button) {
