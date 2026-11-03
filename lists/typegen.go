@@ -7,20 +7,29 @@ import (
 	"cogentcore.org/core/types"
 )
 
-var _ = types.AddType(&types.Type{Name: "main.List", IDName: "list", Doc: "List is a list of items, or a group of lists, in the tree of lists.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "TypeName", Doc: "TypeName is the name of the type of the list,\nor \"\" for a group of lists."}, {Name: "Items", Doc: "Items are the saved items of the list."}, {Name: "values", Doc: "values is the pointer to the slice of pointers to the items as\nstructs of the type of the list, for the [core.TreeTable], or\ninvalid if they are not made yet."}}})
+var _ = types.AddType(&types.Type{Name: "main.List", IDName: "list", Doc: "List is a list of items, or a group of lists, in the tree of lists.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Group", Doc: "Group is whether it is a group of lists, instead of a list."}, {Name: "TypeName", Doc: "TypeName is the name of the type of the list, which is set to that\nof the current list for a new list (see [Lists.newLists])."}, {Name: "Items", Doc: "Items are the saved items of the list."}, {Name: "ColumnWidths", Doc: "ColumnWidths are the widths of the columns of the list that are set,\nby the names of the struct fields (see [core.Table.ColumnWidths])."}, {Name: "values", Doc: "values is the pointer to the slice of pointers to the items as\nstructs of the type of the list, for the [core.TreeTable], or\ninvalid if they are not made yet."}}})
 
 // NewList returns a new [List] with the given optional parent:
 // List is a list of items, or a group of lists, in the tree of lists.
 func NewList(parent ...tree.Node) *List { return tree.New[List](parent...) }
 
+// SetGroup sets the [List.Group]:
+// Group is whether it is a group of lists, instead of a list.
+func (t *List) SetGroup(v bool) *List { t.Group = v; return t }
+
 // SetTypeName sets the [List.TypeName]:
-// TypeName is the name of the type of the list,
-// or "" for a group of lists.
+// TypeName is the name of the type of the list, which is set to that
+// of the current list for a new list (see [Lists.newLists]).
 func (t *List) SetTypeName(v string) *List { t.TypeName = v; return t }
 
 // SetItems sets the [List.Items]:
 // Items are the saved items of the list.
 func (t *List) SetItems(v ...*Item) *List { t.Items = v; return t }
+
+// SetColumnWidths sets the [List.ColumnWidths]:
+// ColumnWidths are the widths of the columns of the list that are set,
+// by the names of the struct fields (see [core.Table.ColumnWidths]).
+func (t *List) SetColumnWidths(v map[string]float32) *List { t.ColumnWidths = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "main.Lists", IDName: "lists", Doc: "Lists is the app: a tree of lists, in groups, and the items of the\ncurrent list, in categories.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Dir", Doc: "Dir is the directory of the files of the lists and the list types."}, {Name: "Root", Doc: "Root is the root group of the tree of lists."}, {Name: "Types", Doc: "Types are the list types, the library of the types of the lists."}, {Name: "Current", Doc: "Current is the current list, whose items are shown, or nil."}, {Name: "tree", Doc: "tree is the tree of lists."}, {Name: "table", Doc: "table is the tree table of the items of the current list."}}})
 

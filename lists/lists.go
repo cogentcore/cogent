@@ -18,14 +18,18 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 )
 
 // List is a list of items, or a group of lists, in the tree of lists.
 type List struct {
 	tree.NodeBase
 
-	// TypeName is the name of the type of the list,
-	// or "" for a group of lists.
+	// Group is whether it is a group of lists, instead of a list.
+	Group bool
+
+	// TypeName is the name of the type of the list, which is set to that
+	// of the current list for a new list (see [Lists.newLists]).
 	TypeName string
 
 	// Items are the saved items of the list.
@@ -42,7 +46,7 @@ type List struct {
 }
 
 // IsGroup returns whether the list is a group of lists.
-func (ls *List) IsGroup() bool { return ls.TypeName == "" }
+func (ls *List) IsGroup() bool { return ls.Group }
 
 // Lists is the app: a tree of lists, in groups, and the items of the
 // current list, in categories.
@@ -104,6 +108,7 @@ func (ls *Lists) Open(dir string) error {
 		root = listData{Name: "Lists", Lists: []*listData{{Name: "To do", Type: "To do"}}}
 	}
 	ls.Root = newList(&root)
+	ls.Root.Group = true
 	ls.Current = nil
 	ls.keepUsedTypes()
 	ls.Update()
@@ -114,6 +119,7 @@ func (ls *Lists) Open(dir string) error {
 func newList(ld *listData) *List {
 	l := tree.New[List]()
 	l.SetName(ld.Name)
+	l.Group = ld.Type == ""
 	l.TypeName = ld.Type
 	l.ColumnWidths = ld.ColumnWidths
 	l.Items = ld.Items
@@ -253,6 +259,7 @@ func (ls *Lists) Init() {
 			})
 			tree.AddChild(w, func(w *core.Tree) {
 				ls.tree = w
+				w.NewNodeType = types.For[List]() // groups are made with NewList
 				w.SetTreeInit(ls.initTree)
 				w.OnSelect(func(e events.Event) {
 					if sel := w.GetSelectedNodes(); len(sel) == 1 {
@@ -346,7 +353,30 @@ func (ls *Lists) treeChanged() {
 		ls.Current = nil
 		ls.Update()
 	}
+	if ls.newLists() {
+		ls.tree.Resync()
+	}
 	ls.saveChanges()
+}
+
+// newLists sets the type and name of the new lists, added by inserting
+// them in the tree, which have no type, to those of the current list,
+// or the first list type, returning whether there are any.
+func (ls *Lists) newLists() bool {
+	typ := ls.Types[0].Name
+	if cur := ls.Current; cur != nil && !cur.IsGroup() {
+		typ = cur.TypeName
+	}
+	found := false
+	ls.Root.WalkDown(func(n tree.Node) bool {
+		if l := n.(*List); !l.IsGroup() && l.TypeName == "" {
+			l.TypeName = typ
+			l.SetName("New list")
+			found = true
+		}
+		return tree.Continue
+	})
+	return found
 }
 
 // initTree initializes a node of the tree of lists.
@@ -429,6 +459,7 @@ func (ls *Lists) NewList(at *List, group bool) {
 	name := "New list"
 	if group {
 		name = "New group"
+		nl.Group = true
 	} else {
 		nl.TypeName = ls.Types[0].Name
 		if cur := ls.Current; cur != nil && !cur.IsGroup() {

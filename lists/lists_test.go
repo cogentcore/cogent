@@ -155,3 +155,25 @@ func TestEditItems(t *testing.T) {
 		assert.Equal(t, `3`, string(chores.Items[1].Items[0].Values["Priority"]), "the default")
 	})
 }
+
+// TestTreeInsert tests that inserting in the tree of lists adds a new
+// list of the type of the current list, without a dialog.
+func TestTreeInsert(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "tree-insert", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		ls.tree.FindSyncNode(gr).InsertAfter()
+		nl, ok := ls.Root.FindPath("Home/New list").(*List)
+		require.True(t, ok, "the new list")
+		assert.Equal(t, 1, nl.IndexInParent(), "after Groceries")
+		assert.False(t, nl.IsGroup())
+		assert.Equal(t, "Shopping", nl.TypeName)
+		home := ls.Root.FindPath("Home").(*List)
+		ls.tree.FindSyncNode(home).InsertBefore()
+		assert.False(t, ls.Root.Child(0).(*List).IsGroup(), "a list, not a group, before Home")
+	})
+}
