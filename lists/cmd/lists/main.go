@@ -28,6 +28,6 @@ func main() {
 	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
 		dir = os.Args[1]
 	}
-	lists.NewApp(b, dir)
+	lists.NewApp(b, dir, false)
 	b.RunMainWindow()
 }

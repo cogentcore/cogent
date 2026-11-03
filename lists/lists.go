@@ -93,6 +93,12 @@ type Lists struct {
 	// Current is the current list, whose items are shown, or nil.
 	Current *List `set:"-"`
 
+	// Mobile is whether the lists have the layout for small screens, as
+	// of phones, in which the tree of lists, the items of the current list,
+	// and an item that is edited are each in a full window, in turn, with
+	// back buttons (see [Lists.openItems]), instead of side by side.
+	Mobile bool
+
 	// tree is the tree of lists.
 	tree *core.Tree
 
@@ -101,6 +107,14 @@ type Lists struct {
 
 	// tableList is the list whose column widths and sort the table has.
 	tableList *List
+
+	// items is the body of the items of the current list,
+	// in the mobile layout, while it is open (see [Lists.openItems]).
+	items *core.Body
+
+	// form is the body of the form of the item that is edited,
+	// in the mobile layout, while it is open (see [Lists.editItem]).
+	form *core.Body
 
 	// syncs is the state of the syncing of the lists (see [Lists.Sync]).
 	syncs syncer
@@ -218,6 +232,7 @@ func (ls *Lists) SetType(lt *ListType) {
 	saveUndo(l, "type change to "+lt.Name)
 	ls.saveChanges()
 	ls.Update()
+	ls.updateItems()
 }
 
 func (ls *Lists) Init() {
@@ -244,43 +259,56 @@ func (ls *Lists) Init() {
 	ls.OnShow(func(e events.Event) {
 		ls.applySplits()
 	})
-	tree.AddChild(ls, func(w *core.Splits) {
-		w.SetSplits(0.2, 0.8)
+	// the layout is made when the plan is, after Mobile is set
+	ls.Maker(func(p *tree.Plan) {
+		if ls.Mobile {
+			tree.AddAt(p, "tree-frame", ls.initTreeFrame)
+			return
+		}
+		tree.AddAt(p, "splits", func(w *core.Splits) {
+			w.SetSplits(0.2, 0.8)
+			w.OnChange(func(e events.Event) {
+				ls.saveSplits()
+			})
+			tree.AddChild(w, ls.initTreeFrame)
+			tree.AddChild(w, func(w *core.Frame) {
+				w.Styler(func(s *styles.Style) {
+					s.Direction = styles.Column
+					s.Grow.Set(1, 1)
+				})
+				w.Maker(ls.makeCurrent)
+			})
+		})
+	})
+}
+
+// initTreeFrame initializes the frame of the tree of lists.
+func (ls *Lists) initTreeFrame(w *core.Frame) {
+	w.Styler(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Overflow.Set(styles.OverflowAuto)
+		if ls.Mobile {
+			s.Grow.Set(1, 1)
+		}
+	})
+	tree.AddChild(w, func(w *core.Tree) {
+		ls.tree = w
+		w.NewNodeType = types.For[List]() // groups are made with NewList
+		w.SetTreeInit(ls.initTree)
+		w.OnSelect(func(e events.Event) {
+			if sel := w.GetSelectedNodes(); len(sel) == 1 {
+				if l, ok := sel[0].AsCoreTree().SyncNode.(*List); ok {
+					ls.SetCurrent(l)
+				}
+			}
+		})
 		w.OnChange(func(e events.Event) {
-			ls.saveSplits()
+			ls.treeChanged()
 		})
-		tree.AddChild(w, func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Column
-				s.Overflow.Set(styles.OverflowAuto)
-			})
-			tree.AddChild(w, func(w *core.Tree) {
-				ls.tree = w
-				w.NewNodeType = types.For[List]() // groups are made with NewList
-				w.SetTreeInit(ls.initTree)
-				w.OnSelect(func(e events.Event) {
-					if sel := w.GetSelectedNodes(); len(sel) == 1 {
-						if l, ok := sel[0].AsCoreTree().SyncNode.(*List); ok {
-							ls.SetCurrent(l)
-						}
-					}
-				})
-				w.OnChange(func(e events.Event) {
-					ls.treeChanged()
-				})
-				w.Updater(func() {
-					if ls.Root != nil && w.SyncNode != ls.Root {
-						w.SyncTree(ls.Root)
-					}
-				})
-			})
-		})
-		tree.AddChild(w, func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Column
-				s.Grow.Set(1, 1)
-			})
-			w.Maker(ls.makeCurrent)
+		w.Updater(func() {
+			if ls.Root != nil && w.SyncNode != ls.Root {
+				w.SyncTree(ls.Root)
+			}
 		})
 	})
 }
@@ -301,18 +329,33 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 		})
 		return
 	}
-	tree.Add(p, func(w *core.Frame) {
+	ls.makeListHeader(p)
+	tree.AddAt(p, "table", func(w *core.TreeTable) {
+		ls.initTable(w)
+	})
+}
+
+// makeListHeader adds the header of the current list to the given plan,
+// with its title, type, and switches.
+func (ls *Lists) makeListHeader(p *tree.Plan) {
+	tree.AddAt(p, "header", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Gap.X.Em(1)
+			s.Wrap = ls.Mobile // the switches under the chooser on a small screen
 		})
-		tree.AddChild(w, func(w *core.Text) {
-			w.SetType(core.TextHeadlineSmall)
-			w.Styler(func(s *styles.Style) {
-				s.SetTextWrap(false)
-			})
-			w.Updater(func() {
-				w.SetText(ls.Current.Name)
+		w.Maker(func(p *tree.Plan) { // the title is that of the window on mobile
+			if ls.Mobile {
+				return
+			}
+			tree.AddAt(p, "title", func(w *core.Text) {
+				w.SetType(core.TextHeadlineSmall)
+				w.Styler(func(s *styles.Style) {
+					s.SetTextWrap(false)
+				})
+				w.Updater(func() {
+					w.SetText(ls.Current.Name)
+				})
 			})
 		})
 		tree.AddChild(w, func(w *core.Chooser) {
@@ -329,60 +372,69 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 				w.SetCurrentValue(ls.TypeOf(ls.Current))
 			})
 		})
-		tree.AddChild(w, func(w *core.Switch) {
-			w.SetText("Group values").SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
-			w.OnChange(func(e events.Event) {
-				ls.Current.HideGroupValues = !w.IsChecked()
-				if ls.table != nil {
-					ls.table.Update()
-				}
-				ls.saveChanges()
+		// the switches, which stay together, under the chooser on mobile
+		tree.AddChild(w, func(w *core.Frame) {
+			w.Styler(func(s *styles.Style) {
+				s.Align.Items = styles.Center
+				s.Gap.X.Em(1)
 			})
-			w.Updater(func() {
-				w.SetChecked(!ls.Current.HideGroupValues)
-			})
-		})
-		w.Maker(func(p *tree.Plan) { // only for a list type with filter values
-			if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
-				return
-			}
-			tree.AddAt(p, "filter", func(w *core.Switch) {
-				w.SetText("Filter").SetTooltip("Whether to hide the items with the filter values of the fields of the type of the list, such as those that are done")
+			tree.AddChild(w, func(w *core.Switch) {
+				w.SetText("Group values").SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
 				w.OnChange(func(e events.Event) {
-					ls.Current.Filtered = w.IsChecked()
+					ls.Current.HideGroupValues = !w.IsChecked()
 					if ls.table != nil {
 						ls.table.Update()
 					}
 					ls.saveChanges()
 				})
 				w.Updater(func() {
-					w.SetChecked(ls.Current.Filtered)
+					w.SetChecked(!ls.Current.HideGroupValues)
+				})
+			})
+			w.Maker(func(p *tree.Plan) { // only for a list type with filter values
+				if lt := ls.TypeOf(ls.Current); lt == nil || !lt.hasFilter() {
+					return
+				}
+				tree.AddAt(p, "filter", func(w *core.Switch) {
+					w.SetText("Filter").SetTooltip("Whether to hide the items with the filter values of the fields of the type of the list, such as those that are done")
+					w.OnChange(func(e events.Event) {
+						ls.Current.Filtered = w.IsChecked()
+						if ls.table != nil {
+							ls.table.Update()
+						}
+						ls.saveChanges()
+					})
+					w.Updater(func() {
+						w.SetChecked(ls.Current.Filtered)
+					})
 				})
 			})
 		})
 	})
-	tree.Add(p, func(w *core.TreeTable) {
-		ls.table = w
-		ls.tableList = nil   // a new table
-		w.SetDragMoves(true) // reordering the items, unlike the lists
-		w.OnChange(func(e events.Event) {
-			ls.Current.ColumnWidths = w.ColumnWidths
-			ls.Current.Sort = w.SortFieldName()
-			ls.itemsChanged()
-		})
-		w.Updater(func() {
-			w.SetItems(ls.values(ls.Current))
-			w.HideGroupValues = ls.Current.HideGroupValues
-			w.ShowItem = nil
-			if lt := ls.TypeOf(ls.Current); ls.Current.Filtered && lt.hasFilter() {
-				w.ShowItem = lt.showItem
-			}
-			if ls.tableList != ls.Current { // the table has those of the list after
-				ls.tableList = ls.Current
-				w.ColumnWidths = ls.Current.ColumnWidths
-				w.SetSortFieldName(ls.Current.Sort)
-			}
-		})
+}
+
+// initTable initializes the tree table of the items of the current list.
+func (ls *Lists) initTable(w *core.TreeTable) {
+	ls.table = w
+	ls.tableList = nil   // a new table
+	w.SetDragMoves(true) // reordering the items, unlike the lists
+	w.OnChange(func(e events.Event) {
+		ls.Current.ColumnWidths = w.ColumnWidths
+		ls.Current.Sort = w.SortFieldName()
+		ls.itemsChanged()
+	})
+	w.Updater(func() {
+		w.SetItems(ls.values(ls.Current))
+		w.HideGroupValues = ls.Current.HideGroupValues
+		w.ShowItem = nil
+		if lt := ls.TypeOf(ls.Current); ls.Current.Filtered && lt.hasFilter() {
+			w.ShowItem = lt.showItem
+		}
+		if ls.tableList != ls.Current { // the table has those of the list after
+			ls.tableList = ls.Current
+			w.ColumnWidths = ls.Current.ColumnWidths
+			w.SetSortFieldName(ls.Current.Sort)
+		}
 	})
 }
 
@@ -406,6 +458,9 @@ func (ls *Lists) treeChanged() {
 // after the next render, on its selected item, or else its first item, or
 // on the table if it has no items, so that the keys for adding items go to it.
 func (ls *Lists) focusTable() {
+	if ls.Mobile {
+		ls.openItems() // which has the table
+	}
 	ls.Defer(func() {
 		tt := ls.table
 		if tt == nil {
@@ -501,6 +556,15 @@ func (ls *Lists) initTree(tr *core.Tree) {
 			e.SetHandled()
 			ls.SetCurrent(l)
 			ls.focusTable()
+		}
+	})
+	// in the mobile layout, a list opens in its window when it is tapped,
+	// also when it is selected already, as when coming back to the tree;
+	// the click is on the parts of the node, which handle it
+	tr.Parts.OnClick(func(e events.Event) {
+		if l := listOf(tr); ls.Mobile && l != nil && !l.IsGroup() {
+			ls.SetCurrent(l)
+			ls.openItems()
 		}
 	})
 	tr.Updater(func() {
@@ -637,8 +701,22 @@ func (ls *Lists) Rename(l *List) {
 	d.RunDialog(ls)
 }
 
-// MakeToolbar makes the toolbar of the app.
+// MakeToolbar makes the toolbar of the app, which has the tools for the
+// lists, the items of the current list, the list types, and the syncing,
+// or in the mobile layout only those that are not for the items, which
+// are in the toolbar of the window of the items (see [Lists.openItems]).
 func (ls *Lists) MakeToolbar(p *tree.Plan) {
+	ls.makeListTools(p)
+	tree.Add(p, func(w *core.Separator) {})
+	if !ls.Mobile {
+		ls.makeItemTools(p) // which end with Edit type, next to List types
+	}
+	ls.makeTypeTools(p)
+	ls.makeSyncButton(p)
+}
+
+// makeListTools adds the tools for the lists to the given plan.
+func (ls *Lists) makeListTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("New list").SetIcon(icons.Add).
 			SetTooltip("Make a new list, in the current group or after the current list")
@@ -653,7 +731,11 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 			ls.NewList(ls.Current, true)
 		})
 	})
-	tree.Add(p, func(w *core.Separator) {})
+}
+
+// makeItemTools adds the tools for the items of the current list
+// to the given plan.
+func (ls *Lists) makeItemTools(p *tree.Plan) {
 	table := func(f func(tt *core.TreeTable, idx int)) func(e events.Event) {
 		return func(e events.Event) {
 			if tt := ls.table; tt != nil {
@@ -718,6 +800,10 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 			}
 		})
 	})
+}
+
+// makeTypeTools adds the tools for the list types to the given plan.
+func (ls *Lists) makeTypeTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("List types").SetIcon(icons.LibraryBooks).
 			SetTooltip("Edit the library of list types")
@@ -725,6 +811,11 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 			ls.EditTypes()
 		})
 	})
+}
+
+// makeSyncButton adds the button of the status of the syncing, if the
+// lists sync, to the given plan.
+func (ls *Lists) makeSyncButton(p *tree.Plan) {
 	if syncing() {
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.Button) {

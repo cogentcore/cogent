@@ -1,0 +1,5 @@
+Name = "Cogent Lists"
+
+# the same ID as the app for desktop platforms, in cmd/lists, as the name
+# of the directory is not that of the app
+ID = "com.cogent.lists"

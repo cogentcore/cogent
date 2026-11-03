@@ -18,12 +18,14 @@ import (
 
 // NewApp makes the app in the given body, with the lists in the given
 // directory, or the app data directory if it is empty, with the toolbar
-// in the top bar, and syncing once the body is shown.
-func NewApp(b *core.Body, dir string) *Lists {
+// in the top bar, and syncing once the body is shown, with the mobile
+// layout if mobile is true (see [Lists.Mobile]).
+func NewApp(b *core.Body, dir string, mobile bool) *Lists {
 	if dir == "" {
 		dir = core.TheApp.AppDataDir()
 	}
 	ls := NewLists(b)
+	ls.Mobile = mobile
 	theLists = ls
 	errors.Log(ls.Open(dir))
 	b.OnShow(func(e events.Event) {

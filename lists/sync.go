@@ -454,13 +454,20 @@ func (ls *Lists) syncLock(f func() error) error {
 // would revert, as while typing.
 func (ls *Lists) editingText() bool {
 	editing := false
-	ls.WidgetWalkDown(func(w core.Widget, wb *core.WidgetBase) bool {
+	edited := func(w core.Widget, wb *core.WidgetBase) bool {
 		if tf, ok := w.(*core.TextField); ok && tf.Edited() {
 			editing = true
 			return tree.Break
 		}
 		return tree.Continue
-	})
+	}
+	ls.WidgetWalkDown(edited)
+	// the windows of the items and of an item in the mobile layout
+	for _, b := range []*core.Body{ls.items, ls.form} {
+		if b != nil && !editing {
+			b.WidgetWalkDown(edited)
+		}
+	}
 	return editing
 }
 
@@ -492,6 +499,7 @@ func (ls *Lists) reload(local, files map[string][]byte) {
 	})
 	ls.tableList = nil // for the column widths and sort of the current list
 	ls.Update()
+	ls.updateItems()
 	if ls.Current != nil {
 		if tn := ls.tree.FindSyncNode(ls.Current); tn != nil {
 			tn.Select()

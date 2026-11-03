@@ -104,5 +104,6 @@ func (ls *Lists) restoreUndo(l *List, state []string, msg string) {
 	ls.keepUsedTypes() // if its type was deleted since
 	ls.saveChanges()
 	ls.Update()
+	ls.updateItems()
 	core.MessageSnackbar(ls, msg)
 }
