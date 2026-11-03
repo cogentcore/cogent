@@ -456,3 +456,36 @@ func TestUndoKeys(t *testing.T) {
 		}
 	})
 }
+
+// TestTreeKeysFocusTable tests that the right arrow and enter keys on a
+// list in the tree of lists put the focus in its table, but not on a group.
+func TestTreeKeysFocusTable(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "tree-keys-focus", func() {
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		for _, code := range []key.Codes{key.CodeRightArrow, key.CodeReturnEnter} {
+			b.AsyncLock()
+			chores := findList(ls, "Chores")
+			ls.SetCurrent(chores)
+			ls.tree.FindSyncNode(chores).SetFocus()
+			b.AsyncUnlock()
+			src.Key(events.KeyDown, 0, code, 0)
+			src.Key(events.KeyUp, 0, code, 0)
+			time.Sleep(300 * time.Millisecond)
+			b.AsyncLock()
+			assert.True(t, ls.table.ContainsFocus(), "the table has the focus, after %v", code)
+			assert.False(t, ls.tree.ContainsFocus())
+			b.AsyncUnlock()
+		}
+		b.AsyncLock()
+		ls.tree.FindSyncNode(ls.Root.FindPath("Home")).SetFocus()
+		b.AsyncUnlock()
+		src.Key(events.KeyDown, 0, key.CodeRightArrow, 0)
+		src.Key(events.KeyUp, 0, key.CodeRightArrow, 0)
+		time.Sleep(300 * time.Millisecond)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.True(t, ls.tree.ContainsFocus(), "not for a group")
+	})
+}

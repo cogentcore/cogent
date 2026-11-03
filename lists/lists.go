@@ -433,20 +433,24 @@ func (ls *Lists) treeChanged() {
 }
 
 // focusTable puts the focus in the table of the items of the current list,
-// after the next render, on its first item, or on the table if it has no
-// items, so that the keys for adding items go to it.
+// after the next render, on its selected item, or else its first item, or
+// on the table if it has no items, so that the keys for adding items go to it.
 func (ls *Lists) focusTable() {
 	ls.Defer(func() {
 		tt := ls.table
 		if tt == nil {
 			return
 		}
-		if tt.SliceSize > 0 {
+		switch {
+		case tt.SelectedIndex >= 0 && tt.SelectedIndex < tt.SliceSize:
+			tt.IndexGrabFocus(tt.SelectedIndex)
+		case tt.SliceSize > 0:
 			tt.SelectIndexEvent(0, events.SelectOne) // which focuses it
-		} else {
+		default:
 			tt.SetFocus()
 		}
 	})
+	ls.NeedsRender() // for the deferred focus
 }
 
 // setUniqueName sets the name of the given list to the given name, with
@@ -515,6 +519,19 @@ func (ls *Lists) initTree(tr *core.Tree) {
 	tr.ContextMenus = nil // replaces the general ones
 	tr.AddContextMenu(func(m *core.Scene, pos image.Point) {
 		ls.treeContextMenu(m, tr)
+	})
+	// these run before those of the tree, for which they open a node
+	tr.On(events.KeyChord, func(e events.Event) {
+		l := listOf(tr)
+		if l == nil || l.IsGroup() {
+			return
+		}
+		switch keymap.Of(e.KeyChord()) {
+		case keymap.Enter, keymap.MoveRight:
+			e.SetHandled()
+			ls.SetCurrent(l)
+			ls.focusTable()
+		}
 	})
 	tr.Updater(func() {
 		if l, ok := tr.SyncNode.(*List); ok {
