@@ -378,7 +378,27 @@ func (ls *Lists) treeChanged() {
 	if uniqueNames(ls.Root) || added {
 		ls.tree.Resync()
 	}
+	if added {
+		ls.focusTable() // after the new list is selected, and current
+	}
 	ls.saveChanges()
+}
+
+// focusTable puts the focus in the table of the items of the current list,
+// after the next render, on its first item, or on the table if it has no
+// items, so that the keys for adding items go to it.
+func (ls *Lists) focusTable() {
+	ls.Defer(func() {
+		tt := ls.table
+		if tt == nil {
+			return
+		}
+		if tt.SliceSize > 0 {
+			tt.SelectIndexEvent(0, events.SelectOne) // which focuses it
+		} else {
+			tt.SetFocus()
+		}
+	})
 }
 
 // setUniqueName sets the name of the given list to the given name, with
@@ -559,6 +579,7 @@ func (ls *Lists) NewList(at *List, group bool) {
 			}
 			ls.SetCurrent(nl)
 			ls.saveChanges()
+			ls.focusTable()
 		})
 	})
 	d.RunDialog(ls)

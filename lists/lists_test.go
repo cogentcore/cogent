@@ -11,9 +11,11 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/types"
 	"github.com/stretchr/testify/assert"
@@ -290,5 +292,41 @@ func TestUniqueNames(t *testing.T) {
 		dup := &listData{Name: "Lists", Lists: []*listData{{Name: "A"}, {Name: "A"}}}
 		l := newList(dup)
 		assert.Equal(t, "A 2", l.Child(1).AsTree().Name)
+	})
+}
+
+// TestNewListFocus tests that the table of a new list made in the tree of
+// lists gets the focus, so that the insert keys add items to it.
+func TestNewListFocus(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "new-list-focus", func() {
+		b.AsyncLock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		tr := ls.tree.FindSyncNode(gr)
+		tr.SetFocus()
+		tr.InsertAfter()
+		b.AsyncUnlock()
+		time.Sleep(300 * time.Millisecond)
+		b.AsyncLock()
+		nl := ls.Root.FindPath("Home/New list").(*List)
+		assert.Equal(t, nl, ls.Current)
+		assert.True(t, ls.table.ContainsFocus() || ls.table.StateIs(states.Focused), "the table of the new list")
+		b.AsyncUnlock()
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		for ch, kf := range *keymap.ActiveMap {
+			if kf == keymap.Insert {
+				r, code, mods, err := ch.Decode()
+				require.NoError(t, err)
+				src.Key(events.KeyDown, r, code, mods)
+				src.Key(events.KeyUp, r, code, mods)
+				break
+			}
+		}
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Len(t, nl.Items, 1, "an item added by the insert key")
 	})
 }
