@@ -367,3 +367,33 @@ func TestSortSaved(t *testing.T) {
 		assert.Equal(t, "Got:up", ls.table.SortFieldName(), "restored")
 	})
 }
+
+// TestHideGroupValues tests the switch for the values of the groups,
+// such as categories, which is saved with the list.
+func TestHideGroupValues(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "hide-group-values", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		rel := ls.Root.FindPath("Work/Release").(*List)
+		ls.SetCurrent(rel)
+		var sw *core.Switch
+		ls.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if s, ok := cw.(*core.Switch); ok && s.Text == "Group values" {
+				sw = s
+			}
+			return sw == nil
+		})
+		require.NotNil(t, sw)
+		assert.True(t, sw.IsChecked(), "shown by default")
+		sw.SetChecked(false)
+		sw.SendChange()
+		assert.True(t, rel.HideGroupValues)
+		assert.True(t, ls.table.HideGroupValues)
+
+		saved := NewLists(core.NewBody())
+		require.NoError(t, saved.Open(ls.Dir))
+		assert.True(t, saved.Root.FindPath("Work/Release").(*List).HideGroupValues, "saved")
+	})
+}

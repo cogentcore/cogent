@@ -46,6 +46,11 @@ type List struct {
 	// direction (see [core.Table.SortFieldName]).
 	Sort string `display:"-"`
 
+	// HideGroupValues is whether the items with items in them, such as
+	// categories, show only their first field
+	// (see [core.TreeTable.HideGroupValues]).
+	HideGroupValues bool `display:"-"`
+
 	// undos is the undo stack of the edits of the list.
 	undos undo.Stack
 
@@ -96,12 +101,13 @@ const (
 
 // listData is the saved form of a list or group, with the lists in it.
 type listData struct {
-	Name         string
-	Type         string             `json:",omitempty"`
-	ColumnWidths map[string]float32 `json:",omitempty"`
-	Sort         string             `json:",omitempty"`
-	Items        []*Item            `json:",omitempty"`
-	Lists        []*listData        `json:",omitempty"`
+	Name            string
+	Type            string             `json:",omitempty"`
+	ColumnWidths    map[string]float32 `json:",omitempty"`
+	Sort            string             `json:",omitempty"`
+	HideGroupValues bool               `json:",omitempty"`
+	Items           []*Item            `json:",omitempty"`
+	Lists           []*listData        `json:",omitempty"`
 }
 
 // Open opens the lists and list types in the given directory, starting
@@ -141,6 +147,7 @@ func newList(ld *listData) *List {
 	l.TypeName = ld.Type
 	l.ColumnWidths = ld.ColumnWidths
 	l.Sort = ld.Sort
+	l.HideGroupValues = ld.HideGroupValues
 	l.Items = ld.Items
 	for _, c := range ld.Lists {
 		cl := newList(c)
@@ -152,7 +159,7 @@ func newList(ld *listData) *List {
 
 // listData returns the saved form of the given list.
 func (ls *List) listData() *listData {
-	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, Items: ls.Items}
+	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Items: ls.Items}
 	for _, c := range ls.Children {
 		ld.Lists = append(ld.Lists, c.(*List).listData())
 	}
@@ -362,10 +369,23 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 				w.SetCurrentValue(ls.TypeOf(ls.Current))
 			})
 		})
+		tree.AddChild(w, func(w *core.Switch) {
+			w.SetText("Group values").SetTooltip("Whether to show the values of the other fields for the items that have items in them, such as categories")
+			w.OnChange(func(e events.Event) {
+				ls.Current.HideGroupValues = !w.IsChecked()
+				if ls.table != nil {
+					ls.table.Update()
+				}
+				ls.saveChanges()
+			})
+			w.Updater(func() {
+				w.SetChecked(!ls.Current.HideGroupValues)
+			})
+		})
 	})
 	tree.Add(p, func(w *core.TreeTable) {
 		ls.table = w
-		ls.tableList = nil // a new table
+		ls.tableList = nil   // a new table
 		w.SetDragMoves(true) // reordering the items, unlike the lists
 		w.OnChange(func(e events.Event) {
 			ls.Current.ColumnWidths = w.ColumnWidths
@@ -374,6 +394,7 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 		})
 		w.Updater(func() {
 			w.SetItems(ls.values(ls.Current))
+			w.HideGroupValues = ls.Current.HideGroupValues
 			if ls.tableList != ls.Current { // the table has those of the list after
 				ls.tableList = ls.Current
 				w.ColumnWidths = ls.Current.ColumnWidths
