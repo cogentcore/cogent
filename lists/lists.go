@@ -58,6 +58,10 @@ type List struct {
 	// which is saved as the state before the next one.
 	undoState []string
 
+	// checks are the states of the check fields of the items that set date
+	// fields, from the last edit, for finding those that are checked.
+	checks map[checkKey]bool
+
 	// values is the pointer to the slice of pointers to the items as
 	// structs of the type of the list, for the [core.TreeTable], or
 	// invalid if they are not made yet.
@@ -241,13 +245,19 @@ func (ls *Lists) values(l *List) any {
 	}
 	initUndo(l)
 	l.values = lt.newItems(l.Items)
+	l.checks = lt.checkStates(l.values)
 	return l.values.Interface()
 }
 
 // itemsChanged saves the items of the current list after they change.
 func (ls *Lists) itemsChanged() {
 	if l := ls.Current; l != nil && l.values.IsValid() {
-		l.Items = ls.TypeOf(l).savedItems(l.values)
+		lt := ls.TypeOf(l)
+		if lt.setDates(l.values, l.checks) && ls.table != nil {
+			ls.table.Update()
+		}
+		l.checks = lt.checkStates(l.values)
+		l.Items = lt.savedItems(l.values)
 		saveUndo(l, "edit")
 	}
 	ls.saveChanges()

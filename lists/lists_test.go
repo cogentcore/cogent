@@ -489,3 +489,37 @@ func TestTreeKeysFocusTable(t *testing.T) {
 		assert.True(t, ls.tree.ContainsFocus(), "not for a group")
 	})
 }
+
+// TestSetBy tests that checking Done sets the date of Done on, if it
+// is not set, only for the items that are checked then.
+func TestSetBy(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "set-by", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		chores := findList(ls, "Chores")
+		ls.SetCurrent(chores)
+		lt := ls.TypeOf(chores)
+		done, doneOn := 1, len(lt.Fields)-1
+		assert.Equal(t, "Done on", lt.Fields[doneOn].Name)
+		item := func(i int) reflect.Value {
+			return reflect.ValueOf(ls.table.Items).Elem().Index(i).Elem()
+		}
+		item(1).Field(done).SetBool(true) // Fix faucet, as by its switch
+		ls.itemsChanged()
+
+		y, m, d := time.Now().Date()
+		today := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+		assert.Equal(t, today, item(1).Field(doneOn).Interface(), "set when checked")
+		assert.True(t, item(0).Field(doneOn).Interface().(time.Time).IsZero(), "not for Laundry, already done")
+
+		earlier := today.AddDate(0, 0, -3)
+		item(1).Field(doneOn).Set(reflect.ValueOf(earlier))
+		item(1).Field(done).SetBool(false)
+		ls.itemsChanged()
+		item(1).Field(done).SetBool(true)
+		ls.itemsChanged()
+		assert.Equal(t, earlier, item(1).Field(doneOn).Interface(), "not when it is set")
+	})
+}

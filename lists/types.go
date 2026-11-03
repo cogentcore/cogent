@@ -79,6 +79,10 @@ type Field struct {
 	// edited, such as min:"0" max:"10" step:"0.5" for a number,
 	// format:"%.2f" for its format, and edit:"-" for no editing.
 	Tags string
+
+	// SetBy is, for a date field, the name of a check field, such as
+	// Done, whose checking sets this date to today, if it is not set.
+	SetBy string
 }
 
 // ListType is a type of list, with the fields of its items.
@@ -224,6 +228,92 @@ func (lt *ListType) savedItem(item reflect.Value) *Item {
 	return saved
 }
 
+// checkKey is a check field of an item, for [ListType.checkStates].
+type checkKey struct {
+	item  any // the pointer to the item
+	field int
+}
+
+// setByFields returns the indexes of the date fields that are set by
+// check fields (see [Field.SetBy]), and of those check fields.
+func (lt *ListType) setByFields() (dates, checks []int) {
+	for i, f := range lt.Fields {
+		if (f.Type != Date && f.Type != DateTime) || f.SetBy == "" {
+			continue
+		}
+		for j, c := range lt.Fields {
+			if c.Type == Check && c.Name == f.SetBy {
+				dates, checks = append(dates, i), append(checks, j)
+				break
+			}
+		}
+	}
+	return
+}
+
+// walkItems calls the given function on each of the given items, from
+// [ListType.newItems], and the items in them, as struct values.
+func (lt *ListType) walkItems(items reflect.Value, fun func(item reflect.Value)) {
+	var walk func(sl reflect.Value)
+	walk = func(sl reflect.Value) {
+		for i := range sl.Len() {
+			item := sl.Index(i)
+			if item.Kind() == reflect.Interface {
+				item = item.Elem()
+			}
+			fun(item)
+			walk(item.Elem().Field(len(lt.Fields) + 1))
+		}
+	}
+	walk(items.Elem())
+}
+
+// checkStates returns the states of the check fields of the given items,
+// from [ListType.newItems], that set date fields.
+func (lt *ListType) checkStates(items reflect.Value) map[checkKey]bool {
+	_, checks := lt.setByFields()
+	states := map[checkKey]bool{}
+	if len(checks) == 0 {
+		return states
+	}
+	lt.walkItems(items, func(item reflect.Value) {
+		for _, c := range checks {
+			states[checkKey{item.Interface(), c}] = item.Elem().Field(c).Bool()
+		}
+	})
+	return states
+}
+
+// setDates sets the date fields of the given items, from
+// [ListType.newItems], whose check fields that set them were checked
+// since the given states, to now, if they are not set, returning
+// whether any were.
+func (lt *ListType) setDates(items reflect.Value, prev map[checkKey]bool) bool {
+	dates, checks := lt.setByFields()
+	set := false
+	now := time.Now()
+	lt.walkItems(items, func(item reflect.Value) {
+		for k, c := range checks {
+			v := item.Elem()
+			if !v.Field(c).Bool() || prev[checkKey{item.Interface(), c}] {
+				continue
+			}
+			date := v.Field(dates[k])
+			if !date.Interface().(time.Time).IsZero() {
+				continue
+			}
+			t := now.Truncate(time.Minute)
+			if lt.Fields[dates[k]].Type == Date {
+				y, m, d := now.Date()
+				t = time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+			}
+			date.Set(reflect.ValueOf(t))
+			set = true
+		}
+	})
+	return set
+}
+
 // renameField renames the values of the field with the old name to
 // the new name in the given saved items.
 func renameField(items []*Item, old, new string) {
@@ -245,6 +335,7 @@ func standardTypes() []*ListType {
 			{Name: "Due", Type: Date},
 			{Name: "Priority", Type: Integer, Default: "3", Tags: `min:"1" max:"5"`},
 			{Name: "Notes"},
+			{Name: "Done on", Type: Date, SetBy: "Done"},
 		}},
 		{Name: "Shopping", Fields: []*Field{
 			{Name: "Item"},
@@ -259,6 +350,7 @@ func standardTypes() []*ListType {
 			{Name: "Owner"},
 			{Name: "Due", Type: Date},
 			{Name: "Hours", Type: Number, Tags: `min:"0" step:"0.5"`},
+			{Name: "Done on", Type: Date, SetBy: "Done"},
 		}},
 		{Name: "Reading", Fields: []*Field{
 			{Name: "Title"},
