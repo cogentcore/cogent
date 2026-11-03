@@ -93,6 +93,7 @@ func TestOpenSave(t *testing.T) {
 	gr := findList(ls, "Groceries")
 	assert.Equal(t, "Shopping", gr.TypeName)
 	assert.Len(t, gr.Items, 3)
+	gr.ColumnWidths = map[string]float32{"Item": 120}
 	require.NoError(t, ls.Save())
 
 	ls2 := NewLists(core.NewBody())
@@ -103,13 +104,15 @@ func TestOpenSave(t *testing.T) {
 func TestTypesEdited(t *testing.T) {
 	ls := testLists(t, core.NewBody())
 	gr := findList(ls, "Groceries")
+	gr.ColumnWidths = map[string]float32{"Quantity": 50}
 	snap := ls.snapshotTypes()
 	shopping := ls.TypeOf(gr)
 	shopping.Name = "Groceries"
-	shopping.Fields[2].Name = "Count" // was Quantity
+	shopping.Fields[2].Name = "Item count" // was Quantity
 	ls.typesEdited(snap)
 	assert.Equal(t, "Groceries", gr.TypeName)
-	assert.Equal(t, `6`, string(gr.Items[0].Items[0].Values["Count"]))
+	assert.Equal(t, `6`, string(gr.Items[0].Items[0].Values["Item count"]))
+	assert.Equal(t, map[string]float32{"ItemCount": 50}, gr.ColumnWidths)
 
 	snap = ls.snapshotTypes()
 	ls.Types = ls.Types[2:] // deletes the to-do and shopping types
@@ -121,7 +124,12 @@ func TestLists(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
 	ls.Current = findList(ls, "Groceries")
-	b.AssertRender(t, "lists")
+	ls.Current.ColumnWidths = map[string]float32{"Item": 160}
+	b.AssertRender(t, "lists", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, ls.Current.ColumnWidths, ls.table.ColumnWidths, "the widths of the list")
+	})
 }
 
 // TestEditItems tests that edits of the items of the current list

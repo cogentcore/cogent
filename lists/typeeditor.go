@@ -51,6 +51,12 @@ func (ls *Lists) typesEdited(snap *typesSnapshot) {
 		for _, f := range lt.Fields {
 			if old, ok := snap.fields[f]; ok && old != f.Name {
 				renameField(l.Items, old, f.Name)
+				// the widths are by the names of the struct fields
+				oldKey, newKey := goName(old, map[string]bool{}), goName(f.Name, map[string]bool{})
+				if w, has := l.ColumnWidths[oldKey]; has {
+					delete(l.ColumnWidths, oldKey)
+					l.ColumnWidths[newKey] = w
+				}
 			}
 		}
 		if len(lt.Fields) == 0 {

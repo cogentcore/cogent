@@ -31,6 +31,10 @@ type List struct {
 	// Items are the saved items of the list.
 	Items []*Item `display:"-"`
 
+	// ColumnWidths are the widths of the columns of the list that are set,
+	// by the names of the struct fields (see [core.Table.ColumnWidths]).
+	ColumnWidths map[string]float32 `display:"-"`
+
 	// values is the pointer to the slice of pointers to the items as
 	// structs of the type of the list, for the [core.TreeTable], or
 	// invalid if they are not made yet.
@@ -71,10 +75,11 @@ const (
 
 // listData is the saved form of a list or group, with the lists in it.
 type listData struct {
-	Name  string
-	Type  string      `json:",omitempty"`
-	Items []*Item     `json:",omitempty"`
-	Lists []*listData `json:",omitempty"`
+	Name         string
+	Type         string             `json:",omitempty"`
+	ColumnWidths map[string]float32 `json:",omitempty"`
+	Items        []*Item            `json:",omitempty"`
+	Lists        []*listData        `json:",omitempty"`
 }
 
 // Open opens the lists and list types in the given directory, starting
@@ -110,6 +115,7 @@ func newList(ld *listData) *List {
 	l := tree.New[List]()
 	l.SetName(ld.Name)
 	l.TypeName = ld.Type
+	l.ColumnWidths = ld.ColumnWidths
 	l.Items = ld.Items
 	for _, c := range ld.Lists {
 		l.AddChild(newList(c))
@@ -119,7 +125,7 @@ func newList(ld *listData) *List {
 
 // listData returns the saved form of the given list.
 func (ls *List) listData() *listData {
-	ld := &listData{Name: ls.Name, Type: ls.TypeName, Items: ls.Items}
+	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Items: ls.Items}
 	for _, c := range ls.Children {
 		ld.Lists = append(ld.Lists, c.(*List).listData())
 	}
@@ -324,10 +330,12 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 		ls.table = w
 		w.SetDragMoves(true) // reordering the items, unlike the lists
 		w.OnChange(func(e events.Event) {
+			ls.Current.ColumnWidths = w.ColumnWidths
 			ls.itemsChanged()
 		})
 		w.Updater(func() {
 			w.SetItems(ls.values(ls.Current))
+			w.ColumnWidths = ls.Current.ColumnWidths
 		})
 	})
 }
