@@ -221,3 +221,23 @@ func TestUndo(t *testing.T) {
 		assert.Equal(t, "Shopping", findList(saved, "Groceries").TypeName, "saved")
 	})
 }
+
+// TestDeleteField tests deleting a field in the middle of the type of
+// the current list, which is shown.
+func TestDeleteField(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	b.AssertRender(t, "delete-field", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		chores := findList(ls, "Chores")
+		ls.SetCurrent(chores)
+		snap := ls.snapshotTypes()
+		todo := ls.TypeOf(chores)
+		todo.Fields = append(todo.Fields[:3], todo.Fields[4:]...) // Priority
+		ls.typesEdited(snap)
+		ls.Restyle()
+		assert.Len(t, ls.table.ColumnWidths, 0)
+		assert.Equal(t, `"washer"`, string(chores.Items[1].Values["Notes"]))
+	})
+}
