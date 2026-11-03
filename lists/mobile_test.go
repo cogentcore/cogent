@@ -152,14 +152,16 @@ func TestMobileForm(t *testing.T) {
 	})
 }
 
-// TestMobileLong tests the items of a list with long names, and the
-// column widths of another device, which fit the width of the screen.
+// TestMobileLong tests the items of a list with long names, the column
+// widths of another device, and the values of the groups hidden, which
+// fit the width of the screen.
 func TestMobileLong(t *testing.T) {
 	b := core.NewBody()
 	ls := testMobile(t, b)
 	gr := findList(ls, "Groceries") // before the window, which needs no lock
 	gr.Items[0].Items[0].Values["Item"] = json.RawMessage(`"Apples, the green ones from the farmers market on Saturday"`)
 	gr.ColumnWidths = map[string]float32{"Item": 500}
+	gr.HideGroupValues = true // the first row is a group, without values
 	b.AssertRender(t, "mobile-long", func() {
 		openMobileItems(t, b, ls, "Groceries")
 	})
