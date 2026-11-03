@@ -85,6 +85,7 @@ var StandardKeyMaps = keymap.Maps{
 // listsKeys handles the key functions of Lists for all of its widgets,
 // before they get the keys, including the key sequences.
 func (ls *Lists) listsKeys(e events.Event) {
+	ls.syncIfIdle()
 	kc := e.KeyChord()
 	kf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {

@@ -110,6 +110,7 @@ func (lt *ListType) Label() string { return lt.Name }
 const (
 	closedField   = "Closed_"
 	childrenField = "Items_"
+	idField       = "ID_"
 )
 
 // StructType returns the struct type of the items of the list type, made
@@ -133,7 +134,8 @@ func (lt *ListType) StructType() reflect.Type {
 	}
 	fields = append(fields,
 		reflect.StructField{Name: closedField, Type: reflect.TypeFor[bool](), Tag: `treetable:"closed" display:"-"`},
-		reflect.StructField{Name: childrenField, Type: reflect.TypeFor[[]any](), Tag: `treetable:"children" display:"-"`})
+		reflect.StructField{Name: childrenField, Type: reflect.TypeFor[[]any](), Tag: `treetable:"children" display:"-"`},
+		reflect.StructField{Name: idField, Type: reflect.TypeFor[string](), Tag: `display:"-"`})
 	return reflect.StructOf(fields)
 }
 
@@ -160,6 +162,10 @@ func goName(name string, used map[string]bool) string {
 // Item is the saved form of an item of a list, with its values by field
 // name, so that they are kept when the fields of its type change.
 type Item struct {
+
+	// ID is the unique identifier of the item in its list, which stays the
+	// same when it is edited or moved, for syncing (see [Lists.Sync]).
+	ID string `json:",omitempty"`
 
 	// Values are the values of the item by field name, in JSON.
 	Values map[string]json.RawMessage
@@ -196,6 +202,7 @@ func (lt *ListType) newItem(st reflect.Type, saved *Item) reflect.Value {
 		}
 	}
 	v.Field(len(lt.Fields)).SetBool(saved.Closed)
+	v.Field(len(lt.Fields) + 2).SetString(saved.ID)
 	children := v.Field(len(lt.Fields) + 1)
 	for _, c := range saved.Items {
 		children.Set(reflect.Append(children, lt.newItem(st, c)))
@@ -208,14 +215,15 @@ func (lt *ListType) newItem(st reflect.Type, saved *Item) reflect.Value {
 func (lt *ListType) savedItems(items reflect.Value) []*Item {
 	sl := items.Elem()
 	saved := make([]*Item, 0, sl.Len())
+	seen := map[string]bool{}
 	for i := range sl.Len() {
-		saved = append(saved, lt.savedItem(reflect.ValueOf(sl.Index(i).Interface())))
+		saved = append(saved, lt.savedItem(reflect.ValueOf(sl.Index(i).Interface()), seen))
 	}
 	return saved
 }
 
 // savedItem returns the saved item for the given pointer to an item.
-func (lt *ListType) savedItem(item reflect.Value) *Item {
+func (lt *ListType) savedItem(item reflect.Value, seen map[string]bool) *Item {
 	v := item.Elem()
 	saved := &Item{Values: map[string]json.RawMessage{}}
 	for i, f := range lt.Fields {
@@ -225,9 +233,17 @@ func (lt *ListType) savedItem(item reflect.Value) *Item {
 		}
 	}
 	saved.Closed = v.Field(len(lt.Fields)).Bool()
+	// a new item, or a copy, gets a new ID, also in the struct, so that it
+	// stays the same
+	id := v.Field(len(lt.Fields) + 2)
+	if id.String() == "" || seen[id.String()] {
+		id.SetString(newID())
+	}
+	saved.ID = id.String()
+	seen[saved.ID] = true
 	children := v.Field(len(lt.Fields) + 1)
 	for i := range children.Len() {
-		saved.Items = append(saved.Items, lt.savedItem(children.Index(i).Elem()))
+		saved.Items = append(saved.Items, lt.savedItem(children.Index(i).Elem(), seen))
 	}
 	return saved
 }

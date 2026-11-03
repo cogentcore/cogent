@@ -39,10 +39,11 @@ func init() {
 // in the given body.
 func testLists(t *testing.T, b *core.Body) *Lists {
 	Settings.Splits = nil // the standard splits, not those of other tests or the user
+	Settings.Sync = SyncSettings{}
 	dir := t.TempDir()
-	data, err := os.ReadFile(filepath.Join("testdata", "sample", listsFile))
+	data, err := os.ReadFile(filepath.Join("testdata", "sample", oldListsFile))
 	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(filepath.Join(dir, listsFile), data, 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, oldListsFile), data, 0o644))
 	ls := NewLists(b)
 	require.NoError(t, ls.Open(dir))
 	return ls
@@ -62,7 +63,7 @@ func TestStructType(t *testing.T) {
 		{Name: "2nd", Type: Check},
 	}}
 	st := lt.StructType()
-	assert.Equal(t, 7, st.NumField())
+	assert.Equal(t, 8, st.NumField())
 	names := []string{}
 	for i := range 5 {
 		names = append(names, st.Field(i).Name)
@@ -91,6 +92,17 @@ func TestItemsRoundTrip(t *testing.T) {
 	assert.True(t, back[0].Closed)
 	assert.Equal(t, `6`, string(back[0].Items[0].Values["Quantity"]))
 	assert.Equal(t, `1`, string(back[0].Values["Quantity"]), "the default")
+	assert.NotEmpty(t, back[0].ID, "a new ID")
+	assert.NotEqual(t, back[0].ID, back[0].Items[0].ID)
+	again := lt.savedItems(items)
+	assert.Equal(t, back[0].ID, again[0].ID, "the same ID, which is in the struct")
+	assert.Equal(t, back[0].Items[0].ID, again[0].Items[0].ID)
+
+	// a copy of an item, with the same ID, gets a new one
+	items.Elem().Set(reflect.Append(items.Elem(), items.Elem().Index(0)))
+	copies := lt.savedItems(items)
+	assert.Equal(t, back[0].ID, copies[0].ID)
+	assert.NotEqual(t, copies[0].ID, copies[1].ID)
 }
 
 func TestOpenSave(t *testing.T) {
@@ -105,6 +117,18 @@ func TestOpenSave(t *testing.T) {
 	ls2 := NewLists(core.NewBody())
 	require.NoError(t, ls2.Open(ls.Dir))
 	assert.Equal(t, ls.Root.listData(), ls2.Root.listData())
+	assert.Equal(t, ls.files(), ls2.files(), "with the same IDs")
+
+	// the old file of all of the lists is converted to the files of each list
+	assert.NoFileExists(t, filepath.Join(ls.Dir, oldListsFile))
+	assert.FileExists(t, filepath.Join(ls.Dir, oldListsBackup))
+	assert.FileExists(t, filepath.Join(ls.Dir, treeFile))
+	assert.FileExists(t, filepath.Join(ls.Dir, filepath.FromSlash(listPath(gr.ID))))
+
+	// the file of a deleted list is deleted
+	gr.Delete()
+	require.NoError(t, ls.Save())
+	assert.NoFileExists(t, filepath.Join(ls.Dir, filepath.FromSlash(listPath(gr.ID))))
 }
 
 func TestTypesEdited(t *testing.T) {

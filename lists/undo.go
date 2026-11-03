@@ -12,6 +12,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/undo"
 )
 
 // undoState is the state of a list for undo: its type and items,
@@ -27,6 +28,14 @@ func undoLines(l *List) []string {
 	b, err := json.MarshalIndent(&undoState{Type: l.TypeName, Items: l.Items}, "", "  ")
 	errors.Log(err)
 	return strings.Split(string(b), "\n")
+}
+
+// undoStack returns the undo stack of the given list, making it if needed.
+func (l *List) undoStack() *undo.Stack {
+	if l.undos == nil {
+		l.undos = &undo.Stack{}
+	}
+	return l.undos
 }
 
 // initUndo starts the undo of the given list with its current state,
@@ -48,7 +57,7 @@ func saveUndo(l *List, action string) {
 	if slices.Equal(state, l.undoState) {
 		return
 	}
-	l.undos.Save(action, "", l.undoState)
+	l.undoStack().Save(action, "", l.undoState)
 	l.undoState = state
 }
 
@@ -56,25 +65,25 @@ func saveUndo(l *List, action string) {
 // its type, which also undoes the edits after it.
 func (ls *Lists) Undo() { //types:add
 	l := ls.Current
-	if l == nil || l.IsGroup() || len(l.undos.Records) == 0 || l.undos.Index < 0 {
+	if l == nil || l.IsGroup() || len(l.undoStack().Records) == 0 || l.undoStack().Index < 0 {
 		core.MessageSnackbar(ls, "Nothing to undo")
 		return
 	}
-	if l.undos.MustSaveUndoStart() { // so that the undo can be redone
-		l.undos.SaveUndoStart(undoLines(l))
+	if l.undoStack().MustSaveUndoStart() { // so that the undo can be redone
+		l.undoStack().SaveUndoStart(undoLines(l))
 	}
-	act, _, state := l.undos.Undo()
+	act, _, state := l.undoStack().Undo()
 	ls.restoreUndo(l, state, "Undid "+act)
 }
 
 // Redo redoes the last undone edit of the current list.
 func (ls *Lists) Redo() { //types:add
 	l := ls.Current
-	if l == nil || l.IsGroup() || !l.undos.HasRedoAvail() {
+	if l == nil || l.IsGroup() || !l.undoStack().HasRedoAvail() {
 		core.MessageSnackbar(ls, "Nothing to redo")
 		return
 	}
-	act, _, state := l.undos.Redo()
+	act, _, state := l.undoStack().Redo()
 	ls.restoreUndo(l, state, "Redid "+act)
 }
 

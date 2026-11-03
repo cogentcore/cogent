@@ -16,6 +16,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 )
 
 // appIcon is the icon of the app, which core build also sets, but go
@@ -32,7 +33,11 @@ func main() {
 		dir = os.Args[1]
 	}
 	ls := NewLists(b)
+	theLists = ls
 	errors.Log(ls.Open(dir))
+	b.OnShow(func(e events.Event) {
+		ls.StartSync()
+	})
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(ls.MakeToolbar)
 	})

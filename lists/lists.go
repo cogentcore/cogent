@@ -7,12 +7,8 @@ package main
 import (
 	"fmt"
 	"image"
-	"os"
-	"path/filepath"
 	"reflect"
 
-	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -27,6 +23,11 @@ import (
 // List is a list of items, or a group of lists, in the tree of lists.
 type List struct {
 	tree.NodeBase
+
+	// ID is the unique identifier of the list or group, which stays the
+	// same when it is renamed or moved, for syncing (see [Lists.Sync]),
+	// and names the file of a list (see [listPath]).
+	ID string `display:"-"`
 
 	// Group is whether it is a group of lists, instead of a list.
 	Group bool
@@ -55,8 +56,8 @@ type List struct {
 	// (see [core.TreeTable.HideGroupValues]).
 	HideGroupValues bool `display:"-"`
 
-	// undos is the undo stack of the edits of the list.
-	undos undo.Stack
+	// undos is the undo stack of the edits of the list (see [List.undoStack]).
+	undos *undo.Stack
 
 	// undoState is the state of the list for undo after the last edit,
 	// which is saved as the state before the next one.
@@ -101,97 +102,12 @@ type Lists struct {
 	// tableList is the list whose column widths and sort the table has.
 	tableList *List
 
+	// syncs is the state of the syncing of the lists (see [Lists.Sync]).
+	syncs syncer
+
 	// keySeq1 is the first key of a key sequence being entered,
 	// such as Control+X (see [Lists.listsKeys]).
 	keySeq1 key.Chord
-}
-
-const (
-	listsFile = "lists.json"
-	typesFile = "types.json"
-)
-
-// listData is the saved form of a list or group, with the lists in it.
-type listData struct {
-	Name            string
-	Type            string             `json:",omitempty"`
-	ColumnWidths    map[string]float32 `json:",omitempty"`
-	Sort            string             `json:",omitempty"`
-	HideGroupValues bool               `json:",omitempty"`
-	Filtered        bool               `json:",omitempty"`
-	Items           []*Item            `json:",omitempty"`
-	Lists           []*listData        `json:",omitempty"`
-}
-
-// Open opens the lists and list types in the given directory, starting
-// with the standard list types and an empty list for the files that do
-// not exist yet.
-func (ls *Lists) Open(dir string) error {
-	ls.Dir = dir
-	ls.Types = nil
-	tf := filepath.Join(dir, typesFile)
-	if err := jsonx.Open(&ls.Types, tf); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	if len(ls.Types) == 0 {
-		ls.Types = standardTypes()
-	}
-	var root listData
-	lf := filepath.Join(dir, listsFile)
-	if err := jsonx.Open(&root, lf); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-		root = listData{Name: "Lists", Lists: []*listData{{Name: "To do", Type: "To do"}}}
-	}
-	ls.Root = newList(&root)
-	ls.Root.Group = true
-	ls.Current = nil
-	ls.keepUsedTypes()
-	ls.Update()
-	return nil
-}
-
-// newList returns a new list made from the given saved list.
-func newList(ld *listData) *List {
-	l := tree.New[List]()
-	l.SetName(ld.Name)
-	l.Group = ld.Type == ""
-	l.TypeName = ld.Type
-	l.ColumnWidths = ld.ColumnWidths
-	l.Sort = ld.Sort
-	l.HideGroupValues = ld.HideGroupValues
-	l.Filtered = ld.Filtered
-	l.Items = ld.Items
-	for _, c := range ld.Lists {
-		cl := newList(c)
-		l.AddChild(cl)
-		setUniqueName(cl, cl.Name)
-	}
-	return l
-}
-
-// listData returns the saved form of the given list.
-func (ls *List) listData() *listData {
-	ld := &listData{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Filtered: ls.Filtered, Items: ls.Items}
-	for _, c := range ls.Children {
-		ld.Lists = append(ld.Lists, c.(*List).listData())
-	}
-	return ld
-}
-
-// Save saves the lists and the list types in [Lists.Dir].
-func (ls *Lists) Save() error {
-	if ls.Dir == "" || ls.Root == nil {
-		return nil
-	}
-	if err := os.MkdirAll(ls.Dir, 0o755); err != nil {
-		return err
-	}
-	if err := jsonx.SaveIndent(ls.Types, filepath.Join(ls.Dir, typesFile)); err != nil {
-		return err
-	}
-	return jsonx.SaveIndent(ls.Root.listData(), filepath.Join(ls.Dir, listsFile))
 }
 
 // saveChanges saves after a change, reporting an error.
@@ -199,6 +115,7 @@ func (ls *Lists) saveChanges() {
 	if err := ls.Save(); err != nil {
 		core.ErrorSnackbar(ls, err, "Error saving lists")
 	}
+	ls.edited()
 }
 
 // TypeOf returns the type of the given list, or nil for a group.
@@ -309,6 +226,9 @@ func (ls *Lists) Init() {
 		s.Grow.Set(1, 1)
 	})
 	ls.OnFirst(events.KeyChord, ls.listsKeys)
+	ls.OnFirst(events.MouseDown, func(e events.Event) {
+		ls.syncIfIdle()
+	})
 	// all of the keys of undo and redo, which the widgets within
 	// do not handle, such as a text field after its edits are accepted
 	ls.OnFinal(events.KeyChord, func(e events.Event) {
@@ -805,4 +725,18 @@ func (ls *Lists) MakeToolbar(p *tree.Plan) {
 			ls.EditTypes()
 		})
 	})
+	if syncing() {
+		tree.Add(p, func(w *core.Separator) {})
+		tree.Add(p, func(w *core.Button) {
+			ls.syncs.button = w
+			w.SetType(core.ButtonAction)
+			w.Updater(func() {
+				icon, status := ls.syncStatus()
+				w.SetIcon(icon).SetTooltip(status)
+			})
+			w.OnClick(func(e events.Event) {
+				ls.Sync()
+			})
+		})
+	}
 }
