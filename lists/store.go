@@ -30,6 +30,10 @@ const (
 	typesFile = "types.json"
 	listsDir  = "lists"
 
+	// localFile is the file of the settings of the lists on this device,
+	// in [Lists.Dir], which is not synced (see [localData]).
+	localFile = "local.json"
+
 	// oldListsFile is the file of all of the lists, with their items,
 	// before the files of each list, which is moved to oldListsBackup
 	// when it is converted (see [Lists.Open]).
@@ -66,13 +70,24 @@ type treeNode struct {
 	Lists []*treeNode `json:",omitempty"`
 }
 
+// localData is the saved form of the settings of the lists on this device,
+// in the [localFile], which are not synced, as they depend on the size of
+// the screen: the column widths of the lists, by the IDs of the lists.
+type localData struct {
+	ColumnWidths map[string]map[string]float32 `json:",omitempty"`
+}
+
 // listFile is the saved form of a list, in its file.
 type listFile struct {
 
 	// Name is the name of the list, for reading the file,
 	// which is that of the tree of lists.
-	Name            string             `json:",omitempty"`
-	Type            string             `json:",omitempty"`
+	Name string `json:",omitempty"`
+	Type string `json:",omitempty"`
+
+	// ColumnWidths are the column widths in older files, which are now
+	// in the [localFile], as they depend on the device. They are read for
+	// a list without them there, and are not written.
 	ColumnWidths    map[string]float32 `json:",omitempty"`
 	Sort            string             `json:",omitempty"`
 	HideGroupValues bool               `json:",omitempty"`
@@ -208,7 +223,44 @@ func (ls *Lists) Save() error {
 	if ls.Dir == "" || ls.Root == nil {
 		return nil
 	}
-	return writeFiles(ls.Dir, ls.files())
+	if err := writeFiles(ls.Dir, ls.files()); err != nil {
+		return err
+	}
+	return ls.saveLocal()
+}
+
+// saveLocal saves the settings of the lists on this device
+// in the [localFile], if they are changed.
+func (ls *Lists) saveLocal() error {
+	ld := &localData{ColumnWidths: map[string]map[string]float32{}}
+	ls.Root.WalkDown(func(n tree.Node) bool {
+		if l := n.(*List); len(l.ColumnWidths) > 0 {
+			ld.ColumnWidths[l.ID] = l.ColumnWidths
+		}
+		return tree.Continue
+	})
+	fn := filepath.Join(ls.Dir, localFile)
+	b := marshal(ld)
+	if old, err := os.ReadFile(fn); err == nil && bytes.Equal(old, b) {
+		return nil
+	}
+	return os.WriteFile(fn, b, 0o644)
+}
+
+// loadLocal sets the settings of the lists on this device from the
+// [localFile], for those that are in it.
+func (ls *Lists) loadLocal() {
+	var ld localData
+	if b, err := os.ReadFile(filepath.Join(ls.Dir, localFile)); err == nil {
+		json.Unmarshal(b, &ld)
+	}
+	ls.Root.WalkDown(func(n tree.Node) bool {
+		l := n.(*List)
+		if w, ok := ld.ColumnWidths[l.ID]; ok {
+			l.ColumnWidths = w
+		}
+		return tree.Continue
+	})
 }
 
 // files returns the saved files of the lists by path, with the IDs of
@@ -263,7 +315,7 @@ func (ls *List) treeNode() *treeNode {
 
 // listFile returns the saved form of the given list in its file.
 func (ls *List) listFile() *listFile {
-	return &listFile{Name: ls.Name, Type: ls.TypeName, ColumnWidths: ls.ColumnWidths, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Filtered: ls.Filtered, Items: ls.Items}
+	return &listFile{Name: ls.Name, Type: ls.TypeName, Sort: ls.Sort, HideGroupValues: ls.HideGroupValues, Filtered: ls.Filtered, Items: ls.Items}
 }
 
 // load sets the lists and list types from the given files by path,
@@ -280,6 +332,7 @@ func (ls *Lists) load(files map[string][]byte) {
 	ls.Root.Group = true
 	ls.Root.ID = ""
 	ls.setIDs()
+	ls.loadLocal()
 	ls.keepUsedTypes()
 }
 

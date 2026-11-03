@@ -23,8 +23,9 @@ import (
 func testMobile(t *testing.T, b *core.Body) *Lists {
 	ls := testLists(t, b)
 	ls.Mobile = true
-	b.Styler(func(s *styles.Style) {
-		s.Min.Set(units.Dp(360), units.Dp(640))
+	b.Styler(func(s *styles.Style) { // as an iPhone 17
+		s.Min.Set(units.Dp(402), units.Dp(874))
+		s.Max.Set(units.Dp(402), units.Dp(874))
 	})
 	b.AddTopBar(func(bar *core.Frame) { // as NewApp does
 		core.NewToolbar(bar).Maker(ls.MakeToolbar)
@@ -148,5 +149,18 @@ func TestMobileForm(t *testing.T) {
 		defer b.AsyncUnlock()
 		require.NotNil(t, ls.form)
 		assert.Equal(t, "Laundry", ls.form.Title)
+	})
+}
+
+// TestMobileLong tests the items of a list with long names, and the
+// column widths of another device, which fit the width of the screen.
+func TestMobileLong(t *testing.T) {
+	b := core.NewBody()
+	ls := testMobile(t, b)
+	gr := findList(ls, "Groceries") // before the window, which needs no lock
+	gr.Items[0].Items[0].Values["Item"] = json.RawMessage(`"Apples, the green ones from the farmers market on Saturday"`)
+	gr.ColumnWidths = map[string]float32{"Item": 500}
+	b.AssertRender(t, "mobile-long", func() {
+		openMobileItems(t, b, ls, "Groceries")
 	})
 }

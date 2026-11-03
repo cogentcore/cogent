@@ -418,8 +418,13 @@ func (ls *Lists) initTable(w *core.TreeTable) {
 	ls.table = w
 	ls.tableList = nil   // a new table
 	w.SetDragMoves(true) // reordering the items, unlike the lists
+	// the mobile layout fits the width of the screen, without the column
+	// widths, which are those of this device, and not synced
+	w.FitWidth = ls.Mobile
 	w.OnChange(func(e events.Event) {
-		ls.Current.ColumnWidths = w.ColumnWidths
+		if !ls.Mobile {
+			ls.Current.ColumnWidths = w.ColumnWidths
+		}
 		ls.Current.Sort = w.SortFieldName()
 		ls.itemsChanged()
 	})
@@ -432,7 +437,9 @@ func (ls *Lists) initTable(w *core.TreeTable) {
 		}
 		if ls.tableList != ls.Current { // the table has those of the list after
 			ls.tableList = ls.Current
-			w.ColumnWidths = ls.Current.ColumnWidths
+			if !ls.Mobile {
+				w.ColumnWidths = ls.Current.ColumnWidths
+			}
 			w.SetSortFieldName(ls.Current.Sort)
 		}
 	})

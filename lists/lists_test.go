@@ -129,6 +129,13 @@ func TestOpenSave(t *testing.T) {
 	assert.FileExists(t, filepath.Join(ls.Dir, treeFile))
 	assert.FileExists(t, filepath.Join(ls.Dir, filepath.FromSlash(listPath(gr.ID))))
 
+	// the column widths are in the local file, which is not synced
+	assert.NotContains(t, string(ls.files()[listPath(gr.ID)]), "ColumnWidths")
+	local, err := os.ReadFile(filepath.Join(ls.Dir, localFile))
+	require.NoError(t, err)
+	assert.Contains(t, string(local), gr.ID)
+	assert.Equal(t, map[string]float32{"Item": 120}, findList(ls2, "Groceries").ColumnWidths, "loaded")
+
 	// the file of a deleted list is deleted
 	gr.Delete()
 	require.NoError(t, ls.Save())
