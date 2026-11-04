@@ -31,6 +31,7 @@ var _ tree.Node = (*Page)(nil)
 func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()
+	pg.Context.BrowserStyle = true
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
