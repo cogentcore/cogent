@@ -11,6 +11,8 @@ import (
 	"errors"
 	"net/http"
 	neturl "net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -307,16 +309,39 @@ func (pg *Page) MakeToolbar(p *tree.Plan) {
 			if text == "" || text == pg.currentURL() {
 				return
 			}
-			if !strings.Contains(text, "://") {
-				if strings.Contains(text, ".") && !strings.Contains(text, " ") {
-					text = "https://" + text
-				} else {
-					text = "https://html.duckduckgo.com/html/?q=" + neturl.QueryEscape(text) // works without JavaScript
-				}
-			}
-			pg.OpenURL(text, e)
+			pg.OpenURL(LocationURL(text), e)
 		})
 	})
+}
+
+// LocationURL returns the URL for the given location, as typed in the
+// address field or given on the command line: a URL (with a scheme), a
+// local file (an absolute or relative path, or one that exists), as a
+// file:// URL, a domain (with a dot), as https, or otherwise a search.
+func LocationURL(loc string) string {
+	loc = strings.TrimSpace(loc)
+	if strings.Contains(loc, "://") || strings.HasPrefix(loc, "about:") || strings.HasPrefix(loc, "data:") {
+		return loc
+	}
+	path := loc
+	if rest, ok := strings.CutPrefix(path, "~/"); ok {
+		if home, err := os.UserHomeDir(); err == nil {
+			path = filepath.Join(home, rest)
+		}
+	}
+	isPath := filepath.IsAbs(path) || strings.HasPrefix(loc, "./") || strings.HasPrefix(loc, "../") || strings.HasPrefix(loc, "~/")
+	if _, err := os.Stat(path); err == nil {
+		isPath = true
+	}
+	if isPath {
+		if abs, err := filepath.Abs(path); err == nil {
+			return (&neturl.URL{Scheme: "file", Path: filepath.ToSlash(abs)}).String()
+		}
+	}
+	if strings.Contains(loc, ".") && !strings.Contains(loc, " ") {
+		return "https://" + loc
+	}
+	return "https://html.duckduckgo.com/html/?q=" + neturl.QueryEscape(loc) // works without JavaScript
 }
 
 // viewportWidth returns the width of the page in dp, which is the width of

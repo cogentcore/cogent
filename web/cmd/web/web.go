@@ -5,6 +5,8 @@
 package main
 
 import (
+	"os"
+
 	"cogentcore.org/cogent/web"
 	"cogentcore.org/core/core"
 )
@@ -17,6 +19,11 @@ func main() {
 		tb.Maker(pg.MakeToolbar)
 		pg.OnOpen = func(url string) { tb.Update() }
 	})
-	pg.OpenURL("https://google.com", nil)
+	// the page to open is the URL or local file in the first argument
+	url := "https://google.com"
+	if len(os.Args) > 1 {
+		url = web.LocationURL(os.Args[1])
+	}
+	pg.OpenURL(url, nil)
 	b.RunMainWindow()
 }

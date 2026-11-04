@@ -6,9 +6,12 @@ package web
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"cogentcore.org/core/base/iox/imagex"
@@ -51,4 +54,50 @@ func TestPageFile(t *testing.T) {
 	if out := os.Getenv("WEB_OUT"); out != "" {
 		imagex.Save(img, out)
 	}
+}
+
+func TestLocationURL(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "test.html")
+	os.WriteFile(file, []byte("<p>x</p>"), 0666)
+	for loc, want := range map[string]string{
+		"https://example.com/": "https://example.com/",
+		"example.com":          "https://example.com",
+		"cogent core":          "https://html.duckduckgo.com/html/?q=cogent+core",
+		file:                   "file://" + filepath.ToSlash(file),
+	} {
+		assert.Equal(t, want, LocationURL(loc), loc)
+	}
+}
+
+// TestOpenFile tests opening a local file and a relative link in it.
+func TestOpenFile(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "a.html"), []byte(`<p><a href="b.html">to b</a></p>`), 0666)
+	os.WriteFile(filepath.Join(dir, "b.html"), []byte(`<p>page b</p>`), 0666)
+	b := core.NewBody()
+	pg := NewPage(b)
+	pg.OpenURL(LocationURL(filepath.Join(dir, "a.html")), nil)
+	b.RenderImage(pg.wait, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		if assert.Len(t, pg.History, 1) {
+			assert.True(t, strings.HasPrefix(pg.History[0], "file://"))
+		}
+		pg.OpenURL("b.html", nil) // as for a click on the link
+	}, pg.wait, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		if assert.Len(t, pg.History, 2) {
+			assert.Equal(t, "file://"+filepath.ToSlash(filepath.Join(dir, "b.html")), pg.History[1])
+		}
+		found := false
+		pg.WalkDown(func(n tree.Node) bool {
+			if tx, ok := n.(*core.Text); ok && strings.Contains(tx.Text, "page b") {
+				found = true
+			}
+			return tree.Continue
+		})
+		assert.True(t, found)
+	})
 }
