@@ -105,7 +105,7 @@ func (pg *Page) Back() {
 }
 
 func (pg *Page) MakeToolbar(p *tree.Plan) {
-	tree.AddInit(p, "back", func(w *core.Button) {
+	tree.AddAt(p, "back", func(w *core.Button) {
 		w.SetIcon(icons.ArrowBack).SetTooltip("Back")
 		w.OnClick(func(e events.Event) {
 			e.SetHandled()
@@ -115,7 +115,7 @@ func (pg *Page) MakeToolbar(p *tree.Plan) {
 			w.SetEnabled(len(pg.History) > 1)
 		})
 	})
-	tree.AddInit(p, "url", func(w *core.TextField) {
+	tree.AddAt(p, "url", func(w *core.TextField) {
 		w.SetPlaceholder("Address or search")
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
