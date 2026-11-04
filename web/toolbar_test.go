@@ -130,3 +130,33 @@ func TestHistory(t *testing.T) {
 			"opening a page after going back replaces the pages after")
 	}))
 }
+
+// TestFragment tests that a link to a fragment of the page that is shown
+// does not open it again.
+func TestFragment(t *testing.T) {
+	b := core.NewBody()
+	pg := NewPage(b)
+	var mu sync.Mutex
+	gets := 0
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		mu.Lock()
+		gets++
+		mu.Unlock()
+		pu, _ := url.Parse(u)
+		r := strings.NewReader(`<p>top</p><div style="height:3000px"></div><h2 id="sec">Section</h2>`)
+		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
+	}
+	pg.OpenURL("https://example.com/page", nil)
+	b.RenderImage(pg.wait, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.True(t, pg.scrollToFragment("sec"))
+		pg.OpenURL("#sec", nil)
+		assert.Equal(t, []string{"https://example.com/page", "https://example.com/page#sec"}, pg.History)
+		assert.False(t, pg.IsLoading())
+	}, pg.wait, func() {
+		mu.Lock()
+		defer mu.Unlock()
+		assert.Equal(t, 1, gets, "the page is not gotten again")
+	})
+}

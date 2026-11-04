@@ -98,7 +98,50 @@ var errStopped = errors.New("stopped")
 
 // OpenURL opens the page at the given url, which is added to the history.
 func (pg *Page) OpenURL(url string, e events.Event) {
+	// a link to a fragment of the page that is shown scrolls to it
+	if cur := pg.currentURL(); cur != "" && pg.loading == "" {
+		if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil && u.Fragment != "" {
+			c, err := neturl.Parse(cur)
+			if err == nil && u.Scheme == c.Scheme && u.Host == c.Host && u.Path == c.Path && u.RawQuery == c.RawQuery {
+				pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], u.String())
+				pg.Current = len(pg.History) - 1
+				pg.scrollToFragment(u.Fragment)
+				pg.opened(u.String())
+				return
+			}
+		}
+	}
 	pg.open(url, historyNew, 0, 0)
+}
+
+// scrollToFragment scrolls to the widget of the element with the given id
+// (or the a element with the given name), returning whether there is one.
+func (pg *Page) scrollToFragment(id string) bool {
+	if id == "" {
+		return false
+	}
+	var target core.Widget
+	pg.WalkDown(func(n tree.Node) bool {
+		w, ok := n.(core.Widget)
+		if !ok {
+			return tree.Continue
+		}
+		wb := w.AsWidget()
+		if pid, _ := wb.Property("id").(string); pid == id {
+			target = w
+			return tree.Break
+		}
+		if name, _ := wb.Property("name").(string); name == id && wb.Property("tag") == "a" {
+			target = w
+			return tree.Break
+		}
+		return tree.Continue
+	})
+	if target == nil {
+		return false
+	}
+	target.AsWidget().ScrollThisToTop()
+	return true
 }
 
 // Back opens the previous page in the history, if there is one.
@@ -229,7 +272,10 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
-		if mode == historyNew {
+		if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
+			// after it is laid out, as for scrolling to its position
+			pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
+		} else if mode == historyNew {
 			pg.scrollToTop()
 		}
 		pg.opened(final)
