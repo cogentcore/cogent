@@ -38,7 +38,7 @@ func TestPageFile(t *testing.T) {
 		return http.Get(u)
 	}
 	pg.OpenURL(os.Getenv("WEB_URL"), nil)
-	img := b.RenderImage(func() {
+	img := b.RenderImage(pg.wait, func() {
 		n := 0
 		pg.WalkDown(func(nd tree.Node) bool {
 			if tx, ok := nd.(*core.Text); ok && n < 5 {
