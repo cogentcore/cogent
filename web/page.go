@@ -342,6 +342,7 @@ func (pg *Page) MakeToolbar(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Min.X.Em(30)
+			s.Max.X = units.Value{} // it fills the toolbar (text fields are at most 40ch)
 		})
 		w.Updater(func() {
 			if pg.loading != "" {
