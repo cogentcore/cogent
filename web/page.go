@@ -75,7 +75,6 @@ var _ tree.Node = (*Page)(nil)
 func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()
-	pg.Context.BrowserStyle = true
 	pg.Context.OpenURL = pg.OpenURL
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
