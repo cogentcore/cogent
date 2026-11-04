@@ -80,6 +80,7 @@ func (pg *Page) Init() {
 	pg.OnShow(func(e events.Event) { pg.setShown() })
 	pg.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
+		s.Shrink.X = 1 // to the width of the frame it scrolls in, as a viewport
 		s.Direction = styles.Column
 	})
 }
