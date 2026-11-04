@@ -28,7 +28,7 @@ func TestPageFile(t *testing.T) {
 	pg := NewPage(b)
 	pg.Context.GetURL = func(u string) (*http.Response, error) {
 		pu, _ := url.Parse(u)
-		if pu.Path == "/" || pu.Path == "" {
+		if pu.Path == "/" || pu.Path == "" || pu.Path == os.Getenv("WEB_PATH") {
 			f, err := os.Open(file)
 			if err != nil {
 				return nil, err

@@ -12,9 +12,11 @@ import (
 func main() {
 	b := core.NewBody("Cogent Web")
 	pg := web.NewPage(b)
-	pg.OpenURL("https://google.com", nil)
 	b.AddTopBar(func(bar *core.Frame) {
-		core.NewToolbar(bar).Maker(pg.MakeToolbar)
+		tb := core.NewToolbar(bar)
+		tb.Maker(pg.MakeToolbar)
+		pg.OnOpen = func(url string) { tb.Update() }
 	})
+	pg.OpenURL("https://google.com", nil)
 	b.RunMainWindow()
 }
