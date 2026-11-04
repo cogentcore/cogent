@@ -19,6 +19,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
@@ -226,8 +227,22 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
+		if mode == historyNew {
+			pg.scrollToTop()
+		}
 		pg.opened(final)
 	}()
+}
+
+// scrollToTop scrolls the frames that the page is in (and the page) to
+// the top, as for a new page.
+func (pg *Page) scrollToTop() {
+	for n := tree.Node(pg); n != nil; n = n.AsTree().Parent {
+		if fr := core.AsFrame(n); fr != nil {
+			fr.ScrollDimToContentStart(math32.Y)
+			fr.ScrollDimToContentStart(math32.X)
+		}
+	}
 }
 
 // wait waits for the opening of pages to finish, for tests.
