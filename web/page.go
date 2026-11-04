@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 )
 
@@ -75,6 +76,7 @@ func (pg *Page) openURL(url string, addHistory bool, redirects int) {
 	}
 	pg.DeleteChildren()
 	pg.Context.RefreshURL = ""
+	pg.Context.MediaWidth = pg.viewportWidth()
 	err = htmlcore.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
 		core.ErrorSnackbar(pg, err, "Error opening page")
@@ -141,4 +143,21 @@ func (pg *Page) MakeToolbar(p *tree.Plan) {
 			pg.OpenURL(text, e)
 		})
 	})
+}
+
+// viewportWidth returns the width of the page in dp, which is the width of
+// the viewport for the @media rules of its style sheets, or 0 (for the
+// width of the screen) if it does not have one yet.
+func (pg *Page) viewportWidth() float32 {
+	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
+		return w / dp
+	}
+	if pg.Scene == nil {
+		return 0
+	}
+	if rw := pg.Scene.RenderWindow(); rw != nil && rw.SystemWindow != nil && dp > 0 {
+		return float32(rw.SystemWindow.Size().X) / dp
+	}
+	return 0
 }
