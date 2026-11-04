@@ -42,6 +42,9 @@ type Page struct {
 	// read with (a new one for each page, made by [htmlcore.Context.NewPage]).
 	Context *htmlcore.Context `set:"-"`
 
+	// Title is the title of the page that is shown (of its title element).
+	Title string `set:"-"`
+
 	// OnOpen, if set, is called with the URL of a page when it starts
 	// opening and when it is opened (or stopped), as for updating a toolbar.
 	OnOpen func(url string) `set:"-" display:"-"`
@@ -211,6 +214,9 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
 	ctx.MediaWidth = pg.viewportWidth()
+	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
+		ctx.MediaWidth = htmlcore.ScreenMediaWidth()
+	}
 	get := ctx.GetURL
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
@@ -269,6 +275,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 			pg.History[index] = final
 		}
 		pg.Context.PageURL = final
+		pg.Title = ctx.Title
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
@@ -298,43 +305,62 @@ func (pg *Page) wait() {
 	pg.loads.Wait()
 }
 
+// MakeToolbar adds the toolbar items for the page (back, forward,
+// reload or stop, and the address field) to the given plan.
 func (pg *Page) MakeToolbar(p *tree.Plan) {
+	makeToolbar(p, func() *Page { return pg })
+}
+
+// makeToolbar adds the toolbar items for the page that the given function
+// returns, which is the current one when they are used (as for tabs),
+// or nil if there is none.
+func makeToolbar(p *tree.Plan, page func() *Page) {
 	tree.AddAt(p, "back", func(w *core.Button) {
 		w.SetIcon(icons.ArrowBack).SetTooltip("Back")
 		w.OnClick(func(e events.Event) {
 			e.SetHandled()
-			pg.Back()
+			if pg := page(); pg != nil {
+				pg.Back()
+			}
 		})
 		w.Updater(func() {
-			w.SetEnabled(pg.Current > 0)
+			pg := page()
+			w.SetEnabled(pg != nil && pg.Current > 0)
 		})
 	})
 	tree.AddAt(p, "forward", func(w *core.Button) {
 		w.SetIcon(icons.ArrowForward).SetTooltip("Forward")
 		w.OnClick(func(e events.Event) {
 			e.SetHandled()
-			pg.Forward()
+			if pg := page(); pg != nil {
+				pg.Forward()
+			}
 		})
 		w.Updater(func() {
-			w.SetEnabled(pg.Current < len(pg.History)-1)
+			pg := page()
+			w.SetEnabled(pg != nil && pg.Current < len(pg.History)-1)
 		})
 	})
 	tree.AddAt(p, "reload", func(w *core.Button) {
 		w.OnClick(func(e events.Event) {
 			e.SetHandled()
-			if pg.IsLoading() {
+			pg := page()
+			switch {
+			case pg == nil:
+			case pg.IsLoading():
 				pg.Stop()
-			} else {
+			default:
 				pg.Reload()
 			}
 		})
 		w.Updater(func() {
-			if pg.IsLoading() {
+			pg := page()
+			if pg != nil && pg.IsLoading() {
 				w.SetIcon(icons.Close).SetTooltip("Stop loading this page")
 			} else {
 				w.SetIcon(icons.Refresh).SetTooltip("Reload this page")
 			}
-			w.SetEnabled(pg.IsLoading() || len(pg.History) > 0)
+			w.SetEnabled(pg != nil && (pg.IsLoading() || len(pg.History) > 0))
 		})
 	})
 	tree.AddAt(p, "url", func(w *core.TextField) {
@@ -345,15 +371,20 @@ func (pg *Page) MakeToolbar(p *tree.Plan) {
 			s.Max.X = units.Value{} // it fills the toolbar (text fields are at most 40ch)
 		})
 		w.Updater(func() {
-			if pg.loading != "" {
+			pg := page()
+			switch {
+			case pg == nil:
+				w.SetText("")
+			case pg.loading != "":
 				w.SetText(pg.loading)
-			} else if u := pg.currentURL(); u != "" {
-				w.SetText(u)
+			default:
+				w.SetText(pg.currentURL())
 			}
 		})
 		w.OnChange(func(e events.Event) {
+			pg := page()
 			text := strings.TrimSpace(w.Text())
-			if text == "" || text == pg.currentURL() {
+			if pg == nil || text == "" || text == pg.currentURL() {
 				return
 			}
 			pg.OpenURL(LocationURL(text), e)

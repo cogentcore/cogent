@@ -13,17 +13,21 @@ import (
 
 func main() {
 	b := core.NewBody("Cogent Web")
-	pg := web.NewPage(b)
+	br := web.NewBrowser(b)
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
-		tb.Maker(pg.MakeToolbar)
-		pg.OnOpen = func(url string) { tb.Update() }
+		tb.Maker(br.MakeToolbar)
+		br.OnOpen = func() { tb.Update() }
 	})
-	// the page to open is the URL or local file in the first argument
-	url := "https://google.com"
-	if len(os.Args) > 1 {
-		url = web.LocationURL(os.Args[1])
+	// the pages to open are the URLs or local files in the arguments,
+	// each in a tab
+	urls := os.Args[1:]
+	if len(urls) == 0 {
+		urls = []string{"https://google.com"}
 	}
-	pg.OpenURL(url, nil)
+	for _, u := range urls {
+		br.NewTab(web.LocationURL(u))
+	}
+	br.Tabs.SelectTabIndex(0)
 	b.RunMainWindow()
 }
