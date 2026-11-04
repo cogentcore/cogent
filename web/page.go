@@ -19,6 +19,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
@@ -41,6 +42,10 @@ type Page struct {
 	// Context has the settings of the [htmlcore.Context] that each page is
 	// read with (a new one for each page, made by [htmlcore.Context.NewPage]).
 	Context *htmlcore.Context `set:"-"`
+
+	// OpenNewTab, if set, opens the given (absolute) URL in a new tab, for
+	// links that are clicked with the meta or control key.
+	OpenNewTab func(url string) `set:"-" display:"-"`
 
 	// Title is the title of the page that is shown (of its title element).
 	Title string `set:"-"`
@@ -73,9 +78,7 @@ func (pg *Page) Init() {
 	pg.Context.BrowserStyle = true
 	pg.Context.OpenURL = pg.OpenURL
 	pg.shown = make(chan struct{})
-	pg.OnShow(func(e events.Event) {
-		pg.shownOnce.Do(func() { close(pg.shown) })
-	})
+	pg.OnShow(func(e events.Event) { pg.setShown() })
 	pg.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 		s.Direction = styles.Column
@@ -101,6 +104,17 @@ var errStopped = errors.New("stopped")
 
 // OpenURL opens the page at the given url, which is added to the history.
 func (pg *Page) OpenURL(url string, e events.Event) {
+	// a link clicked with the meta or control key opens in a new tab,
+	// as in browsers
+	if e != nil && pg.OpenNewTab != nil && e.HasAnyModifier(key.Meta, key.Control) {
+		if cur := pg.currentURL(); cur != "" {
+			if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil {
+				url = u.String()
+			}
+		}
+		pg.OpenNewTab(url)
+		return
+	}
 	// a link to a fragment of the page that is shown scrolls to it
 	if cur := pg.currentURL(); cur != "" && pg.loading == "" {
 		if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil && u.Fragment != "" {
@@ -300,6 +314,12 @@ func (pg *Page) scrollToTop() {
 	}
 }
 
+// setShown records that the page (or the window that it is in, as for a
+// tab in the background) has been shown, so that pages can be opened in it.
+func (pg *Page) setShown() {
+	pg.shownOnce.Do(func() { close(pg.shown) })
+}
+
 // wait waits for the opening of pages to finish, for tests.
 func (pg *Page) wait() {
 	pg.loads.Wait()
@@ -368,7 +388,7 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Min.X.Em(30)
-			s.Max.X = units.Value{} // it fills the toolbar (text fields are at most 40ch)
+			s.Max.X.Ch(80)
 		})
 		w.Updater(func() {
 			pg := page()

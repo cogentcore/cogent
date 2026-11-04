@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,4 +51,39 @@ func TestBrowserTabs(t *testing.T) {
 		assert.Equal(t, []*Page{two}, br.Pages())
 		assert.Equal(t, two, br.CurrentPage())
 	}))
+}
+
+// TestBrowserNewTabClick tests that a link clicked with the meta key
+// opens in a new tab, without selecting it.
+func TestBrowserNewTabClick(t *testing.T) {
+	b := core.NewBody()
+	br := NewBrowser(b)
+	br.PageFunc = func(pg *Page) {
+		pg.Context.GetURL = func(u string) (*http.Response, error) {
+			pu, _ := url.Parse(u)
+			r := strings.NewReader(`<p>x</p>`)
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
+		}
+	}
+	one := br.NewTab("https://example.com/one")
+	wait := func() {
+		for _, pg := range br.Pages() {
+			pg.wait()
+		}
+	}
+	b.RenderImage(wait, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		e := events.NewKey(events.KeyDown, 0, 0, key.Modifiers(0))
+		e.Mods.SetFlag(true, key.Meta)
+		one.OpenURL("two", e)
+	}, wait, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		if assert.Len(t, br.Pages(), 2) {
+			assert.Equal(t, one, br.CurrentPage(), "the new tab is not selected")
+			assert.Equal(t, []string{"https://example.com/two"}, br.Pages()[1].History)
+			assert.Equal(t, []string{"https://example.com/one"}, one.History)
+		}
+	})
 }

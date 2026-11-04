@@ -32,6 +32,10 @@ type Browser struct {
 
 	// pages are the pages of the tabs, in their order.
 	pages []*Page
+
+	// shown is whether the browser has been shown, after which the pages
+	// of tabs in the background can be opened too.
+	shown bool
 }
 
 func (br *Browser) Init() {
@@ -41,6 +45,12 @@ func (br *Browser) Init() {
 		s.Direction = styles.Column
 		s.Padding.Zero()
 		s.Gap.Zero()
+	})
+	br.OnShow(func(e events.Event) {
+		br.shown = true
+		for _, pg := range br.pages {
+			pg.setShown()
+		}
 	})
 	br.Tabs = core.NewTabs(br)
 	br.Tabs.SetType(core.FunctionalTabs)
@@ -68,9 +78,16 @@ func (br *Browser) opened() {
 // NewTab adds a new tab and selects it, opening the given URL in it,
 // unless it is empty, and returns its page.
 func (br *Browser) NewTab(url string) *Page {
+	pg := br.NewBackgroundTab(url)
+	br.Tabs.SelectTabIndex(len(br.pages) - 1)
+	return pg
+}
+
+// NewBackgroundTab adds a new tab without selecting it, opening the given
+// URL in it, unless it is empty, and returns its page.
+func (br *Browser) NewBackgroundTab(url string) *Page {
 	fr, tab := br.Tabs.NewTab("New tab")
 	pg := br.addPage(fr, tab)
-	br.Tabs.SelectTabIndex(len(br.pages) - 1)
 	if url != "" {
 		pg.OpenURL(url, nil)
 	}
@@ -85,6 +102,10 @@ func (br *Browser) addPage(fr *core.Frame, tab *core.Tab) *Page {
 	})
 	pg := NewPage(fr)
 	br.pages = append(br.pages, pg)
+	pg.OpenNewTab = func(url string) { br.NewBackgroundTab(url) }
+	if br.shown {
+		pg.setShown()
+	}
 	if br.PageFunc != nil {
 		br.PageFunc(pg)
 	}
