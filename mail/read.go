@@ -138,7 +138,8 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 				}
 				dmf.Message.parsed.plain = string(b)
 			case "text/html":
-				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
+				ctx := htmlcore.NewContext()
+				err := htmlcore.ReadHTML(ctx, w, p.Body)
 				if err != nil {
 					return err
 				}

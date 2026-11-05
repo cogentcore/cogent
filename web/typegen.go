@@ -7,8 +7,17 @@ import (
 	"cogentcore.org/core/types"
 )
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page", IDName: "page", Doc: "Page represents one web browser page.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlcore.Context]."}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Browser", IDName: "browser", Doc: "Browser is a web browser with tabs, each of which has a [Page].\nIts toolbar ([Browser.MakeToolbar]) is for the page of the current tab.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Tabs", Doc: "Tabs has the tabs of the pages."}, {Name: "OnOpen", Doc: "OnOpen, if set, is called when a page of a tab starts opening or is\nopened (see [Page.OnOpen]) and when another tab is selected, as for\nupdating a toolbar."}, {Name: "PageFunc", Doc: "PageFunc, if set, is called with the page of each new tab,\nas for setting its [htmlcore.Context]."}, {Name: "pages", Doc: "pages are the pages of the tabs, in their order."}}})
+
+// NewBrowser returns a new [Browser] with the given optional parent:
+// Browser is a web browser with tabs, each of which has a [Page].
+// Its toolbar ([Browser.MakeToolbar]) is for the page of the current tab.
+func NewBrowser(parent ...tree.Node) *Browser { return tree.New[Browser](parent...) }
+
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page", IDName: "page", Doc: "Page represents one web browser page.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Current", Doc: "Current is the index in [Page.History] of the page that is shown,\nwhich is before the end of it after going back."}, {Name: "Context", Doc: "Context has the settings of the [htmlcore.Context] that each page is\nread with (a new one for each page, made by [htmlcore.Context.NewPage])."}, {Name: "OpenNewTab", Doc: "OpenNewTab, if set, opens the given (absolute) URL in a new tab, for\nlinks that are clicked with the meta or control key."}, {Name: "Title", Doc: "Title is the title of the page that is shown (of its title element)."}, {Name: "OnOpen", Doc: "OnOpen, if set, is called with the URL of a page when it starts\nopening and when it is opened (or stopped), as for updating a toolbar."}, {Name: "loading", Doc: "loading is the URL of the page that is being opened, if any."}, {Name: "load", Doc: "load is the number of the latest page that has started opening, so\nthat the opening of another one (and stopping) cancels earlier ones."}, {Name: "loads", Doc: "loads is the opening of pages in progress, for tests."}, {Name: "shown", Doc: "shown is closed when the page is first shown, which the opening of\na page waits for before it updates the page (with AsyncLock)."}, {Name: "shownOnce"}}})
 
 // NewPage returns a new [Page] with the given optional parent:
 // Page represents one web browser page.
 func NewPage(parent ...tree.Node) *Page { return tree.New[Page](parent...) }
+
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.historyMode", IDName: "history-mode", Doc: "historyMode is how the opening of a page changes the history."})
