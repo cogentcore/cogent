@@ -8,7 +8,9 @@ package web
 //go:generate core generate -add-types
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -16,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -68,7 +71,29 @@ type Page struct {
 	// a page waits for before it updates the page (with AsyncLock).
 	shown     chan struct{}
 	shownOnce sync.Once
+
+	// media is what is needed to read the page that is shown again when the
+	// width of its viewport crosses a boundary of its media (see
+	// [Page.SizeFinal]), checkedWidth is the last width checked for that,
+	// and mediaTimer is the pending read of it for that width, if any.
+	media        *pageMedia
+	checkedWidth float32
+	mediaTimer   *time.Timer
 }
+
+// pageMedia is what is needed to read a page that is shown again for
+// another width of its viewport: its context, HTML and resources.
+type pageMedia struct {
+	ctx   *htmlcore.Context
+	html  []byte
+	url   string // the final URL of the page
+	cache *resourceCache
+}
+
+// mediaDelay is how long the width of the viewport of a page must stay
+// across a boundary of its media before the page is read again for it,
+// so that it is not read again for each step of resizing a window.
+const mediaDelay = 250 * time.Millisecond
 
 var _ tree.Node = (*Page)(nil)
 
@@ -231,31 +256,28 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
 		ctx.MediaWidth = htmlcore.ScreenMediaWidth()
 	}
-	get := ctx.GetURL
+	cache := &resourceCache{get: ctx.GetURL}
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
 			return nil, errStopped
 		}
-		return get(u)
+		return cache.Get(u)
 	}
 	pg.loads.Add(1)
 	go func() {
 		defer pg.loads.Done()
 		final := url
-		content := core.NewFrame()
-		content.SetName("content")
-		content.Styler(func(s *styles.Style) {
-			s.Grow.Set(1, 1)
-			s.Direction = styles.Column
-			s.Padding.Zero()
-			s.Gap.Zero()
-		})
+		content := newPageContent()
+		var page []byte
 		resp, err := htmlcore.Get(ctx, url)
 		if err == nil {
-			defer resp.Body.Close()
 			final = resp.Request.URL.String()
 			ctx.PageURL = final
-			err = htmlcore.ReadHTML(ctx, content, resp.Body)
+			page, err = io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err == nil {
+				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
+			}
 		}
 		if canceled() {
 			return
@@ -290,6 +312,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		}
 		pg.Context.PageURL = final
 		pg.Title = ctx.Title
+		pg.setMedia(&pageMedia{ctx: ctx, html: page, url: final, cache: cache})
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
@@ -300,6 +323,113 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 			pg.scrollToTop()
 		}
 		pg.opened(final)
+	}()
+}
+
+// newPageContent returns a new frame for the content of a page.
+func newPageContent() *core.Frame {
+	content := core.NewFrame()
+	content.SetName("content")
+	content.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+		s.Direction = styles.Column
+		s.Padding.Zero()
+		s.Gap.Zero()
+	})
+	return content
+}
+
+// SizeFinal sizes the page, and checks whether the page needs to be read
+// again for the width of its viewport, as when its window is resized:
+// when the width crosses a boundary of its media, it is read again (with
+// its resources from a cache) once the width has stayed there for
+// [mediaDelay], as browsers apply the @media rules of the new width.
+func (pg *Page) SizeFinal() {
+	pg.Frame.SizeFinal()
+	pg.checkMedia()
+}
+
+// checkMedia checks whether the page needs to be read again for the
+// width of its viewport (see [Page.SizeFinal]).
+func (pg *Page) checkMedia() {
+	m := pg.media
+	if m == nil || pg.loading != "" {
+		return
+	}
+	w := pg.viewportWidth()
+	if w <= 0 || w == pg.checkedWidth {
+		return
+	}
+	pg.checkedWidth = w
+	pg.stopMediaTimer() // for an earlier width
+	if !m.ctx.MediaChanged(w) {
+		return
+	}
+	pg.loads.Add(1)
+	pg.mediaTimer = time.AfterFunc(mediaDelay, func() {
+		defer pg.loads.Done()
+		if !pg.AsyncLockIfShown() {
+			return
+		}
+		defer pg.AsyncUnlock()
+		if pg.media == m && pg.loading == "" {
+			pg.mediaTimer = nil
+			pg.readMedia(m, pg.checkedWidth)
+		}
+	})
+}
+
+// stopMediaTimer stops the pending read of the page for another width, if any.
+func (pg *Page) stopMediaTimer() {
+	if pg.mediaTimer != nil && pg.mediaTimer.Stop() {
+		pg.loads.Done()
+	}
+	pg.mediaTimer = nil
+}
+
+// setMedia sets what is needed to read the page that is shown again
+// for another width of its viewport.
+func (pg *Page) setMedia(m *pageMedia) {
+	pg.stopMediaTimer()
+	pg.media = m
+	pg.checkedWidth = m.ctx.MediaWidth
+}
+
+// readMedia reads the page that is shown again for the given width of
+// its viewport, from the given media of it, in another goroutine. It
+// replaces the page when it has been read, unless the opening of another
+// page has started by then.
+func (pg *Page) readMedia(m *pageMedia, width float32) {
+	gen := pg.load.Add(1)
+	canceled := func() bool { return pg.load.Load() != gen }
+	ctx := pg.Context.NewPage()
+	ctx.MediaWidth = width
+	ctx.PageURL = m.url
+	ctx.GetURL = func(u string) (*http.Response, error) {
+		if canceled() {
+			return nil, errStopped
+		}
+		return m.cache.Get(u)
+	}
+	pg.loads.Add(1)
+	go func() {
+		defer pg.loads.Done()
+		content := newPageContent()
+		err := htmlcore.ReadHTML(ctx, content, bytes.NewReader(m.html))
+		if canceled() || err != nil {
+			return
+		}
+		if !pg.AsyncLockIfShown() {
+			return
+		}
+		defer pg.AsyncUnlock()
+		if canceled() {
+			return
+		}
+		pg.setMedia(&pageMedia{ctx: ctx, html: m.html, url: m.url, cache: m.cache})
+		pg.DeleteChildren()
+		pg.AddChild(content)
+		pg.Update()
 	}()
 }
 
@@ -444,10 +574,16 @@ func LocationURL(loc string) string {
 
 // viewportWidth returns the width of the page in dp, which is the width of
 // the viewport for the @media rules of its style sheets, or 0 (for the
-// width of the screen) if it does not have one yet.
+// width of the screen) if it does not have one yet. As in browsers, it
+// includes the vertical scrollbar of the frame that it scrolls in, so
+// that the scrollbar does not change it (which, as a page can be read
+// again for another width, could make it read again and again).
 func (pg *Page) viewportWidth() float32 {
 	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
+		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
+			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
+		}
 		return w / dp
 	}
 	if pg.Scene == nil {
