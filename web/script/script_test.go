@@ -518,3 +518,23 @@ func TestSharedModules(t *testing.T) {
 	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
 	assert.Empty(t, *logs)
 }
+
+// TestIntl tests the minimal Intl (English only), which goja lacks and
+// sites (GitHub) use to format numbers and dates.
+func TestIntl(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "1,234,567.891|$1,234.50|45%|1.2K|3/5/2024|March 5, 2024|Tuesday, March 5, 2024|3:07 PM|3 days ago|tomorrow|a, b, and c|other one|-1|1|12K|1.5 million", run(t, e, `
+		const d = new Date(2024, 2, 5, 15, 7, 9);
+		[new Intl.NumberFormat().format(1234567.891), new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(1234.5),
+			new Intl.NumberFormat("en", { style: "percent" }).format(0.45), new Intl.NumberFormat("en", { notation: "compact" }).format(1234),
+			new Intl.DateTimeFormat("en-US").format(d), new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(d),
+			new Intl.DateTimeFormat("en-US", { dateStyle: "full" }).format(d), new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(d),
+			new Intl.RelativeTimeFormat("en").format(-3, "days"), new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(1, "day"),
+			new Intl.ListFormat("en").format(["a", "b", "c"]), new Intl.PluralRules("en").select(2) + " " + new Intl.PluralRules("en").select(1),
+			new Intl.Collator("en").compare("a", "b"), ["b10", "b9"].sort(new Intl.Collator("en", { numeric: true }).compare).indexOf("b10"),
+			new Intl.NumberFormat("en", { notation: "compact" }).format(12345), new Intl.NumberFormat("en", { notation: "compact", compactDisplay: "long" }).format(1499999)].join("|")`))
+	assert.Empty(t, *logs)
+}
