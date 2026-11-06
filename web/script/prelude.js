@@ -1156,6 +1156,17 @@
 		try { f(...args); } catch (e) { reportError(e); }
 	};
 
+	// __dynamicImport is what the dynamic imports of scripts (import(...))
+	// are rewritten as: it gets and runs the module, bundled.
+	function dynamicImport(spec) {
+		return new Promise((resolve, reject) => {
+			D.importModule(newCallback((ns, err) => {
+				if (err) reject(new TypeError("Failed to import " + spec + ": " + err));
+				else resolve(ns);
+			}), String(spec));
+		});
+	}
+
 	// ---- URL ----
 
 	class URLSearchParams {
@@ -1590,6 +1601,7 @@
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
 		MutationObserver, IntersectionObserver, ResizeObserver, PerformanceObserver,
 		fetch,
+		__dynamicImport: dynamicImport,
 		NodeFilter: { SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 1, SHOW_TEXT: 4, SHOW_COMMENT: 128, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 },
 		DOMException: class DOMException extends Error { constructor(msg, name) { super(msg); this.name = name || "Error"; } },
 		CSS: { supports() { return false; }, escape: cssEscape },

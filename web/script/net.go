@@ -389,10 +389,12 @@ func (e *Engine) Load(done func()) {
 	e.Post(func() {
 		e.loading = false
 		e.callPrelude("loaded", "complete")
-		e.dirty = true // the document as the scripts made it
 		if done != nil {
 			done()
 		}
+		// done reads the document as the scripts have made it (with
+		// the lock of the page, which this task does not hold)
+		e.dirty = false
 	})
 }
 

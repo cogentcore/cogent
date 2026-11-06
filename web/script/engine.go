@@ -124,10 +124,10 @@ type Engine struct {
 	loading  bool       // whether the scripts of the page are being loaded
 	current  *html.Node // the script element that is running, if any
 	jsDOM    *goja.Object
-	dispatch goja.Callable // __dom.dispatch, set by the prelude
-	fire     goja.Callable // __dom.fireTimer, set by the prelude
-	callback goja.Callable // __dom.callback, set by the prelude
-	session  *Storage      // the sessionStorage of the page
+	dispatch goja.Callable       // __dom.dispatch, set by the prelude
+	fire     goja.Callable       // __dom.fireTimer, set by the prelude
+	callback goja.Callable       // __dom.callback, set by the prelude
+	session  *Storage            // the sessionStorage of the page
 	ran      map[*html.Node]bool // the script elements that have run
 }
 
@@ -319,14 +319,38 @@ func (e *Engine) reportError(err error) {
 
 // run runs the given source as a script with the given name, reporting
 // its errors.
+// If it does not compile, it is rewritten without the features that goja
+// does not support (see [lower]), or bundled as a module if it has the
+// syntax of modules.
 func (e *Engine) run(name, src string) {
-	prog, err := goja.Compile(name, src, false)
+	prog, err := e.compile(name, src)
 	if err != nil {
 		e.reportError(err)
 		return
 	}
 	_, err = e.vm.RunProgram(prog)
 	e.reportError(err)
+}
+
+// compile compiles the given script, rewriting it if needed (see [Engine.run]).
+func (e *Engine) compile(name, src string) (*goja.Program, error) {
+	prog, err := goja.Compile(name, rewriteImports(src), false)
+	if err == nil {
+		return prog, nil
+	}
+	if lowered, lerr := lower(src, name); lerr == nil {
+		if p, perr := goja.Compile(name, rewriteImports(lowered), false); perr == nil {
+			return p, nil
+		}
+	}
+	if moduleSyntax.MatchString(src) {
+		if bundled, berr := e.bundleModule(src, name); berr == nil {
+			if p, perr := goja.Compile(name, rewriteImports(bundled), false); perr == nil {
+				return p, nil
+			}
+		}
+	}
+	return nil, err
 }
 
 // RunString runs the given JavaScript source in a task and returns its

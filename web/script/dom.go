@@ -7,6 +7,7 @@ package script
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -361,7 +362,8 @@ func (e *Engine) defineDOM() {
 		if n == nil {
 			return vm.ToValue(0)
 		}
-		sel := compile(str(call, 1))
+		defer scoped(n)()
+		sel := compile(scopeSelector(str(call, 1), n))
 		var found *html.Node
 		walk(n, func(c *html.Node) bool {
 			if c != n && c.Type == html.ElementNode && sel.Match(c) {
@@ -376,7 +378,8 @@ func (e *Engine) defineDOM() {
 		n := node(arg(call, 0))
 		var ids []any
 		if n != nil {
-			sel := compile(str(call, 1))
+			defer scoped(n)()
+			sel := compile(scopeSelector(str(call, 1), n))
 			walk(n, func(c *html.Node) bool {
 				if c != n && c.Type == html.ElementNode && sel.Match(c) {
 					ids = append(ids, ni.id(c))
@@ -391,7 +394,8 @@ func (e *Engine) defineDOM() {
 		if n == nil || n.Type != html.ElementNode {
 			return vm.ToValue(false)
 		}
-		return vm.ToValue(compile(str(call, 1)).Match(n))
+		defer scoped(n)()
+		return vm.ToValue(compile(scopeSelector(str(call, 1), n)).Match(n))
 	})
 	set("byId", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
@@ -486,6 +490,37 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(string(rs))
 	})
+	// importModule gets the module of the given specifier (relative to the
+	// page) bundled with the modules that it imports, in another goroutine,
+	// and then runs it and calls the callback of the given id with its
+	// exports (or null and an error).
+	set("importModule", func(call goja.FunctionCall) goja.Value {
+		cb := int(arg(call, 0).ToInteger())
+		u, err := resolveURL(str(call, 1), e.baseURL())
+		if err != nil {
+			e.callBack(cb, nil, err.Error())
+			return goja.Undefined()
+		}
+		go func() {
+			e.mu.Lock()
+			e.timerID++
+			global := fmt.Sprintf("__module%d", e.timerID)
+			e.mu.Unlock()
+			code, err := e.bundleURL(u, global)
+			if err != nil {
+				e.callBack(cb, nil, err.Error())
+				return
+			}
+			e.Post(func() {
+				e.run(u, code)
+				ns := e.vm.Get(global)
+				e.vm.GlobalObject().Delete(global)
+				_, err := e.callback(goja.Undefined(), vm.ToValue(cb), ns, goja.Null())
+				e.reportError(err)
+			})
+		}()
+		return goja.Undefined()
+	})
 	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })
 	set("loading", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.loading) })
 	set("write", func(call goja.FunctionCall) goja.Value {
@@ -566,4 +601,39 @@ func (e *Engine) parseFragment(s string, ctx *html.Node) []*html.Node {
 		return nil
 	}
 	return kids
+}
+
+// scopeAttr is the attribute that marks the element that a selector with
+// :scope is relative to (see [scopeSelector]).
+const scopeAttr = "data-cc-scope"
+
+// scopeSelector returns the given selector with :scope (which cascadia
+// does not support) as the attribute that marks the given node (see
+// [scoped]), or :root for a document.
+func scopeSelector(sel string, n *html.Node) string {
+	if !strings.Contains(sel, ":scope") {
+		return sel
+	}
+	if n.Type != html.ElementNode {
+		return strings.ReplaceAll(sel, ":scope", ":root")
+	}
+	return strings.ReplaceAll(sel, ":scope", "["+scopeAttr+"]")
+}
+
+// scoped marks the given element with the attribute of :scope (without
+// changing the document for rendering), returning the function that
+// removes it.
+func scoped(n *html.Node) func() {
+	if n.Type != html.ElementNode {
+		return func() {}
+	}
+	n.Attr = append(n.Attr, html.Attribute{Key: scopeAttr})
+	return func() {
+		for i, a := range n.Attr {
+			if a.Key == scopeAttr {
+				n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
+				return
+			}
+		}
+	}
 }

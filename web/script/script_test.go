@@ -220,3 +220,42 @@ func findByID(doc *html.Node, id string) *html.Node {
 	})
 	return found
 }
+
+// TestModules tests module scripts (bundled with the modules that they
+// import), dynamic imports, syntax that goja does not support (async
+// generators, rewritten), and :scope in selectors.
+func TestModules(t *testing.T) {
+	page := `<html><body><div id="out"></div><ul id="l"><li>a</li><li>b</li></ul>
+		<script type="module">
+			import { greet } from "./lib.js";
+			import data from "./data.json";
+			document.getElementById("out").textContent = greet(data.name) + ";";
+			import("./later.js").then(m => { document.getElementById("out").textContent += m.default + ";"; });
+		</script>
+		<script>
+			async function* gen() { yield 1; yield 2; }
+			(async () => {
+				let sum = 0;
+				for await (const x of gen()) sum += x;
+				document.getElementById("out").textContent += "sum " + sum + ";";
+			})();
+			window.scopeCount = document.getElementById("l").querySelectorAll(":scope > li").length;
+		</script>
+	</body></html>`
+	e, logs := testEngine(t, page, map[string]string{
+		"/lib.js":    `import { helper } from "./helper.js"; export function greet(n) { return helper("hello " + n); }`,
+		"/helper.js": `export const helper = s => s.toUpperCase();`,
+		"/data.json": `{"name": "module"}`,
+		"/later.js":  `export default "later";`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`document.getElementById("out").textContent`)
+		s, _ := v.(string)
+		return strings.Contains(s, "HELLO MODULE;") && strings.Contains(s, "later;") && strings.Contains(s, "sum 3;")
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+	assert.Equal(t, int64(2), run(t, e, `scopeCount`))
+	assert.Empty(t, *logs)
+}
