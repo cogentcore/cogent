@@ -10,6 +10,8 @@ package web
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"image"
 	"io"
 	"net/http"
 	neturl "net/url"
@@ -57,6 +59,15 @@ type Page struct {
 	// opening and when it is opened (or stopped), as for updating a toolbar.
 	OnOpen func(url string) `set:"-" display:"-"`
 
+	// Scripts is whether the scripts (JavaScript) of the pages are run,
+	// which they are by default. It applies to the pages opened after it
+	// is changed (see [Page.SetScripts]).
+	Scripts bool
+
+	// zoom is the zoom factor of the page that is shown (or being opened),
+	// from the settings of its site (see [SiteSettings]), or 0 for none.
+	zoom float32
+
 	// loading is the URL of the page that is being opened, if any.
 	loading string
 
@@ -79,6 +90,10 @@ type Page struct {
 	media        *pageMedia
 	checkedWidth float32
 	mediaTimer   *time.Timer
+
+	// scripts is the state of the scripts of the page that is shown, if
+	// it is run with scripts.
+	scripts *pageScripts
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -100,7 +115,11 @@ var _ tree.Node = (*Page)(nil)
 func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()
+	pg.Context.GetURL = withCookies(pg.Context.GetURL)
 	pg.Context.OpenURL = pg.OpenURL
+	pg.Context.PostURL = pg.postURL
+	pg.Context.WebFonts = true
+	pg.Scripts = true
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
 	pg.Styler(func(s *styles.Style) {
@@ -247,15 +266,31 @@ const maxRedirects = 5
 // which replaces the content of the page when it has been read, unless the
 // opening of another page has started (or it was stopped) by then.
 func (pg *Page) open(url string, mode historyMode, index, redirects int) {
+	pg.openPost(url, nil, mode, index, redirects)
+}
+
+// postURL opens the page of the given URL with a POST request with the
+// given body of the given content type, as for a form that is submitted
+// with the POST method.
+func (pg *Page) postURL(url, contentType string, body []byte, e events.Event) {
+	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+}
+
+// openPost is [Page.open] with the given POST request, if not nil (as for
+// the submission of a form), instead of a GET request.
+func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index, redirects int) {
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	pg.loading = url
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
+	pg.zoom = Site(url).Zoom
+	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
-		ctx.MediaWidth = htmlcore.ScreenMediaWidth()
+		ctx.MediaWidth = htmlcore.ScreenMediaWidth() / pg.zoomFactor()
 	}
+	scripts := pg.Scripts
 	cache := &resourceCache{get: ctx.GetURL}
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
@@ -269,12 +304,24 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		final := url
 		content := newPageContent()
 		var page []byte
-		resp, err := htmlcore.Get(ctx, url)
+		var resp *http.Response
+		var err error
+		if post != nil {
+			resp, err = postPage(url, post)
+		} else {
+			resp, err = htmlcore.Get(ctx, url)
+		}
 		if err == nil {
 			final = resp.Request.URL.String()
 			ctx.PageURL = final
 			page, err = io.ReadAll(resp.Body)
 			resp.Body.Close()
+			if err == nil && scripts {
+				// the page is shown by its scripts once they have run
+				if pg.openScripts(ctx, page, final, mode, index, cache, canceled) {
+					return
+				}
+			}
 			if err == nil {
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
@@ -288,6 +335,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		if canceled() {
 			return
 		}
+		pg.showScripts(nil)
 		pg.loading = ""
 		if err != nil {
 			core.ErrorSnackbar(pg, err, "Error opening page")
@@ -302,14 +350,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 				return
 			}
 		}
-		switch mode {
-		case historyNew:
-			pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], final)
-			pg.Current = len(pg.History) - 1
-		case historyAt:
-			pg.Current = index
-			pg.History[index] = final
-		}
+		pg.setHistory(final, mode, index)
 		pg.Context.PageURL = final
 		pg.Title = ctx.Title
 		pg.setMedia(&pageMedia{ctx: ctx, html: page, url: final, cache: cache})
@@ -324,6 +365,93 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		}
 		pg.opened(final)
 	}()
+}
+
+// SetScripts sets whether the scripts of the pages are run
+// ([Page.Scripts]), and opens the current page again with it.
+func (pg *Page) SetScripts(on bool) {
+	pg.Scripts = on
+	pg.Reload()
+}
+
+// zoomFactor returns the zoom factor of the page (1 if it is not zoomed).
+func (pg *Page) zoomFactor() float32 {
+	if pg.zoom > 0 {
+		return pg.zoom
+	}
+	return 1
+}
+
+// zoomLevels are the zoom factors that zooming in and out steps through,
+// as in browsers.
+var zoomLevels = []float32{0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5}
+
+// StepZoom zooms the page in (for a positive step) or out (for a negative
+// one) to the next of the zoom levels, or back to 100% for a zero step.
+func (pg *Page) StepZoom(step int) {
+	z := pg.zoomFactor()
+	switch {
+	case step == 0:
+		z = 1
+	case step > 0:
+		for _, l := range zoomLevels {
+			if l > z+0.001 {
+				z = l
+				break
+			}
+		}
+	default:
+		for i := len(zoomLevels) - 1; i >= 0; i-- {
+			if zoomLevels[i] < z-0.001 {
+				z = zoomLevels[i]
+				break
+			}
+		}
+	}
+	pg.SetZoom(z)
+}
+
+// SetZoom sets the zoom factor of the page (1 for 100%), and saves it for
+// the pages of its site (see [SiteSettings]), as browsers do. The page is
+// read again for it (as the scripts have made it, if they run).
+func (pg *Page) SetZoom(zoom float32) {
+	if zoom == 1 {
+		zoom = 0
+	}
+	if zoom == pg.zoom {
+		return
+	}
+	pg.zoom = zoom
+	if cur := pg.currentURL(); cur != "" {
+		SetSite(cur, func(ss *SiteSettings) { ss.Zoom = zoom })
+		pg.opened(cur) // for the toolbar to show the zoom
+	}
+	width := pg.viewportWidth()
+	pg.checkedWidth = width
+	if ps := pg.scripts; ps != nil {
+		ps.engine.Post(func() {
+			ps.base.Zoom = zoom
+			ps.width = width
+			ps.engine.Changed()
+		})
+		return
+	}
+	if pg.media != nil {
+		pg.readMedia(pg.media, width)
+	}
+}
+
+// setHistory sets the history for the page of the given URL that is
+// opened, with the given change to the history.
+func (pg *Page) setHistory(url string, mode historyMode, index int) {
+	switch mode {
+	case historyNew:
+		pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], url)
+		pg.Current = len(pg.History) - 1
+	case historyAt:
+		pg.Current = index
+		pg.History[index] = url
+	}
 }
 
 // newPageContent returns a new frame for the content of a page.
@@ -400,9 +528,18 @@ func (pg *Page) setMedia(m *pageMedia) {
 // replaces the page when it has been read, unless the opening of another
 // page has started by then.
 func (pg *Page) readMedia(m *pageMedia, width float32) {
+	if ps := pg.scripts; ps != nil {
+		// the document as the scripts have made it is read again
+		ps.engine.Post(func() {
+			ps.width = width
+			ps.engine.Changed()
+		})
+		return
+	}
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	ctx := pg.Context.NewPage()
+	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = width
 	ctx.PageURL = m.url
 	ctx.GetURL = func(u string) (*http.Response, error) {
@@ -540,6 +677,82 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			pg.OpenURL(LocationURL(text), e)
 		})
 	})
+	tree.AddAt(p, "zoom", func(w *core.Button) {
+		w.Updater(func() {
+			pg := page()
+			w.SetIcon(icons.ZoomIn).SetText("")
+			tip := "Zoom of the page"
+			if pg != nil && pg.zoom > 0 {
+				pct := fmt.Sprintf("%d%%", int(math32.Round(pg.zoom*100)))
+				w.SetText(pct)
+				tip += ": " + pct
+			}
+			w.SetTooltip(tip)
+			w.SetEnabled(pg != nil)
+		})
+		w.SetMenu(func(m *core.Scene, _ image.Point) {
+			pg := page()
+			if pg == nil {
+				return
+			}
+			core.NewButton(m).SetText("Zoom in").SetIcon(icons.ZoomIn).OnClick(func(e events.Event) {
+				pg.StepZoom(1)
+			})
+			core.NewButton(m).SetText("Zoom out").SetIcon(icons.ZoomOut).OnClick(func(e events.Event) {
+				pg.StepZoom(-1)
+			})
+			core.NewButton(m).SetText("Actual size (100%)").SetIcon(icons.Refresh).OnClick(func(e events.Event) {
+				pg.StepZoom(0)
+			})
+		})
+	})
+	tree.AddAt(p, "scripts", func(w *core.Button) {
+		w.Updater(func() {
+			pg := page()
+			on := pg == nil || pg.Scripts
+			errs := 0
+			if pg != nil {
+				for _, m := range pg.ScriptConsole() {
+					if strings.HasPrefix(m, "ERROR") {
+						errs++
+					}
+				}
+			}
+			icon := icons.Code
+			if !on {
+				icon = icons.CodeOff
+			}
+			tip := "JavaScript is on"
+			if !on {
+				tip = "JavaScript is off"
+			}
+			if errs > 0 {
+				icon = icons.BugReport
+				tip += fmt.Sprintf(" (%d script errors on this page)", errs)
+			}
+			w.SetIcon(icon).SetTooltip(tip)
+			w.SetEnabled(pg != nil)
+		})
+		w.SetMenu(func(m *core.Scene, _ image.Point) {
+			pg := page()
+			if pg == nil {
+				return
+			}
+			text := "Turn off JavaScript"
+			if !pg.Scripts {
+				text = "Turn on JavaScript"
+			}
+			core.NewButton(m).SetText(text).SetIcon(icons.CodeOff).OnClick(func(e events.Event) {
+				pg.SetScripts(!pg.Scripts)
+			})
+			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
+				pg.showConsole()
+			})
+			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
+				ClearCookies()
+			})
+		})
+	})
 }
 
 // LocationURL returns the URL for the given location, as typed in the
@@ -584,13 +797,13 @@ func (pg *Page) viewportWidth() float32 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
 			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
 		}
-		return w / dp
+		return w / dp / pg.zoomFactor()
 	}
 	if pg.Scene == nil {
 		return 0
 	}
 	if rw := pg.Scene.RenderWindow(); rw != nil && rw.SystemWindow != nil && dp > 0 {
-		return float32(rw.SystemWindow.Size().X) / dp
+		return float32(rw.SystemWindow.Size().X) / dp / pg.zoomFactor()
 	}
 	return 0
 }
