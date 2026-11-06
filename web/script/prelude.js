@@ -43,10 +43,20 @@
 		return n[ID];
 	}
 
-	function list(ids) {
-		const a = [];
+	// NodeList and HTMLCollection are arrays (so that scripts can use the
+	// methods of arrays on them, as many do), whose map and filter return
+	// plain arrays.
+	class NodeList extends Array {
+		static get [Symbol.species]() { return Array; }
+		item(i) { return this[i] === undefined ? null : this[i]; }
+	}
+	class HTMLCollection extends NodeList {
+		namedItem(n) { return this.find(el => el.id === n || el.getAttribute("name") === n) || null; }
+	}
+
+	function list(ids, cls) {
+		const a = new (cls || NodeList)();
 		for (let i = 0; i < ids.length; i++) a.push(wrap(ids[i]));
-		a.item = function (i) { return this[i] === undefined ? null : this[i]; };
 		return a;
 	}
 
@@ -336,17 +346,17 @@
 
 	// methods of nodes that have children (Element, Document, DocumentFragment)
 	const parentNodeMethods = {
-		get children() { return list(D.children(this[ID]).filter(id => D.type(id) === 1)); },
+		get children() { return list(D.children(this[ID]).filter(id => D.type(id) === 1), HTMLCollection); },
 		get firstElementChild() { const c = this.children; return c.length ? c[0] : null; },
 		get lastElementChild() { const c = this.children; return c.length ? c[c.length - 1] : null; },
 		get childElementCount() { return this.children.length; },
 		querySelector(sel) { return wrap(D.query(this[ID], String(sel))); },
 		querySelectorAll(sel) { return list(D.queryAll(this[ID], String(sel))); },
-		getElementsByTagName(tag) { return this.querySelectorAll(tag === "*" ? "*" : String(tag).toLowerCase().replace(/:/g, "\\:")); },
+		getElementsByTagName(tag) { return list(D.queryAll(this[ID], tag === "*" ? "*" : String(tag).toLowerCase().replace(/:/g, "\\:")), HTMLCollection); },
 		getElementsByClassName(cls) {
 			const names = String(cls).trim().split(/\s+/).filter(Boolean);
-			if (!names.length) return list([]);
-			return this.querySelectorAll(names.map(c => "." + cssEscape(c)).join(""));
+			if (!names.length) return list([], HTMLCollection);
+			return list(D.queryAll(this[ID], names.map(c => "." + cssEscape(c)).join("")), HTMLCollection);
 		},
 		append(...nodes) { for (const n of nodes) this.appendChild(toNode(n)); },
 		prepend(...nodes) { const f = this.firstChild; for (const n of nodes) this.insertBefore(toNode(n), f); },
@@ -1665,6 +1675,7 @@
 
 	const props = {
 		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
+		NodeList, HTMLCollection,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),

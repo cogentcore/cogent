@@ -120,7 +120,55 @@ func rewriteImports(src, base string) string {
 	if !strings.Contains(base, "://") {
 		base = ""
 	}
-	return dynamicImport.ReplaceAllString(src, "${1}__dynamicImport("+quoteJS(base)+", ")
+	call := "__dynamicImport(" + quoteJS(base) + ", "
+	var sb strings.Builder
+	last := 0
+	for _, m := range dynamicImport.FindAllStringSubmatchIndex(src, -1) {
+		open := m[1] - 1 // the (
+		if isMethod(src, open) {
+			continue // a method named import, as import(e) { ... }
+		}
+		sb.WriteString(src[last:m[3]])
+		sb.WriteString(call)
+		last = m[1]
+	}
+	if last == 0 {
+		return src
+	}
+	sb.WriteString(src[last:])
+	return sb.String()
+}
+
+// isMethod returns whether the parentheses that start at the given index
+// of the given script are the parameters of a method, followed by its body
+// ({), and not the arguments of a call.
+func isMethod(src string, open int) bool {
+	depth := 0
+	var quote byte
+	for i := open; i < len(src); i++ {
+		c := src[i]
+		if quote != 0 {
+			if c == '\\' {
+				i++
+			} else if c == quote {
+				quote = 0
+			}
+			continue
+		}
+		switch c {
+		case '"', '\'', '`':
+			quote = c
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 {
+				rest := strings.TrimLeft(src[i+1:], " \t\r\n")
+				return strings.HasPrefix(rest, "{")
+			}
+		}
+	}
+	return false
 }
 
 // bundleURL returns the module at the given URL, bundled with the modules

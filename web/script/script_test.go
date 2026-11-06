@@ -403,3 +403,28 @@ func TestNavigation(t *testing.T) {
 		[navigation.currentEntry.url, navigation.entries().length, navigation.currentEntry.getState()].join(" ")`))
 	assert.Empty(t, *logs)
 }
+
+// TestRewriteImports tests the rewriting of dynamic imports, which leaves
+// methods named import (as in a chunk of BBC) and import.meta alone.
+func TestRewriteImports(t *testing.T) {
+	assert.Equal(t, `__dynamicImport('https://x.com/a.js', "./b.js").then(f); x.import(1)`,
+		rewriteImports(`import("./b.js").then(f); x.import(1)`, "https://x.com/a.js"))
+	src := "class F { import(e) { this.n = e.n } export() { return import(`./c${\")\"}.js`) } } import.meta.url"
+	assert.Equal(t, "class F { import(e) { this.n = e.n } export() { return __dynamicImport('', `./c${\")\"}.js`) } } import.meta.url",
+		rewriteImports(src, ""))
+}
+
+// TestCollections tests NodeList and HTMLCollection, which polyfills (as on
+// the Guardian) extend, and that they work as arrays.
+func TestCollections(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><p id="a" class="x">1</p><p id="b" class="x">2</p></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true true true 2 b 1,2 true", run(t, e, `
+		const l = document.querySelectorAll("p"), c = document.getElementsByClassName("x");
+		NodeList.prototype.extra = function () { return true; };
+		[l instanceof NodeList, c instanceof HTMLCollection, l.extra(), c.length, c.namedItem("b").id,
+			Array.from(l).map(p => p.textContent).join(), Array.isArray(l.map(p => p))].join(" ")`))
+	assert.Empty(t, *logs)
+}
