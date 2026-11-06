@@ -652,3 +652,42 @@ func TestStopAfterTimeouts(t *testing.T) {
 	_, err = e.RunString("1")
 	assert.Error(t, err, "the engine is closed")
 }
+
+// TestMessageChannel tests MessageChannel (React's scheduler and reCAPTCHA
+// use it), that its messages come in later tasks, and the slot property
+// (which Lit elements on Reddit set).
+func TestMessageChannel(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		window.got = [];
+		const c = new MessageChannel();
+		c.port1.onmessage = e => got.push("1:" + e.data);
+		c.port2.addEventListener("message", e => got.push("2:" + e.data));
+		c.port2.postMessage("a");
+		c.port1.postMessage("b");
+		got.push("sync");
+		const d = document.getElementById("d");
+		d.slot = "s";
+		got.push(d.getAttribute("slot"), MediaError.MEDIA_ERR_DECODE);`)
+	var got any
+	assert.Eventually(t, func() bool { got = run(t, e, `got.join(" ")`); return got == "sync s 3 1:a 2:b" }, 2*time.Second, 10*time.Millisecond)
+	assert.Equal(t, "sync s 3 1:a 2:b", got)
+	assert.Empty(t, *logs)
+}
+
+// TestTimerOrder tests that timers without a delay run in the order that
+// they are set.
+func TestTimerOrder(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.order = []; for (let i = 0; i < 50; i++) setTimeout(() => order.push(i), 0); clearTimeout(setTimeout(() => order.push("cleared"), 0));`)
+	var got any
+	assert.Eventually(t, func() bool { got = run(t, e, `order.length`); return got == int64(50) }, 2*time.Second, 10*time.Millisecond)
+	assert.Equal(t, true, run(t, e, `order.every((v, i) => v === i)`))
+	assert.Empty(t, *logs)
+}

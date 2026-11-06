@@ -536,21 +536,37 @@ func (e *Engine) setTimer(ms float64, repeat bool) int {
 	if repeat {
 		d = max(d, 4*time.Millisecond) // as browsers clamp nested timers
 	}
+	task := func() {
+		e.mu.Lock()
+		_, ok := e.timers[id]
+		if ok && !repeat {
+			delete(e.timers, id)
+		}
+		e.mu.Unlock()
+		if !ok {
+			return // cleared
+		}
+		_, err := e.fire(goja.Undefined(), e.vm.ToValue(id))
+		e.reportError(err)
+	}
+	if d == 0 && !repeat {
+		// queued now, so that such timers run in the order that they are
+		// set (as React's scheduler and MessageChannel need), which the
+		// goroutines of timers do not keep; a stopped timer for clearTimer
+		t := time.AfterFunc(time.Hour, func() {})
+		t.Stop()
+		e.timers[id] = t
+		e.pending++
+		e.queue = append(e.queue, task)
+		select {
+		case e.wake <- struct{}{}:
+		default:
+		}
+		return id
+	}
 	var fire func()
 	fire = func() {
-		e.Post(func() {
-			e.mu.Lock()
-			_, ok := e.timers[id]
-			if ok && !repeat {
-				delete(e.timers, id)
-			}
-			e.mu.Unlock()
-			if !ok {
-				return // cleared
-			}
-			_, err := e.fire(goja.Undefined(), e.vm.ToValue(id))
-			e.reportError(err)
-		})
+		e.Post(task)
 		if repeat {
 			e.mu.Lock()
 			if t, ok := e.timers[id]; ok {

@@ -640,6 +640,7 @@
 		set className(v) { this.setAttribute("class", v); }
 		get classList() { return new DOMTokenList(this, "class"); }
 		get slot() { return this.getAttribute("slot") || ""; }
+		set slot(v) { this.setAttribute("slot", v); }
 		getAttribute(n) { return D.attr(this[ID], String(n)); }
 		getAttributeNS(ns, n) { return this.getAttribute(n); }
 		setAttribute(n, v) { D.setAttr(this[ID], String(n), String(v)); }
@@ -2073,6 +2074,40 @@
 		};
 	})();
 
+	// ---- MessageChannel ----
+
+	// MessagePort sends messages to the other port of its channel, in
+	// tasks (as React's scheduler yields with them).
+	class MessagePort extends EventTarget {
+		constructor() { super(); this._other = null; this._closed = false; this.onmessage = null; }
+		postMessage(data) {
+			const to = this._other;
+			if (!to || this._closed) return;
+			setTimer(() => {
+				if (to._closed) return;
+				const ev = new MessageEvent("message", { data });
+				if (typeof to.onmessage === "function") {
+					try { to.onmessage(ev); } catch (e) { reportError(e); }
+				}
+				to.dispatchEvent(ev);
+			}, 0, [], false);
+		}
+		start() {}
+		close() { this._closed = true; }
+	}
+	class MessageChannel {
+		constructor() {
+			this.port1 = new MessagePort();
+			this.port2 = new MessagePort();
+			this.port1._other = this.port2;
+			this.port2._other = this.port1;
+		}
+	}
+	class MediaError {
+		constructor(code, message) { this.code = code; this.message = message || ""; }
+	}
+	Object.assign(MediaError, { MEDIA_ERR_ABORTED: 1, MEDIA_ERR_NETWORK: 2, MEDIA_ERR_DECODE: 3, MEDIA_ERR_SRC_NOT_SUPPORTED: 4 });
+
 	const waiting = new Map(); // name -> resolve functions of whenDefined
 	const customElements = {
 		define(name, cls) {
@@ -2137,7 +2172,7 @@
 
 	const props = {
 		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
-		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
+		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
