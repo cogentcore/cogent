@@ -82,8 +82,12 @@ func (e *Engine) bundle(code, name, global string) (string, error) {
 		Supported:  unsupported,
 		Plugins:    []api.Plugin{plugin},
 		GlobalName: global,
-		Write:      false,
-		LogLevel:   api.LogLevelSilent,
+		// the URL of the module (as webpack finds the URLs of its
+		// chunks from it), which is the URL of the page for a module
+		// in the page
+		Define:   map[string]string{"import.meta.url": quoteJS(base)},
+		Write:    false,
+		LogLevel: api.LogLevelSilent,
 	})
 	if len(res.Errors) > 0 {
 		return "", buildError(res.Errors)

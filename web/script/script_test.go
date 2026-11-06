@@ -319,3 +319,20 @@ func TestImportMap(t *testing.T) {
 	assert.Equal(t, "AB", run(t, e, `document.getElementById("out").textContent`), "%v", *logs)
 	assert.Equal(t, int64(1), run(t, e, `document.querySelectorAll('[class^="x-"').length`))
 }
+
+// TestDataScripts tests scripts with data URLs, and import.meta.url in a
+// module (as webpack uses to find its chunks).
+func TestDataScripts(t *testing.T) {
+	page := `<html><body><div id="out"></div>
+		<script src="data:text/javascript,document.getElementById('out').textContent%20%2B%3D%20'data%3B'"></script>
+		<script src="data:text/javascript;base64,ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ291dCcpLnRleHRDb250ZW50ICs9ICdiNjQ7Jw=="></script>
+		<script type="module" src="/m.js"></script>
+	</body></html>`
+	e, logs := testEngine(t, page, map[string]string{
+		"/m.js": `document.getElementById("out").textContent += new URL("chunk.js", import.meta.url).href;`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "data;b64;https://example.com/chunk.js", run(t, e, `document.getElementById("out").textContent`), "%v", *logs)
+}

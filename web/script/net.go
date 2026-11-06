@@ -6,6 +6,7 @@ package script
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log/slog"
@@ -459,6 +460,9 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 
 // getScript gets the script at the given URL.
 func (e *Engine) getScript(u string) (string, error) {
+	if strings.HasPrefix(u, "data:") {
+		return dataURL(u)
+	}
 	if e.opts.GetURL == nil {
 		return "", fmt.Errorf("no GetURL")
 	}
@@ -562,4 +566,20 @@ func (e *Engine) HasListener(n *html.Node, typ string) bool {
 // submit button, or for a text field (as for Enter).
 func (e *Engine) Activate(n *html.Node) {
 	e.callPrelude("activate", e.nodes.id(n))
+}
+
+// dataURL returns the content of the given data URL.
+func dataURL(u string) (string, error) {
+	meta, data, ok := strings.Cut(strings.TrimPrefix(u, "data:"), ",")
+	if !ok {
+		return "", fmt.Errorf("invalid data URL")
+	}
+	if strings.HasSuffix(meta, ";base64") {
+		b, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			b, err = base64.RawStdEncoding.DecodeString(data)
+		}
+		return string(b), err
+	}
+	return neturl.PathUnescape(data)
 }
