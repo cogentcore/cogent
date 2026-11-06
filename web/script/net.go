@@ -13,6 +13,7 @@ import (
 	neturl "net/url"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	"github.com/dop251/goja"
@@ -324,7 +325,12 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	for i := 0; i+1 < len(headers); i += 2 {
 		req.Header.Add(headers[i], headers[i+1])
 	}
-	client := &http.Client{Jar: e.opts.Cookies}
+	// The cookies are only sent to the origin of the page, as browsers do
+	// by default (not with the requests of a page to other sites).
+	client := &http.Client{Timeout: 30 * time.Second}
+	if origin(u) == origin(e.opts.PageURL) {
+		client.Jar = e.opts.Cookies
+	}
 	return client.Do(req)
 }
 
