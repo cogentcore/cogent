@@ -456,11 +456,11 @@ func (e *Engine) defineDOM() {
 		// (and otherwise its box as last rendered is current), as
 		// rendering a page is costly and scripts get boxes often.
 		if e.dirty && e.changedAround(n) {
-			e.renderIfDirty()
+			e.renderIfDirty(nil, nil) // the lock is held by the task
 		}
 		x, y, w, h, ok := e.opts.Layout(n)
 		if !ok && e.dirty {
-			e.renderIfDirty() // as for an element that has no box yet
+			e.renderIfDirty(nil, nil) // as for an element that has no box yet
 			x, y, w, h, ok = e.opts.Layout(n)
 		}
 		if !ok {

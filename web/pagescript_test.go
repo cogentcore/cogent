@@ -121,10 +121,10 @@ func TestScriptsClick(t *testing.T) {
 			}
 			return tree.Continue
 		})
-		b.AsyncUnlock()
 		if assert.NotNil(t, target, id) {
-			target.AsWidget().Send(events.Click)
+			target.AsWidget().Send(events.Click) // as the event loop does, with the lock held
 		}
+		b.AsyncUnlock()
 	}
 	b.RenderImage(func() { settle(pg) }, func() {
 		clickNode("b")

@@ -142,32 +142,37 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	return content, err
 }
 
-// render reads the document into the page again (in a task, with the lock
-// of the page held), after the scripts have changed it.
-func (ps *pageScripts) render() {
-	pg := ps.pg
+// render reads the document into new widgets after the scripts have
+// changed it (without the lock of the page, as reading a page takes time,
+// but while no script runs), and returns the function that shows them in
+// the page (with the lock held).
+func (ps *pageScripts) render() func() {
 	if !ps.shown {
 		ps.pending = true
-		return
-	}
-	if pg.scripts != ps {
-		return // another page is shown
+		return nil
 	}
 	start := time.Now()
 	content, err := ps.read()
 	if err != nil {
 		ps.log(slog.LevelError, "reading the page: "+err.Error())
-		return
+		return nil
 	}
 	ps.renders++
 	ps.renderTime += time.Since(start)
-	if pg.media != nil {
-		pg.media.ctx = ps.ctx
+	ctx := ps.ctx
+	return func() {
+		pg := ps.pg
+		if pg.scripts != ps {
+			return // another page is shown
+		}
+		if pg.media != nil {
+			pg.media.ctx = ctx
+		}
+		pg.Title = ctx.Title
+		pg.DeleteChildren()
+		pg.AddChild(content)
+		pg.Update()
 	}
-	pg.Title = ps.ctx.Title
-	pg.DeleteChildren()
-	pg.AddChild(content)
-	pg.Update()
 }
 
 // handleWidget sets up the given widget of the page (as it is read) for

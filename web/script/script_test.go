@@ -59,11 +59,16 @@ func run(t *testing.T, e *Engine, src string) any {
 	return v
 }
 
-// render returns the HTML of the document of the engine.
+// render returns the HTML of the document of the engine (in a task, as
+// the scripts change it in their tasks).
 func render(e *Engine) string {
-	var b bytes.Buffer
-	html.Render(&b, e.Document())
-	return b.String()
+	ch := make(chan string, 1)
+	e.Post(func() {
+		var b bytes.Buffer
+		html.Render(&b, e.Document())
+		ch <- b.String()
+	})
+	return <-ch
 }
 
 func TestDOMBasics(t *testing.T) {
@@ -270,11 +275,12 @@ func TestRenderThrottle(t *testing.T) {
 	renders := 0
 	last := ""
 	var e *Engine
-	e, err = New(doc, Options{PageURL: "https://example.com/", Render: func() {
+	e, err = New(doc, Options{PageURL: "https://example.com/", Render: func() func() {
 		mu.Lock()
 		renders++
 		last = textContent(findByID(e.Document(), "p"))
 		mu.Unlock()
+		return nil
 	}})
 	require.NoError(t, err)
 	defer e.Close()

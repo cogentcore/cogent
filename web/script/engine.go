@@ -61,7 +61,12 @@ type Options struct {
 
 	// Render, if set, reads the document into the widgets of the page
 	// again after a task has changed it. It is called with the lock held.
-	Render func()
+	//
+	// It is called without the lock of the page (but while no script runs),
+	// to read the document into new widgets, and returns the function that
+	// shows them (as it replaces the widgets of the page), which is called
+	// with the lock held, or nil.
+	Render func() (commit func())
 
 	// Layout, if set, returns the position and size of the box of the
 	// given node in CSS px, relative to the top left of the page, after
@@ -116,7 +121,7 @@ type Engine struct {
 	timerID  int
 	lock     func() bool
 	unlock   func()
-	pending  sync.WaitGroup // tasks queued or running, for tests (Wait)
+	pending  int // tasks queued or running, for tests (Wait)
 	stopped  chan struct{}
 	inTask   bool
 	nodes    nodeIDs
@@ -200,7 +205,7 @@ func (e *Engine) Post(task func()) {
 	if e.closed {
 		return
 	}
-	e.pending.Add(1)
+	e.pending++
 	e.queue = append(e.queue, task)
 	select {
 	case e.wake <- struct{}{}:
@@ -211,7 +216,22 @@ func (e *Engine) Post(task func()) {
 // Wait waits until the engine has no tasks queued or running (as for
 // tests; timers that have not fired do not count).
 func (e *Engine) Wait() {
-	e.pending.Wait()
+	for {
+		e.mu.Lock()
+		n := e.pending
+		e.mu.Unlock()
+		if n == 0 {
+			return
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+}
+
+// done records that a task has run.
+func (e *Engine) done() {
+	e.mu.Lock()
+	e.pending--
+	e.mu.Unlock()
 }
 
 // Close stops the engine: its timers and the tasks that are queued.
@@ -226,12 +246,9 @@ func (e *Engine) Close() {
 		t.Stop()
 	}
 	e.timers = nil
-	n := len(e.queue)
+	e.pending -= len(e.queue)
 	e.queue = nil
 	e.mu.Unlock()
-	for range n {
-		e.pending.Done()
-	}
 	e.vm.Interrupt(errClosed)
 	close(e.wake)
 }
@@ -253,19 +270,19 @@ func (e *Engine) loop() {
 			lock, unlock := e.lock, e.unlock
 			e.mu.Unlock()
 			if lock != nil && !lock() {
-				e.pending.Done()
+				e.done()
 				go e.Close() // the page is gone
 				continue
 			}
 			e.runTask(task, unlock)
-			e.pending.Done()
+			e.renderSoon(lock, unlock)
+			e.done()
 		}
 	}
 }
 
 // runTask runs the given task (with the lock of the page held, which
-// unlock unlocks if not nil), within the time limit of a task, and renders
-// the page afterward if the task changed it.
+// unlock unlocks if not nil, at the end), within the time limit of a task.
 func (e *Engine) runTask(task func(), unlock func()) {
 	if unlock != nil {
 		defer unlock()
@@ -285,7 +302,6 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	e.inTask = false
 	timer.Stop()
 	e.vm.ClearInterrupt()
-	e.renderSoon()
 }
 
 // renderInterval is the shortest time between the renders of a page at
@@ -297,27 +313,38 @@ func (e *Engine) runTask(task func(), unlock func()) {
 const renderInterval = 100 * time.Millisecond
 
 // renderIfDirty renders the page if the document has changed (now, as
-// for the layout of an element that a script needs).
-func (e *Engine) renderIfDirty() {
-	if e.dirty && e.opts.Render != nil && !e.loading {
-		e.dirty = false
-		e.changedNodes = e.changedNodes[:0]
-		start := time.Now()
-		e.opts.Render()
-		e.lastRender = time.Now()
-		e.renderCost = e.lastRender.Sub(start)
+// for the layout of an element that a script needs). The widgets are
+// shown with the given lock held, if not nil (otherwise it is held).
+func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
+	if !e.dirty || e.opts.Render == nil || e.loading {
+		return
 	}
+	e.dirty = false
+	e.changedNodes = e.changedNodes[:0]
+	start := time.Now()
+	commit := e.opts.Render()
+	if commit != nil {
+		if lock == nil {
+			commit()
+		} else if lock() {
+			commit()
+			unlock()
+		}
+	}
+	e.lastRender = time.Now()
+	e.renderCost = e.lastRender.Sub(start)
 }
 
-// renderSoon renders the page if the document has changed, at the end of
-// a task: now, or after [renderInterval] since the last render.
-func (e *Engine) renderSoon() {
+// renderSoon renders the page if the document has changed, after a task
+// (without the lock of the page, which it takes to show it): now, or after
+// [renderInterval] since the last render.
+func (e *Engine) renderSoon(lock func() bool, unlock func()) {
 	if !e.dirty || e.opts.Render == nil || e.loading {
 		return
 	}
 	wait := max(renderInterval, 2*e.renderCost) - time.Since(e.lastRender)
 	if wait <= 0 {
-		e.renderIfDirty()
+		e.renderIfDirty(lock, unlock)
 		return
 	}
 	if e.renderTimer {
