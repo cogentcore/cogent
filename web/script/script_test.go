@@ -563,3 +563,17 @@ func TestRenderNotTimed(t *testing.T) {
 	_, err = e.RunString(`for (;;) {}`)
 	assert.Error(t, err, "a script that does not end is still interrupted")
 }
+
+// TestSerialize tests innerHTML and outerHTML as browsers serialize them:
+// the text of scripts as it is (the Guardian parses the JSON of a script
+// element from its innerHTML), and quotes only escaped in attributes.
+func TestSerialize(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><script type="application/json" id="c">{"a":"<b>&amp;"}</script>`+
+		`<p id="p" title='say "hi" &amp; go'>"quoted" &amp; <i>a&lt;b</i>&nbsp;<br>x<!--c--></p></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, `{"a":"<b>&amp;"}|<p id="p" title="say &quot;hi&quot; &amp; go">"quoted" &amp; <i>a&lt;b</i>&nbsp;<br>x<!--c--></p>`,
+		run(t, e, `document.getElementById("c").innerHTML + "|" + document.getElementById("p").outerHTML`))
+	assert.Empty(t, *logs)
+}

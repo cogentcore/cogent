@@ -350,9 +350,7 @@ func (e *Engine) defineDOM() {
 		n := node(arg(call, 0))
 		var b bytes.Buffer
 		if n != nil {
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				html.Render(&b, c)
-			}
+			serializeChildren(&b, n)
 		}
 		return vm.ToValue(b.String())
 	})
@@ -360,7 +358,7 @@ func (e *Engine) defineDOM() {
 		n := node(arg(call, 0))
 		var b bytes.Buffer
 		if n != nil {
-			html.Render(&b, n)
+			serialize(&b, n)
 		}
 		return vm.ToValue(b.String())
 	})
@@ -735,4 +733,94 @@ func closeSelector(sel string) string {
 		sel += string(open[i])
 	}
 	return sel
+}
+
+// rawTextElements are the elements whose text is serialized as it is.
+var rawTextElements = map[string]bool{"script": true, "style": true, "xmp": true, "iframe": true,
+	"noembed": true, "noframes": true, "plaintext": true, "noscript": true}
+
+// voidElements are the elements that have no end tag.
+var voidElements = map[string]bool{"area": true, "base": true, "br": true, "col": true, "embed": true,
+	"hr": true, "img": true, "input": true, "link": true, "meta": true, "source": true, "track": true,
+	"wbr": true, "basefont": true, "bgsound": true, "frame": true, "keygen": true, "param": true}
+
+// serialize writes the HTML of the given node, as browsers serialize it
+// (for innerHTML and outerHTML): unlike [html.Render], the text of script
+// and style elements and the quotes of text are not escaped.
+func serialize(b *bytes.Buffer, n *html.Node) {
+	switch n.Type {
+	case html.ElementNode:
+		b.WriteByte('<')
+		b.WriteString(n.Data)
+		for _, a := range n.Attr {
+			b.WriteByte(' ')
+			if a.Namespace != "" {
+				b.WriteString(a.Namespace)
+				b.WriteByte(':')
+			}
+			b.WriteString(a.Key)
+			b.WriteString(`="`)
+			b.WriteString(escapeText(a.Val, true))
+			b.WriteByte('"')
+		}
+		b.WriteByte('>')
+		if n.Namespace == "" && voidElements[n.Data] {
+			return
+		}
+		serializeChildren(b, n)
+		b.WriteString("</")
+		b.WriteString(n.Data)
+		b.WriteByte('>')
+	case html.TextNode:
+		if p := n.Parent; p != nil && p.Type == html.ElementNode && p.Namespace == "" && rawTextElements[p.Data] {
+			b.WriteString(n.Data)
+		} else {
+			b.WriteString(escapeText(n.Data, false))
+		}
+	case html.CommentNode:
+		b.WriteString("<!--")
+		b.WriteString(n.Data)
+		b.WriteString("-->")
+	case html.DoctypeNode:
+		b.WriteString("<!DOCTYPE ")
+		b.WriteString(n.Data)
+		b.WriteByte('>')
+	case html.DocumentNode:
+		serializeChildren(b, n)
+	}
+}
+
+// serializeChildren writes the HTML of the children of the given node.
+func serializeChildren(b *bytes.Buffer, n *html.Node) {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		serialize(b, c)
+	}
+}
+
+// escapeText escapes the given text (or attribute value) as browsers do
+// when they serialize HTML.
+func escapeText(s string, attr bool) string {
+	if !strings.ContainsAny(s, "&<>\"\u00a0") {
+		return s
+	}
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r == '&':
+			b.WriteString("&amp;")
+		case r == '\u00a0':
+			b.WriteString("&nbsp;")
+		case r == '"' && attr:
+			b.WriteString("&quot;")
+		case (r == '<' || r == '>') && !attr:
+			if r == '<' {
+				b.WriteString("&lt;")
+			} else {
+				b.WriteString("&gt;")
+			}
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
