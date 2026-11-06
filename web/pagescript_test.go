@@ -197,3 +197,47 @@ func TestScriptsOff(t *testing.T) {
 		assert.Nil(t, pg.scripts)
 	})
 }
+
+// TestScriptsForms tests that the scripts get the submit event of a form
+// with a submit listener, which can prevent it (as to send it themselves),
+// and that a form without listeners is submitted as in HTML.
+func TestScriptsForms(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body>
+			<form id="js" action="/search"><input name="q" value="first"><button id="go">Go</button></form>
+			<p id="out">none</p>
+			<form id="plain" action="/search"><input name="q" value="second"><button id="plaingo">Search</button></form>
+			<script>
+				const f = document.getElementById("js");
+				f.addEventListener("submit", e => {
+					e.preventDefault();
+					document.getElementById("out").textContent = "submitted " + new FormData(f).get("q");
+				});
+			</script></body></html>`,
+		"/search": `<html><body><p>Results</p></body></html>`,
+	})
+	clickID := func(id string) {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var target core.Widget
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if cwb.Property("id") == id && target == nil {
+				target = cw
+			}
+			return tree.Continue
+		})
+		if assert.NotNil(t, target, id) {
+			target.AsWidget().Send(events.Click)
+		}
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		clickID("go")
+	}, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "submitted first") }), pageTexts(b, pg))
+		assert.Equal(t, 1, len(pg.History), "the form with a listener is not submitted")
+		clickID("plaingo")
+	}, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "Results") }), pageTexts(b, pg))
+	})
+	assert.Equal(t, "https://example.com/search?q=second", pg.currentURL())
+}

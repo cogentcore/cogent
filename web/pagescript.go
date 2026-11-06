@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
@@ -185,6 +186,32 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		return
 	}
 	e := ps.engine
+	if form := ancestorForm(n); form != nil && e.HasListener(form, "submit") || isSubmitter(n) && e.HasListener(n, "click") {
+		// the scripts get the click of a submit button, and the submit
+		// event of the form, which they can prevent (as to send it
+		// themselves); otherwise the form is submitted as it is in HTML
+		switch {
+		case isSubmitter(n):
+			wb.OnClick(func(ev events.Event) {
+				ev.SetHandled()
+				e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+					if !prevented {
+						e.Activate(n)
+					}
+				})
+			})
+			return
+		case w.AsWidget().Property("tag") == "input":
+			if tf, ok := w.(*core.TextField); ok {
+				tf.OnFirst(events.KeyChord, func(ev events.Event) {
+					if kf := keymap.Of(ev.KeyChord()); kf == keymap.Enter || kf == keymap.Accept {
+						ev.SetHandled()
+						e.Dispatch(n, "change", map[string]any{"value": tf.Text()}, func(bool) { e.Activate(n) })
+					}
+				})
+			}
+		}
+	}
 	switch x := w.(type) {
 	case *core.TextField:
 		x.OnInput(func(ev events.Event) {
@@ -513,4 +540,32 @@ func (pg *Page) showConsole() {
 		s.Text.WhiteSpace = text.WhiteSpacePreWrap
 	})
 	d.AddOKOnly().RunWindowDialog(pg)
+}
+
+// ancestorForm returns the form element that the given node is in, if any.
+func ancestorForm(n *html.Node) *html.Node {
+	for p := n.Parent; p != nil; p = p.Parent {
+		if p.Type == html.ElementNode && p.Data == "form" {
+			return p
+		}
+	}
+	return nil
+}
+
+// isSubmitter returns whether the given element submits its form when it
+// is clicked (a submit button).
+func isSubmitter(n *html.Node) bool {
+	typ := ""
+	for _, a := range n.Attr {
+		if a.Key == "type" {
+			typ = strings.ToLower(strings.TrimSpace(a.Val))
+		}
+	}
+	switch n.Data {
+	case "button":
+		return typ == "" || typ == "submit"
+	case "input":
+		return typ == "submit" || typ == "image"
+	}
+	return false
 }

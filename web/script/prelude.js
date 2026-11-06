@@ -1707,6 +1707,21 @@
 		return ev.defaultPrevented;
 	};
 
+	// activate does the default action of the element of the given id
+	// after a click on it that was not prevented (as submitting its form
+	// for a submit button), or submits its form for a text field (as for
+	// Enter, its implicit submission).
+	D.activate = function (id) {
+		const el = wrap(id);
+		if (!el) return;
+		const form = el.closest && el.closest("form");
+		if (!form) return;
+		const t = (el.getAttribute("type") || "").toLowerCase();
+		if (el.tagName === "BUTTON" ? (t === "" || t === "submit") : (t === "submit" || t === "image")) form.requestSubmit(el);
+		else if (el.tagName === "BUTTON" && t === "reset" || el.tagName === "INPUT" && t === "reset") form.reset();
+		else if (el.tagName === "INPUT") form.requestSubmit();
+	};
+
 	// fireEvent fires a simple event of the given type at the node of
 	// the given id (as the load event of a script).
 	D.fireEvent = function (id, type) {

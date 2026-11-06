@@ -550,3 +550,10 @@ func (e *Engine) HasListener(n *html.Node, typ string) bool {
 	v := e.callPrelude("hasListener", e.nodes.id(n), typ)
 	return v.ToBoolean()
 }
+
+// Activate does the default action of the given element (in a task), as
+// after a click on it that was not prevented: submitting its form for a
+// submit button, or for a text field (as for Enter).
+func (e *Engine) Activate(n *html.Node) {
+	e.callPrelude("activate", e.nodes.id(n))
+}
