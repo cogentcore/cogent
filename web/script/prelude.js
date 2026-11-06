@@ -133,6 +133,7 @@
 
 	class EventTarget {
 		addEventListener(type, fn, opts) {
+			if (this === undefined || this === null) return g.addEventListener(type, fn, opts); // as a function of the window
 			if (!fn) return;
 			const capture = typeof opts === "boolean" ? opts : !!(opts && opts.capture);
 			const once = !!(opts && typeof opts === "object" && opts.once);
@@ -147,12 +148,14 @@
 			}
 		}
 		removeEventListener(type, fn, opts) {
+			if (this === undefined || this === null) return g.removeEventListener(type, fn, opts);
 			const capture = typeof opts === "boolean" ? opts : !!(opts && opts.capture);
 			const m = listeners.get(this);
 			if (!m || !m[type]) return;
 			m[type] = m[type].filter(x => !(x.fn === fn && x.capture === capture));
 		}
 		dispatchEvent(ev) {
+			if (this === undefined || this === null) return g.dispatchEvent(ev);
 			ev.target = this;
 			const path = [];
 			for (let t = this; t; t = parentTarget(t)) path.push(t);
