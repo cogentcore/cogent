@@ -425,3 +425,50 @@ func TestScriptsResize(t *testing.T) {
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "790 to 500") }), pageTexts(b, pg))
 	})
 }
+
+// TestScriptsClickInLink tests that a click on a box in a link (as the
+// results of craigslist), which gets the click as the page has a click
+// listener, opens the link unless a listener prevents its default, and
+// that it opens it after the scripts are stopped.
+func TestScriptsClickInLink(t *testing.T) {
+	for _, mode := range []string{"open", "prevented", "stopped"} {
+		t.Run(mode, func(t *testing.T) {
+			prevent := ""
+			if mode == "prevented" {
+				prevent = "e.preventDefault();"
+			}
+			b, pg := newScriptPage(t, map[string]string{
+				"/": `<html><body><a href="/item"><div id="card" style="height: 40px">card</div></a>
+					<script>document.addEventListener("click", e => { ` + prevent + ` });</script></body></html>`,
+				"/item": `<html><body><p>the item</p></body></html>`,
+			})
+			b.RenderImage(func() { settle(pg) }, func() {
+				if mode == "stopped" {
+					b.AsyncLock()
+					ps := pg.scripts
+					b.AsyncUnlock()
+					ps.engine.Close()
+				}
+				b.AsyncLock()
+				var card core.Widget
+				pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+					if cwb.Property("id") == "card" {
+						card = cw
+					}
+					return tree.Continue
+				})
+				if assert.NotNil(t, card) {
+					card.AsWidget().Send(events.Click)
+				}
+				b.AsyncUnlock()
+			}, func() {
+				if mode == "prevented" {
+					settle(pg)
+					assert.Equal(t, "https://example.com/", pg.currentURL())
+					return
+				}
+				assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "the item") }), pageTexts(b, pg))
+			})
+		})
+	}
+}

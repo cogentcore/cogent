@@ -238,6 +238,14 @@ func (e *Engine) Post(task func()) {
 	}
 }
 
+// Closed returns whether the engine has been closed, as when the scripts
+// of the page were stopped for running too long: then it runs no tasks.
+func (e *Engine) Closed() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.closed
+}
+
 // Wait waits until the engine has no tasks queued or running (as for
 // tests; timers that have not fired do not count).
 func (e *Engine) Wait() {

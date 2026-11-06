@@ -302,10 +302,62 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 			s.StateLayer = 0 // not highlighted, as it is only in an element with a listener
 		}
 	})
+	// a click in a link opens it, unless a listener prevents its default
+	// (as in browsers), as for the boxes in a link (as the results of
+	// craigslist), which get the clicks instead of the link
+	href := ""
+	for p := n.Parent; p != nil; p = p.Parent {
+		if p.Type == html.ElementNode && p.Data == "a" {
+			href = attrOf(p, "href")
+			break
+		}
+	}
 	wb.OnClick(func(ev events.Event) {
 		ev.SetHandled()
-		e.Dispatch(n, "click", mouseProps(ev), nil)
+		if e.Closed() { // the scripts were stopped
+			ps.followLink(href, ev)
+			return
+		}
+		e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+			if !prevented {
+				ps.followLink(href, ev)
+			}
+		})
 	})
+}
+
+// followLink opens the given URL of a link (if not ""), or runs its
+// script for a javascript: URL (unless the scripts were stopped).
+func (ps *pageScripts) followLink(href string, ev events.Event) {
+	if href == "" {
+		return
+	}
+	if js, ok := cutPrefixFold(strings.TrimSpace(href), "javascript:"); ok {
+		if !ps.engine.Closed() {
+			ps.engine.Eval(js)
+		}
+		return
+	}
+	ps.pg.OpenURL(href, ev)
+}
+
+// cutPrefixFold is [strings.CutPrefix], ignoring the case of the prefix.
+func cutPrefixFold(s, prefix string) (string, bool) {
+	if len(s) >= len(prefix) && strings.EqualFold(s[:len(prefix)], prefix) {
+		return s[len(prefix):], true
+	}
+	return s, false
+}
+
+// attrOf returns the value of the given attribute of the given node,
+// or "" if it does not have it.
+func attrOf(n *html.Node, key string) string {
+	for _, a := range n.Attr {
+		if a.Key == key && a.Namespace == "" {
+			return a.Val
+		}
+	}
+	return ""
 }
 
 // hasOwnClickHandler returns whether the given element has an onclick
@@ -332,8 +384,16 @@ func mouseProps(ev events.Event) map[string]any {
 // for the URL), unless a listener prevents its default.
 func (ps *pageScripts) openURL(url string, ev events.Event) {
 	pg := ps.pg
-	anchor := ps.anchorFor(url)
 	js := strings.HasPrefix(strings.ToLower(strings.TrimSpace(url)), "javascript:")
+	if ps.engine.Closed() {
+		// the scripts were stopped (as for running too long): links are
+		// followed as without scripts
+		if !js {
+			pg.OpenURL(url, ev)
+		}
+		return
+	}
+	anchor := ps.anchorFor(url)
 	if anchor == nil {
 		if js {
 			ps.engine.Eval(strings.TrimSpace(url)[len("javascript:"):])
