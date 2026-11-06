@@ -124,11 +124,19 @@ type Engine struct {
 	loading  bool       // whether the scripts of the page are being loaded
 	current  *html.Node // the script element that is running, if any
 	jsDOM    *goja.Object
-	dispatch goja.Callable       // __dom.dispatch, set by the prelude
-	fire     goja.Callable       // __dom.fireTimer, set by the prelude
-	callback goja.Callable       // __dom.callback, set by the prelude
-	session  *Storage            // the sessionStorage of the page
-	ran      map[*html.Node]bool // the script elements that have run
+	dispatch goja.Callable // __dom.dispatch, set by the prelude
+	fire     goja.Callable // __dom.fireTimer, set by the prelude
+	callback goja.Callable // __dom.callback, set by the prelude
+	session  *Storage      // the sessionStorage of the page
+	// lastRender is when the page was last rendered, and renderTimer
+	// whether a render is pending (see [Engine.renderSoon]).
+	lastRender time.Time
+	renderCost time.Duration // how long the last render took
+	// changedNodes are the nodes that have changed since the page was
+	// last rendered (see [Engine.changedAround]).
+	changedNodes []*html.Node
+	renderTimer  bool
+	ran          map[*html.Node]bool // the script elements that have run
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -277,15 +285,48 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	e.inTask = false
 	timer.Stop()
 	e.vm.ClearInterrupt()
-	e.renderIfDirty()
+	e.renderSoon()
 }
 
-// renderIfDirty renders the page if the document has changed.
+// renderInterval is the shortest time between the renders of a page at
+// the end of tasks, which renders that are needed sooner wait for (as for
+// a script that changes the page in each frame of an animation, or loads
+// many modules that each change it); it is longer for pages that take
+// longer to render (twice the time of the last render), so that rendering
+// takes at most about a third of the time.
+const renderInterval = 100 * time.Millisecond
+
+// renderIfDirty renders the page if the document has changed (now, as
+// for the layout of an element that a script needs).
 func (e *Engine) renderIfDirty() {
 	if e.dirty && e.opts.Render != nil && !e.loading {
 		e.dirty = false
+		e.changedNodes = e.changedNodes[:0]
+		start := time.Now()
 		e.opts.Render()
+		e.lastRender = time.Now()
+		e.renderCost = e.lastRender.Sub(start)
 	}
+}
+
+// renderSoon renders the page if the document has changed, at the end of
+// a task: now, or after [renderInterval] since the last render.
+func (e *Engine) renderSoon() {
+	if !e.dirty || e.opts.Render == nil || e.loading {
+		return
+	}
+	wait := max(renderInterval, 2*e.renderCost) - time.Since(e.lastRender)
+	if wait <= 0 {
+		e.renderIfDirty()
+		return
+	}
+	if e.renderTimer {
+		return
+	}
+	e.renderTimer = true
+	time.AfterFunc(wait, func() {
+		e.Post(func() { e.renderTimer = false }) // renders at its end
+	})
 }
 
 // logf logs the given message to the console of the page.

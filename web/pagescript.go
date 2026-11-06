@@ -12,6 +12,7 @@ import (
 	neturl "net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/core"
@@ -70,6 +71,11 @@ type pageScripts struct {
 	// out since it was last rendered.
 	widgets map[*html.Node]*core.WidgetBase
 	laidOut bool
+
+	// renders is the number of times that the page has been rendered
+	// again after it was shown (for tests).
+	renders    int
+	renderTime time.Duration
 
 	consoleMu sync.Mutex
 	console   []string
@@ -147,11 +153,14 @@ func (ps *pageScripts) render() {
 	if pg.scripts != ps {
 		return // another page is shown
 	}
+	start := time.Now()
 	content, err := ps.read()
 	if err != nil {
 		ps.log(slog.LevelError, "reading the page: "+err.Error())
 		return
 	}
+	ps.renders++
+	ps.renderTime += time.Since(start)
 	if pg.media != nil {
 		pg.media.ctx = ps.ctx
 	}

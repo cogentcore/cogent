@@ -1576,6 +1576,24 @@
 		},
 	};
 
+	// Function compiles code that goja does not support (as async
+	// generators, which pages test for) rewritten by esbuild.
+	const OrigFunction = Function;
+	const FunctionProxy = function Function(...args) { return makeFunction(args); };
+	FunctionProxy.prototype = OrigFunction.prototype;
+	function makeFunction(args) {
+		try {
+			return Reflect.construct(OrigFunction, args);
+		} catch (e) {
+			if (!(e instanceof SyntaxError)) throw e;
+			const params = args.slice(0, -1).map(String).join(",");
+			const body = args.length ? String(args[args.length - 1]) : "";
+			const code = D.lower("(function anonymous(" + params + "\n) {\n" + body + "\n})");
+			if (code === null) throw e;
+			return (0, eval)(code);
+		}
+	}
+
 	// ---- the global object (window) ----
 
 	const props = {
@@ -1601,6 +1619,7 @@
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
 		MutationObserver, IntersectionObserver, ResizeObserver, PerformanceObserver,
 		fetch,
+		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,
 		NodeFilter: { SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 1, SHOW_TEXT: 4, SHOW_COMMENT: 128, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 },
 		DOMException: class DOMException extends Error { constructor(msg, name) { super(msg); this.name = name || "Error"; } },

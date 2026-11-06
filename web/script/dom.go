@@ -60,7 +60,38 @@ const fragmentData = "#document-fragment"
 func (e *Engine) changed(n *html.Node) {
 	if n == nil || connected(n, e.doc) {
 		e.dirty = true
+		if n != nil && len(e.changedNodes) < maxChangedNodes {
+			e.changedNodes = append(e.changedNodes, n)
+		} else {
+			e.changedNodes = append(e.changedNodes, e.doc) // all of it
+		}
 	}
+}
+
+// maxChangedNodes is the number of changed nodes that are recorded (see
+// [Engine.changedAround]), beyond which the whole document has changed.
+const maxChangedNodes = 1000
+
+// changedAround returns whether the given node, or a node that it is in
+// or that is in it, has changed since the page was last rendered, which
+// can change the box of its element (its size and position in it).
+func (e *Engine) changedAround(n *html.Node) bool {
+	for _, c := range e.changedNodes {
+		if contains(c, n) || contains(n, c) {
+			return true
+		}
+	}
+	return false
+}
+
+// contains returns whether the given node is a or is in it.
+func contains(a, n *html.Node) bool {
+	for ; n != nil; n = n.Parent {
+		if n == a {
+			return true
+		}
+	}
+	return false
 }
 
 // connected returns whether the given node is in the given document.
@@ -421,8 +452,17 @@ func (e *Engine) defineDOM() {
 		if n == nil || e.opts.Layout == nil {
 			return goja.Null()
 		}
-		e.renderIfDirty()
+		// The page is rendered first if the element may have changed
+		// (and otherwise its box as last rendered is current), as
+		// rendering a page is costly and scripts get boxes often.
+		if e.dirty && e.changedAround(n) {
+			e.renderIfDirty()
+		}
 		x, y, w, h, ok := e.opts.Layout(n)
+		if !ok && e.dirty {
+			e.renderIfDirty() // as for an element that has no box yet
+			x, y, w, h, ok = e.opts.Layout(n)
+		}
 		if !ok {
 			return goja.Null()
 		}
@@ -520,6 +560,15 @@ func (e *Engine) defineDOM() {
 			})
 		}()
 		return goja.Undefined()
+	})
+	// lower returns the given code rewritten without the features of
+	// JavaScript that goja does not support, or null if it is not valid.
+	set("lower", func(call goja.FunctionCall) goja.Value {
+		code, err := lower(str(call, 0), "Function")
+		if err != nil {
+			return goja.Null()
+		}
+		return vm.ToValue(strings.TrimRight(strings.TrimSpace(code), ";"))
 	})
 	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })
 	set("loading", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.loading) })

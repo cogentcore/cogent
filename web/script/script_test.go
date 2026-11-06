@@ -259,3 +259,35 @@ func TestModules(t *testing.T) {
 	assert.Equal(t, int64(2), run(t, e, `scopeCount`))
 	assert.Empty(t, *logs)
 }
+
+// TestRenderThrottle tests that a script that changes the page often (as
+// an animation) renders it far less often, and that its last change is
+// rendered.
+func TestRenderThrottle(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><p id="p">0</p></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	var mu sync.Mutex
+	renders := 0
+	last := ""
+	var e *Engine
+	e, err = New(doc, Options{PageURL: "https://example.com/", Render: func() {
+		mu.Lock()
+		renders++
+		last = textContent(findByID(e.Document(), "p"))
+		mu.Unlock()
+	}})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `let i = 0; const iv = setInterval(() => { document.getElementById("p").textContent = String(++i); if (i === 40) clearInterval(iv); }, 5);`)
+	assert.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return last == "40"
+	}, 5*time.Second, 20*time.Millisecond, "the last change is rendered")
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Less(t, renders, 10, "rendered far less often than changed (40 times)")
+}
