@@ -691,3 +691,42 @@ func TestTimerOrder(t *testing.T) {
 	assert.Equal(t, true, run(t, e, `order.every((v, i) => v === i)`))
 	assert.Empty(t, *logs)
 }
+
+// TestSVGElements tests that elements created in the SVG namespace (as
+// React does for the icons of github.com) keep the case of their names and
+// of their attributes (as linearGradient and viewBox), which the SVG reader
+// needs, while the names of HTML attributes are lowercase.
+func TestSVGElements(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, `<svg viewBox="0 0 1 1"><linearGradient id="g"></linearGradient></svg>|linearGradient|http://www.w3.org/2000/svg|true|0 0 1 1|DIV|x`,
+		run(t, e, `
+			const ns = "http://www.w3.org/2000/svg";
+			const svg = document.createElementNS(ns, "svg");
+			svg.setAttribute("viewBox", "0 0 1 1");
+			const g = document.createElementNS(ns, "linearGradient");
+			g.setAttribute("id", "g");
+			svg.appendChild(g);
+			const d = document.getElementById("d");
+			d.setAttribute("DATA-X", "x");
+			[svg.outerHTML, g.tagName, g.namespaceURI, g instanceof SVGElement, svg.getAttribute("viewBox"), d.tagName, d.getAttribute("data-x")].join("|")`))
+	assert.Empty(t, *logs)
+}
+
+// TestStyleProperties tests that the properties of styles are in them
+// (as "opacity" in el.style), by which libraries such as GSAP (on
+// github.com) find the properties that are supported, and that vendor
+// prefixed ones are not.
+func TestStyleProperties(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true,true,true,true,false,false,true",
+		run(t, e, `const d = document.getElementById("d");
+			const cs = getComputedStyle(d);
+			["opacity" in d.style, "backgroundColor" in d.style, "--x" in d.style, "display" in cs, "WebkitTransform" in d.style, "webkitTransform" in d.style, "setProperty" in d.style].join(",")`))
+	assert.Empty(t, *logs)
+}

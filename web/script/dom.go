@@ -157,6 +157,24 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(0)
 	})
+	// ns returns the namespace of the element ("svg" or "math" for foreign
+	// elements, otherwise "").
+	set("ns", func(call goja.FunctionCall) goja.Value {
+		n := node(arg(call, 0))
+		if n == nil {
+			return vm.ToValue("")
+		}
+		return vm.ToValue(n.Namespace)
+	})
+	// attrName returns the given name of an attribute of the given node:
+	// lowercase for HTML elements, and as it is for foreign (SVG) ones,
+	// as the DOM does (as for viewBox).
+	attrName := func(n *html.Node, name string) string {
+		if n.Namespace != "" {
+			return name
+		}
+		return strings.ToLower(name)
+	}
 	set("name", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
@@ -193,7 +211,7 @@ func (e *Engine) defineDOM() {
 		if n == nil {
 			return goja.Null()
 		}
-		name := strings.ToLower(str(call, 1))
+		name := attrName(n, str(call, 1))
 		for _, a := range n.Attr {
 			if a.Key == name {
 				return vm.ToValue(a.Val)
@@ -206,7 +224,7 @@ func (e *Engine) defineDOM() {
 		if n == nil {
 			return goja.Undefined()
 		}
-		name, val := strings.ToLower(str(call, 1)), str(call, 2)
+		name, val := attrName(n, str(call, 1)), str(call, 2)
 		for i, a := range n.Attr {
 			if a.Key == name {
 				if a.Val != val {
@@ -225,7 +243,7 @@ func (e *Engine) defineDOM() {
 		if n == nil {
 			return goja.Undefined()
 		}
-		name := strings.ToLower(str(call, 1))
+		name := attrName(n, str(call, 1))
 		for i, a := range n.Attr {
 			if a.Key == name {
 				n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
@@ -281,9 +299,16 @@ func (e *Engine) defineDOM() {
 		e.changed(n)
 		return goja.Undefined()
 	})
+	// create creates an element with the given name, in the given
+	// namespace ("svg" or "math", whose names keep their case, as
+	// linearGradient, or "" for HTML).
 	set("create", func(call goja.FunctionCall) goja.Value {
-		tag := strings.ToLower(str(call, 0))
-		return id(&html.Node{Type: html.ElementNode, Data: tag, DataAtom: atom.Lookup([]byte(tag))})
+		tag, ns := str(call, 0), str(call, 1)
+		if ns != "svg" && ns != "math" {
+			ns = ""
+			tag = strings.ToLower(tag)
+		}
+		return id(&html.Node{Type: html.ElementNode, Data: tag, Namespace: ns, DataAtom: atom.Lookup([]byte(strings.ToLower(tag)))})
 	})
 	set("createText", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.TextNode, Data: str(call, 0)})

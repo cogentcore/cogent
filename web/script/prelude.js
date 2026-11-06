@@ -23,13 +23,17 @@
 
 	const tagClasses = {}; // tag name -> class of its elements
 
+	// the namespaces of elements, by their URI, and their URIs
+	const namespaceURIs = { "": "http://www.w3.org/1999/xhtml", svg: "http://www.w3.org/2000/svg", math: "http://www.w3.org/1998/Math/MathML" };
+	const namespaces = { "http://www.w3.org/2000/svg": "svg", "http://www.w3.org/1998/Math/MathML": "math" };
+
 	function wrap(id) {
 		if (!id) return null;
 		let w = wrappers.get(id);
 		if (w) return w;
 		let cls;
 		switch (D.type(id)) {
-			case 1: cls = tagClasses[D.name(id)] || HTMLElement; break;
+			case 1: cls = D.ns(id) === "svg" ? SVGElement : (tagClasses[D.name(id)] || HTMLElement); break;
 			case 3: cls = Text; break;
 			case 8: cls = Comment; break;
 			case 9: cls = Document; break;
@@ -599,7 +603,15 @@
 		get length() { return parseStyle(this._el.getAttribute("style")).size; }
 		item(i) { return Array.from(parseStyle(this._el.getAttribute("style")).keys())[i] || ""; }
 	}
+	// isStyleProperty returns whether the given name is that of a CSS
+	// property of a style (as for "opacity" in el.style, by which libraries
+	// such as GSAP find the properties that are supported): a camelCase or
+	// kebab-case name that is not vendor prefixed, or a custom property.
+	function isStyleProperty(p) {
+		return typeof p === "string" && (p.startsWith("--") || /^[a-z][a-zA-Z]*$/.test(p) && !/^(webkit|moz|ms|o)[A-Z]/.test(p) || /^[a-z]+(-[a-z]+)+$/.test(p));
+	}
 	const styleHandler = {
+		has(t, p) { return p in t || isStyleProperty(p); },
 		get(t, p, r) {
 			if (typeof p !== "string" || p in t || p.startsWith("_")) return Reflect.get(t, p, t);
 			return t.getPropertyValue(p);
@@ -630,9 +642,9 @@
 	}
 
 	class Element extends Node {
-		get tagName() { return D.name(this[ID]).toUpperCase(); }
+		get tagName() { const n = D.name(this[ID]); return D.ns(this[ID]) ? n : n.toUpperCase(); }
 		get localName() { return D.name(this[ID]); }
-		get namespaceURI() { return "http://www.w3.org/1999/xhtml"; }
+		get namespaceURI() { return namespaceURIs[D.ns(this[ID])] || namespaceURIs[""]; }
 		get prefix() { return null; }
 		get id() { return this.getAttribute("id") || ""; }
 		set id(v) { this.setAttribute("id", v); }
@@ -1166,7 +1178,11 @@
 		get fonts() { return { ready: Promise.resolve(), check() { return true; }, load() { return Promise.resolve([]); }, addEventListener() {}, add() {}, forEach() {} }; }
 		get implementation() { return { createHTMLDocument(title) { return wrap(D.parseDocument("<!DOCTYPE html><title>" + (title || "") + "</title>")); }, hasFeature() { return true; } }; }
 		createElement(tag) { return wrap(D.create(String(tag))); }
-		createElementNS(ns, tag) { const n = String(tag); return wrap(D.create(n.indexOf(":") >= 0 ? n.split(":")[1] : n)); }
+		createElementNS(ns, tag) {
+			let n = String(tag);
+			if (n.indexOf(":") >= 0) n = n.split(":")[1];
+			return wrap(D.create(n, namespaces[ns] || ""));
+		}
 		createTextNode(s) { return wrap(D.createText(String(s))); }
 		createComment(s) { return wrap(D.createComment(String(s))); }
 		createDocumentFragment() { return wrap(D.createFragment()); }
@@ -1416,6 +1432,7 @@
 		};
 		return new Proxy({ getPropertyValue: get, getPropertyPriority: () => "", item: () => "", length: 0, cssText: "" }, {
 			get(t, p) { if (typeof p !== "string") return undefined; if (p in t) return t[p]; return get(p); },
+			has(t, p) { return p in t || isStyleProperty(p); },
 		});
 	}
 
