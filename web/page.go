@@ -111,6 +111,7 @@ var _ tree.Node = (*Page)(nil)
 func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()
+	pg.Context.GetURL = withCookies(pg.Context.GetURL)
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Scripts = true
 	pg.shown = make(chan struct{})
@@ -259,6 +260,12 @@ const maxRedirects = 5
 // which replaces the content of the page when it has been read, unless the
 // opening of another page has started (or it was stopped) by then.
 func (pg *Page) open(url string, mode historyMode, index, redirects int) {
+	pg.openPost(url, nil, mode, index, redirects)
+}
+
+// openPost is [Page.open] with the given POST request, if not nil (as for
+// the submission of a form), instead of a GET request.
+func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index, redirects int) {
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	pg.loading = url
@@ -282,7 +289,13 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		final := url
 		content := newPageContent()
 		var page []byte
-		resp, err := htmlcore.Get(ctx, url)
+		var resp *http.Response
+		var err error
+		if post != nil {
+			resp, err = postPage(url, post)
+		} else {
+			resp, err = htmlcore.Get(ctx, url)
+		}
 		if err == nil {
 			final = resp.Request.URL.String()
 			ctx.PageURL = final

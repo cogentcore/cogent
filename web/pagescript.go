@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
-	"net/http/cookiejar"
 	neturl "net/url"
 	"strings"
 	"sync"
@@ -31,12 +30,9 @@ import (
 	"golang.org/x/net/html"
 )
 
-// localStorage and cookies are the localStorage and the cookies of
-// the pages of the app, shared by its pages.
-var (
-	localStorage = script.NewStorage()
-	cookies, _   = cookiejar.New(nil)
-)
+// localStorage is the localStorage of the pages of the app, shared by its
+// pages (by origin).
+var localStorage = script.NewStorage()
 
 // maxConsole is the number of console messages that a page keeps.
 const maxConsole = 500
@@ -94,6 +90,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		Viewport:     ps.viewport,
 		MediaMatches: func(q string) bool { return ps.context().MediaMatches(q) },
 		Navigate:     ps.navigate,
+		Submit:       ps.submit,
 		PushState:    ps.pushState,
 		Storage:      localStorage,
 		Cookies:      cookies,
@@ -398,6 +395,20 @@ func (ps *pageScripts) navigate(url string, replace bool) {
 		return
 	}
 	pg.OpenURL(url, nil)
+}
+
+// submit opens the page of the given URL with a POST request with the
+// given body (as for a form), in another goroutine than that of the scripts.
+func (ps *pageScripts) submit(url, contentType string, body []byte) {
+	pg := ps.pg
+	if !pg.AsyncLockIfShown() {
+		return
+	}
+	defer pg.AsyncUnlock()
+	if pg.scripts != ps {
+		return
+	}
+	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
 }
 
 // pushState changes the URL of the page without opening it, as for

@@ -7,6 +7,7 @@ package web
 import (
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -286,4 +287,47 @@ func TestScriptsTyping(t *testing.T) {
 			assert.True(t, tf.StateIs(states.Focused), "the field keeps the focus")
 		}
 	})
+}
+
+// TestScriptsPost tests a form with the POST method that a script fills in
+// and submits (as the challenge page of Reddit does), and that the cookie
+// that the response sets is sent with the request of the page that it
+// redirects to.
+func TestScriptsPost(t *testing.T) {
+	var posted string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/":
+			io.WriteString(w, `<html><body><p>checking</p>
+				<form method="post" action="/check"><input type="hidden" name="solution"></form>
+				<script>
+					document.addEventListener("DOMContentLoaded", () => {
+						const f = document.forms[0];
+						f.elements.namedItem("solution").value = "a b&c";
+						f.requestSubmit();
+					});
+				</script></body></html>`)
+		case "/check":
+			r.ParseForm()
+			posted = r.Method + " " + r.Header.Get("Content-Type") + " " + r.PostForm.Get("solution")
+			http.SetCookie(w, &http.Cookie{Name: "pass", Value: "granted", Path: "/"})
+			http.Redirect(w, r, "/content", http.StatusSeeOther)
+		case "/content":
+			c, err := r.Cookie("pass")
+			if err != nil {
+				io.WriteString(w, `<html><body><p>no cookie</p></body></html>`)
+				return
+			}
+			io.WriteString(w, `<html><body><p>content with `+c.Value+`</p></body></html>`)
+		}
+	}))
+	defer srv.Close()
+	b := core.NewBody()
+	pg := NewPage(b)
+	pg.OpenURL(srv.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "content with granted") }), pageTexts(b, pg))
+	})
+	assert.Equal(t, "POST application/x-www-form-urlencoded a b&c", posted)
+	assert.Equal(t, srv.URL+"/content", pg.currentURL())
 }

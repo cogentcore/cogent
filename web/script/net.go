@@ -157,6 +157,13 @@ func (e *Engine) defineNet() {
 		}
 		return goja.Undefined()
 	})
+	set("submit", func(call goja.FunctionCall) goja.Value {
+		u, err := resolveURL(str(call, 0), e.baseURL())
+		if err == nil && e.opts.Submit != nil {
+			go e.opts.Submit(u, str(call, 1), []byte(str(call, 2))) // after the task
+		}
+		return goja.Undefined()
+	})
 	set("pushState", func(call goja.FunctionCall) goja.Value {
 		u, err := resolveURL(str(call, 0), e.opts.PageURL)
 		if err != nil || origin(u) != origin(e.opts.PageURL) {
