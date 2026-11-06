@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"cogentcore.org/core/htmlcore"
 	"github.com/dop251/goja"
 	"golang.org/x/net/html"
 )
@@ -352,7 +353,15 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	if err != nil {
 		return nil, err
 	}
+	// the headers of browsers, unless the script sets them
+	htmlcore.SetRequestHeaders(req)
+	req.Header.Set("Accept", "*/*")
+	set := map[string]bool{}
 	for i := 0; i+1 < len(headers); i += 2 {
+		if k := http.CanonicalHeaderKey(headers[i]); !set[k] {
+			set[k] = true
+			req.Header.Del(k)
+		}
 		req.Header.Add(headers[i], headers[i+1])
 	}
 	// The cookies are only sent to the origin of the page, as browsers do

@@ -1362,9 +1362,11 @@
 	const navigation = new Navigation();
 
 	const navigator = {
-		userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) CogentCore/1.0 Safari/537.36",
-		appName: "Netscape", appVersion: "5.0", appCodeName: "Mozilla", product: "Gecko", vendor: "Cogent Core",
-		platform: "MacIntel", language: "en-US", languages: ["en-US", "en"], onLine: true, cookieEnabled: true,
+		// the user agent is that of the requests of the page (sites check
+		// that they match), as are the languages (Accept-Language)
+		userAgent: D.userAgent, appVersion: D.userAgent.replace(/^Mozilla\//, ""),
+		appName: "Netscape", appCodeName: "Mozilla", product: "Gecko", vendor: "Cogent Core",
+		platform: D.platform, language: D.languages[0], languages: D.languages, onLine: true, cookieEnabled: true,
 		hardwareConcurrency: 4, maxTouchPoints: 0, doNotTrack: null, webdriver: false, pdfViewerEnabled: false,
 		plugins: [], mimeTypes: [],
 		sendBeacon() { return true; },

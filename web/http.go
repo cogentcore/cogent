@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -17,8 +16,9 @@ import (
 
 // cookies are the cookies of the pages of the app, shared by its pages:
 // they are sent with the requests of pages and their resources, and are
-// those of the scripts of pages (document.cookie and fetch).
-var cookies, _ = cookiejar.New(nil)
+// those of the scripts of pages (document.cookie and fetch). The
+// persistent ones are saved (see [persistentJar]).
+var cookies = newPersistentJar()
 
 // httpClient is the client of the requests of pages and their resources,
 // with the [cookies], and a timeout so that a server that does not respond
@@ -44,7 +44,7 @@ func withCookies(get func(url string) (*http.Response, error)) func(url string) 
 }
 
 // doRequest makes the given request with the [httpClient], with the
-// [htmlcore.UserAgent], and with the given body, if not nil.
+// headers of browsers ([htmlcore.SetRequestHeaders]), and with the given body, if not nil.
 func doRequest(method, url string, post *postRequest) (*http.Response, error) {
 	var body *bytes.Reader
 	if post != nil {
@@ -56,7 +56,7 @@ func doRequest(method, url string, post *postRequest) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", htmlcore.UserAgent)
+	htmlcore.SetRequestHeaders(req)
 	if post != nil {
 		req.Header.Set("Content-Type", post.contentType)
 	}

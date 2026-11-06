@@ -187,6 +187,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	e.vm.SetMaxCallStackSize(maxCallStack)
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
+	e.defineNavigator()
 	e.vm.Set("__dom", e.jsDOM)
 	if _, err := e.vm.RunProgram(prog); err != nil {
 		return nil, fmt.Errorf("running prelude: %w", err)

@@ -747,6 +747,9 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
 				pg.showConsole()
 			})
+			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
+				ClearCookies()
+			})
 		})
 	})
 }
