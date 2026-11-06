@@ -23,6 +23,8 @@ import (
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
 	"golang.org/x/net/html"
 )
@@ -480,4 +482,21 @@ func (pg *Page) ScriptConsole() []string {
 	ps.consoleMu.Lock()
 	defer ps.consoleMu.Unlock()
 	return append([]string(nil), ps.console...)
+}
+
+// showConsole shows the console messages of the scripts of the page.
+func (pg *Page) showConsole() {
+	msgs := pg.ScriptConsole()
+	all := strings.Join(msgs, "\n")
+	if all == "" {
+		all = "No messages"
+	}
+	d := core.NewBody("Script console")
+	core.NewText(d).SetText(pg.currentURL()).Styler(func(s *styles.Style) { s.Font.Size.Dp(12) })
+	tx := core.NewText(d).SetText(html.EscapeString(all))
+	tx.Styler(func(s *styles.Style) {
+		s.Font.Family = rich.Monospace
+		s.Text.WhiteSpace = text.WhiteSpacePreWrap
+	})
+	d.AddOKOnly().RunWindowDialog(pg)
 }

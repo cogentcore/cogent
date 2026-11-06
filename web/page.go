@@ -10,6 +10,8 @@ package web
 import (
 	"bytes"
 	"errors"
+	"image"
+	"fmt"
 	"io"
 	"net/http"
 	neturl "net/url"
@@ -337,6 +339,13 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 	}()
 }
 
+// SetScripts sets whether the scripts of the pages are run
+// ([Page.Scripts]), and opens the current page again with it.
+func (pg *Page) SetScripts(on bool) {
+	pg.Scripts = on
+	pg.Reload()
+}
+
 // setHistory sets the history for the page of the given URL that is
 // opened, with the given change to the history.
 func (pg *Page) setHistory(url string, mode historyMode, index int) {
@@ -570,6 +579,50 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 				return
 			}
 			pg.OpenURL(LocationURL(text), e)
+		})
+	})
+	tree.AddAt(p, "scripts", func(w *core.Button) {
+		w.Updater(func() {
+			pg := page()
+			on := pg == nil || pg.Scripts
+			errs := 0
+			if pg != nil {
+				for _, m := range pg.ScriptConsole() {
+					if strings.HasPrefix(m, "ERROR") {
+						errs++
+					}
+				}
+			}
+			icon := icons.Code
+			if !on {
+				icon = icons.CodeOff
+			}
+			tip := "JavaScript is on"
+			if !on {
+				tip = "JavaScript is off"
+			}
+			if errs > 0 {
+				icon = icons.BugReport
+				tip += fmt.Sprintf(" (%d script errors on this page)", errs)
+			}
+			w.SetIcon(icon).SetTooltip(tip)
+			w.SetEnabled(pg != nil)
+		})
+		w.SetMenu(func(m *core.Scene, _ image.Point) {
+			pg := page()
+			if pg == nil {
+				return
+			}
+			text := "Turn off JavaScript"
+			if !pg.Scripts {
+				text = "Turn on JavaScript"
+			}
+			core.NewButton(m).SetText(text).SetIcon(icons.CodeOff).OnClick(func(e events.Event) {
+				pg.SetScripts(!pg.Scripts)
+			})
+			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
+				pg.showConsole()
+			})
 		})
 	})
 }
