@@ -578,16 +578,18 @@ func TestSerialize(t *testing.T) {
 	assert.Empty(t, *logs)
 }
 
-// TestPromisePolyfill tests that a page that replaces Promise with one
-// that schedules with queueMicrotask (as core-js on BBC) does not make
-// queueMicrotask recurse without end.
+// TestPromisePolyfill tests that a page that replaces Promise, and the
+// then method of the native one, with ones that schedule with
+// queueMicrotask (as core-js on BBC) does not make queueMicrotask recurse,
+// or queue microtasks, without end.
 func TestPromisePolyfill(t *testing.T) {
 	e, logs := testEngine(t, `<html><body></body></html>`, nil)
 	loaded := make(chan bool, 1)
 	e.Load(func() { loaded <- true })
 	<-loaded
 	run(t, e, `
-		const Native = Promise;
+		const Native = Promise, nativeThen = Promise.prototype.then;
+		Native.prototype.then = function (a, b) { queueMicrotask(() => {}); return nativeThen.call(this, a, b); };
 		window.Promise = class P {
 			constructor(f) { this.p = new Native(f); }
 			then(a, b) { const q = new P(() => {}); queueMicrotask(() => {}); q.p = this.p.then(a, b); return q; }

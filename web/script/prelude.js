@@ -13,6 +13,8 @@
 	// queueMicrotask), even if a page replaces it (core-js on BBC does,
 	// with a Promise that schedules with queueMicrotask).
 	const Promise = g.Promise;
+	const promiseThen = Promise.prototype.then; // which core-js also replaces
+	const resolvedPromise = Promise.resolve();
 
 	// ---- wrapping nodes ----
 
@@ -2175,7 +2177,7 @@
 		cancelAnimationFrame: clearTimer,
 		requestIdleCallback(fn) { return setTimer(() => fn({ didTimeout: false, timeRemaining: () => 10 }), 1, [], false); },
 		cancelIdleCallback: clearTimer,
-		queueMicrotask(fn) { Promise.resolve().then(fn).catch(reportError); },
+		queueMicrotask(fn) { promiseThen.call(resolvedPromise, () => { try { fn(); } catch (e) { reportError(e); } }); },
 		structuredClone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); },
 		reportError,
 		atob(s) { return D.atob(String(s)); },

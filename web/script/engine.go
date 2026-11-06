@@ -421,6 +421,8 @@ func (e *Engine) reportError(err error) {
 		if v, ok := ie.Value().(error); ok && errors.Is(v, errClosed) {
 			return
 		}
+		e.logf(slog.LevelError, "%s", ie.String()) // with the stack
+		return
 	}
 	e.logf(slog.LevelError, "%v", err)
 }
