@@ -470,13 +470,23 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 		}
 	}
 	if typ, _ := attr(s, "type"); strings.EqualFold(strings.TrimSpace(typ), "module") {
-		var err error
-		code, err = e.bundleModule(code, name)
+		// the module, and those that it imports, are defined in the
+		// registry, and then it is evaluated
+		entry, meta := name, ""
+		if !hasSrc {
+			e.timerID++
+			entry = fmt.Sprintf("%s#inline-module-%d", strings.Split(e.baseURL(), "#")[0], e.timerID)
+			meta = e.baseURL()
+			name = entry
+		}
+		defs, err := e.moduleGraph(entry, &code, meta)
 		if err != nil {
 			e.logf(slog.LevelWarn, "module %s: %v", name, err)
 			e.callPrelude("fireEvent", e.nodes.id(s), "error")
 			return
 		}
+		e.defineModules(defs)
+		code = "__requireModule(" + quoteJS(entry) + ");"
 	}
 	e.current = s
 	e.run(name, code)

@@ -1441,11 +1441,39 @@
 	// are rewritten as: it gets and runs the module, bundled.
 	function dynamicImport(base, spec) {
 		return new Promise((resolve, reject) => {
-			D.importModule(newCallback((ns, err) => {
+			D.importModule(newCallback((u, err) => {
 				if (err) reject(new TypeError("Failed to import " + spec + ": " + err));
-				else resolve(ns);
+				else {
+					try { resolve(requireModule(u)); } catch (e) { reject(e); }
+				}
 			}), String(spec), base);
 		});
+	}
+
+	// The registry of modules (see modules.go): each is evaluated when it
+	// is first required, once.
+	const modules = new Map(); // url -> { deps, factory, module, error }
+	function defineModule(url, deps, factory) {
+		if (!modules.has(url)) modules.set(url, { deps, factory, module: null, error: null });
+	}
+	function requireModule(url) {
+		const m = modules.get(url);
+		if (!m) throw new TypeError("the module is not loaded: " + url);
+		if (m.error) throw m.error;
+		if (m.module) return m.module.exports; // done, or being evaluated (a cycle)
+		m.module = { exports: {} };
+		const req = spec => {
+			const u = m.deps[spec];
+			if (u === undefined) throw new TypeError("Failed to resolve module specifier \"" + spec + "\" from " + url);
+			return requireModule(u);
+		};
+		try {
+			m.factory.call(undefined, m.module.exports, req, m.module);
+		} catch (e) {
+			m.error = e;
+			throw e;
+		}
+		return m.module.exports;
 	}
 
 	// ---- URL ----
@@ -1917,6 +1945,8 @@
 		fetch,
 		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,
+		__defineModule: defineModule,
+		__requireModule: requireModule,
 		NodeFilter: { SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 1, SHOW_TEXT: 4, SHOW_COMMENT: 128, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 },
 		DOMException: class DOMException extends Error { constructor(msg, name) { super(msg); this.name = name || "Error"; } },
 		CSS: { supports() { return false; }, escape: cssEscape },

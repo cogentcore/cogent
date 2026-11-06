@@ -7,7 +7,6 @@ package script
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -553,20 +552,20 @@ func (e *Engine) defineDOM() {
 			return goja.Undefined()
 		}
 		go func() {
-			e.mu.Lock()
-			e.timerID++
-			global := fmt.Sprintf("__module%d", e.timerID)
-			e.mu.Unlock()
-			code, err := e.bundleURL(u, global)
+			var defs []moduleDef
+			var err error
+			if !e.moduleDefined(u) {
+				defs, err = e.moduleGraph(u, nil, "")
+			}
 			if err != nil {
 				e.callBack(cb, nil, err.Error())
 				return
 			}
 			e.Post(func() {
-				e.run(u, code)
-				ns := e.vm.Get(global)
-				e.vm.GlobalObject().Delete(global)
-				_, err := e.callback(goja.Undefined(), vm.ToValue(cb), ns, goja.Null())
+				e.defineModules(defs)
+				// the module is evaluated by the callback (requireModule),
+				// so that its errors reject the import
+				_, err := e.callback(goja.Undefined(), vm.ToValue(cb), vm.ToValue(u), goja.Null())
 				e.reportError(err)
 			})
 		}()

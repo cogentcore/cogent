@@ -129,6 +129,7 @@ type Engine struct {
 	timers   map[int]*time.Timer
 	timerID  int
 	blobs    map[string]blob // the object URLs of blobs (URL.createObjectURL)
+	modules  map[string]bool // the URLs of the modules defined (moduleGraph)
 	lock     func() bool
 	unlock   func()
 	pending  int // tasks queued or running, for tests (Wait)

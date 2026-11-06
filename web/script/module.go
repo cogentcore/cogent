@@ -171,19 +171,6 @@ func isMethod(src string, open int) bool {
 	return false
 }
 
-// bundleURL returns the module at the given URL, bundled with the modules
-// that it imports as a script that sets the given global variable to the
-// exports of the module (for a dynamic import).
-func (e *Engine) bundleURL(u, global string) (string, error) {
-	entry := "export * from " + quoteJS(u) + "; export { default } from " + quoteJS(u) + ";"
-	code, err := e.bundle(entry, u, global)
-	if err != nil {
-		// a module without a default export
-		code, err = e.bundle("export * from "+quoteJS(u)+";", u, global)
-	}
-	return code, err
-}
-
 // quoteJS returns the given string as a JavaScript string literal.
 func quoteJS(s string) string {
 	return "'" + strings.NewReplacer("\\", "\\\\", "'", "\\'", "\n", "\\n").Replace(s) + "'"

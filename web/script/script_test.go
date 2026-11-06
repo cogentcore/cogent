@@ -491,3 +491,30 @@ func TestStyleSheets(t *testing.T) {
 		[st.sheet.cssRules.length, st.textContent.split("\n").reverse().join("|"), c.cssRules.length, c.cssRules[0].cssText].join(" ")`))
 	assert.Empty(t, *logs)
 }
+
+// TestSharedModules tests that a module that the module scripts of a page
+// share (as on GitHub, which defines custom elements in one) is evaluated
+// once, with modules that import each other, and that the error of a
+// module rejects its dynamic import.
+func TestSharedModules(t *testing.T) {
+	page := `<html><body>
+		<script type="module">import { count } from "./shared.js"; window.a = count();</script>
+		<script type="module" src="/b.js"></script>
+		<script type="module">import("./bad.js").catch(e => { window.bad = e.message; });</script>
+	</body></html>`
+	e, logs := testEngine(t, page, map[string]string{
+		"/shared.js": `import { other } from "./cycle.js"; let n = 0; export const count = () => ++n + other();
+			customElements.define("shared-el", class extends HTMLElement {});`,
+		"/cycle.js": `import { count } from "./shared.js"; export const other = () => typeof count === "function" ? 0 : 100;`,
+		"/b.js":     `import { count } from "./shared.js"; window.b = count();`,
+		"/bad.js":   `throw new Error("bad module");`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`[window.a, window.b, window.bad].join(" ")`)
+		return v == "1 2 bad module"
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+	assert.Empty(t, *logs)
+}
