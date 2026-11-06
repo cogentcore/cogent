@@ -388,6 +388,7 @@ func TestHistoryPolyfill(t *testing.T) {
 	assert.Less(t, time.Since(start), 2*time.Second)
 	e.Eval(`setTimeout(function g() { return g() + 1; }, 0)`) // reported
 	assert.Eventually(t, func() bool {
+		e.RunString("0") // after the logs of earlier tasks
 		return strings.Contains(strings.Join(*logs, "\n"), "Maximum call stack size exceeded")
 	}, 2*time.Second, 10*time.Millisecond, "%v", *logs)
 }
@@ -426,5 +427,67 @@ func TestCollections(t *testing.T) {
 		NodeList.prototype.extra = function () { return true; };
 		[l instanceof NodeList, c instanceof HTMLCollection, l.extra(), c.length, c.namedItem("b").id,
 			Array.from(l).map(p => p.textContent).join(), Array.isArray(l.map(p => p))].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestCustomElements tests that the constructors and the reactions
+// (connected, disconnected and attribute changes) of custom elements run
+// (as GitHub's turbo-frame and the Lit elements of Reddit need), including
+// for elements in the page before they are defined, and shadow roots.
+func TestCustomElements(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><x-tag id="early" mood="calm"></x-tag></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "", run(t, e, `
+		const log = [];
+		class XTag extends HTMLElement {
+			static get observedAttributes() { return ["mood"]; }
+			constructor() { super(); this.delegate = { ok: true }; log.push("ctor:" + this.id); }
+			connectedCallback() { log.push("conn:" + this.id); }
+			disconnectedCallback() { log.push("disc:" + this.id); }
+			attributeChangedCallback(n, o, v) { log.push("attr:" + n + "=" + (o === null ? "" : o + ">") + v); }
+		}
+		let defined = "";
+		customElements.whenDefined("x-tag").then(() => { defined = "defined"; });
+		customElements.define("x-tag", XTag);
+		const out = [log.join(" ")]; log.length = 0;
+		const el = document.createElement("x-tag");
+		el.id = "made";
+		document.body.appendChild(el);
+		out.push(log.join(" ")); log.length = 0;
+		el.setAttribute("mood", "calm"); el.setAttribute("mood", "glad"); el.setAttribute("other", "x");
+		out.push(log.join(" ")); log.length = 0;
+		el.remove();
+		out.push(log.join(" ")); log.length = 0;
+		document.body.insertAdjacentHTML("beforeend", "<div><x-tag id=inner></x-tag></div>");
+		out.push(log.join(" ")); log.length = 0;
+		const host = document.getElementById("early");
+		const sr = host.attachShadow({ mode: "open" });
+		sr.innerHTML = "<x-tag id=deep></x-tag>";
+		out.push([host.shadowRoot === sr, sr.host === host, log.join(" "), document.querySelectorAll("x-tag").length].join(" "));
+		out.push(new XTag() instanceof XTag);
+		Promise.resolve().then(() => {}).then(() => { window.result = out.join("|") + " " + defined; });
+		Object.getPrototypeOf(document.createElement("x-tag").delegate) === Object.prototype ? "" : "no delegate"`))
+	assert.Equal(t, "ctor:early attr:mood=calm conn:early|ctor: conn:made|attr:mood=calm attr:mood=calm>glad|disc:made|ctor:inner conn:inner|true true ctor:deep conn:deep 2|true defined",
+		run(t, e, `window.result`))
+	assert.Empty(t, *logs)
+}
+
+// TestStyleSheets tests constructed style sheets (as of Lit on MDN) and
+// that the rules inserted in the sheet of a style element (as by CSS-in-JS)
+// are in its text, so that they style the page.
+func TestStyleSheets(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s">a { color: red }</style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "2 b{color:blue}|a { color: red } 1 p{x:y}", run(t, e, `
+		const st = document.getElementById("s");
+		st.sheet.insertRule("b{color:blue}", 1);
+		const c = new CSSStyleSheet();
+		c.replaceSync("p{x:y}");
+		document.adoptedStyleSheets = [...document.adoptedStyleSheets, c];
+		[st.sheet.cssRules.length, st.textContent.split("\n").reverse().join("|"), c.cssRules.length, c.cssRules[0].cssText].join(" ")`))
 	assert.Empty(t, *logs)
 }

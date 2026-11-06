@@ -33,7 +33,121 @@
 		w = Object.create(cls.prototype);
 		Object.defineProperty(w, ID, { value: id });
 		wrappers.set(id, w);
+		if (registry.size && registry.has(D.name(id))) upgrade(w);
 		return w;
+	}
+
+	// ---- custom elements ----
+
+	const registry = new Map(); // name -> { cls, observed }
+	const definedNames = new Map(); // class -> name
+	const connectedSet = new WeakSet(); // the custom elements connected
+	let upgrading = null; // the element that HTMLElement's constructor returns
+
+	// upgrade runs the constructor of the class of the given custom element
+	// on it (once), and its connectedCallback if it is in the document.
+	function upgrade(w) {
+		const def = registry.get(D.name(w[ID]));
+		if (!def || w instanceof def.cls) return;
+		upgrading = w;
+		try {
+			new def.cls();
+		} catch (e) {
+			reportError(e);
+			return;
+		} finally {
+			upgrading = null;
+		}
+		if (typeof w.attributeChangedCallback === "function") {
+			for (const n of def.observed) {
+				const v = D.attr(w[ID], n);
+				if (v !== null && v !== undefined) callReaction(w, "attributeChangedCallback", n, null, v);
+			}
+		}
+		if (connected(w[ID])) connect(w[ID]);
+	}
+
+	function callReaction(w, name, ...args) {
+		if (typeof w[name] !== "function") return;
+		try { w[name](...args); } catch (e) { reportError(e); }
+	}
+
+	const shadowHosts = new Map(); // the id of a shadow root -> that of its host
+	const shadows = new WeakMap(); // element -> { root, mode }
+
+	// connected returns whether the node of the given id is in the document
+	// (through the hosts of shadow roots).
+	function connected(id) {
+		const doc = D.doc();
+		for (let n = id; n; n = D.parent(n) || shadowHosts.get(n)) if (n === doc) return true;
+		return false;
+	}
+
+	// customIn returns the ids of the defined custom elements in the tree of
+	// the node of the given id, including it, in tree order.
+	function customIn(id) {
+		if (!registry.size || !id) return [];
+		const sel = [...registry.keys()].join(",");
+		const ids = D.type(id) === 1 && D.matches(id, sel) ? [id] : [];
+		return ids.concat(D.queryAll(id, sel));
+	}
+
+	function connect(id) {
+		const w = wrap(id); // which upgrades it, and connects it then
+		if (!(w instanceof HTMLElement) || connectedSet.has(w) || !registry.has(D.name(id)) || !(w instanceof registry.get(D.name(id)).cls)) return;
+		connectedSet.add(w);
+		callReaction(w, "connectedCallback");
+	}
+
+	function disconnect(id) {
+		const w = wrappers.get(id);
+		if (!w || !connectedSet.has(w)) return;
+		connectedSet.delete(w);
+		callReaction(w, "disconnectedCallback");
+	}
+
+	// the reactions of custom elements to the changes of the DOM
+	{
+		const insert = D.insert, remove = D.remove, setInner = D.setInner, write = D.write, setText = D.setText;
+		const setAttr = D.setAttr, removeAttr = D.removeAttr;
+		const removing = id => connected(id) ? customIn(id) : [];
+		const childrenOf = id => D.type(id) === 11 ? D.children(id) : [id];
+		D.insert = function (p, c, ref) {
+			if (!registry.size) return insert(p, c, ref);
+			const roots = childrenOf(c);
+			const moved = [].concat(...roots.map(removing));
+			insert(p, c, ref);
+			moved.forEach(disconnect);
+			if (connected(p)) for (const r of roots) customIn(r).forEach(connect);
+		};
+		D.remove = function (id) {
+			const ids = registry.size ? removing(id) : [];
+			remove(id);
+			ids.forEach(disconnect);
+		};
+		const replacing = (f) => function (id, v) {
+			if (!registry.size) return f(id, v);
+			const old = connected(id) ? [].concat(...D.children(id).map(customIn)) : [];
+			f(id, v);
+			old.forEach(disconnect);
+			if (connected(id)) for (const c of D.children(id)) customIn(c).forEach(connect);
+		};
+		D.setInner = replacing(setInner);
+		D.setText = replacing(setText);
+		D.write = function (html) {
+			write(html);
+			customIn(D.doc()).forEach(connect);
+		};
+		const attrChanged = (id, n, f) => {
+			const w = wrappers.get(id);
+			const def = w && registry.get(D.name(id));
+			if (!def || !def.observed.includes(n) || !(w instanceof def.cls)) return f();
+			const old = D.attr(id, n);
+			f();
+			callReaction(w, "attributeChangedCallback", n, old === undefined ? null : old, D.attr(id, n));
+		};
+		D.setAttr = (id, n, v) => attrChanged(id, n, () => setAttr(id, n, v));
+		D.removeAttr = (id, n) => attrChanged(id, n, () => removeAttr(id, n));
 	}
 
 	function idOf(n) {
@@ -312,7 +426,7 @@
 		get nextSibling() { return wrap(D.next(this[ID])); }
 		get previousSibling() { return wrap(D.prev(this[ID])); }
 		get ownerDocument() { return this.nodeType === 9 ? null : document; }
-		get isConnected() { let n = this; while (n.parentNode) n = n.parentNode; return n === document; }
+		get isConnected() { return connected(this[ID]); }
 		get textContent() { const t = this.nodeType; return t === 9 || t === 10 ? null : D.text(this[ID]); }
 		set textContent(v) { D.setText(this[ID], v === null || v === undefined ? "" : String(v)); }
 		get baseURI() { return D.baseURL(); }
@@ -606,7 +720,18 @@
 		focus() { focused = this; }
 		blur() { if (focused === this) focused = null; }
 		click() { this.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })); }
-		attachShadow() { throw domException("NotSupportedError", "shadow DOM is not supported"); }
+		attachShadow(init) {
+			if (shadows.has(this)) throw domException("NotSupportedError", "the element already has a shadow root");
+			const id = D.createFragment();
+			const sr = Object.create(ShadowRoot.prototype);
+			Object.defineProperty(sr, ID, { value: id });
+			wrappers.set(id, sr);
+			shadowHosts.set(id, this[ID]);
+			shadows.set(this, { root: sr, mode: init && init.mode === "closed" ? "closed" : "open" });
+			sr.adoptedStyleSheets = [];
+			return sr;
+		}
+		get shadowRoot() { const s = shadows.get(this); return s && s.mode === "open" ? s.root : null; }
 		animate() { return { finished: Promise.resolve(), cancel() {}, play() {}, pause() {}, onfinish: null, addEventListener() {} }; }
 		getAnimations() { return []; }
 		requestFullscreen() { return Promise.reject(domException("NotSupportedError", "fullscreen is not supported")); }
@@ -647,7 +772,25 @@
 		}
 	}
 
-	class HTMLElement extends Element {}
+	// HTMLElement's constructor is called by those of custom elements: it
+	// returns the element being upgraded, or a new one (new MyElement()).
+	class HTMLElement extends Element {
+		constructor() {
+			if (upgrading) {
+				const w = upgrading;
+				upgrading = null;
+				Object.setPrototypeOf(w, new.target.prototype);
+				return w;
+			}
+			const name = definedNames.get(new.target);
+			if (!name) throw new TypeError("Illegal constructor");
+			const id = D.create(name);
+			const w = Object.create(new.target.prototype);
+			Object.defineProperty(w, ID, { value: id });
+			wrappers.set(id, w);
+			return w;
+		}
+	}
 	reflect(HTMLElement, ["title", "lang", "dir", "accessKey"], ["hidden", "inert", "draggable", "spellcheck"]);
 	Object.defineProperty(HTMLElement.prototype, "tabIndex", {
 		get() { const v = parseInt(this.getAttribute("tabindex"), 10); return isNaN(v) ? -1 : v; },
@@ -690,7 +833,57 @@
 		Object.defineProperty(cls.prototype, "text", { get() { return this.textContent; }, set(v) { this.textContent = v; } });
 	});
 	const HTMLLinkElement = elementClass(["link"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["rel", "type", "media", "as", "crossOrigin", "integrity"]); Object.defineProperty(cls.prototype, "relList", { get() { return new DOMTokenList(this, "rel"); } }); });
-	const HTMLStyleElement = elementClass(["style"], HTMLElement, cls => { reflect(cls, ["media", "type"]); Object.defineProperty(cls.prototype, "sheet", { get() { return { cssRules: [], insertRule() { return 0; }, deleteRule() {} }; } }); });
+	// CSSStyleSheet has the rules of a style sheet as text. That of a style
+	// element changes its text (as CSS-in-JS inserts rules), so that the
+	// page is styled by them; constructed ones (adoptedStyleSheets, as of
+	// Lit) are not applied.
+	function cssBlocks(text) {
+		const out = [];
+		let depth = 0, start = 0, quote = "";
+		for (let i = 0; i < text.length; i++) {
+			const c = text[i];
+			if (quote) { if (c === "\\") i++; else if (c === quote) quote = ""; continue; }
+			if (c === '"' || c === "'") quote = c;
+			else if (c === "/" && text[i + 1] === "*") { const e = text.indexOf("*/", i + 2); i = e < 0 ? text.length : e + 1; }
+			else if (c === "{") depth++;
+			else if (c === "}" && --depth <= 0) { depth = 0; const r = text.slice(start, i + 1).trim(); if (r) out.push(r); start = i + 1; }
+			else if (c === ";" && depth === 0) { const r = text.slice(start, i + 1).trim(); if (r) out.push(r); start = i + 1; }
+		}
+		return out;
+	}
+	const sheetOwners = new WeakMap(); // style sheet -> style element
+	class CSSStyleSheet {
+		constructor(opts) { this._rules = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
+		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map(t => ({ cssText: t, type: 1 })); }
+		get rules() { return this.cssRules; }
+		get ownerNode() { return sheetOwners.get(this) || null; }
+		_set(rules) { this._rules = rules; const o = sheetOwners.get(this); if (o) o.textContent = rules.join("\n"); }
+		insertRule(rule, index) {
+			const rules = this.cssRules.map(r => r.cssText);
+			index = index === undefined ? 0 : index >>> 0;
+			if (index > rules.length) throw domException("IndexSizeError", "the index is beyond the rules");
+			rules.splice(index, 0, String(rule));
+			this._set(rules);
+			return index;
+		}
+		deleteRule(index) { const rules = this.cssRules.map(r => r.cssText); rules.splice(index >>> 0, 1); this._set(rules); }
+		addRule(sel, style, index) { return this.insertRule(sel + "{" + style + "}", index === undefined ? this.cssRules.length : index); }
+		removeRule(index) { this.deleteRule(index || 0); }
+		replaceSync(text) { this._set(cssBlocks(String(text))); }
+		replace(text) { this.replaceSync(text); return Promise.resolve(this); }
+	}
+	const styleSheets = new WeakMap(); // style element -> its sheet
+	const HTMLStyleElement = elementClass(["style"], HTMLElement, cls => {
+		reflect(cls, ["media", "type"]);
+		Object.defineProperty(cls.prototype, "sheet", {
+			get() {
+				if (!this.isConnected) return null;
+				let sh = styleSheets.get(this);
+				if (!sh) { sh = new CSSStyleSheet(); sheetOwners.set(sh, this); styleSheets.set(this, sh); }
+				return sh;
+			},
+		});
+	});
 	const HTMLMetaElement = elementClass(["meta"], HTMLElement, cls => reflect(cls, ["name", "content", "httpEquiv", "charset"]));
 	const HTMLBaseElement = elementClass(["base"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["target"]); });
 	const HTMLIFrameElement = elementClass(["iframe"], HTMLElement, cls => {
@@ -956,7 +1149,9 @@
 		get images() { return this.querySelectorAll("img"); }
 		get links() { return this.querySelectorAll("a[href], area[href]"); }
 		get scripts() { return this.querySelectorAll("script"); }
-		get styleSheets() { return []; }
+		get styleSheets() { return this.querySelectorAll("style").map(st => st.sheet); }
+		get adoptedStyleSheets() { return this._adopted || (this._adopted = []); }
+		set adoptedStyleSheets(v) { this._adopted = Array.from(v); }
 		get fonts() { return { ready: Promise.resolve(), check() { return true; }, load() { return Promise.resolve([]); }, addEventListener() {}, add() {}, forEach() {} }; }
 		get implementation() { return { createHTMLDocument(title) { return wrap(D.parseDocument("<!DOCTYPE html><title>" + (title || "") + "</title>")); }, hasFeature() { return true; } }; }
 		createElement(tag) { return wrap(D.create(String(tag))); }
@@ -1000,6 +1195,15 @@
 		set innerHTML(v) { D.setInner(this[ID], String(v)); }
 	}
 	mixin(DocumentFragment, parentNodeMethods);
+
+	// ShadowRoot is the shadow root of an element, a fragment whose content
+	// is not rendered (only the children of the element are), but which
+	// scripts use (as web components render into them).
+	class ShadowRoot extends DocumentFragment {
+		get host() { return wrap(shadowHosts.get(this[ID])); }
+		get mode() { const s = shadows.get(this.host); return s ? s.mode : "open"; }
+		get activeElement() { return null; }
+	}
 
 	function treeWalker(root, what, filter) {
 		what = what === undefined ? 0xFFFFFFFF : what;
@@ -1625,12 +1829,26 @@
 	}
 	class PerformanceObserver { observe() {} disconnect() {} static get supportedEntryTypes() { return []; } }
 
-	const registry = new Map();
+	const waiting = new Map(); // name -> resolve functions of whenDefined
 	const customElements = {
-		define(name, cls) { registry.set(name, cls); tagClasses[name] = cls; },
-		get(name) { return registry.get(name); },
-		whenDefined(name) { return Promise.resolve(registry.get(name)); },
-		upgrade() {},
+		define(name, cls) {
+			name = String(name).toLowerCase();
+			if (registry.has(name)) throw domException("NotSupportedError", "the name has already been used: " + name);
+			const observed = Array.isArray(cls.observedAttributes) ? cls.observedAttributes.map(String) : [];
+			registry.set(name, { cls, observed });
+			definedNames.set(cls, name);
+			for (const id of customIn(D.doc())) if (D.name(id) === name) upgrade(wrap(id));
+			for (const r of waiting.get(name) || []) r(cls);
+			waiting.delete(name);
+		},
+		get(name) { const d = registry.get(String(name).toLowerCase()); return d ? d.cls : undefined; },
+		getName(cls) { return definedNames.get(cls) || null; },
+		whenDefined(name) {
+			name = String(name).toLowerCase();
+			if (registry.has(name)) return Promise.resolve(registry.get(name).cls);
+			return new Promise(r => { if (!waiting.has(name)) waiting.set(name, []); waiting.get(name).push(r); });
+		},
+		upgrade(root) { if (root && root[ID]) for (const id of customIn(root[ID])) upgrade(wrap(id)); },
 	};
 
 	const t0 = Date.now();
@@ -1675,7 +1893,7 @@
 
 	const props = {
 		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
-		NodeList, HTMLCollection,
+		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
