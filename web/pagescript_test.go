@@ -331,3 +331,48 @@ func TestScriptsPost(t *testing.T) {
 	assert.Equal(t, "POST application/x-www-form-urlencoded a b&c", posted)
 	assert.Equal(t, srv.URL+"/content", pg.currentURL())
 }
+
+// TestFormPost tests that a form with the POST method and no listeners
+// (as the cookie consent of google.com) is submitted when its button is
+// clicked, with scripts and without.
+func TestFormPost(t *testing.T) {
+	for _, scripts := range []bool{true, false} {
+		var posted string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/":
+				io.WriteString(w, `<html><body><form method="post" action="/save">
+					<input type="hidden" name="set_eom" value="true"><button id="reject">Reject all</button></form></body></html>`)
+			case "/save":
+				r.ParseForm()
+				posted = r.Method + " " + r.PostForm.Get("set_eom")
+				http.Redirect(w, r, "/search", http.StatusSeeOther)
+			case "/search":
+				io.WriteString(w, `<html><body><p>Results</p></body></html>`)
+			}
+		}))
+		b := core.NewBody()
+		pg := NewPage(b)
+		pg.Scripts = scripts
+		pg.OpenURL(srv.URL+"/", nil)
+		b.RenderImage(func() { settle(pg) }, func() {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			var target core.Widget
+			pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if cwb.Property("id") == "reject" && target == nil {
+					target = cw
+				}
+				return tree.Continue
+			})
+			if assert.NotNil(t, target) {
+				target.AsWidget().Send(events.Click)
+			}
+		}, func() {
+			assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "Results") }), pageTexts(b, pg))
+		})
+		assert.Equal(t, "POST true", posted, "scripts %v", scripts)
+		assert.Equal(t, srv.URL+"/search", pg.currentURL())
+		srv.Close()
+	}
+}

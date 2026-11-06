@@ -113,6 +113,7 @@ func (pg *Page) Init() {
 	pg.Context = htmlcore.NewContext()
 	pg.Context.GetURL = withCookies(pg.Context.GetURL)
 	pg.Context.OpenURL = pg.OpenURL
+	pg.Context.PostURL = pg.postURL
 	pg.Scripts = true
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
@@ -261,6 +262,13 @@ const maxRedirects = 5
 // opening of another page has started (or it was stopped) by then.
 func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 	pg.openPost(url, nil, mode, index, redirects)
+}
+
+// postURL opens the page of the given URL with a POST request with the
+// given body of the given content type, as for a form that is submitted
+// with the POST method.
+func (pg *Page) postURL(url, contentType string, body []byte, e events.Event) {
+	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
 }
 
 // openPost is [Page.open] with the given POST request, if not nil (as for
