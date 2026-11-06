@@ -538,3 +538,28 @@ func TestIntl(t *testing.T) {
 			new Intl.NumberFormat("en", { notation: "compact" }).format(12345), new Intl.NumberFormat("en", { notation: "compact", compactDisplay: "long" }).format(1499999)].join("|")`))
 	assert.Empty(t, *logs)
 }
+
+// TestRenderNotTimed tests that the time of the renders that a task needs
+// (as for the layout of elements) is not counted as that of its scripts,
+// which are interrupted after TaskTimeout (a slow page, as GitHub).
+func TestRenderNotTimed(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><p id="p">0</p></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	var logs []string
+	e, err := New(doc, Options{PageURL: "https://example.com/", TaskTimeout: 200 * time.Millisecond,
+		Render: func() func() { time.Sleep(150 * time.Millisecond); return nil },
+		Layout: func(n *html.Node) (x, y, w, h float32, ok bool) { return 0, 0, 10, 10, true },
+		Log:    func(level slog.Level, msg string) { logs = append(logs, msg) }})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	v, err := e.RunString(`const p = document.getElementById("p");
+		for (let i = 0; i < 3; i++) { p.textContent = String(i); p.getBoundingClientRect(); }
+		p.textContent`)
+	assert.NoError(t, err)
+	assert.Equal(t, "2", v)
+	_, err = e.RunString(`for (;;) {}`)
+	assert.Error(t, err, "a script that does not end is still interrupted")
+}

@@ -122,14 +122,15 @@ type Engine struct {
 	doc  *html.Node
 
 	// mu protects the fields below it, which are used by other goroutines.
-	mu       sync.Mutex
-	queue    []func()
-	wake     chan struct{}
-	closed   bool
-	timers   map[int]*time.Timer
-	timerID  int
-	blobs    map[string]blob // the object URLs of blobs (URL.createObjectURL)
-	modules  map[string]bool // the URLs of the modules defined (moduleGraph)
+	mu      sync.Mutex
+	queue   []func()
+	wake    chan struct{}
+	closed  bool
+	timers  map[int]*time.Timer
+	timerID int
+	blobs   map[string]blob // the object URLs of blobs (URL.createObjectURL)
+	modules map[string]bool // the URLs of the modules defined (moduleGraph)
+
 	lock     func() bool
 	unlock   func()
 	pending  int // tasks queued or running, for tests (Wait)
@@ -154,6 +155,13 @@ type Engine struct {
 	changedNodes []*html.Node
 	renderTimer  bool
 	ran          map[*html.Node]bool // the script elements that have run
+
+	// taskTimer interrupts the task that is running when it has run for
+	// longer than TaskTimeout, not counting renders: taskLeft is the time
+	// left since taskStart. They are used by the goroutine of the engine.
+	taskTimer *time.Timer
+	taskLeft  time.Duration
+	taskStart time.Time
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -302,9 +310,13 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	if unlock != nil {
 		defer unlock()
 	}
+	e.taskLeft = e.opts.TaskTimeout
+	e.taskStart = time.Now()
 	timer := time.AfterFunc(e.opts.TaskTimeout, func() {
 		e.vm.Interrupt(fmt.Errorf("a script ran for more than %v", e.opts.TaskTimeout))
 	})
+	e.taskTimer = timer
+	defer func() { e.taskTimer = nil }()
 	e.inTask = true
 	func() {
 		defer func() {
@@ -337,6 +349,14 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	e.dirty = false
 	e.changedNodes = e.changedNodes[:0]
 	start := time.Now()
+	// the time of rendering is not that of the scripts of the task
+	if e.taskTimer != nil && e.taskTimer.Stop() {
+		e.taskLeft -= start.Sub(e.taskStart)
+		defer func() {
+			e.taskStart = time.Now()
+			e.taskTimer.Reset(max(e.taskLeft, 0))
+		}()
+	}
 	commit := e.opts.Render()
 	if commit != nil {
 		if lock == nil {
