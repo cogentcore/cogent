@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
@@ -54,6 +55,10 @@ type pageScripts struct {
 
 	// width is the width of the viewport that the document is read for.
 	width float32
+
+	// seen is the size of the viewport that the scripts last got, if
+	// they have, for firing resize events when it changes.
+	seen math32.Vector2
 
 	// shown is whether the page is shown, before which it is not
 	// rendered again (pending is whether it needs to be then).
@@ -148,6 +153,13 @@ func (ps *pageScripts) render() func() {
 	if !ps.shown {
 		ps.pending = true
 		return nil
+	}
+	// the scripts get a resize event if the viewport has another size
+	// than they got (as it may not have its size while the page loads)
+	if ps.seen != (math32.Vector2{}) {
+		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
+			ps.engine.Resized()
+		}
 	}
 	start := time.Now()
 	content, err := ps.read()
@@ -427,8 +439,16 @@ func (ps *pageScripts) pushState(url string, replace bool) {
 	pg.opened(url)
 }
 
-// viewport returns the size of the viewport of the page in CSS px.
+// viewport returns the size of the viewport of the page in CSS px, for
+// the scripts, recording it (see pageScripts.seen).
 func (ps *pageScripts) viewport() (float32, float32) {
+	w, h := ps.viewportSize()
+	ps.seen = math32.Vec2(w, h)
+	return w, h
+}
+
+// viewportSize returns the width and height of the viewport in CSS px.
+func (ps *pageScripts) viewportSize() (float32, float32) {
 	pg := ps.pg
 	w := ps.width
 	h := float32(768)

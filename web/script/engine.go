@@ -510,6 +510,12 @@ func (e *Engine) Rerender() {
 	e.Post(func() { e.dirty = true })
 }
 
+// Resized fires the resize event of the window in a task, as when the
+// viewport has another size.
+func (e *Engine) Resized() {
+	e.Post(func() { e.callPrelude("resized") })
+}
+
 // Eval runs the given JavaScript in a task (as for a javascript: URL).
 func (e *Engine) Eval(src string) {
 	e.Post(func() { e.run("javascript: URL", src) })

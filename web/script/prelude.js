@@ -711,8 +711,11 @@
 		get offsetLeft() { const r = D.rect(this[ID]); return r ? Math.round(r[0]) : 0; }
 		get offsetTop() { const r = D.rect(this[ID]); return r ? Math.round(r[1]) : 0; }
 		get offsetParent() { return D.rect(this[ID]) ? document.body : null; }
-		get clientWidth() { return this.offsetWidth; }
-		get clientHeight() { return this.offsetHeight; }
+		// the client size of the root element is that of the viewport, as
+		// pages read for their layout (craigslist shows its mobile layout
+		// for a width of 0)
+		get clientWidth() { return this === document.documentElement ? Math.round(D.viewport()[0]) : this.offsetWidth; }
+		get clientHeight() { return this === document.documentElement ? Math.round(D.viewport()[1]) : this.offsetHeight; }
 		get clientLeft() { return 0; }
 		get clientTop() { return 0; }
 		get scrollWidth() { return this.offsetWidth; }
@@ -2330,6 +2333,12 @@
 			if (D.type(n) === 1 && D.attr(n, "on" + type) !== null) return true;
 		}
 		return has(g);
+	};
+
+	// resized fires the resize event of the window, when its viewport has
+	// another size.
+	D.resized = function () {
+		g.dispatchEvent(new Event("resize"));
 	};
 
 	// loaded sets the ready state of the document, and fires its events.

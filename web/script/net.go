@@ -532,7 +532,18 @@ func (e *Engine) runInserted(n *html.Node) {
 		return
 	}
 	walk(n, func(c *html.Node) bool {
-		if !isScript(c) || e.ran[c] {
+		if e.ran[c] {
+			return true
+		}
+		if isStyleLink(c) {
+			if e.ran == nil {
+				e.ran = map[*html.Node]bool{}
+			}
+			e.ran[c] = true
+			e.loadStyleLink(c)
+			return true
+		}
+		if !isScript(c) {
 			return true
 		}
 		if e.ran == nil {
@@ -548,6 +559,44 @@ func (e *Engine) runInserted(n *html.Node) {
 		}
 		return true
 	})
+}
+
+// isStyleLink returns whether the given node is a link to a style sheet.
+func isStyleLink(n *html.Node) bool {
+	if n.Type != html.ElementNode || n.Data != "link" || n.Namespace != "" {
+		return false
+	}
+	rel, _ := attr(n, "rel")
+	for _, r := range strings.Fields(strings.ToLower(rel)) {
+		if r == "stylesheet" {
+			return true
+		}
+	}
+	return false
+}
+
+// loadStyleLink gets the style sheet of the given link that was inserted
+// in the document (in another goroutine), and then fires its load (or
+// error) event in a task, as scripts that load style sheets wait for it
+// (as craigslist does to show its pages). The style sheet is applied when
+// the page is read.
+func (e *Engine) loadStyleLink(n *html.Node) {
+	href, ok := attr(n, "href")
+	if !ok {
+		return
+	}
+	u, err := resolveURL(href, e.baseURL()) // in the task: it reads the document
+	go func() {
+		event := "load"
+		if err == nil {
+			_, err = e.getScript(u)
+		}
+		if err != nil {
+			e.logf(slog.LevelWarn, "style sheet %s: %v", href, err)
+			event = "error"
+		}
+		e.Post(func() { e.callPrelude("fireEvent", e.nodes.id(n), event) })
+	}()
 }
 
 // write writes the given HTML to the document, as document.write: after

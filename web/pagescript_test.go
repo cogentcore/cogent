@@ -173,9 +173,9 @@ func TestScriptsLayout(t *testing.T) {
 		"/": `<html><body style="margin: 0"><div id="box" style="width: 300px; height: 50px">box</div></body></html>`,
 	})
 	b.RenderImage(func() { settle(pg) }, func() {
-		v, err := pg.scripts.engine.RunString(`const r = document.getElementById("box").getBoundingClientRect(); [Math.round(r.width), Math.round(r.height), innerWidth > 0].join(",")`)
+		v, err := pg.scripts.engine.RunString(`const r = document.getElementById("box").getBoundingClientRect(); [Math.round(r.width), Math.round(r.height), innerWidth > 0, document.documentElement.clientWidth === innerWidth].join(",")`)
 		assert.NoError(t, err)
-		assert.Equal(t, "300,50,true", v)
+		assert.Equal(t, "300,50,true,true", v, "the client width of the root element is that of the viewport")
 	})
 }
 
@@ -375,4 +375,53 @@ func TestFormPost(t *testing.T) {
 		assert.Equal(t, srv.URL+"/search", pg.currentURL())
 		srv.Close()
 	}
+}
+
+// TestScriptsStyleLinkLoad tests that a style sheet link that a script
+// inserts fires its load event (or error event, if it can not be gotten),
+// as craigslist waits for it before it shows its pages, and that the
+// style sheet is applied.
+func TestScriptsStyleLinkLoad(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="out" class="hidden">waiting</p>
+			<script>
+				const p = document.getElementById("out");
+				const ok = document.createElement("link");
+				ok.rel = "stylesheet";
+				ok.href = "/style.css";
+				ok.onload = () => { p.textContent = "loaded"; p.className = ""; };
+				document.head.appendChild(ok);
+				const bad = document.createElement("link");
+				bad.rel = "stylesheet";
+				bad.href = "/missing.css";
+				bad.addEventListener("error", () => { p.textContent += " and failed"; });
+				document.head.appendChild(bad);
+			</script></body></html>`,
+		"/style.css": `.hidden { display: none }`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "loaded and failed") }), pageTexts(b, pg))
+	})
+}
+
+// TestScriptsResize tests that the scripts get a resize event when the
+// viewport has another width than they got, as craigslist switches
+// between its mobile and desktop layouts by them.
+func TestScriptsResize(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="out">none</p><script>
+			const start = innerWidth;
+			addEventListener("resize", () => { document.getElementById("out").textContent = start + " to " + innerWidth; });
+		</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		ps := pg.scripts
+		b.AsyncUnlock()
+		ps.engine.Post(func() {
+			ps.width = 500 // as for a narrower window (see Page.readMedia)
+			ps.engine.Changed()
+		})
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "790 to 500") }), pageTexts(b, pg))
+	})
 }
