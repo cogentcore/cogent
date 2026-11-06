@@ -14,8 +14,8 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 )

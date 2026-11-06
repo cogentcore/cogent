@@ -10,8 +10,8 @@ package web
 import (
 	"bytes"
 	"errors"
-	"image"
 	"fmt"
+	"image"
 	"io"
 	"net/http"
 	neturl "net/url"
