@@ -45,7 +45,7 @@ func (e *Engine) bundle(code, name, global string) (string, error) {
 				if importer == "" || importer == "<stdin>" || !strings.Contains(importer, "://") {
 					importer = base
 				}
-				u, err := resolveURL(args.Path, importer)
+				u, err := e.resolveModule(args.Path, importer)
 				if err != nil {
 					return api.OnResolveResult{}, err
 				}

@@ -373,6 +373,7 @@ func (e *Engine) Load(done func()) {
 	})
 	e.Post(func() {
 		e.loading = true
+		e.readImportMaps()
 		if e.ran == nil {
 			e.ran = map[*html.Node]bool{}
 		}

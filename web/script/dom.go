@@ -123,6 +123,13 @@ func (e *Engine) defineDOM() {
 	compile := func(sel string) cascadia.Matcher {
 		g, err := cascadia.ParseGroup(sel)
 		if err != nil {
+			// the brackets and parentheses that are open at the end are
+			// closed, as in CSS (as for '[class^="x"')
+			if closed := closeSelector(sel); closed != sel {
+				g, err = cascadia.ParseGroup(closed)
+			}
+		}
+		if err != nil {
 			panic(syntaxError("'" + sel + "' is not a valid selector"))
 		}
 		return g
@@ -536,7 +543,7 @@ func (e *Engine) defineDOM() {
 	// exports (or null and an error).
 	set("importModule", func(call goja.FunctionCall) goja.Value {
 		cb := int(arg(call, 0).ToInteger())
-		u, err := resolveURL(str(call, 1), e.baseURL())
+		u, err := e.resolveModule(str(call, 1), e.baseURL())
 		if err != nil {
 			e.callBack(cb, nil, err.Error())
 			return goja.Undefined()
@@ -685,4 +692,37 @@ func scoped(n *html.Node) func() {
 			}
 		}
 	}
+}
+
+// closeSelector returns the given selector with the brackets, parentheses
+// and strings that are open at its end closed, as CSS does.
+func closeSelector(sel string) string {
+	var open []byte
+	var quote byte
+	for i := 0; i < len(sel); i++ {
+		c := sel[i]
+		switch {
+		case quote != 0:
+			if c == '\\' {
+				i++
+			} else if c == quote {
+				quote = 0
+			}
+		case c == '"' || c == '\'':
+			quote = c
+		case c == '[':
+			open = append(open, ']')
+		case c == '(':
+			open = append(open, ')')
+		case (c == ']' || c == ')') && len(open) > 0 && open[len(open)-1] == c:
+			open = open[:len(open)-1]
+		}
+	}
+	if quote != 0 {
+		sel += string(quote)
+	}
+	for i := len(open) - 1; i >= 0; i-- {
+		sel += string(open[i])
+	}
+	return sel
 }

@@ -136,6 +136,7 @@ type Engine struct {
 	// lastRender is when the page was last rendered, and renderTimer
 	// whether a render is pending (see [Engine.renderSoon]).
 	lastRender time.Time
+	imports    *importMap    // the import map of the page, if any
 	renderCost time.Duration // how long the last render took
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).

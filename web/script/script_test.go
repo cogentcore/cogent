@@ -297,3 +297,25 @@ func TestRenderThrottle(t *testing.T) {
 	defer mu.Unlock()
 	assert.Less(t, renders, 10, "rendered far less often than changed (40 times)")
 }
+
+// TestImportMap tests that the bare specifiers of modules are mapped by
+// the import map of the page (as "react" on GitHub), and that a selector
+// with an open bracket at its end is closed, as in CSS.
+func TestImportMap(t *testing.T) {
+	page := `<html><head><script type="importmap">{"imports": {"lib": "/vendor/lib.js", "pkg/": "/vendor/pkg/"}}</script></head>
+		<body><div id="out"></div><p class="x-y">p</p>
+		<script type="module">
+			import { a } from "lib";
+			import { b } from "pkg/b.js";
+			document.getElementById("out").textContent = a + b;
+		</script></body></html>`
+	e, logs := testEngine(t, page, map[string]string{
+		"/vendor/lib.js":   `export const a = "A";`,
+		"/vendor/pkg/b.js": `export const b = "B";`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "AB", run(t, e, `document.getElementById("out").textContent`), "%v", *logs)
+	assert.Equal(t, int64(1), run(t, e, `document.querySelectorAll('[class^="x-"').length`))
+}
