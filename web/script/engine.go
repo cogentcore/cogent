@@ -53,8 +53,11 @@ type Options struct {
 	GetURL func(url string) (*http.Response, error)
 
 	// Lock and Unlock, if set, lock and unlock the widgets of the page
-	// for running a task (see [Engine.SetLock]).
-	Lock, Unlock func()
+	// for running a task (see [Engine.SetLock]). Lock returns false if
+	// the page is gone (as when its window is closed), which closes the
+	// engine.
+	Lock   func() bool
+	Unlock func()
 
 	// Render, if set, reads the document into the widgets of the page
 	// again after a task has changed it. It is called with the lock held.
@@ -111,7 +114,7 @@ type Engine struct {
 	closed   bool
 	timers   map[int]*time.Timer
 	timerID  int
-	lock     func()
+	lock     func() bool
 	unlock   func()
 	pending  sync.WaitGroup // tasks queued or running, for tests (Wait)
 	stopped  chan struct{}
@@ -163,10 +166,16 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 
 // SetLock sets the functions that lock and unlock the widgets of the page
 // for each task (as once the page is shown).
-func (e *Engine) SetLock(lock, unlock func()) {
+func (e *Engine) SetLock(lock func() bool, unlock func()) {
 	e.mu.Lock()
 	e.lock, e.unlock = lock, unlock
 	e.mu.Unlock()
+}
+
+// PageURL returns the URL of the page, which its scripts can change
+// (with history.pushState). It must be called in a task.
+func (e *Engine) PageURL() string {
+	return e.opts.PageURL
 }
 
 // Document returns the document of the engine.
@@ -235,17 +244,22 @@ func (e *Engine) loop() {
 			e.queue = e.queue[1:]
 			lock, unlock := e.lock, e.unlock
 			e.mu.Unlock()
-			e.runTask(task, lock, unlock)
+			if lock != nil && !lock() {
+				e.pending.Done()
+				go e.Close() // the page is gone
+				continue
+			}
+			e.runTask(task, unlock)
 			e.pending.Done()
 		}
 	}
 }
 
-// runTask runs the given task with the given lock held, within the time
-// limit of a task, and renders the page afterward if the task changed it.
-func (e *Engine) runTask(task func(), lock, unlock func()) {
-	if lock != nil {
-		lock()
+// runTask runs the given task (with the lock of the page held, which
+// unlock unlocks if not nil), within the time limit of a task, and renders
+// the page afterward if the task changed it.
+func (e *Engine) runTask(task func(), unlock func()) {
+	if unlock != nil {
 		defer unlock()
 	}
 	timer := time.AfterFunc(e.opts.TaskTimeout, func() {
@@ -337,6 +351,24 @@ func (e *Engine) RunString(src string) (any, error) {
 	case <-e.stopped:
 		return nil, errClosed
 	}
+}
+
+// Rerender renders the page again in a task, as when it is read again
+// for another width of its viewport.
+func (e *Engine) Rerender() {
+	e.Post(func() { e.dirty = true })
+}
+
+// Eval runs the given JavaScript in a task (as for a javascript: URL).
+func (e *Engine) Eval(src string) {
+	e.Post(func() { e.run("javascript: URL", src) })
+}
+
+// Changed records that the document has changed (in a task), so that the
+// page is rendered again at the end of the task, as for the value of a
+// form control that is changed by the user.
+func (e *Engine) Changed() {
+	e.dirty = true
 }
 
 // setTimer starts a timer that fires the timer of the given id in the

@@ -57,6 +57,11 @@ type Page struct {
 	// opening and when it is opened (or stopped), as for updating a toolbar.
 	OnOpen func(url string) `set:"-" display:"-"`
 
+	// Scripts is whether the scripts (JavaScript) of the pages are run,
+	// which they are by default. It applies to the pages opened after it
+	// is changed (see [Page.SetScripts]).
+	Scripts bool
+
 	// loading is the URL of the page that is being opened, if any.
 	loading string
 
@@ -79,6 +84,10 @@ type Page struct {
 	media        *pageMedia
 	checkedWidth float32
 	mediaTimer   *time.Timer
+
+	// scripts is the state of the scripts of the page that is shown, if
+	// it is run with scripts.
+	scripts *pageScripts
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -101,6 +110,7 @@ func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()
 	pg.Context.OpenURL = pg.OpenURL
+	pg.Scripts = true
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
 	pg.Styler(func(s *styles.Style) {
@@ -256,6 +266,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
 		ctx.MediaWidth = htmlcore.ScreenMediaWidth()
 	}
+	scripts := pg.Scripts
 	cache := &resourceCache{get: ctx.GetURL}
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
@@ -275,6 +286,12 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 			ctx.PageURL = final
 			page, err = io.ReadAll(resp.Body)
 			resp.Body.Close()
+			if err == nil && scripts {
+				// the page is shown by its scripts once they have run
+				if pg.openScripts(ctx, page, final, mode, index, cache, canceled) {
+					return
+				}
+			}
 			if err == nil {
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
@@ -288,6 +305,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		if canceled() {
 			return
 		}
+		pg.showScripts(nil)
 		pg.loading = ""
 		if err != nil {
 			core.ErrorSnackbar(pg, err, "Error opening page")
@@ -302,14 +320,7 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 				return
 			}
 		}
-		switch mode {
-		case historyNew:
-			pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], final)
-			pg.Current = len(pg.History) - 1
-		case historyAt:
-			pg.Current = index
-			pg.History[index] = final
-		}
+		pg.setHistory(final, mode, index)
 		pg.Context.PageURL = final
 		pg.Title = ctx.Title
 		pg.setMedia(&pageMedia{ctx: ctx, html: page, url: final, cache: cache})
@@ -324,6 +335,19 @@ func (pg *Page) open(url string, mode historyMode, index, redirects int) {
 		}
 		pg.opened(final)
 	}()
+}
+
+// setHistory sets the history for the page of the given URL that is
+// opened, with the given change to the history.
+func (pg *Page) setHistory(url string, mode historyMode, index int) {
+	switch mode {
+	case historyNew:
+		pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], url)
+		pg.Current = len(pg.History) - 1
+	case historyAt:
+		pg.Current = index
+		pg.History[index] = url
+	}
 }
 
 // newPageContent returns a new frame for the content of a page.
@@ -400,6 +424,14 @@ func (pg *Page) setMedia(m *pageMedia) {
 // replaces the page when it has been read, unless the opening of another
 // page has started by then.
 func (pg *Page) readMedia(m *pageMedia, width float32) {
+	if ps := pg.scripts; ps != nil {
+		// the document as the scripts have made it is read again
+		ps.engine.Post(func() {
+			ps.width = width
+			ps.engine.Changed()
+		})
+		return
+	}
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	ctx := pg.Context.NewPage()
