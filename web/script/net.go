@@ -157,6 +157,25 @@ func (e *Engine) defineNet() {
 		}
 		return goja.Undefined()
 	})
+	// createObjectURL returns a new blob: URL for the given data, of the
+	// given type, which scripts and fetch can get until it is revoked.
+	set("createObjectURL", func(call goja.FunctionCall) goja.Value {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		if e.blobs == nil {
+			e.blobs = map[string]blob{}
+		}
+		e.timerID++
+		u := fmt.Sprintf("blob:%s/%d-%d", origin(e.opts.PageURL), time.Now().UnixNano(), e.timerID)
+		e.blobs[u] = blob{data: str(call, 0), typ: str(call, 1)}
+		return vm.ToValue(u)
+	})
+	set("revokeObjectURL", func(call goja.FunctionCall) goja.Value {
+		e.mu.Lock()
+		delete(e.blobs, str(call, 0))
+		e.mu.Unlock()
+		return goja.Undefined()
+	})
 	set("submit", func(call goja.FunctionCall) goja.Value {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Submit != nil {
@@ -323,6 +342,9 @@ func bytesOf(v goja.Value) []byte {
 // request makes the given request: a GET without a body with GetURL, as
 // for the resources of the page, and others with the default client.
 func (e *Engine) request(u, method string, headers []string, body []byte, hasBody bool) (*http.Response, error) {
+	if strings.HasPrefix(u, "blob:") {
+		return e.blobResponse(u)
+	}
 	if (method == "" || method == "GET") && !hasBody && e.opts.GetURL != nil {
 		return e.opts.GetURL(u)
 	}
@@ -469,10 +491,15 @@ func (e *Engine) getScript(u string) (string, error) {
 	if strings.HasPrefix(u, "data:") {
 		return dataURL(u)
 	}
-	if e.opts.GetURL == nil {
+	var resp *http.Response
+	var err error
+	if strings.HasPrefix(u, "blob:") {
+		resp, err = e.blobResponse(u)
+	} else if e.opts.GetURL == nil {
 		return "", fmt.Errorf("no GetURL")
+	} else {
+		resp, err = e.opts.GetURL(u)
 	}
-	resp, err := e.opts.GetURL(u)
 	if err != nil {
 		return "", err
 	}
@@ -607,4 +634,27 @@ func (e *Engine) ControlState(n *html.Node) (value string, hasValue, checked, ha
 		checked, hasChecked = x.ToBoolean(), true
 	}
 	return
+}
+
+// blob is the data of a blob: URL, and its content type.
+type blob struct {
+	data, typ string
+}
+
+// blobResponse returns a response with the data of the given blob: URL,
+// or an error if there is none (as when it was revoked).
+func (e *Engine) blobResponse(u string) (*http.Response, error) {
+	e.mu.Lock()
+	b, ok := e.blobs[strings.SplitN(u, "#", 2)[0]]
+	e.mu.Unlock()
+	if !ok {
+		return nil, fmt.Errorf("no blob at %s", u)
+	}
+	pu, _ := neturl.Parse(u)
+	h := http.Header{}
+	if b.typ != "" {
+		h.Set("Content-Type", b.typ)
+	}
+	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
+		Body: io.NopCloser(strings.NewReader(b.data))}, nil
 }

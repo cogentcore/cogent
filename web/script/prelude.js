@@ -1249,8 +1249,8 @@
 			this._search = null;
 		}
 		static canParse(u, base) { return !!D.parseURL(String(u), base === undefined ? undefined : String(base)); }
-		static createObjectURL() { return "blob:" + D.pageURL() + "#" + (++callbackID); }
-		static revokeObjectURL() {}
+		static createObjectURL(b) { return b instanceof Blob ? D.createObjectURL(b._data, b.type || "") : "blob:" + D.pageURL() + "#" + (++callbackID); }
+		static revokeObjectURL(u) { D.revokeObjectURL(String(u)); }
 		_get(i) { return this._parts[i]; }
 		_set(field, v) {
 			const p = this._parts;

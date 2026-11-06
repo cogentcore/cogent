@@ -342,3 +342,27 @@ func TestDataScripts(t *testing.T) {
 	<-loaded
 	assert.Equal(t, "data;b64;https://example.com/chunk.js", run(t, e, `document.getElementById("out").textContent`), "%v", *logs)
 }
+
+// TestBlobURLs tests the object URLs of blobs (as Reddit loads a script
+// from), as the source of a script and with fetch, until revoked.
+func TestBlobURLs(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="out"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		const u = URL.createObjectURL(new Blob(["document.getElementById('out').textContent += 'blob script;';"], { type: "text/javascript" }));
+		const s = document.createElement("script");
+		s.src = u;
+		document.body.appendChild(s);
+		fetch(u).then(r => r.text()).then(t => {
+			document.getElementById("out").textContent += "fetched " + t.length + ";";
+			URL.revokeObjectURL(u);
+			return fetch(u);
+		}).catch(err => { document.getElementById("out").textContent += "revoked;"; });
+	`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`document.getElementById("out").textContent`)
+		return v == "blob script;fetched 61;revoked;"
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+}

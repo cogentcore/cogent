@@ -124,6 +124,7 @@ type Engine struct {
 	closed   bool
 	timers   map[int]*time.Timer
 	timerID  int
+	blobs    map[string]blob // the object URLs of blobs (URL.createObjectURL)
 	lock     func() bool
 	unlock   func()
 	pending  int // tasks queued or running, for tests (Wait)
