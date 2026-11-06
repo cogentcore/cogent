@@ -118,6 +118,7 @@ func (pg *Page) Init() {
 	pg.Context.GetURL = withCookies(pg.Context.GetURL)
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Context.PostURL = pg.postURL
+	pg.Context.WebFonts = true
 	pg.Scripts = true
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
