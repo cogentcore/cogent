@@ -1736,6 +1736,15 @@
 		else if (el.tagName === "INPUT") form.requestSubmit();
 	};
 
+	// state returns the state of the form control of the given id that
+	// is not in its attributes: its value and checked state, or null
+	// for each that the user or scripts have not changed.
+	D.state = function (id) {
+		const el = wrap(id);
+		if (!el) return [null, null];
+		return [values.has(el) ? values.get(el) : null, checks.has(el) ? checks.get(el) : null];
+	};
+
 	// fireEvent fires a simple event of the given type at the node of
 	// the given id (as the load event of a script).
 	D.fireEvent = function (id, type) {

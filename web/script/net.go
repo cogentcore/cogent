@@ -582,3 +582,22 @@ func dataURL(u string) (string, error) {
 	}
 	return neturl.PathUnescape(data)
 }
+
+// ControlState returns the state of the given form control that is not
+// in its attributes (which the page is read from): its value and whether
+// it is checked, and whether the user or the scripts have changed each.
+// It must be called when no script runs (as while rendering the page).
+func (e *Engine) ControlState(n *html.Node) (value string, hasValue, checked, hasChecked bool) {
+	v := e.callPrelude("state", e.nodes.id(n))
+	o, ok := v.(*goja.Object)
+	if !ok {
+		return
+	}
+	if x := o.Get("0"); x != nil && !goja.IsNull(x) && !goja.IsUndefined(x) {
+		value, hasValue = x.String(), true
+	}
+	if x := o.Get("1"); x != nil && !goja.IsNull(x) && !goja.IsUndefined(x) {
+		checked, hasChecked = x.ToBoolean(), true
+	}
+	return
+}

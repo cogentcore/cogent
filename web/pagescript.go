@@ -169,10 +169,31 @@ func (ps *pageScripts) render() func() {
 		if pg.media != nil {
 			pg.media.ctx = ctx
 		}
+		// the element that has the focus keeps it in the new widgets
+		var focused *html.Node
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if cwb.StateIs(states.Focused) {
+				focused = htmlcore.NodeOf(cw)
+				return tree.Break
+			}
+			return tree.Continue
+		})
 		pg.Title = ctx.Title
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
+		if focused != nil {
+			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if n, ok := cwb.Property("node").(*html.Node); ok && n == focused {
+					cwb.SetFocus()
+					if tf, ok := cw.(*core.TextField); ok {
+						tf.SetCursorEnd() // to type on
+					}
+					return tree.Break
+				}
+				return tree.Continue
+			})
+		}
 	}
 }
 
@@ -209,6 +230,23 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 						e.Dispatch(n, "change", map[string]any{"value": tf.Text()}, func(bool) { e.Activate(n) })
 					}
 				})
+			}
+		}
+	}
+	// the state of the controls that the user or the scripts have changed
+	if value, hasValue, checked, hasChecked := e.ControlState(n); hasValue || hasChecked {
+		switch x := w.(type) {
+		case *core.TextField:
+			if hasValue {
+				x.SetText(value)
+			}
+		case *core.Switch:
+			if hasChecked {
+				x.SetChecked(checked)
+			}
+		case *core.Chooser:
+			if hasValue {
+				x.SetCurrentValue(value)
 			}
 		}
 	}

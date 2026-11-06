@@ -14,6 +14,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
@@ -240,4 +241,49 @@ func TestScriptsForms(t *testing.T) {
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "Results") }), pageTexts(b, pg))
 	})
 	assert.Equal(t, "https://example.com/search?q=second", pg.currentURL())
+}
+
+// TestScriptsTyping tests that typing in a field whose input listener
+// changes the page (as a search as you type) keeps what is typed in the
+// field, and its focus, when the page is rendered again.
+func TestScriptsTyping(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><input id="q" value=""><p id="out">nothing</p>
+			<script>
+				document.getElementById("q").addEventListener("input", e => {
+					document.getElementById("out").textContent = "typed " + e.target.value;
+				});
+			</script></body></html>`,
+	})
+	field := func() *core.TextField {
+		var tf *core.TextField
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if x, ok := cw.(*core.TextField); ok && tf == nil {
+				tf = x
+			}
+			return tree.Continue
+		})
+		return tf
+	}
+	var first *core.TextField
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		first = field()
+		if assert.NotNil(t, first) {
+			first.SetFocus()
+			first.SetText("abc")
+			first.Send(events.Input)
+		}
+		b.AsyncUnlock()
+	}, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "typed abc") }), pageTexts(b, pg))
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		tf := field()
+		if assert.NotNil(t, tf) {
+			assert.NotSame(t, first, tf, "the page was rendered again")
+			assert.Equal(t, "abc", tf.Text(), "the field keeps what was typed")
+			assert.True(t, tf.StateIs(states.Focused), "the field keeps the focus")
+		}
+	})
 }
