@@ -366,7 +366,9 @@ func attr(n *html.Node, key string) (string, bool) {
 
 // Load runs the scripts of the document, in tasks: those in it, in order
 // (getting the external ones), then the DOMContentLoaded event, then the
-// load event, after which it calls done (if not nil) in the task.
+// load event, after which it calls done (if not nil) in the task. The page
+// is not rendered again while it loads, but after the load event if the
+// scripts have changed it (at the end of its task).
 func (e *Engine) Load(done func()) {
 	var scripts []*html.Node
 	walk(e.doc, func(n *html.Node) bool {
@@ -400,9 +402,6 @@ func (e *Engine) Load(done func()) {
 		if done != nil {
 			done()
 		}
-		// done reads the document as the scripts have made it (with
-		// the lock of the page, which this task does not hold)
-		e.dirty = false
 	})
 }
 

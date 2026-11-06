@@ -141,6 +141,7 @@
 			const l = m[type] || (m[type] = []);
 			for (const x of l) if (x.fn === fn && x.capture === capture) return;
 			l.push({ fn, capture, once });
+			listenerAdded(this, type);
 			if (opts && typeof opts === "object" && opts.signal) {
 				opts.signal.addEventListener("abort", () => this.removeEventListener(type, fn, opts));
 			}
@@ -183,6 +184,16 @@
 			ev.eventPhase = 0;
 			return !ev.defaultPrevented;
 		}
+	}
+
+	// wiredTypes are the types of events for which the widgets of elements
+	// are set up when the page is rendered (see hasListener), which it is
+	// rendered again for when a listener for them is added.
+	const wiredTypes = { click: true, submit: true };
+	function listenerAdded(t, type) {
+		if (!wiredTypes[type]) return;
+		if (t instanceof Node) D.listenerAdded(t[ID]);
+		else if (t === g) D.listenerAdded(D.doc());
 	}
 
 	function callListener(fn, t, ev) {
@@ -253,7 +264,7 @@
 		for (const type of eventTypes) {
 			Object.defineProperty(proto, "on" + type.toLowerCase(), {
 				get() { return this["_on" + type] || null; },
-				set(v) { this["_on" + type] = typeof v === "function" ? v : null; },
+				set(v) { this["_on" + type] = typeof v === "function" ? v : null; listenerAdded(this, type); },
 				configurable: true,
 			});
 		}

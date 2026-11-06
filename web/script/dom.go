@@ -577,6 +577,13 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(strings.TrimRight(strings.TrimSpace(code), ";"))
 	})
+	// listenerAdded records that a listener for events for which the
+	// widgets are set up (as clicks) was added to the given node, so that
+	// the page is rendered again.
+	set("listenerAdded", func(call goja.FunctionCall) goja.Value {
+		e.changed(node(arg(call, 0)))
+		return goja.Undefined()
+	})
 	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })
 	set("loading", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.loading) })
 	set("write", func(call goja.FunctionCall) goja.Value {

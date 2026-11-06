@@ -431,10 +431,11 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 }
 
 // openScripts opens the given page (gotten with the given context from
-// the given final URL) with its scripts: it parses it with scripting, runs
-// its scripts, and shows it once they have loaded (after the load event),
-// with the given change to the history. It returns false if its scripts
-// cannot be run, for the page to be read without them.
+// the given final URL) with its scripts: it parses it with scripting,
+// shows it as it is parsed (as browsers show pages while their scripts
+// load), and then runs its scripts, after which (and as they change it)
+// it is rendered again, with the given change to the history. It returns
+// false if its scripts cannot be run, for the page to be read without them.
 func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool) bool {
 	ctx.Scripting = true
 	ctx.ImageCache = htmlcore.NewImageCache(64 << 20)
@@ -449,48 +450,48 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		ctx.Scripting = false
 		return false
 	}
-	done := make(chan struct{})
-	ps.engine.Load(func() {
-		defer close(done)
-		if canceled() {
-			go ps.engine.Close()
-			return
+	content, err := ps.read() // no script has run yet
+	if canceled() {
+		ps.engine.Close()
+		return true
+	}
+	<-pg.shown // AsyncLock is not safe before then
+	pg.AsyncLock()
+	defer pg.AsyncUnlock()
+	if canceled() {
+		ps.engine.Close()
+		return true
+	}
+	pg.loading = ""
+	if err != nil {
+		core.ErrorSnackbar(pg, err, "Error opening page")
+		pg.opened(pg.currentURL())
+		ps.engine.Close()
+		return true
+	}
+	// a page that redirects is replaced by the page that it redirects to
+	if ref := ps.ctx.RefreshURL; ref != "" {
+		if u, err := htmlcore.ParseRelativeURL(ref, final); err == nil && u.String() != final {
+			ps.engine.Close()
+			pg.open(u.String(), mode, index, 1)
+			return true
 		}
-		content, err := ps.read()
-		<-pg.shown // AsyncLock is not safe before then
-		pg.AsyncLock()
-		defer pg.AsyncUnlock()
-		if canceled() {
-			go ps.engine.Close()
-			return
-		}
-		pg.loading = ""
-		if err != nil {
-			core.ErrorSnackbar(pg, err, "Error opening page")
-			pg.opened(pg.currentURL())
-			go ps.engine.Close()
-			return
-		}
-		url := final
-		if ps.pushed != "" {
-			url = ps.pushed
-		}
-		pg.setHistory(url, mode, index)
-		pg.Context.PageURL = url
-		pg.Title = ps.ctx.Title
-		pg.setMedia(&pageMedia{ctx: ps.ctx, html: page, url: final, cache: cache})
-		pg.showScripts(ps)
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
-		if u, err := neturl.Parse(url); err == nil && u.Fragment != "" {
-			pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
-		} else if mode == historyNew {
-			pg.scrollToTop()
-		}
-		pg.opened(url)
-	})
-	<-done
+	}
+	pg.setHistory(final, mode, index)
+	pg.Context.PageURL = final
+	pg.Title = ps.ctx.Title
+	pg.setMedia(&pageMedia{ctx: ps.ctx, html: page, url: final, cache: cache})
+	pg.showScripts(ps)
+	pg.DeleteChildren()
+	pg.AddChild(content)
+	pg.Update()
+	if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
+		pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
+	} else if mode == historyNew {
+		pg.scrollToTop()
+	}
+	pg.opened(final)
+	ps.engine.Load(nil) // rendered again after the load event
 	return true
 }
 
