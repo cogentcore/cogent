@@ -538,12 +538,16 @@ func (e *Engine) defineDOM() {
 		return vm.ToValue(string(rs))
 	})
 	// importModule gets the module of the given specifier (relative to the
-	// page) bundled with the modules that it imports, in another goroutine,
+	// given URL of the importing script, or the page if "") bundled with the modules that it imports, in another goroutine,
 	// and then runs it and calls the callback of the given id with its
 	// exports (or null and an error).
 	set("importModule", func(call goja.FunctionCall) goja.Value {
 		cb := int(arg(call, 0).ToInteger())
-		u, err := e.resolveModule(str(call, 1), e.baseURL())
+		base := str(call, 2)
+		if base == "" {
+			base = e.baseURL()
+		}
+		u, err := e.resolveModule(str(call, 1), base)
 		if err != nil {
 			e.callBack(cb, nil, err.Error())
 			return goja.Undefined()

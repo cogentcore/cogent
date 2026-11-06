@@ -65,7 +65,8 @@ func (e *Engine) bundle(code, name, global string) (string, error) {
 				if strings.HasSuffix(path, ".json") {
 					loader = api.LoaderJSON
 				} else {
-					src = rewriteImports(src)
+					src = rewriteImports(src, args.Path)
+					src = importMetaURL.ReplaceAllLiteralString(src, quoteJS(args.Path))
 				}
 				return api.OnLoadResult{Contents: &src, Loader: loader}, nil
 			})
@@ -74,7 +75,7 @@ func (e *Engine) bundle(code, name, global string) (string, error) {
 	res := api.Build(api.BuildOptions{
 		// the dynamic imports are done at run time (by the prelude), as esbuild
 		// would match those of computed paths with local files
-		Stdin:      &api.StdinOptions{Contents: rewriteImports(code), Sourcefile: name, Loader: api.LoaderJS},
+		Stdin:      &api.StdinOptions{Contents: rewriteImports(code, base), Sourcefile: name, Loader: api.LoaderJS},
 		Bundle:     true,
 		Format:     api.FormatIIFE,
 		Platform:   api.PlatformBrowser,
@@ -105,13 +106,21 @@ var moduleSyntax = regexp.MustCompile(`(?m)^\s*(import\s*[\w{*'"]|export\s+(defa
 // which goja does not support, but not import.meta or method calls.
 var dynamicImport = regexp.MustCompile(`(^|[^.\w$])import\s*\(`)
 
+// importMetaURL matches import.meta.url, which is the URL of each module.
+var importMetaURL = regexp.MustCompile(`\bimport\.meta\.url\b`)
+
 // rewriteImports rewrites the dynamic imports of the given script as
-// calls of __dynamicImport (of the prelude), which bundles the module.
-func rewriteImports(src string) string {
+// calls of __dynamicImport (of the prelude), which bundles the module,
+// with the URL of the script that they are relative to (the base URL of
+// the document if "").
+func rewriteImports(src, base string) string {
 	if !strings.Contains(src, "import") {
 		return src
 	}
-	return dynamicImport.ReplaceAllString(src, "${1}__dynamicImport(")
+	if !strings.Contains(base, "://") {
+		base = ""
+	}
+	return dynamicImport.ReplaceAllString(src, "${1}__dynamicImport("+quoteJS(base)+", ")
 }
 
 // bundleURL returns the module at the given URL, bundled with the modules

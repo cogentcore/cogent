@@ -232,9 +232,10 @@ func findByID(doc *html.Node, id string) *html.Node {
 func TestModules(t *testing.T) {
 	page := `<html><body><div id="out"></div><ul id="l"><li>a</li><li>b</li></ul>
 		<script type="module">
-			import { greet } from "./lib.js";
+			import { greet, chunk, where } from "./js/lib.js";
 			import data from "./data.json";
-			document.getElementById("out").textContent = greet(data.name) + ";";
+			document.getElementById("out").textContent = greet(data.name) + ";" + where + ";";
+			chunk().then(c => { document.getElementById("out").textContent += c + ";"; });
 			import("./later.js").then(m => { document.getElementById("out").textContent += m.default + ";"; });
 		</script>
 		<script>
@@ -248,10 +249,15 @@ func TestModules(t *testing.T) {
 		</script>
 	</body></html>`
 	e, logs := testEngine(t, page, map[string]string{
-		"/lib.js":    `import { helper } from "./helper.js"; export function greet(n) { return helper("hello " + n); }`,
-		"/helper.js": `export const helper = s => s.toUpperCase();`,
-		"/data.json": `{"name": "module"}`,
-		"/later.js":  `export default "later";`,
+		// the dynamic imports and import.meta.url of a module are relative
+		// to its URL, not that of the page (as the chunks of webpack on MDN)
+		"/js/lib.js": `import { helper } from "../helper.js"; export function greet(n) { return helper("hello " + n); }
+			export const chunk = () => import("./chunk.js").then(m => m.default);
+			export const where = new URL("x", import.meta.url).pathname;`,
+		"/js/chunk.js": `export default "chunk";`,
+		"/helper.js":   `export const helper = s => s.toUpperCase();`,
+		"/data.json":   `{"name": "module"}`,
+		"/later.js":    `export default "later";`,
 	})
 	loaded := make(chan bool, 1)
 	e.Load(func() { loaded <- true })
@@ -259,7 +265,7 @@ func TestModules(t *testing.T) {
 	assert.Eventually(t, func() bool {
 		v, _ := e.RunString(`document.getElementById("out").textContent`)
 		s, _ := v.(string)
-		return strings.Contains(s, "HELLO MODULE;") && strings.Contains(s, "later;") && strings.Contains(s, "sum 3;")
+		return strings.Contains(s, "HELLO MODULE;/js/x;") && strings.Contains(s, "chunk;") && strings.Contains(s, "later;") && strings.Contains(s, "sum 3;")
 	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
 	assert.Equal(t, int64(2), run(t, e, `scopeCount`))
 	assert.Empty(t, *logs)

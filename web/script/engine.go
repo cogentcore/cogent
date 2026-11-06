@@ -87,6 +87,11 @@ type Options struct {
 	// replaces the current page in the history if replace is true.
 	Navigate func(url string, replace bool)
 
+	// Submit, if set, opens the page of the given URL with a POST request
+	// with the given body, of the given content type, as for the
+	// submission of a form with the POST method.
+	Submit func(url, contentType string, body []byte)
+
 	// PushState, if set, is called when a script changes the URL of the
 	// page without opening it (history.pushState and replaceState).
 	PushState func(url string, replace bool)
@@ -403,18 +408,18 @@ func (e *Engine) run(name, src string) {
 
 // compile compiles the given script, rewriting it if needed (see [Engine.run]).
 func (e *Engine) compile(name, src string) (*goja.Program, error) {
-	prog, err := goja.Compile(name, rewriteImports(src), false)
+	prog, err := goja.Compile(name, rewriteImports(src, name), false)
 	if err == nil {
 		return prog, nil
 	}
 	if lowered, lerr := lower(src, name); lerr == nil {
-		if p, perr := goja.Compile(name, rewriteImports(lowered), false); perr == nil {
+		if p, perr := goja.Compile(name, rewriteImports(lowered, name), false); perr == nil {
 			return p, nil
 		}
 	}
 	if moduleSyntax.MatchString(src) {
 		if bundled, berr := e.bundleModule(src, name); berr == nil {
-			if p, perr := goja.Compile(name, rewriteImports(bundled), false); perr == nil {
+			if p, perr := goja.Compile(name, rewriteImports(bundled, name), false); perr == nil {
 				return p, nil
 			}
 		}

@@ -803,7 +803,13 @@
 	const HTMLFormElement = elementClass(["form"], HTMLElement, cls => {
 		reflect(cls, ["name", "method", "enctype", "target", "acceptCharset", "autocomplete"], ["noValidate"]);
 		reflectURL(cls, ["action"]);
-		Object.defineProperty(cls.prototype, "elements", { get() { return this.querySelectorAll("input, select, textarea, button, fieldset, output"); } });
+		Object.defineProperty(cls.prototype, "elements", {
+			get() {
+				const a = this.querySelectorAll("input, select, textarea, button, fieldset, output");
+				a.namedItem = n => a.find(el => el.id === n || el.getAttribute("name") === n) || null;
+				return a;
+			},
+		});
 		Object.defineProperty(cls.prototype, "length", { get() { return this.elements.length; } });
 		cls.prototype.submit = function () { submitForm(this, null); };
 		cls.prototype.requestSubmit = function (submitter) {
@@ -884,8 +890,14 @@
 			const u = new URL(action);
 			u.search = "?" + q.toString();
 			location.href = u.href;
+		} else if ((form.getAttribute("enctype") || "").toLowerCase() === "multipart/form-data") {
+			// the files of the form are not sent, only their names
+			const boundary = "----CogentFormBoundary" + Math.random().toString(36).slice(2);
+			let body = "";
+			for (const [k, v] of fd) body += "--" + boundary + '\r\nContent-Disposition: form-data; name="' + k.replace(/"/g, "%22") + '"\r\n\r\n' + (typeof v === "string" ? v : v.name || "") + "\r\n";
+			D.submit(action, "multipart/form-data; boundary=" + boundary, body + "--" + boundary + "--\r\n");
 		} else {
-			D.log("warn", "form POST submission is not supported (to " + action + ")");
+			D.submit(action, "application/x-www-form-urlencoded", q.toString());
 		}
 	}
 
@@ -1172,12 +1184,12 @@
 
 	// __dynamicImport is what the dynamic imports of scripts (import(...))
 	// are rewritten as: it gets and runs the module, bundled.
-	function dynamicImport(spec) {
+	function dynamicImport(base, spec) {
 		return new Promise((resolve, reject) => {
 			D.importModule(newCallback((ns, err) => {
 				if (err) reject(new TypeError("Failed to import " + spec + ": " + err));
 				else resolve(ns);
-			}), String(spec));
+			}), String(spec), base);
 		});
 	}
 
