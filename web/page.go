@@ -64,6 +64,10 @@ type Page struct {
 	// is changed (see [Page.SetScripts]).
 	Scripts bool
 
+	// zoom is the zoom factor of the page that is shown (or being opened),
+	// from the settings of its site (see [SiteSettings]), or 0 for none.
+	zoom float32
+
 	// loading is the URL of the page that is being opened, if any.
 	loading string
 
@@ -279,9 +283,11 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	pg.loading = url
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
+	pg.zoom = Site(url).Zoom
+	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
-		ctx.MediaWidth = htmlcore.ScreenMediaWidth()
+		ctx.MediaWidth = htmlcore.ScreenMediaWidth() / pg.zoomFactor()
 	}
 	scripts := pg.Scripts
 	cache := &resourceCache{get: ctx.GetURL}
@@ -365,6 +371,73 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 func (pg *Page) SetScripts(on bool) {
 	pg.Scripts = on
 	pg.Reload()
+}
+
+// zoomFactor returns the zoom factor of the page (1 if it is not zoomed).
+func (pg *Page) zoomFactor() float32 {
+	if pg.zoom > 0 {
+		return pg.zoom
+	}
+	return 1
+}
+
+// zoomLevels are the zoom factors that zooming in and out steps through,
+// as in browsers.
+var zoomLevels = []float32{0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5}
+
+// StepZoom zooms the page in (for a positive step) or out (for a negative
+// one) to the next of the zoom levels, or back to 100% for a zero step.
+func (pg *Page) StepZoom(step int) {
+	z := pg.zoomFactor()
+	switch {
+	case step == 0:
+		z = 1
+	case step > 0:
+		for _, l := range zoomLevels {
+			if l > z+0.001 {
+				z = l
+				break
+			}
+		}
+	default:
+		for i := len(zoomLevels) - 1; i >= 0; i-- {
+			if zoomLevels[i] < z-0.001 {
+				z = zoomLevels[i]
+				break
+			}
+		}
+	}
+	pg.SetZoom(z)
+}
+
+// SetZoom sets the zoom factor of the page (1 for 100%), and saves it for
+// the pages of its site (see [SiteSettings]), as browsers do. The page is
+// read again for it (as the scripts have made it, if they run).
+func (pg *Page) SetZoom(zoom float32) {
+	if zoom == 1 {
+		zoom = 0
+	}
+	if zoom == pg.zoom {
+		return
+	}
+	pg.zoom = zoom
+	if cur := pg.currentURL(); cur != "" {
+		SetSite(cur, func(ss *SiteSettings) { ss.Zoom = zoom })
+		pg.opened(cur) // for the toolbar to show the zoom
+	}
+	width := pg.viewportWidth()
+	pg.checkedWidth = width
+	if ps := pg.scripts; ps != nil {
+		ps.engine.Post(func() {
+			ps.base.Zoom = zoom
+			ps.width = width
+			ps.engine.Changed()
+		})
+		return
+	}
+	if pg.media != nil {
+		pg.readMedia(pg.media, width)
+	}
 }
 
 // setHistory sets the history for the page of the given URL that is
@@ -465,6 +538,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	ctx := pg.Context.NewPage()
+	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = width
 	ctx.PageURL = m.url
 	ctx.GetURL = func(u string) (*http.Response, error) {
@@ -602,6 +676,35 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			pg.OpenURL(LocationURL(text), e)
 		})
 	})
+	tree.AddAt(p, "zoom", func(w *core.Button) {
+		w.Updater(func() {
+			pg := page()
+			w.SetIcon(icons.ZoomIn).SetText("")
+			tip := "Zoom of the page"
+			if pg != nil && pg.zoom > 0 {
+				pct := fmt.Sprintf("%d%%", int(math32.Round(pg.zoom*100)))
+				w.SetText(pct)
+				tip += ": " + pct
+			}
+			w.SetTooltip(tip)
+			w.SetEnabled(pg != nil)
+		})
+		w.SetMenu(func(m *core.Scene, _ image.Point) {
+			pg := page()
+			if pg == nil {
+				return
+			}
+			core.NewButton(m).SetText("Zoom in").SetIcon(icons.ZoomIn).OnClick(func(e events.Event) {
+				pg.StepZoom(1)
+			})
+			core.NewButton(m).SetText("Zoom out").SetIcon(icons.ZoomOut).OnClick(func(e events.Event) {
+				pg.StepZoom(-1)
+			})
+			core.NewButton(m).SetText("Actual size (100%)").SetIcon(icons.Refresh).OnClick(func(e events.Event) {
+				pg.StepZoom(0)
+			})
+		})
+	})
 	tree.AddAt(p, "scripts", func(w *core.Button) {
 		w.Updater(func() {
 			pg := page()
@@ -690,13 +793,13 @@ func (pg *Page) viewportWidth() float32 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
 			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
 		}
-		return w / dp
+		return w / dp / pg.zoomFactor()
 	}
 	if pg.Scene == nil {
 		return 0
 	}
 	if rw := pg.Scene.RenderWindow(); rw != nil && rw.SystemWindow != nil && dp > 0 {
-		return float32(rw.SystemWindow.Size().X) / dp
+		return float32(rw.SystemWindow.Size().X) / dp / pg.zoomFactor()
 	}
 	return 0
 }

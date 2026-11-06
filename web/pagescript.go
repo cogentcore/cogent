@@ -454,7 +454,7 @@ func (ps *pageScripts) viewportSize() (float32, float32) {
 	h := float32(768)
 	if dp := pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.Geom.Size.Alloc.Content.Y > 0 {
-			h = fr.Geom.Size.Alloc.Content.Y / dp
+			h = fr.Geom.Size.Alloc.Content.Y / dp / pg.zoomFactor()
 		}
 	}
 	return w, h
