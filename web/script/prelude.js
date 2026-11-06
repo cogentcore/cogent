@@ -9,6 +9,11 @@
 (function (g, D) {
 	"use strict";
 
+	// Promise is the native one, which the prelude schedules with (as for
+	// queueMicrotask), even if a page replaces it (core-js on BBC does,
+	// with a Promise that schedules with queueMicrotask).
+	const Promise = g.Promise;
+
 	// ---- wrapping nodes ----
 
 	const wrappers = new Map(); // id -> object

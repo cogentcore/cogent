@@ -577,3 +577,26 @@ func TestSerialize(t *testing.T) {
 		run(t, e, `document.getElementById("c").innerHTML + "|" + document.getElementById("p").outerHTML`))
 	assert.Empty(t, *logs)
 }
+
+// TestPromisePolyfill tests that a page that replaces Promise with one
+// that schedules with queueMicrotask (as core-js on BBC) does not make
+// queueMicrotask recurse without end.
+func TestPromisePolyfill(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		const Native = Promise;
+		window.Promise = class P {
+			constructor(f) { this.p = new Native(f); }
+			then(a, b) { const q = new P(() => {}); queueMicrotask(() => {}); q.p = this.p.then(a, b); return q; }
+			catch(b) { return this.then(undefined, b); }
+			static resolve(v) { return new P(r => r(v)); }
+		};
+		window.done = 0;
+		queueMicrotask(() => { window.done++; });
+		Promise.resolve(1).then(() => { window.done++; });`)
+	assert.Eventually(t, func() bool { return run(t, e, `window.done`) == int64(2) }, 2*time.Second, 10*time.Millisecond, "%v", *logs)
+	assert.Empty(t, *logs)
+}
