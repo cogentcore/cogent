@@ -124,7 +124,11 @@
 	class ErrorEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.message = init.message || ""; this.error = init.error; this.filename = init.filename || ""; } }
 	class MessageEvent extends Event { constructor(type, init) { super(type, init); this.data = init && init.data; this.origin = (init && init.origin) || ""; } }
 	class ProgressEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.loaded = init.loaded || 0; this.total = init.total || 0; this.lengthComputable = !!init.lengthComputable; } }
-	class PopStateEvent extends Event { constructor(type, init) { super(type, init); this.state = init ? init.state : null; } }
+	const popStates = new WeakMap();
+	class PopStateEvent extends Event {
+		constructor(type, init) { super(type, init); popStates.set(this, init && init.state !== undefined ? init.state : null); }
+		get state() { return popStates.get(this); }
+	}
 	class HashChangeEvent extends Event { constructor(type, init) { super(type, init); this.oldURL = (init && init.oldURL) || ""; this.newURL = (init && init.newURL) || ""; } }
 	class SubmitEvent extends Event { constructor(type, init) { super(type, init); this.submitter = (init && init.submitter) || null; } }
 	class AnimationEvent extends Event {}
@@ -1069,15 +1073,52 @@
 	}
 	const location = new Location();
 
+	// History has its properties on its prototype, as in browsers, which
+	// polyfills (as of the Navigation API, on Reddit) patch.
 	let historyState = null;
-	const history = {
-		get length() { return 1; },
-		get state() { return historyState; },
-		scrollRestoration: "auto",
-		pushState(state, title, url) { historyState = state; if (url !== undefined && url !== null) D.pushState(String(url), false); },
-		replaceState(state, title, url) { historyState = state; if (url !== undefined && url !== null) D.pushState(String(url), true); },
-		back() {}, forward() {}, go() {},
-	};
+	class History {
+		constructor() { this.scrollRestoration = "auto"; }
+		get length() { return 1; }
+		get state() { return historyState; }
+		pushState(state, title, url) { historyState = state; if (url !== undefined && url !== null) D.pushState(String(url), false); }
+		replaceState(state, title, url) { historyState = state; if (url !== undefined && url !== null) D.pushState(String(url), true); }
+		back() {}
+		forward() {}
+		go() {}
+	}
+	const history = new History();
+
+	// Navigation is a minimal Navigation API (window.navigation), so that
+	// sites do not load polyfills of it (Reddit's recurses through history
+	// until a RangeError, which goja cannot catch). It never fires navigate
+	// events: links and navigate() open pages as location does.
+	let navEntry = null;
+	class NavigationHistoryEntry extends EventTarget {
+		constructor(state) { super(); this.key = this.id = String(++callbackID); this._state = state; }
+		get url() { return location.href; }
+		get index() { return 0; }
+		get sameDocument() { return true; }
+		getState() { return this._state; }
+	}
+	class Navigation extends EventTarget {
+		get currentEntry() { if (!navEntry) navEntry = new NavigationHistoryEntry(undefined); return navEntry; }
+		entries() { return [this.currentEntry]; }
+		get transition() { return null; }
+		get activation() { return null; }
+		get canGoBack() { return false; }
+		get canGoForward() { return false; }
+		navigate(url, opts) {
+			navigate(String(url), !!opts && opts.history === "replace");
+			const entry = this.currentEntry;
+			return { committed: Promise.resolve(entry), finished: Promise.resolve(entry) };
+		}
+		reload() { return this.navigate(location.href, { history: "replace" }); }
+		updateCurrentEntry(opts) { navEntry = new NavigationHistoryEntry(opts ? opts.state : undefined); }
+		traverseTo() { const p = Promise.reject(domException("InvalidStateError", "no such entry")); p.catch(() => {}); return { committed: p, finished: p }; }
+		back() { return this.traverseTo(); }
+		forward() { return this.traverseTo(); }
+	}
+	const navigation = new Navigation();
 
 	const navigator = {
 		userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) CogentCore/1.0 Safari/537.36",
@@ -1624,7 +1665,7 @@
 
 	const props = {
 		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
-		document, location, history, navigator,
+		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
@@ -1638,7 +1679,7 @@
 		HTMLLIElement, HTMLTableElement, HTMLTableRowElement, HTMLTableCellElement, HTMLHtmlElement, HTMLHeadElement,
 		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement, SVGElement,
 		EventTarget, Event, CustomEvent, UIEvent, MouseEvent, PointerEvent, KeyboardEvent, FocusEvent, InputEvent,
-		WheelEvent, ErrorEvent, MessageEvent, ProgressEvent, PopStateEvent, HashChangeEvent, SubmitEvent,
+		WheelEvent, ErrorEvent, MessageEvent, ProgressEvent, PopStateEvent, HashChangeEvent, SubmitEvent, History,
 		AnimationEvent, TransitionEvent, TouchEvent,
 		DOMTokenList, CSSStyleDeclaration, DOMRect, DOMRectReadOnly: DOMRect, Location, MediaQueryList,
 		URL, URLSearchParams, Headers, Request, Response, XMLHttpRequest, Blob, File, FileReader, FormData,

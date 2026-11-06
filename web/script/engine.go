@@ -111,6 +111,10 @@ type Options struct {
 	TaskTimeout time.Duration
 }
 
+// maxCallStack is the maximum depth of the calls of scripts, about that
+// of browsers.
+const maxCallStack = 10000
+
 // Engine runs the scripts of a page (see the package documentation).
 type Engine struct {
 	opts Options
@@ -167,6 +171,9 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	e.nodes.init()
 	e.vm = goja.New()
 	e.vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
+	// a script that recurses without end gets a RangeError (as in browsers)
+	// instead of running until it times out, using ever more memory
+	e.vm.SetMaxCallStackSize(maxCallStack)
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
 	e.vm.Set("__dom", e.jsDOM)
@@ -376,6 +383,11 @@ func (e *Engine) logf(level slog.Level, format string, args ...any) {
 // reportError logs the given error of a script.
 func (e *Engine) reportError(err error) {
 	if err == nil {
+		return
+	}
+	var so *goja.StackOverflowError
+	if errors.As(err, &so) {
+		e.logf(slog.LevelError, "RangeError: Maximum call stack size exceeded%s", so.String())
 		return
 	}
 	var ex *goja.Exception

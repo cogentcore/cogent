@@ -366,3 +366,40 @@ func TestBlobURLs(t *testing.T) {
 		return v == "blob script;fetched 61;revoked;"
 	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
 }
+
+// TestHistoryPolyfill tests that history and PopStateEvent have their state
+// on their prototypes, which a polyfill of the Navigation API (on Reddit)
+// patches, and that a script that recurses without end gets an error soon.
+func TestHistoryPolyfill(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "first", run(t, e, `
+		const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(history), "state");
+		Object.defineProperty(history, "state", { ...d, get() { return d.get.call(this) + ""; } });
+		Object.defineProperty(history, "originalState", { ...d });
+		history.pushState("first", "");
+		const p = Object.getOwnPropertyDescriptor(PopStateEvent.prototype, "state");
+		history.state === history.originalState && typeof p.get === "function" && new PopStateEvent("popstate", { state: 1 }).state === 1 ? history.state : "wrong"`))
+	start := time.Now()
+	_, err := e.RunString(`function f() { return f() + 1; } f()`)
+	assert.Error(t, err)
+	assert.Less(t, time.Since(start), 2*time.Second)
+	e.Eval(`setTimeout(function g() { return g() + 1; }, 0)`) // reported
+	assert.Eventually(t, func() bool {
+		return strings.Contains(strings.Join(*logs, "\n"), "Maximum call stack size exceeded")
+	}, 2*time.Second, 10*time.Millisecond, "%v", *logs)
+}
+
+// TestNavigation tests the minimal Navigation API (window.navigation).
+func TestNavigation(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "https://example.com/page.html 1 s", run(t, e, `
+		navigation.updateCurrentEntry({ state: "s" });
+		[navigation.currentEntry.url, navigation.entries().length, navigation.currentEntry.getState()].join(" ")`))
+	assert.Empty(t, *logs)
+}
