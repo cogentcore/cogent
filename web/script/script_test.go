@@ -602,3 +602,53 @@ func TestPromisePolyfill(t *testing.T) {
 	assert.Eventually(t, func() bool { return run(t, e, `window.done`) == int64(2) }, 2*time.Second, 10*time.Millisecond, "%v", *logs)
 	assert.Empty(t, *logs)
 }
+
+// TestReadRunsNoScripts tests that what the page asks of the scripts when
+// it is read (whether elements have listeners, and the state of form
+// controls) runs no scripts of the page, as the constructors of custom
+// elements (which looped on BBC while the page was being read).
+func TestReadRunsNoScripts(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d" onclick="x()"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.made = 0; customElements.define("x-el", class extends HTMLElement { constructor() { super(); window.made++; } });`)
+	done := make(chan bool)
+	e.Post(func() {
+		d := findByID(e.Document(), "d")
+		el := &html.Node{Type: html.ElementNode, Data: "x-el"}
+		d.AppendChild(el) // as the page has it, not wrapped by the scripts
+		assert.True(t, e.HasListener(el, "click"), "the onclick of its parent")
+		assert.False(t, e.HasListener(el, "input"))
+		_, hasValue, _, _ := e.ControlState(el)
+		assert.False(t, hasValue)
+		close(done)
+	})
+	<-done
+	assert.Equal(t, int64(0), run(t, e, `window.made`))
+	assert.Empty(t, *logs)
+}
+
+// TestStopAfterTimeouts tests that the scripts of a page that keep running
+// too long (as BBC's, which queue microtasks without end) are stopped.
+func TestStopAfterTimeouts(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	var mu sync.Mutex
+	var logs []string
+	e, err := New(doc, Options{PageURL: "https://example.com/", TaskTimeout: 50 * time.Millisecond,
+		Log: func(level slog.Level, msg string) { mu.Lock(); logs = append(logs, msg); mu.Unlock() }})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	e.Eval(`setInterval(() => { for (;;) {} }, 1)`)
+	assert.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return strings.Contains(strings.Join(logs, "\n"), "were stopped")
+	}, 3*time.Second, 10*time.Millisecond)
+	_, err = e.RunString("1")
+	assert.Error(t, err, "the engine is closed")
+}

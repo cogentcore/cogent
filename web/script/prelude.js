@@ -2268,7 +2268,7 @@
 	// is not in its attributes: its value and checked state, or null
 	// for each that the user or scripts have not changed.
 	D.state = function (id) {
-		const el = wrap(id);
+		const el = wrappers.get(id); // no state without a wrapper (see hasListener)
 		if (!el) return [null, null];
 		return [values.has(el) ? values.get(el) : null, checks.has(el) ? checks.get(el) : null];
 	};
@@ -2282,13 +2282,19 @@
 
 	// hasListener returns whether the node of the given id or one that it
 	// is in (or the document or window) has a listener of the given type.
+	// It is called while the page is read (rendered): it runs no scripts of
+	// the page (as wrap could, which constructs custom elements).
 	D.hasListener = function (id, type) {
-		for (let t = wrap(id); t; t = parentTarget(t)) {
+		const has = t => {
 			const m = listeners.get(t);
-			if (m && m[type] && m[type].length) return true;
-			if (handlerOf(t, type)) return true;
+			return !!(m && m[type] && m[type].length) || typeof t["_on" + type] === "function";
+		};
+		for (let n = id; n; n = D.parent(n)) {
+			const w = wrappers.get(n);
+			if (w && has(w)) return true;
+			if (D.type(n) === 1 && D.attr(n, "on" + type) !== null) return true;
 		}
-		return false;
+		return has(g);
 	};
 
 	// loaded sets the ready state of the document, and fires its events.

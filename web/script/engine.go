@@ -26,6 +26,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dop251/goja"
@@ -162,6 +163,7 @@ type Engine struct {
 	taskTimer *time.Timer
 	taskLeft  time.Duration
 	taskStart time.Time
+	timeouts  int // the number of tasks interrupted for running too long
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -312,7 +314,9 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	}
 	e.taskLeft = e.opts.TaskTimeout
 	e.taskStart = time.Now()
+	var timedOut atomic.Bool
 	timer := time.AfterFunc(e.opts.TaskTimeout, func() {
+		timedOut.Store(true)
 		e.vm.Interrupt(fmt.Errorf("a script ran for more than %v", e.opts.TaskTimeout))
 	})
 	e.taskTimer = timer
@@ -329,7 +333,20 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	e.inTask = false
 	timer.Stop()
 	e.vm.ClearInterrupt()
+	if timedOut.Load() {
+		e.timeouts++
+		if e.timeouts >= maxTimeouts {
+			e.logf(slog.LevelError, "the scripts of the page were stopped, as they ran for too long %d times", e.timeouts)
+			go e.Close() // the page stays as it is
+		}
+	}
 }
+
+// maxTimeouts is the number of times that the tasks of a page can be
+// interrupted for running too long (TaskTimeout) before its scripts are
+// stopped, as browsers stop pages that do not respond, rather than use a
+// processor for as long as the page is open.
+const maxTimeouts = 3
 
 // renderInterval is the shortest time between the renders of a page at
 // the end of tasks, which renders that are needed sooner wait for (as for
