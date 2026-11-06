@@ -179,6 +179,22 @@ func TestScriptsLayout(t *testing.T) {
 	})
 }
 
+// TestScriptsComputedStyle tests that the computed styles of scripts have
+// the values of the style sheets of the page (as the text-align that
+// github.com copies to the lines of its heading), as browsers report them.
+func TestScriptsComputedStyle(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>:root{--accent: #0f0} h1{text-align:center;color:#0000ff;font-size:32px} .faded{color:rgba(255,0,0,0.5)}</style></head>` +
+			`<body><h1 id="h">Heading <span id="s">x</span></h1><p id="p" class="faded">p</p></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		v, err := pg.scripts.engine.RunString(`const h = getComputedStyle(document.getElementById("h")), s = getComputedStyle(document.getElementById("s")), p = getComputedStyle(document.getElementById("p"));
+			[h.textAlign, h.color, s.textAlign, s.color, h.fontSize, s.getPropertyValue("--accent"), p.color, p.textAlign, p.backgroundColor].join(";")`)
+		assert.NoError(t, err)
+		assert.Equal(t, "center;rgb(0, 0, 255);center;rgb(0, 0, 255);32px;#0f0;rgba(255, 0, 0, 0.5);;", v)
+	})
+}
+
 // TestScriptsOff tests that the scripts of pages do not run when the
 // scripts are turned off, and that noscript content is then shown.
 func TestScriptsOff(t *testing.T) {

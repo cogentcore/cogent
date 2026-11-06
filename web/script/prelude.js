@@ -1406,14 +1406,18 @@
 	defineHandlers(MediaQueryList.prototype);
 
 	// getComputedStyle returns an approximation of the computed style:
-	// the inline style, with the display of an element that has no box.
+	// the inline style, or the value of the style sheets of the page (as
+	// last read), with the display of an element that has no box.
 	function getComputedStyle(el) {
 		const inline = el && el.style ? el.style : null;
 		const get = p => {
 			p = camelToKebab(String(p));
 			const v = inline ? inline.getPropertyValue(p) : "";
 			if (v) return v.replace(/\s*!important$/, "");
+			const cv = el && el[ID] ? D.computed(el[ID], p) : "";
+			if (cv && p !== "display") return cv;
 			const box = el ? D.rect(el[ID]) : null;
+			if (cv && box) return cv; // display
 			switch (p) {
 				case "display": return box ? (el.matches("span, a, b, i, em, strong, code, img, label, small, sup, sub, abbr") ? "inline" : "block") : "none";
 				case "visibility": return "visible";

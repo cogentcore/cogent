@@ -76,6 +76,13 @@ type Options struct {
 	// with the lock held.
 	Layout func(n *html.Node) (x, y, w, h float32, ok bool)
 
+	// ComputedStyle, if set, returns the computed value of the given CSS
+	// property of the given element, as browsers report it (as colors as
+	// rgb()), from the style sheets of the page as it was last read (not
+	// its inline style, which scripts have), or "" if it is unknown.
+	// It is called with the lock held.
+	ComputedStyle func(n *html.Node, prop string) string
+
 	// Viewport, if set, returns the width and height of the viewport
 	// in CSS px (as for innerWidth).
 	Viewport func() (w, h float32)

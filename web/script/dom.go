@@ -476,6 +476,13 @@ func (e *Engine) defineDOM() {
 		}
 		return id(found)
 	})
+	set("computed", func(call goja.FunctionCall) goja.Value {
+		n := node(arg(call, 0))
+		if n == nil || e.opts.ComputedStyle == nil {
+			return vm.ToValue("")
+		}
+		return vm.ToValue(e.opts.ComputedStyle(n, str(call, 1)))
+	})
 	set("rect", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil || e.opts.Layout == nil {

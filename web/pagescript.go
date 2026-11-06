@@ -8,12 +8,15 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"math"
 	neturl "net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"cogentcore.org/cogent/web/script"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -88,18 +91,19 @@ type pageScripts struct {
 func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final string) (*pageScripts, error) {
 	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth}
 	e, err := script.New(doc, script.Options{
-		PageURL:      final,
-		GetURL:       ctx.GetURL,
-		Render:       ps.render,
-		Layout:       ps.layout,
-		Viewport:     ps.viewport,
-		MediaMatches: func(q string) bool { return ps.context().MediaMatches(q) },
-		Navigate:     ps.navigate,
-		Submit:       ps.submit,
-		PushState:    ps.pushState,
-		Storage:      localStorage,
-		Cookies:      cookies,
-		Log:          ps.log,
+		PageURL:       final,
+		GetURL:        ctx.GetURL,
+		Render:        ps.render,
+		Layout:        ps.layout,
+		ComputedStyle: ps.computedStyle,
+		Viewport:      ps.viewport,
+		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
+		Navigate:      ps.navigate,
+		Submit:        ps.submit,
+		PushState:     ps.pushState,
+		Storage:       localStorage,
+		Cookies:       cookies,
+		Log:           ps.log,
 	})
 	if err != nil {
 		return nil, err
@@ -528,18 +532,7 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
 		return
 	}
-	if ps.widgets == nil {
-		ps.widgets = map[*html.Node]*core.WidgetBase{}
-		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-			if nd, ok := cwb.Property("node").(*html.Node); ok && nd != nil {
-				if _, has := ps.widgets[nd]; !has {
-					ps.widgets[nd] = cwb
-				}
-			}
-			return tree.Continue
-		})
-	}
-	wb := ps.widgets[n]
+	wb := ps.widgetOf(n)
 	if wb == nil {
 		return
 	}
@@ -557,6 +550,85 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 	pos := wb.Geom.Pos.Total.Sub(pg.Geom.Pos.Content)
 	size := wb.Geom.Size.Actual.Total
 	return pos.X / dp, pos.Y / dp, size.X / dp, size.Y / dp, true
+}
+
+// colorProperties are the CSS properties whose computed values are
+// colors, which browsers report as rgb() or rgba().
+var colorProperties = map[string]bool{
+	"color": true, "background-color": true, "border-color": true, "border-top-color": true,
+	"border-right-color": true, "border-bottom-color": true, "border-left-color": true,
+	"outline-color": true, "fill": true, "stroke": true, "text-decoration-color": true,
+	"caret-color": true, "column-rule-color": true, "stop-color": true,
+}
+
+// computedStyle returns the computed value of the given CSS property of the
+// given element, as browsers report it, from the style sheets of the page
+// as it was last read (see [script.Options.ComputedStyle]): colors as rgb()
+// (black for the default color), and font sizes in px, from its widget.
+func (ps *pageScripts) computedStyle(n *html.Node, prop string) string {
+	v := ps.context().ComputedValue(n, prop)
+	switch {
+	case prop == "font-size":
+		if wb := ps.widgetOf(n); wb != nil {
+			if dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 && wb.Styles.Font.Size.Dots > 0 {
+				return strconv.FormatFloat(float64(wb.Styles.Font.Size.Dots/dp), 'f', -1, 32) + "px"
+			}
+		}
+	case colorProperties[prop]:
+		if v == "" {
+			if prop != "color" {
+				return ""
+			}
+			v = "black"
+		}
+		return cssColor(v)
+	}
+	return v
+}
+
+// cssColor returns the given CSS color as browsers report computed colors:
+// rgb(r, g, b), or rgba(r, g, b, a) if it is not opaque, or the color
+// itself if it is not one that can be parsed (as a gradient).
+func cssColor(v string) string {
+	c, err := colors.FromString(v)
+	if err != nil {
+		return v
+	}
+	r, g, b, a := colors.AsRGBA(c).R, colors.AsRGBA(c).G, colors.AsRGBA(c).B, colors.AsRGBA(c).A
+	if a == 255 {
+		return fmt.Sprintf("rgb(%d, %d, %d)", r, g, b)
+	}
+	if a == 0 {
+		return "rgba(0, 0, 0, 0)"
+	}
+	// the colors are premultiplied by alpha
+	un := func(x uint8) int { return int(math32.Round(float32(x) * 255 / float32(a))) }
+	// the alpha with 2 decimals if they give the same 8 bit alpha, else 3, as Chrome does
+	af := math.Round(float64(a)/255*100) / 100
+	if uint8(math.Round(af*255)) != a {
+		af = math.Round(float64(a)/255*1000) / 1000
+	}
+	return fmt.Sprintf("rgba(%d, %d, %d, %s)", un(r), un(g), un(b), strconv.FormatFloat(af, 'f', -1, 64))
+}
+
+// widgetOf returns the widget of the given element, if it has one.
+func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
+	pg := ps.pg
+	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
+		return nil
+	}
+	if ps.widgets == nil {
+		ps.widgets = map[*html.Node]*core.WidgetBase{}
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if nd, ok := cwb.Property("node").(*html.Node); ok && nd != nil {
+				if _, has := ps.widgets[nd]; !has {
+					ps.widgets[nd] = cwb
+				}
+			}
+			return tree.Continue
+		})
+	}
+	return ps.widgets[n]
 }
 
 // openScripts opens the given page (gotten with the given context from
