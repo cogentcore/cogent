@@ -13,13 +13,13 @@ require (
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
+	github.com/dop251/goja v0.0.0-20261107161106-d6eaa50db8bc
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
 	github.com/emersion/go-message v0.18.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
 	github.com/emersion/go-smtp v0.21.1
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
-	github.com/grafana/sobek v0.0.0-20261105103427-a5b602015248
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sgtdi/fswatcher v1.3.0
@@ -110,5 +110,3 @@ require (
 	golang.org/x/tools v0.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/grafana/sobek => github.com/cogentcore/sobek v0.0.0-20261108122101-017eee4c9c4d

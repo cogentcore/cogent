@@ -13,7 +13,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 )
 
-// unsupported are the features of JavaScript that sobek does not support,
+// unsupported are the features of JavaScript that goja does not support,
 // which esbuild rewrites in terms of others.
 var unsupported = map[string]bool{
 	"async-generator": false,
@@ -23,7 +23,7 @@ var unsupported = map[string]bool{
 }
 
 // bundleModule returns the given module script (with the given name, its
-// URL if external) as a classic script that sobek can run: esbuild bundles
+// URL if external) as a classic script that goja can run: esbuild bundles
 // it with the modules that it imports (gotten with GetURL, relative to the
 // module that imports them), as a function that is called at once.
 func (e *Engine) bundleModule(code, name string) (string, error) {
@@ -103,7 +103,7 @@ func (e *Engine) bundle(code, name, global string) (string, error) {
 var moduleSyntax = regexp.MustCompile(`(?m)^\s*(import\s*[\w{*'"]|export\s+(default|const|let|var|function|class|async|\{|\*))`)
 
 // dynamicImport matches the dynamic imports of scripts (import(...)),
-// which sobek does not support, but not import.meta or method calls.
+// which goja does not support, but not import.meta or method calls.
 var dynamicImport = regexp.MustCompile(`(^|[^.\w$])import\s*\(`)
 
 // importMetaURL matches import.meta.url, which is the URL of each module.
@@ -177,7 +177,7 @@ func quoteJS(s string) string {
 }
 
 // lower returns the given classic script with the features of JavaScript
-// that sobek does not support rewritten (as when it does not compile).
+// that goja does not support rewritten (as when it does not compile).
 func lower(code, name string) (string, error) {
 	res := api.Transform(code, api.TransformOptions{
 		Sourcefile: name,

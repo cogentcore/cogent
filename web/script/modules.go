@@ -15,7 +15,7 @@ import (
 )
 
 // The modules of a page are each transformed by esbuild into a function
-// in the CommonJS format (which sobek runs), and defined once in the
+// in the CommonJS format (which goja runs), and defined once in the
 // registry of the prelude (__defineModule) by URL, with the URLs of the
 // modules that it imports. A module is evaluated when it is first
 // imported (required), so that the modules that the module scripts of a

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/andybalholm/cascadia"
-	"github.com/grafana/sobek"
+	"github.com/dop251/goja"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
@@ -109,14 +109,14 @@ func (e *Engine) defineDOM() {
 	vm := e.vm
 	d := e.jsDOM
 	ni := &e.nodes
-	node := func(v sobek.Value) *html.Node { return ni.node(int(v.ToInteger())) }
-	id := func(n *html.Node) sobek.Value { return vm.ToValue(ni.id(n)) }
-	set := func(name string, f func(call sobek.FunctionCall) sobek.Value) {
+	node := func(v goja.Value) *html.Node { return ni.node(int(v.ToInteger())) }
+	id := func(n *html.Node) goja.Value { return vm.ToValue(ni.id(n)) }
+	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
 		d.Set(name, f)
 	}
-	arg := func(call sobek.FunctionCall, i int) sobek.Value { return call.Argument(i) }
-	str := func(call sobek.FunctionCall, i int) string { return call.Argument(i).String() }
-	syntaxError := func(msg string) *sobek.Object {
+	arg := func(call goja.FunctionCall, i int) goja.Value { return call.Argument(i) }
+	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
+	syntaxError := func(msg string) *goja.Object {
 		return vm.NewGoError(&domException{name: "SyntaxError", msg: msg})
 	}
 	compile := func(sel string) cascadia.Matcher {
@@ -134,8 +134,8 @@ func (e *Engine) defineDOM() {
 		return g
 	}
 
-	set("doc", func(call sobek.FunctionCall) sobek.Value { return id(e.doc) })
-	set("type", func(call sobek.FunctionCall) sobek.Value {
+	set("doc", func(call goja.FunctionCall) goja.Value { return id(e.doc) })
+	set("type", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue(0)
@@ -159,7 +159,7 @@ func (e *Engine) defineDOM() {
 	})
 	// ns returns the namespace of the element ("svg" or "math" for foreign
 	// elements, otherwise "").
-	set("ns", func(call sobek.FunctionCall) sobek.Value {
+	set("ns", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue("")
@@ -175,15 +175,15 @@ func (e *Engine) defineDOM() {
 		}
 		return strings.ToLower(name)
 	}
-	set("name", func(call sobek.FunctionCall) sobek.Value {
+	set("name", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue("")
 		}
 		return vm.ToValue(n.Data)
 	})
-	rel := func(f func(n *html.Node) *html.Node) func(call sobek.FunctionCall) sobek.Value {
-		return func(call sobek.FunctionCall) sobek.Value {
+	rel := func(f func(n *html.Node) *html.Node) func(call goja.FunctionCall) goja.Value {
+		return func(call goja.FunctionCall) goja.Value {
 			n := node(arg(call, 0))
 			if n == nil {
 				return vm.ToValue(0)
@@ -196,7 +196,7 @@ func (e *Engine) defineDOM() {
 	set("last", rel(func(n *html.Node) *html.Node { return n.LastChild }))
 	set("next", rel(func(n *html.Node) *html.Node { return n.NextSibling }))
 	set("prev", rel(func(n *html.Node) *html.Node { return n.PrevSibling }))
-	set("children", func(call sobek.FunctionCall) sobek.Value {
+	set("children", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		var ids []any
 		if n != nil {
@@ -206,10 +206,10 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(ids...)
 	})
-	set("attr", func(call sobek.FunctionCall) sobek.Value {
+	set("attr", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
-			return sobek.Null()
+			return goja.Null()
 		}
 		name := attrName(n, str(call, 1))
 		for _, a := range n.Attr {
@@ -217,12 +217,12 @@ func (e *Engine) defineDOM() {
 				return vm.ToValue(a.Val)
 			}
 		}
-		return sobek.Null()
+		return goja.Null()
 	})
-	set("setAttr", func(call sobek.FunctionCall) sobek.Value {
+	set("setAttr", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		name, val := attrName(n, str(call, 1)), str(call, 2)
 		for i, a := range n.Attr {
@@ -231,17 +231,17 @@ func (e *Engine) defineDOM() {
 					n.Attr[i].Val = val
 					e.changed(n)
 				}
-				return sobek.Undefined()
+				return goja.Undefined()
 			}
 		}
 		n.Attr = append(n.Attr, html.Attribute{Key: name, Val: val})
 		e.changed(n)
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("removeAttr", func(call sobek.FunctionCall) sobek.Value {
+	set("removeAttr", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		name := attrName(n, str(call, 1))
 		for i, a := range n.Attr {
@@ -251,9 +251,9 @@ func (e *Engine) defineDOM() {
 				break
 			}
 		}
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("attrs", func(call sobek.FunctionCall) sobek.Value {
+	set("attrs", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		var kv []any
 		if n != nil {
@@ -263,14 +263,14 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(kv...)
 	})
-	set("data", func(call sobek.FunctionCall) sobek.Value {
+	set("data", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue("")
 		}
 		return vm.ToValue(n.Data)
 	})
-	set("setData", func(call sobek.FunctionCall) sobek.Value {
+	set("setData", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n != nil && (n.Type == html.TextNode || n.Type == html.CommentNode) {
 			if s := str(call, 1); s != n.Data {
@@ -278,15 +278,15 @@ func (e *Engine) defineDOM() {
 				e.changed(n)
 			}
 		}
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("text", func(call sobek.FunctionCall) sobek.Value {
+	set("text", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(textContent(node(arg(call, 0))))
 	})
-	set("setText", func(call sobek.FunctionCall) sobek.Value {
+	set("setText", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		if n.Type == html.TextNode || n.Type == html.CommentNode {
 			n.Data = str(call, 1)
@@ -297,12 +297,12 @@ func (e *Engine) defineDOM() {
 			}
 		}
 		e.changed(n)
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
 	// create creates an element with the given name, in the given
 	// namespace ("svg" or "math", whose names keep their case, as
 	// linearGradient, or "" for HTML).
-	set("create", func(call sobek.FunctionCall) sobek.Value {
+	set("create", func(call goja.FunctionCall) goja.Value {
 		tag, ns := str(call, 0), str(call, 1)
 		if ns != "svg" && ns != "math" {
 			ns = ""
@@ -310,19 +310,19 @@ func (e *Engine) defineDOM() {
 		}
 		return id(&html.Node{Type: html.ElementNode, Data: tag, Namespace: ns, DataAtom: atom.Lookup([]byte(strings.ToLower(tag)))})
 	})
-	set("createText", func(call sobek.FunctionCall) sobek.Value {
+	set("createText", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.TextNode, Data: str(call, 0)})
 	})
-	set("createComment", func(call sobek.FunctionCall) sobek.Value {
+	set("createComment", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.CommentNode, Data: str(call, 0)})
 	})
-	set("createFragment", func(call sobek.FunctionCall) sobek.Value {
+	set("createFragment", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.DocumentNode, Data: fragmentData})
 	})
-	set("insert", func(call sobek.FunctionCall) sobek.Value {
+	set("insert", func(call goja.FunctionCall) goja.Value {
 		parent, child, before := node(arg(call, 0)), node(arg(call, 1)), node(arg(call, 2))
 		if parent == nil || child == nil {
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		if before != nil && before.Parent != parent {
 			panic(vm.NewGoError(&domException{name: "NotFoundError", msg: "the node before which to insert is not a child of this node"}))
@@ -354,24 +354,24 @@ func (e *Engine) defineDOM() {
 		for _, k := range kids {
 			e.runInserted(k)
 		}
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("remove", func(call sobek.FunctionCall) sobek.Value {
+	set("remove", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n != nil && n.Parent != nil {
 			e.changed(n.Parent)
 			n.Parent.RemoveChild(n)
 		}
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("clone", func(call sobek.FunctionCall) sobek.Value {
+	set("clone", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue(0)
 		}
 		return id(cloneNode(n, arg(call, 1).ToBoolean()))
 	})
-	set("inner", func(call sobek.FunctionCall) sobek.Value {
+	set("inner", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		var b bytes.Buffer
 		if n != nil {
@@ -379,7 +379,7 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(b.String())
 	})
-	set("outer", func(call sobek.FunctionCall) sobek.Value {
+	set("outer", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		var b bytes.Buffer
 		if n != nil {
@@ -387,10 +387,10 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(b.String())
 	})
-	set("setInner", func(call sobek.FunctionCall) sobek.Value {
+	set("setInner", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		kids := e.parseFragment(str(call, 1), n)
 		removeChildren(n)
@@ -398,11 +398,11 @@ func (e *Engine) defineDOM() {
 			n.AppendChild(k)
 		}
 		e.changed(n)
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
 	// parse parses the given HTML in the context of the given element,
 	// into a new fragment, whose id it returns.
-	set("parse", func(call sobek.FunctionCall) sobek.Value {
+	set("parse", func(call goja.FunctionCall) goja.Value {
 		ctx := node(arg(call, 1))
 		frag := &html.Node{Type: html.DocumentNode, Data: fragmentData}
 		for _, k := range e.parseFragment(str(call, 0), ctx) {
@@ -410,14 +410,14 @@ func (e *Engine) defineDOM() {
 		}
 		return id(frag)
 	})
-	set("parseDocument", func(call sobek.FunctionCall) sobek.Value {
+	set("parseDocument", func(call goja.FunctionCall) goja.Value {
 		doc, err := html.Parse(strings.NewReader(str(call, 0)))
 		if err != nil {
 			return vm.ToValue(0)
 		}
 		return id(doc)
 	})
-	set("query", func(call sobek.FunctionCall) sobek.Value {
+	set("query", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil {
 			return vm.ToValue(0)
@@ -434,7 +434,7 @@ func (e *Engine) defineDOM() {
 		})
 		return id(found)
 	})
-	set("queryAll", func(call sobek.FunctionCall) sobek.Value {
+	set("queryAll", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		var ids []any
 		if n != nil {
@@ -449,7 +449,7 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(ids...)
 	})
-	set("matches", func(call sobek.FunctionCall) sobek.Value {
+	set("matches", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil || n.Type != html.ElementNode {
 			return vm.ToValue(false)
@@ -457,7 +457,7 @@ func (e *Engine) defineDOM() {
 		defer scoped(n)()
 		return vm.ToValue(compile(scopeSelector(str(call, 1), n)).Match(n))
 	})
-	set("byId", func(call sobek.FunctionCall) sobek.Value {
+	set("byId", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		want := str(call, 1)
 		var found *html.Node
@@ -476,17 +476,17 @@ func (e *Engine) defineDOM() {
 		}
 		return id(found)
 	})
-	set("computed", func(call sobek.FunctionCall) sobek.Value {
+	set("computed", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil || e.opts.ComputedStyle == nil {
 			return vm.ToValue("")
 		}
 		return vm.ToValue(e.opts.ComputedStyle(n, str(call, 1)))
 	})
-	set("rect", func(call sobek.FunctionCall) sobek.Value {
+	set("rect", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil || e.opts.Layout == nil {
-			return sobek.Null()
+			return goja.Null()
 		}
 		// The page is rendered first if the element may have changed
 		// (and otherwise its box as last rendered is current), as
@@ -500,24 +500,24 @@ func (e *Engine) defineDOM() {
 			x, y, w, h, ok = e.opts.Layout(n)
 		}
 		if !ok {
-			return sobek.Null()
+			return goja.Null()
 		}
 		return vm.NewArray(x, y, w, h)
 	})
-	set("viewport", func(call sobek.FunctionCall) sobek.Value {
+	set("viewport", func(call goja.FunctionCall) goja.Value {
 		w, h := float32(1024), float32(768)
 		if e.opts.Viewport != nil {
 			w, h = e.opts.Viewport()
 		}
 		return vm.NewArray(w, h)
 	})
-	set("mediaMatches", func(call sobek.FunctionCall) sobek.Value {
+	set("mediaMatches", func(call goja.FunctionCall) goja.Value {
 		if e.opts.MediaMatches == nil {
 			return vm.ToValue(false)
 		}
 		return vm.ToValue(e.opts.MediaMatches(str(call, 0)))
 	})
-	set("log", func(call sobek.FunctionCall) sobek.Value {
+	set("log", func(call goja.FunctionCall) goja.Value {
 		level := slog.LevelInfo
 		switch str(call, 0) {
 		case "error":
@@ -528,16 +528,16 @@ func (e *Engine) defineDOM() {
 			level = slog.LevelDebug
 		}
 		e.logf(level, "%s", str(call, 1))
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("setTimer", func(call sobek.FunctionCall) sobek.Value {
+	set("setTimer", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(e.setTimer(arg(call, 0).ToFloat(), arg(call, 1).ToBoolean()))
 	})
-	set("clearTimer", func(call sobek.FunctionCall) sobek.Value {
+	set("clearTimer", func(call goja.FunctionCall) goja.Value {
 		e.clearTimer(int(arg(call, 0).ToInteger()))
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("btoa", func(call sobek.FunctionCall) sobek.Value {
+	set("btoa", func(call goja.FunctionCall) goja.Value {
 		s := str(call, 0)
 		b := make([]byte, 0, len(s))
 		for _, r := range s {
@@ -548,7 +548,7 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(base64.StdEncoding.EncodeToString(b))
 	})
-	set("atob", func(call sobek.FunctionCall) sobek.Value {
+	set("atob", func(call goja.FunctionCall) goja.Value {
 		s := strings.Map(func(r rune) rune {
 			if r == ' ' || r == '\n' || r == '\t' || r == '\r' || r == '\f' {
 				return -1
@@ -570,7 +570,7 @@ func (e *Engine) defineDOM() {
 	// given URL of the importing script, or the page if "") bundled with the modules that it imports, in another goroutine,
 	// and then runs it and calls the callback of the given id with its
 	// exports (or null and an error).
-	set("importModule", func(call sobek.FunctionCall) sobek.Value {
+	set("importModule", func(call goja.FunctionCall) goja.Value {
 		cb := int(arg(call, 0).ToInteger())
 		base := str(call, 2)
 		if base == "" {
@@ -579,7 +579,7 @@ func (e *Engine) defineDOM() {
 		u, err := e.resolveModule(str(call, 1), base)
 		if err != nil {
 			e.callBack(cb, nil, err.Error())
-			return sobek.Undefined()
+			return goja.Undefined()
 		}
 		go func() {
 			var defs []moduleDef
@@ -595,33 +595,33 @@ func (e *Engine) defineDOM() {
 				e.defineModules(defs)
 				// the module is evaluated by the callback (requireModule),
 				// so that its errors reject the import
-				_, err := e.callback(sobek.Undefined(), vm.ToValue(cb), vm.ToValue(u), sobek.Null())
+				_, err := e.callback(goja.Undefined(), vm.ToValue(cb), vm.ToValue(u), goja.Null())
 				e.reportError(err)
 			})
 		}()
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
 	// lower returns the given code rewritten without the features of
-	// JavaScript that sobek does not support, or null if it is not valid.
-	set("lower", func(call sobek.FunctionCall) sobek.Value {
+	// JavaScript that goja does not support, or null if it is not valid.
+	set("lower", func(call goja.FunctionCall) goja.Value {
 		code, err := lower(str(call, 0), "Function")
 		if err != nil {
-			return sobek.Null()
+			return goja.Null()
 		}
 		return vm.ToValue(strings.TrimRight(strings.TrimSpace(code), ";"))
 	})
 	// listenerAdded records that a listener for events for which the
 	// widgets are set up (as clicks) was added to the given node, so that
 	// the page is rendered again.
-	set("listenerAdded", func(call sobek.FunctionCall) sobek.Value {
+	set("listenerAdded", func(call goja.FunctionCall) goja.Value {
 		e.changed(node(arg(call, 0)))
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
-	set("currentScript", func(call sobek.FunctionCall) sobek.Value { return id(e.current) })
-	set("loading", func(call sobek.FunctionCall) sobek.Value { return vm.ToValue(e.loading) })
-	set("write", func(call sobek.FunctionCall) sobek.Value {
+	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })
+	set("loading", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.loading) })
+	set("write", func(call goja.FunctionCall) goja.Value {
 		e.write(str(call, 0))
-		return sobek.Undefined()
+		return goja.Undefined()
 	})
 	e.defineNet()
 }
