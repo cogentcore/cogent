@@ -488,3 +488,44 @@ func TestScriptsClickInLink(t *testing.T) {
 		})
 	}
 }
+
+// TestScriptsCheckedMenu tests a menu that CSS shows when a hidden
+// checkbox is checked (as the menus of Wikipedia): checking it shows the
+// menu (the page is read again for the :checked selector), and a click on
+// text outside of it goes to a listener of the document, which unchecks it.
+func TestScriptsCheckedMenu(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>.menu { display: none } .cb:checked ~ .menu { display: block }</style></head><body>
+			<div><input type="checkbox" class="cb" id="cb"><div class="menu"><p>Menu item</p></div></div>
+			<p>Outside text</p>
+			<script>
+				document.addEventListener("click", e => {
+					if (e.target.id !== "cb") document.getElementById("cb").checked = false;
+				});
+			</script></body></html>`,
+	})
+	// send sends a click to the first widget that the given function selects
+	send := func(sel func(w core.Widget) bool) {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var target core.Widget
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if target == nil && sel(cw) {
+				target = cw
+			}
+			return tree.Continue
+		})
+		if assert.NotNil(t, target) {
+			target.AsWidget().Send(events.Click)
+		}
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.NotContains(t, pageTexts(b, pg), "Menu item")
+		send(func(w core.Widget) bool { _, ok := w.(*core.Switch); return ok })
+	}, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "Menu item") }), pageTexts(b, pg))
+		send(func(w core.Widget) bool { tx, ok := w.(*core.Text); return ok && strings.Contains(tx.Text, "Outside") })
+	}, func() {
+		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "Menu item") }), pageTexts(b, pg))
+	})
+}

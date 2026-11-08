@@ -140,6 +140,12 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.ImageCache = ps.base.ImageCache
 	ctx.MediaWidth = ps.width
 	ctx.OpenURL = ps.openURL
+	ctx.Checked = func(n *html.Node) bool { // the state from the user and the scripts
+		if _, _, checked, ok := ps.engine.ControlState(n); ok {
+			return checked
+		}
+		return htmlcore.HasAttr(n, "checked")
+	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
@@ -213,8 +219,26 @@ func (ps *pageScripts) render() func() {
 // handleWidget sets up the given widget of the page (as it is read) for
 // the events of its element: clicks for the elements that have listeners
 // for them (or are in elements that do), and the values of form controls.
+// handleTextClicks sends the clicks on the given text to the listeners of
+// the element that it is in (and of the elements that that is in, and the
+// document), as those that close the menus of Wikipedia on clicks outside
+// of them. Its links open as they do.
+func (ps *pageScripts) handleTextClicks(tx *core.Text) {
+	n := htmlcore.NodeOf(tx)
+	if n == nil || n.Type != html.ElementNode || !ps.engine.HasListener(n, "click") {
+		return
+	}
+	tx.OnClick(func(ev events.Event) {
+		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
+	})
+}
+
 func (ps *pageScripts) handleWidget(w core.Widget) {
 	wb := w.AsWidget()
+	if tx, ok := w.(*core.Text); ok {
+		ps.handleTextClicks(tx)
+		return
+	}
 	n, ok := wb.Property("node").(*html.Node)
 	if !ok || n == nil || n.Type != html.ElementNode {
 		return
@@ -276,6 +300,9 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		x.OnChange(func(ev events.Event) {
 			checked := x.IsChecked()
 			e.Dispatch(n, "click", map[string]any{"checked": checked}, func(bool) {
+				// the page is read again, for the :checked selectors (as the
+				// CSS menus of Wikipedia, which show when a checkbox is checked)
+				e.Changed()
 				e.Dispatch(n, "input", nil, nil)
 				e.Dispatch(n, "change", nil, nil)
 			})
