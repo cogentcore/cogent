@@ -329,8 +329,11 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		}
 	})
 	wb.FinalStyler(func(s *styles.Style) {
-		if !own {
-			s.StateLayer = 0 // not highlighted, as it is only in an element with a listener
+		if !own && !s.Is(states.Hovered) {
+			// not highlighted when pressed, as it is only in an element with
+			// a listener, but it shows a hover that it has (as the label of
+			// a transparent checkbox over it, as the menus of Wikipedia)
+			s.StateLayer = 0
 		}
 	})
 	// a click in a link opens it, unless a listener prevents its default

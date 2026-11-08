@@ -529,3 +529,36 @@ func TestScriptsCheckedMenu(t *testing.T) {
 		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "Menu item") }), pageTexts(b, pg))
 	})
 }
+
+// TestScriptsTransparentControlHover tests that the label after a
+// transparent checkbox shows its hover in a page whose document has a
+// click listener (as the menu buttons of Wikipedia): the state layer of
+// the label, which is clickable for the listener, is kept when hovered.
+func TestScriptsTransparentControlHover(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div style="position: relative"><input type="checkbox" id="cb" style="opacity: 0; position: absolute">` +
+			`<label for="cb" id="lb" style="display: inline-block">Menu</label></div>` +
+			`<script>document.addEventListener("click", e => {});</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var sw *core.Switch
+		var label *core.WidgetBase
+		pg.WalkDown(func(n tree.Node) bool {
+			if s, ok := n.(*core.Switch); ok {
+				sw = s
+			}
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "lb" && label == nil {
+				label = wb
+			}
+			return tree.Continue
+		})
+		if !assert.NotNil(t, sw) || !assert.NotNil(t, label) {
+			return
+		}
+		sw.Send(events.MouseEnter)
+		label.Style()
+		assert.Greater(t, label.Styles.StateLayer, float32(0), "the hover of the label")
+	})
+}
