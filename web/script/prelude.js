@@ -24,6 +24,22 @@
 		Object.defineProperty(resolvedPromise, "constructor", { value: { [Symbol.species]: NativePromise } });
 	}
 
+	// WeakRef and FinalizationRegistry, which the engine does not have (the
+	// scripts of google.com use WeakRef): the references are strong, and
+	// the finalizers are never called.
+	if (typeof g.WeakRef === "undefined") {
+		g.WeakRef = class WeakRef {
+			constructor(target) { this._target = target; }
+			deref() { return this._target; }
+		};
+	}
+	if (typeof g.FinalizationRegistry === "undefined") {
+		g.FinalizationRegistry = class FinalizationRegistry {
+			register() {}
+			unregister() { return false; }
+		};
+	}
+
 	// ---- wrapping nodes ----
 
 	const wrappers = new Map(); // id -> object

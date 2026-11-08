@@ -73,3 +73,14 @@ func TestArrowArguments(t *testing.T) {
 		f(1, 2) + ";" + g(1, 2, 3) + ";" + h(1, 5, 2)`))
 	assert.Empty(t, *logs)
 }
+
+// TestWeakRef tests WeakRef and FinalizationRegistry, which the engine does
+// not have (the scripts of google.com use WeakRef, without which they
+// stopped): a WeakRef derefs to its target.
+func TestWeakRef(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true,false", run(t, e, `const o = {}; const r = new WeakRef(o);
+		const f = new FinalizationRegistry(() => {}); f.register(o, 1);
+		[r.deref() === o, f.unregister(o)].join()`))
+	assert.Empty(t, *logs)
+}
