@@ -15,6 +15,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
@@ -642,6 +643,50 @@ func TestScriptsSummaryClickStopped(t *testing.T) {
 		defer b.AsyncUnlock()
 		if p := find("Anchor positioning"); assert.NotNil(t, p) {
 			assert.True(t, shown(p), "opened in place")
+		}
+	})
+}
+
+// TestScriptsScrollKept tests that an element that scrolls keeps its
+// scroll position when the page is read again after a change by the
+// scripts (as the sidebar of MDN, which scrolled to its top when an item
+// in it opened).
+func TestScriptsScrollKept(t *testing.T) {
+	items := strings.Repeat(`<p style="height: 40px">item</p>`, 30)
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="side" style="height: 200px; overflow: auto">` + items +
+			`<details id="d"><summary><span>Modules</span></summary><p>Anchor positioning</p></details>` + items + `</div>` +
+			`<script>document.addEventListener("click", e => {});</script></body></html>`,
+	})
+	side := func() *core.Frame {
+		var fr *core.Frame
+		pg.WalkDown(func(n tree.Node) bool {
+			if f := core.AsFrame(n); f != nil && f.Property("id") == "side" {
+				fr = f
+			}
+			return tree.Continue
+		})
+		return fr
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		fr := side()
+		if assert.NotNil(t, fr) && assert.True(t, fr.HasScroll[math32.Y]) {
+			fr.Geom.Scroll.Y = -600
+			fr.ScrollUpdateFromGeom(math32.Y)
+		}
+		b.AsyncUnlock()
+		pg.scripts.engine.RunString(`document.getElementById("d").open = true`)
+	}, func() {
+		settle(pg)
+		time.Sleep(300 * time.Millisecond)
+	}, func() {
+		v, _ := pg.scripts.engine.RunString(`document.getElementById("d").open`)
+		assert.Equal(t, true, v)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		if fr := side(); assert.NotNil(t, fr) {
+			assert.InDelta(t, -600, fr.Geom.Scroll.Y, 2, "kept its scroll")
 		}
 	})
 }

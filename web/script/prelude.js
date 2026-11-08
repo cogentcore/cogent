@@ -2527,8 +2527,29 @@
 			else checks.set(t, !!init.checked);
 		}
 		t.dispatchEvent(ev);
+		if (type === "click" && !ev.defaultPrevented) summaryActivation(t);
 		return ev.defaultPrevented;
 	};
+
+	// summaryActivation does the default action of a click on the given
+	// target in a summary (not in a link or control in it): it toggles the
+	// details of the summary, as in browsers, once, unless a listener
+	// prevented the default of the click (as the sidebar of MDN).
+	function summaryActivation(t) {
+		for (let n = t; n && n.nodeType === 1; n = n.parentNode) {
+			const tag = n.localName;
+			if (tag === "a" || tag === "button" || tag === "input" || tag === "select" || tag === "textarea" || tag === "label") return;
+			if (tag === "summary") {
+				const d = n.parentNode;
+				if (d && d.localName === "details" && d.querySelector(":scope > summary") === n) {
+					d.open = !d.open;
+					Promise.resolve().then(() => d.dispatchEvent(new Event("toggle")));
+				}
+				return;
+			}
+			if (tag === "details") return;
+		}
+	}
 
 	// activate does the default action of the element of the given id
 	// after a click on it that was not prevented (as submitting its form

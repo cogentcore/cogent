@@ -153,7 +153,14 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		if ps.engine.Closed() { // in place, as the scripts were stopped
 			return false
 		}
-		ps.engine.ToggleDetails(n)
+		// the click on the summary is dispatched to the scripts, whose
+		// default action toggles the details (once, unless prevented)
+		for k := n.FirstChild; k != nil; k = k.NextSibling {
+			if k.Type == html.ElementNode && k.Data == "summary" {
+				ps.engine.Dispatch(k, "click", nil, nil)
+				break
+			}
+		}
 		return true
 	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
@@ -198,19 +205,36 @@ func (ps *pageScripts) render() func() {
 		if pg.media != nil {
 			pg.media.ctx = ctx
 		}
-		// the element that has the focus keeps it in the new widgets
+		// the element that has the focus keeps it in the new widgets, and
+		// the elements that scroll keep their scroll positions (as the
+		// sidebar of MDN, which scrolled to its top when an item opened)
 		var focused *html.Node
+		scrolls := map[*html.Node]math32.Vector2{}
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if cwb.StateIs(states.Focused) {
 				focused = htmlcore.NodeOf(cw)
-				return tree.Break
+			}
+			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
+				if n := htmlcore.NodeOf(cw); n != nil {
+					scrolls[n] = fr.Geom.Scroll
+				}
 			}
 			return tree.Continue
 		})
+		pageScroll := pg.Geom.Scroll
 		pg.Title = ctx.Title
 		pg.DeleteChildren()
 		pg.AddChild(content)
 		pg.Update()
+		content.Defer(func() {
+			restoreScrolls(content, scrolls)
+			for d := math32.X; d <= math32.Y; d++ {
+				if pg.HasScroll[d] && pg.Geom.Scroll.Dim(d) != pageScroll.Dim(d) {
+					pg.Geom.Scroll.SetDim(d, pageScroll.Dim(d))
+					pg.ScrollUpdateFromGeom(d)
+				}
+			}
+		})
 		if focused != nil {
 			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 				if n, ok := cwb.Property("node").(*html.Node); ok && n == focused {
@@ -251,14 +275,31 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 			}
 			return
 		}
-		ps.engine.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
-			// a click on the text of a summary toggles its details, as
-			// the text gets the click instead of the summary (the items of
-			// the sidebar of MDN, whose texts are in spans)
-			if details != nil && !prevented {
-				ps.engine.ToggleDetails(details)
+		// (the default action of a click on the text of a summary, which
+		// gets the click instead of it, toggles its details in the scripts)
+		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
+	})
+}
+
+// restoreScrolls restores the given scroll positions of the elements that
+// scroll in the given content (read again), after its layout.
+func restoreScrolls(content *core.Frame, scrolls map[*html.Node]math32.Vector2) {
+	content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		fr := core.AsFrame(cw)
+		if fr == nil {
+			return tree.Continue
+		}
+		pos, ok := scrolls[htmlcore.NodeOf(cw)]
+		if !ok {
+			return tree.Continue
+		}
+		for d := math32.X; d <= math32.Y; d++ {
+			if fr.HasScroll[d] {
+				fr.Geom.Scroll.SetDim(d, pos.Dim(d))
+				fr.ScrollUpdateFromGeom(d)
 			}
-		})
+		}
+		return tree.Continue
 	})
 }
 
@@ -290,6 +331,11 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	}
 	n, ok := wb.Property("node").(*html.Node)
 	if !ok || n == nil || n.Type != html.ElementNode {
+		return
+	}
+	if htmlcore.PseudoElement(n) != "" {
+		// the clicks on a pseudo-element are those of its element (as the
+		// chevrons of the sidebar of MDN, which took the clicks)
 		return
 	}
 	e := ps.engine
@@ -367,8 +413,10 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	default:
 		return
 	}
-	if n.Data == "a" || !e.HasListener(n, "click") {
-		return // links open through openURL
+	if n.Data == "a" || n.Data == "summary" || !e.HasListener(n, "click") {
+		// links open through openURL, and summaries dispatch their clicks
+		// through Context.ToggleDetails (once)
+		return
 	}
 	own := hasOwnClickHandler(n)
 	wb.Styler(func(s *styles.Style) {
