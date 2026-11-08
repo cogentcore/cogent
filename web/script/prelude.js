@@ -357,13 +357,37 @@
 		}
 	}
 
+	// parentTarget returns the next target of an event after the given one:
+	// its parent, or the slot that it is assigned to when its parent has a
+	// shadow root, or the host of a shadow root, as events propagate in the
+	// composed tree in browsers (the menus of MDN open on clicks on their
+	// buttons, which their shadow roots listen to on their slots).
 	function parentTarget(t) {
 		if (t === g) return null;
 		if (t instanceof Node) {
 			const p = t.parentNode;
-			if (p) return p;
+			if (p) {
+				const sh = shadows.get(p);
+				if (sh) {
+					const slot = assignedSlot(sh.root, t);
+					if (slot) return slot;
+				}
+				return p;
+			}
 			if (t instanceof Document) return g;
+			const host = t[ID] !== undefined && shadowHosts.get(t[ID]);
+			if (host) return wrap(host);
 			return null;
+		}
+		return null;
+	}
+
+	// assignedSlot returns the slot of the given shadow root that the given
+	// child of its host is assigned to, if any.
+	function assignedSlot(root, child) {
+		const name = child.nodeType === 1 ? (child.getAttribute("slot") || "") : "";
+		for (const s of root.querySelectorAll("slot")) {
+			if ((s.getAttribute("name") || "") === name) return s;
 		}
 		return null;
 	}

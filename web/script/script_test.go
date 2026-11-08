@@ -777,3 +777,23 @@ func TestTemplateWalkSlots(t *testing.T) {
 	})
 	assert.Equal(t, [2]bool{false, false}, <-panel, "open")
 }
+
+// TestSlotEvents tests that an event on a child of a shadow host goes
+// through the slot of the shadow root that it is in, then the shadow root,
+// then the host (as the clicks on the menu buttons of MDN, whose shadow
+// roots listen on their slots to open the menus).
+func TestSlotEvents(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><menu-x id="m"><button slot="button" id="b">Open</button></menu-x></body></html>`, nil)
+	assert.Equal(t, "slot root host", run(t, e, `(() => {
+		const m = document.getElementById("m");
+		const sr = m.attachShadow({mode: "open"});
+		sr.innerHTML = '<div><slot name="button"></slot></div><slot name="dropdown"></slot>';
+		const got = [];
+		sr.querySelector("slot[name=button]").addEventListener("click", () => got.push("slot"));
+		sr.querySelector("slot[name=dropdown]").addEventListener("click", () => got.push("other slot"));
+		sr.addEventListener("click", () => got.push("root"));
+		m.addEventListener("click", () => got.push("host"));
+		document.getElementById("b").click();
+		return got.join(" ");
+	})()`))
+}

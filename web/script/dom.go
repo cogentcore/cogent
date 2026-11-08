@@ -57,6 +57,16 @@ const fragmentData = "#document-fragment"
 // changed records that the document has changed, so that the page is
 // rendered again at the end of the task.
 func (e *Engine) changed(n *html.Node) {
+	// a change in a shadow root (which is not rendered itself) is one of
+	// its host, as it can change which children of the host are rendered
+	// (as the slots of the menus of MDN, which open them)
+	for root := rootOf(n); root != nil && root != e.doc; root = rootOf(n) {
+		host := e.shadowHosts[root]
+		if host == nil {
+			break
+		}
+		n = host
+	}
 	if n == nil || connected(n, e.doc) {
 		e.dirty = true
 		if n != nil && len(e.changedNodes) < maxChangedNodes {
@@ -91,6 +101,17 @@ func contains(a, n *html.Node) bool {
 		}
 	}
 	return false
+}
+
+// rootOf returns the root of the tree that the given node is in, or nil.
+func rootOf(n *html.Node) *html.Node {
+	if n == nil {
+		return nil
+	}
+	for n.Parent != nil {
+		n = n.Parent
+	}
+	return n
 }
 
 // connected returns whether the given node is in the given document.
@@ -320,6 +341,7 @@ func (e *Engine) defineDOM() {
 	set("setShadow", func(call goja.FunctionCall) goja.Value {
 		if host, root := node(arg(call, 0)), node(arg(call, 1)); host != nil && root != nil {
 			e.shadowRoots[host] = root
+			e.shadowHosts[root] = host
 		}
 		return goja.Undefined()
 	})
