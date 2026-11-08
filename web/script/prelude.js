@@ -15,6 +15,14 @@
 	const Promise = g.Promise;
 	const promiseThen = Promise.prototype.then; // which core-js also replaces
 	const resolvedPromise = Promise.resolve();
+	// The native then makes its promise with the species of the constructor
+	// of the promise, which core-js sets to its polyfill, whose microtasks
+	// are queueMicrotask, which made another of its promises: a loop that
+	// stopped the scripts of bbc.com. This promise keeps the native one.
+	{
+		const NativePromise = Promise;
+		Object.defineProperty(resolvedPromise, "constructor", { value: { [Symbol.species]: NativePromise } });
+	}
 
 	// ---- wrapping nodes ----
 
@@ -874,6 +882,34 @@
 		Object.defineProperty(cls.prototype, "complete", { get() { return true; } });
 		Object.defineProperty(cls.prototype, "currentSrc", { get() { return this.src; } });
 		cls.prototype.decode = function () { return Promise.resolve(); };
+		// Images fire load (once for each source) for the scripts that wait
+		// for it, as the page loads them (as the photos of bbc.com, whose
+		// placeholders were removed only on it, and covered them).
+		const loadedSrc = new WeakMap(); // image -> the source it fired load for
+		const sourceOf = img => img.getAttribute("src") || img.getAttribute("srcset") || "";
+		const fireLoad = img => {
+			const src = sourceOf(img);
+			if (!src || loadedSrc.get(img) === src) return;
+			loadedSrc.set(img, src);
+			setTimeout(() => {
+				if (sourceOf(img) !== src) return; // another source since
+				const e = new Event("load");
+				e.isTrusted = true;
+				img.dispatchEvent(e);
+			}, 0);
+		};
+		const addListener = cls.prototype.addEventListener;
+		cls.prototype.addEventListener = function (type, ...rest) {
+			const r = addListener.call(this, type, ...rest);
+			if (type === "load") fireLoad(this);
+			return r;
+		};
+		const srcDesc = Object.getOwnPropertyDescriptor(cls.prototype, "src");
+		Object.defineProperty(cls.prototype, "src", {
+			get: srcDesc.get,
+			set(v) { srcDesc.set.call(this, v); fireLoad(this); }, // (as for img.onload = f; img.src = u)
+			configurable: true,
+		});
 	});
 	const HTMLScriptElement = elementClass(["script"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]);

@@ -864,3 +864,33 @@ func htmlAttr(n *html.Node, key string) string {
 	}
 	return ""
 }
+
+// TestImageLoad tests that images fire load for the scripts that wait for
+// it (as the photos of bbc.com, whose placeholders are removed on it).
+func TestImageLoad(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><img id="i" src="a.png"></body></html>`, nil)
+	run(t, e, `window.got = [];
+		document.getElementById("i").addEventListener("load", () => got.push("listener"));
+		const im = new Image(); im.onload = () => got.push("onload"); im.src = "b.png";`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got.slice().sort().join(" ")`)
+		return v == "listener onload"
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
+// TestMicrotasksWithPolyfill tests that queueMicrotask does not use a
+// Promise that replaces the native one (as the polyfill of core-js on
+// bbc.com, which makes its microtasks with queueMicrotask: a loop).
+func TestMicrotasksWithPolyfill(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.made = 0; window.ran = false;
+		const Native = Promise;
+		function Poly(exec) { made++; if (made > 1000) throw new Error("loop"); return new Native(exec); }
+		Poly.prototype = Native.prototype;
+		Native.prototype.constructor = Poly; // as core-js does
+		queueMicrotask(() => { ran = true; });`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`ran && made === 0`)
+		return v == true
+	}, 3*time.Second, 20*time.Millisecond)
+}
