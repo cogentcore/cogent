@@ -149,7 +149,13 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// the children of shadow hosts that are in no slot are not rendered
 	ctx.Unrendered = ps.engine.Unassigned
 	// details are toggled in the document, which is read again
-	ctx.ToggleDetails = ps.engine.ToggleDetails
+	ctx.ToggleDetails = func(n *html.Node) bool {
+		if ps.engine.Closed() { // in place, as the scripts were stopped
+			return false
+		}
+		ps.engine.ToggleDetails(n)
+		return true
+	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
@@ -234,6 +240,17 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	}
 	details := summaryDetails(n)
 	tx.OnClick(func(ev events.Event) {
+		if ps.engine.Closed() {
+			if details != nil { // the summary opens its details in place
+				for p := core.AsWidget(tx.Parent); p != nil; p = core.AsWidget(p.Parent) {
+					if pn := htmlcore.NodeOf(p.This.(core.Widget)); pn != nil && pn.Data == "summary" {
+						p.Send(events.Click, ev)
+						break
+					}
+				}
+			}
+			return
+		}
 		ps.engine.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
 			// a click on the text of a summary toggles its details, as
 			// the text gets the click instead of the summary (the items of

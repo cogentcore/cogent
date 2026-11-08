@@ -597,3 +597,51 @@ func TestScriptsSummaryTextClick(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond, "opened")
 	})
 }
+
+// TestScriptsSummaryClickStopped tests that a click on the text of a
+// summary opens its details in place when the scripts were stopped (as
+// after timeouts), as the document is not read again then.
+func TestScriptsSummaryClickStopped(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><details id="d"><summary><span id="s">Modules</span></summary><p>Anchor positioning</p></details>` +
+			`<script>document.addEventListener("click", e => {});</script></body></html>`,
+	})
+	find := func(s string) *core.Text {
+		var tx *core.Text
+		pg.WalkDown(func(n tree.Node) bool {
+			if t, ok := n.(*core.Text); ok && strings.Contains(t.Text, s) {
+				tx = t
+			}
+			return tree.Continue
+		})
+		return tx
+	}
+	shown := func(tx *core.Text) bool {
+		for w := tx.AsWidget(); w != nil; w = core.AsWidget(w.Parent) {
+			if w.Styles.Display == styles.DisplayNone {
+				return false
+			}
+		}
+		return true
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		pg.scripts.engine.Close()
+		b.AsyncLock()
+		text := find("Modules")
+		b.AsyncUnlock()
+		if !assert.NotNil(t, text) {
+			return
+		}
+		bb := text.Geom.TotalBBox
+		c := bb.Min.Add(bb.Size().Div(2))
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseButton(events.MouseDown, events.Left, c, 0)
+		ev.MouseButton(events.MouseUp, events.Left, c, 0)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		if p := find("Anchor positioning"); assert.NotNil(t, p) {
+			assert.True(t, shown(p), "opened in place")
+		}
+	})
+}
