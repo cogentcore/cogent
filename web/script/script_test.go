@@ -730,3 +730,50 @@ func TestStyleProperties(t *testing.T) {
 			["opacity" in d.style, "backgroundColor" in d.style, "--x" in d.style, "display" in cs, "WebkitTransform" in d.style, "webkitTransform" in d.style, "setProperty" in d.style].join(",")`))
 	assert.Empty(t, *logs)
 }
+
+// TestTemplateWalkSlots tests what Lit needs to render its templates (as
+// the menus of MDN): the content of a template is one fragment, a tree
+// walker walks from its currentNode (as that content, outside its root),
+// and the children of a shadow host that are in no slot (or in a hidden
+// one) are reported as unassigned, so they are not rendered.
+func TestTemplateWalkSlots(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><menu-x id="m"><button slot="button">Open</button><div slot="dropdown" id="panel">Panel</div></menu-x></body></html>`, nil)
+	assert.Equal(t, true, run(t, e, `(() => { const t = document.createElement("template"); t.innerHTML = "<p>a</p>"; return t.content === t.content && t.content.firstChild.nodeName === "P"; })()`))
+	assert.Equal(t, "SLOT:name|?hidden$lit$ SLOT:name", run(t, e, `(() => {
+		const t = document.createElement("template");
+		t.innerHTML = '<div><slot name="button" ?hidden$lit$="m"></slot></div><slot name="dropdown"></slot>';
+		const w = document.createTreeWalker(document, 1);
+		w.currentNode = t.content;
+		const out = [];
+		let n;
+		while ((n = w.nextNode()) !== null) {
+			if (n.nodeName === "SLOT") out.push(n.nodeName + ":" + n.getAttributeNames().join("|"));
+			if (n.hasAttribute("?hidden$lit$")) n.removeAttribute("?hidden$lit$");
+		}
+		return out.join(" ") + (t.content.querySelector("[name=button]").getAttributeNames().length === 1 ? "" : " kept");
+	})()`))
+	run(t, e, `document.getElementById("m").attachShadow({mode: "open"}).innerHTML = '<slot name="button"></slot><slot name="dropdown" hidden></slot>';`)
+	panel := make(chan [2]bool, 1)
+	e.Post(func() {
+		var button, p *html.Node
+		for n := range e.Document().Descendants() {
+			if n.Type == html.ElementNode && n.Data == "button" {
+				button = n
+			}
+			if n.Type == html.ElementNode && n.Data == "div" {
+				p = n
+			}
+		}
+		panel <- [2]bool{e.Unassigned(button), e.Unassigned(p)}
+	})
+	assert.Equal(t, [2]bool{false, true}, <-panel, "the panel is in a hidden slot")
+	run(t, e, `document.getElementById("m").shadowRoot.querySelector("[name=dropdown]").hidden = false;`)
+	e.Post(func() {
+		for n := range e.Document().Descendants() {
+			if n.Type == html.ElementNode && n.Data == "div" {
+				panel <- [2]bool{false, e.Unassigned(n)}
+			}
+		}
+	})
+	assert.Equal(t, [2]bool{false, false}, <-panel, "open")
+}

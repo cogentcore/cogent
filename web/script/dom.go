@@ -316,6 +316,13 @@ func (e *Engine) defineDOM() {
 	set("createComment", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.CommentNode, Data: str(call, 0)})
 	})
+	// setShadow records the shadow root (a fragment) of the given host.
+	set("setShadow", func(call goja.FunctionCall) goja.Value {
+		if host, root := node(arg(call, 0)), node(arg(call, 1)); host != nil && root != nil {
+			e.shadowRoots[host] = root
+		}
+		return goja.Undefined()
+	})
 	set("createFragment", func(call goja.FunctionCall) goja.Value {
 		return id(&html.Node{Type: html.DocumentNode, Data: fragmentData})
 	})
@@ -855,4 +862,62 @@ func escapeText(s string, attr bool) string {
 		}
 	}
 	return b.String()
+}
+
+// Unassigned returns whether the given element is a child of an element
+// with a shadow root that has no slot for it, so that it is not rendered,
+// as in browsers (as the closed dropdown panels of the menus of MDN, in a
+// slot of their shadow root only when they are open). Shadow roots are not
+// rendered themselves, so the children that they have slots for are
+// rendered in their place. It must be called in a task of the engine.
+func (e *Engine) Unassigned(n *html.Node) bool {
+	if n == nil || n.Type != html.ElementNode || n.Parent == nil {
+		return false
+	}
+	root := e.shadowRoots[n.Parent]
+	if root == nil {
+		return false
+	}
+	name := ""
+	for _, a := range n.Attr {
+		if a.Key == "slot" {
+			name = a.Val
+		}
+	}
+	return !hasSlot(root, name)
+}
+
+// hasSlot returns whether the given tree has a slot element of the given
+// name ("" for the default slot) that is not hidden (with its hidden
+// attribute, or in an element with it).
+func hasSlot(n *html.Node, name string) bool {
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		if k.Type != html.ElementNode {
+			continue
+		}
+		hidden := false
+		for _, a := range k.Attr {
+			if a.Key == "hidden" {
+				hidden = true
+			}
+		}
+		if hidden {
+			continue
+		}
+		if k.Data == "slot" {
+			sn := ""
+			for _, a := range k.Attr {
+				if a.Key == "name" {
+					sn = a.Val
+				}
+			}
+			if sn == name {
+				return true
+			}
+		}
+		if hasSlot(k, name) {
+			return true
+		}
+	}
+	return false
 }

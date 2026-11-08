@@ -750,6 +750,7 @@
 			Object.defineProperty(sr, ID, { value: id });
 			wrappers.set(id, sr);
 			shadowHosts.set(id, this[ID]);
+			D.setShadow(this[ID], id);
 			shadows.set(this, { root: sr, mode: init && init.mode === "closed" ? "closed" : "open" });
 			sr.adoptedStyleSheets = [];
 			return sr;
@@ -1057,9 +1058,28 @@
 		Object.defineProperty(cls.prototype, "htmlFor", { get() { return this.getAttribute("for") || ""; }, set(v) { this.setAttribute("for", v); } });
 		Object.defineProperty(cls.prototype, "control", { get() { const f = this.htmlFor; return f ? document.getElementById(f) : this.querySelector("input, select, textarea, button"); } });
 	});
+	// The content of a template is one fragment (its children, moved into
+	// it when it is first used), as in browsers: Lit prepares the content
+	// (removing the markers of its bindings) and then clones it, and with a
+	// new fragment each time, the clones kept the markers and the bindings
+	// were lost (the menus of MDN were all open).
+	const templateContents = new WeakMap();
 	const HTMLTemplateElement = elementClass(["template"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "content", {
-			get() { const f = document.createDocumentFragment(); f.innerHTML = this.innerHTML; return f; },
+			get() {
+				let f = templateContents.get(this);
+				if (!f) {
+					f = document.createDocumentFragment();
+					while (this.firstChild) f.appendChild(this.firstChild);
+					templateContents.set(this, f);
+				}
+				return f;
+			},
+		});
+		Object.defineProperty(cls.prototype, "innerHTML", {
+			get() { return D.inner(this.content[ID]); },
+			set(v) { D.setInner(this.content[ID], v === null ? "" : String(v)); },
+			configurable: true,
 		});
 	});
 	const HTMLCanvasElement = elementClass(["canvas"], HTMLElement, cls => {
@@ -1350,25 +1370,79 @@
 		get activeElement() { return null; }
 	}
 
+	// treeWalker returns a TreeWalker, which walks the live tree from its
+	// currentNode, as in the DOM spec: Lit sets the currentNode to the
+	// content of a template (outside of the root, the document) and walks
+	// it while it changes it (with the nodes of the root listed when it
+	// was made, Lit walked the document, and its templates kept the
+	// markers of their bindings: the menus of MDN were all open).
 	function treeWalker(root, what, filter) {
 		what = what === undefined ? 0xFFFFFFFF : what;
-		const accept = n => {
-			if (!(what & (1 << (n.nodeType - 1)))) return false;
-			if (!filter) return true;
+		const ACCEPT = 1, REJECT = 2;
+		const check = n => { // 1 accept, 2 reject (with its descendants), 3 skip
+			if (!(what & (1 << (n.nodeType - 1)))) return 3;
+			if (!filter) return ACCEPT;
 			const f = typeof filter === "function" ? filter : filter.acceptNode;
-			return f.call(filter, n) === 1;
+			return f.call(filter, n);
 		};
-		const order = [];
-		const visit = n => { for (let c = n.firstChild; c; c = c.nextSibling) { order.push(c); visit(c); } };
-		visit(root);
-		let i = -1;
 		return {
-			root, currentNode: root,
-			nextNode() { while (++i < order.length) if (accept(order[i])) return (this.currentNode = order[i]); return null; },
-			previousNode() { while (--i >= 0) if (accept(order[i])) return (this.currentNode = order[i]); return null; },
-			firstChild() { const c = this.currentNode.firstChild; return c ? (this.currentNode = c) : null; },
-			parentNode() { const p = this.currentNode.parentNode; return p && p !== root.parentNode ? (this.currentNode = p) : null; },
-			nextSibling() { const s = this.currentNode.nextSibling; return s ? (this.currentNode = s) : null; },
+			root, currentNode: root, whatToShow: what, filter: filter || null,
+			nextNode() {
+				let n = this.currentNode, r = ACCEPT;
+				for (;;) {
+					while (r !== REJECT && n.firstChild) {
+						n = n.firstChild;
+						if ((r = check(n)) === ACCEPT) return (this.currentNode = n);
+					}
+					let s = null;
+					for (let t = n; t && t !== root; t = t.parentNode) {
+						if (t.nextSibling) { s = t.nextSibling; break; }
+					}
+					if (!s) return null;
+					n = s;
+					if ((r = check(n)) === ACCEPT) return (this.currentNode = n);
+				}
+			},
+			previousNode() {
+				let n = this.currentNode;
+				while (n !== root) {
+					let s = n.previousSibling;
+					while (s) {
+						n = s;
+						let r = check(n);
+						while (r !== REJECT && n.lastChild) { n = n.lastChild; r = check(n); }
+						if (r === ACCEPT) return (this.currentNode = n);
+						s = n.previousSibling;
+					}
+					if (!n.parentNode || n === root) return null;
+					n = n.parentNode;
+					if (check(n) === ACCEPT) return (this.currentNode = n);
+				}
+				return null;
+			},
+			parentNode() {
+				for (let n = this.currentNode; n && n !== root;) {
+					n = n.parentNode;
+					if (n && check(n) === ACCEPT) return (this.currentNode = n);
+				}
+				return null;
+			},
+			firstChild() {
+				for (let c = this.currentNode.firstChild; c; c = c.nextSibling) if (check(c) === ACCEPT) return (this.currentNode = c);
+				return null;
+			},
+			lastChild() {
+				for (let c = this.currentNode.lastChild; c; c = c.previousSibling) if (check(c) === ACCEPT) return (this.currentNode = c);
+				return null;
+			},
+			nextSibling() {
+				for (let s = this.currentNode.nextSibling; s; s = s.nextSibling) if (check(s) === ACCEPT) return (this.currentNode = s);
+				return null;
+			},
+			previousSibling() {
+				for (let s = this.currentNode.previousSibling; s; s = s.previousSibling) if (check(s) === ACCEPT) return (this.currentNode = s);
+				return null;
+			},
 		};
 	}
 

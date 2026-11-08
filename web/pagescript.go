@@ -146,6 +146,8 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		}
 		return htmlcore.HasAttr(n, "checked")
 	}
+	// the children of shadow hosts that are in no slot are not rendered
+	ctx.Unrendered = ps.engine.Unassigned
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)

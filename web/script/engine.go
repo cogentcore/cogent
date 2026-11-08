@@ -129,6 +129,10 @@ type Engine struct {
 	vm   *goja.Runtime
 	doc  *html.Node
 
+	// shadowRoots has the shadow roots (fragments) of the elements that
+	// scripts have attached them to, for [Engine.Unassigned].
+	shadowRoots map[*html.Node]*html.Node
+
 	// mu protects the fields below it, which are used by other goroutines.
 	mu      sync.Mutex
 	queue   []func()
@@ -187,6 +191,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	e := &Engine{opts: opts, doc: doc, wake: make(chan struct{}, 1), stopped: make(chan struct{}),
 		timers: map[int]*time.Timer{}, lock: opts.Lock, unlock: opts.Unlock}
 	e.nodes.init()
+	e.shadowRoots = map[*html.Node]*html.Node{}
 	e.vm = goja.New()
 	e.vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
 	// a script that recurses without end gets a RangeError (as in browsers)
