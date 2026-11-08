@@ -71,6 +71,10 @@ type Page struct {
 	// loading is the URL of the page that is being opened, if any.
 	loading string
 
+	// failed is the URL of the page that last failed to open, if any since
+	// a page was opened, which the address field keeps (and Reload opens).
+	failed string
+
 	// load is the number of the latest page that has started opening, so
 	// that the opening of another one (and stopping) cancels earlier ones.
 	load atomic.Int64
@@ -219,8 +223,13 @@ func (pg *Page) Forward() {
 	}
 }
 
-// Reload opens the current page again.
+// Reload opens the current page again, or the page that last failed to
+// open, if any.
 func (pg *Page) Reload() {
+	if pg.failed != "" {
+		pg.open(pg.failed, historyNew, 0, 0)
+		return
+	}
 	if pg.Current < len(pg.History) {
 		pg.open(pg.History[pg.Current], historyAt, pg.Current, 0)
 	}
@@ -282,6 +291,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	pg.loading = url
+	pg.failed = ""
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
 	pg.zoom = Site(url).Zoom
@@ -336,6 +346,9 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			return
 		}
 		pg.showScripts(nil)
+		if err != nil {
+			pg.failed = pg.loading
+		}
 		pg.loading = ""
 		if err != nil {
 			core.ErrorSnackbar(pg, err, "Error opening page")
@@ -647,7 +660,7 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			} else {
 				w.SetIcon(icons.Refresh).SetTooltip("Reload this page")
 			}
-			w.SetEnabled(pg != nil && (pg.IsLoading() || len(pg.History) > 0))
+			w.SetEnabled(pg != nil && (pg.IsLoading() || len(pg.History) > 0 || pg.failed != ""))
 		})
 	})
 	tree.AddAt(p, "url", func(w *core.TextField) {
@@ -664,6 +677,8 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 				w.SetText("")
 			case pg.loading != "":
 				w.SetText(pg.loading)
+			case pg.failed != "":
+				w.SetText(pg.failed)
 			default:
 				w.SetText(pg.currentURL())
 			}
@@ -677,34 +692,41 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			pg.OpenURL(LocationURL(text), e)
 		})
 	})
+	tree.AddAt(p, "zoom-out", func(w *core.Button) {
+		w.SetIcon(icons.ZoomOut).SetTooltip("Zoom out")
+		w.OnClick(func(e events.Event) {
+			if pg := page(); pg != nil {
+				pg.StepZoom(-1)
+			}
+		})
+		w.Updater(func() { w.SetEnabled(page() != nil) })
+	})
 	tree.AddAt(p, "zoom", func(w *core.Button) {
+		w.SetType(core.ButtonText)
+		w.SetTooltip("Zoom of the page: click for actual size (100%)")
+		w.OnClick(func(e events.Event) {
+			if pg := page(); pg != nil {
+				pg.StepZoom(0)
+			}
+		})
 		w.Updater(func() {
 			pg := page()
-			w.SetIcon(icons.ZoomIn).SetText("")
-			tip := "Zoom of the page"
+			pct := "100%"
 			if pg != nil && pg.zoom > 0 {
-				pct := fmt.Sprintf("%d%%", int(math32.Round(pg.zoom*100)))
-				w.SetText(pct)
-				tip += ": " + pct
+				pct = fmt.Sprintf("%d%%", int(math32.Round(pg.zoom*100)))
 			}
-			w.SetTooltip(tip)
+			w.SetText(pct)
 			w.SetEnabled(pg != nil)
 		})
-		w.SetMenu(func(m *core.Scene, _ image.Point) {
-			pg := page()
-			if pg == nil {
-				return
-			}
-			core.NewButton(m).SetText("Zoom in").SetIcon(icons.ZoomIn).OnClick(func(e events.Event) {
+	})
+	tree.AddAt(p, "zoom-in", func(w *core.Button) {
+		w.SetIcon(icons.ZoomIn).SetTooltip("Zoom in")
+		w.OnClick(func(e events.Event) {
+			if pg := page(); pg != nil {
 				pg.StepZoom(1)
-			})
-			core.NewButton(m).SetText("Zoom out").SetIcon(icons.ZoomOut).OnClick(func(e events.Event) {
-				pg.StepZoom(-1)
-			})
-			core.NewButton(m).SetText("Actual size (100%)").SetIcon(icons.Refresh).OnClick(func(e events.Event) {
-				pg.StepZoom(0)
-			})
+			}
 		})
+		w.Updater(func() { w.SetEnabled(page() != nil) })
 	})
 	tree.AddAt(p, "scripts", func(w *core.Button) {
 		w.Updater(func() {

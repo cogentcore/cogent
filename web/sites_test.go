@@ -5,7 +5,9 @@
 package web
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -102,4 +104,27 @@ func TestPageZoom(t *testing.T) {
 			})
 		})
 	}
+}
+
+// TestPageFailedURL tests that the URL of a page that fails to open is
+// kept (for the address field, and for Reload to open it again).
+func TestPageFailedURL(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>home</p></body></html>`})
+	fails := 0
+	b.RenderImage(func() {
+		settle(pg)
+		pg.Context.GetURL = func(u string) (*http.Response, error) {
+			fails++
+			return nil, errors.New("timeout")
+		}
+		pg.OpenURL("https://down.example.com/page", nil)
+		settle(pg)
+		assert.Equal(t, "https://down.example.com/page", pg.failed)
+		assert.Equal(t, "https://example.com/", pg.currentURL(), "the page shown is kept")
+		pg.Reload()
+		settle(pg)
+	}, func() {
+		assert.Equal(t, 2, fails, "Reload opens the page that failed")
+		assert.Equal(t, "https://down.example.com/page", pg.failed)
+	})
 }
