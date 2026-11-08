@@ -60,3 +60,15 @@ func TestDocumentsForEditors(t *testing.T) {
 			d.baseURI, document.baseURI, new URL(d.querySelector("a").getAttribute("href"), d.baseURI).href].join(",")`))
 	assert.Empty(t, *logs)
 }
+
+// TestArrowArguments tests the arguments of a function used only in an
+// arrow function in it (as OO.ui.deferMsg of the VisualEditor of
+// Wikipedia), which goja and sobek got wrong (fixed in cogentcore/sobek).
+func TestArrowArguments(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "1,2;3;5", run(t, e, `function f() { return (() => [...arguments])().join(); }
+		function g() { return (() => arguments.length)(); }
+		function h() { const m = () => Math.max(...arguments); return m(); }
+		f(1, 2) + ";" + g(1, 2, 3) + ";" + h(1, 5, 2)`))
+	assert.Empty(t, *logs)
+}
