@@ -1067,14 +1067,111 @@
 		cls.prototype.toDataURL = function () { return "data:,"; };
 		reflect(cls, ["width", "height"]);
 	});
+	// Media elements (video and audio) are not played, but the metadata
+	// (duration and size) of their source is loaded (D.mediaMetadata) when
+	// a script first uses their state or listens to their events, and when
+	// their source changes, as browsers do for preload="metadata": pages
+	// wait for it (as for the chapters of the video of github.com). Their
+	// play() is rejected as when autoplay is not allowed.
+	const mediaEvents = new Set(["loadstart", "durationchange", "loadedmetadata", "loadeddata", "canplay",
+		"canplaythrough", "error", "emptied", "progress", "suspend", "abort"]);
+	const mediaStates = { HAVE_NOTHING: 0, HAVE_METADATA: 1, HAVE_CURRENT_DATA: 2, HAVE_FUTURE_DATA: 3, HAVE_ENOUGH_DATA: 4,
+		NETWORK_EMPTY: 0, NETWORK_IDLE: 1, NETWORK_LOADING: 2, NETWORK_NO_SOURCE: 3 };
 	const HTMLMediaElement = elementClass(["video", "audio"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]);
-		reflect(cls, [], ["autoplay", "controls", "loop", "muted"]);
-		cls.prototype.play = function () { return Promise.reject(domException("NotSupportedError", "media is not supported")); };
-		cls.prototype.pause = function () {};
-		cls.prototype.load = function () {};
-		cls.prototype.canPlayType = function () { return ""; };
+		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "muted", "playsInline"]);
+		Object.assign(cls, mediaStates);
+		Object.assign(cls.prototype, mediaStates);
+		const srcDesc = Object.getOwnPropertyDescriptor(cls.prototype, "src");
+		Object.defineProperty(cls.prototype, "src", {
+			get: srcDesc.get,
+			set(v) { srcDesc.set.call(this, v); this._mediaLoad(); },
+			configurable: true,
+		});
+		// the media state of the element
+		cls.prototype._media = function () {
+			if (!this.__media) {
+				this.__media = { src: null, readyState: 0, networkState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0, volume: 1, rate: 1 };
+			}
+			return this.__media;
+		};
+		// the URL of the source of the element: its src, or that of its first source element
+		cls.prototype._mediaSrc = function () {
+			if (this.hasAttribute("src")) return this.src;
+			const s = this.querySelector("source[src]");
+			return s ? new URL(s.getAttribute("src"), document.baseURI).href : "";
+		};
+		// _mediaLoad loads the metadata of the source of the element if it
+		// has changed (or if force).
+		cls.prototype._mediaLoad = function (force) {
+			const m = this._media();
+			const src = this._mediaSrc();
+			if (src === m.src && !force) return;
+			const had = m.src;
+			Object.assign(m, { src, readyState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0 });
+			if (had) this.dispatchEvent(new Event("emptied"));
+			if (!src) {
+				m.networkState = had === null ? 0 : 3;
+				return;
+			}
+			m.networkState = 2;
+			Promise.resolve().then(() => { if (m.src === src) this.dispatchEvent(new Event("loadstart")); });
+			D.mediaMetadata(newCallback((duration, width, height, err) => {
+				if (m.src !== src) return; // another source since
+				if (err) {
+					m.networkState = 3;
+					m.error = new MediaError(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, String(err));
+					this.dispatchEvent(new Event("error"));
+					return;
+				}
+				Object.assign(m, { duration, width, height, readyState: 1, networkState: 1 });
+				this.dispatchEvent(new Event("durationchange"));
+				this.dispatchEvent(new Event("loadedmetadata"));
+				this.dispatchEvent(new Event("suspend"));
+			}), src);
+		};
+		const state = (name, f) => Object.defineProperty(cls.prototype, name, {
+			get() { this._mediaLoad(); return f(this._media()); },
+			configurable: true,
+		});
+		state("readyState", m => m.readyState);
+		state("networkState", m => m.networkState);
+		state("duration", m => m.duration);
+		state("videoWidth", m => m.width);
+		state("videoHeight", m => m.height);
+		state("error", m => m.error);
+		state("currentSrc", m => m.src || "");
+		const noRange = () => { throw domException("IndexSizeError", "no time range"); };
+		const ranges = { length: 0, start: noRange, end: noRange };
+		for (const p of ["buffered", "played", "seekable"]) Object.defineProperty(cls.prototype, p, { get() { return ranges; } });
+		Object.defineProperty(cls.prototype, "currentTime", {
+			get() { return this._media().currentTime; },
+			set(v) {
+				const m = this._media();
+				m.currentTime = Math.max(0, Number(v) || 0);
+				if (Number.isFinite(m.duration)) m.currentTime = Math.min(m.currentTime, m.duration);
+				this.dispatchEvent(new Event("timeupdate"));
+			},
+		});
+		Object.defineProperty(cls.prototype, "volume", { get() { return this._media().volume; }, set(v) { this._media().volume = Number(v); this.dispatchEvent(new Event("volumechange")); } });
+		Object.defineProperty(cls.prototype, "playbackRate", { get() { return this._media().rate; }, set(v) { this._media().rate = Number(v); this.dispatchEvent(new Event("ratechange")); } });
+		Object.defineProperty(cls.prototype, "defaultPlaybackRate", { get() { return 1; }, set() {} });
 		Object.defineProperty(cls.prototype, "paused", { get() { return true; } });
+		for (const p of ["ended", "seeking"]) Object.defineProperty(cls.prototype, p, { get() { return false; } });
+		cls.prototype.play = function () {
+			this._mediaLoad();
+			return Promise.reject(domException("NotAllowedError", "media playback is not supported"));
+		};
+		cls.prototype.pause = function () {};
+		cls.prototype.load = function () { this._mediaLoad(true); };
+		cls.prototype.canPlayType = function (t) { return /^(video|audio)\/mp4\b/i.test(String(t)) ? "maybe" : ""; };
+		cls.prototype.fastSeek = function (t) { this.currentTime = t; };
+		const addListener = cls.prototype.addEventListener;
+		cls.prototype.addEventListener = function (type, ...rest) {
+			const r = addListener.call(this, type, ...rest);
+			if (mediaEvents.has(String(type))) this._mediaLoad();
+			return r;
+		};
 	});
 	const HTMLDetailsElement = elementClass(["details"], HTMLElement, cls => reflect(cls, [], ["open"]));
 	const HTMLDialogElement = elementClass(["dialog"], HTMLElement, cls => {

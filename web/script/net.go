@@ -105,6 +105,7 @@ func (e *Engine) defineNet() {
 		d.Set(name, f)
 	}
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
+	e.setMediaFuncs(set)
 
 	set("pageURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.opts.PageURL) })
 	set("baseURL", func(call goja.FunctionCall) goja.Value {
