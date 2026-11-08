@@ -31,6 +31,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
+	"golang.org/x/net/html"
 )
 
 // Page represents one web browser page.
@@ -203,10 +204,76 @@ func (pg *Page) scrollToFragment(id string) bool {
 		return tree.Continue
 	})
 	if target == nil {
+		target = pg.fragmentContainer(id)
+	}
+	if target == nil {
 		return false
 	}
 	target.AsWidget().ScrollThisToTop()
 	return true
+}
+
+// fragmentContainer returns the innermost widget that the element with
+// the given id is in, for an element without a widget of its own (as the
+// headings of Wikipedia, which are inline in the text of their parent),
+// or nil if there is none.
+func (pg *Page) fragmentContainer(id string) core.Widget {
+	// the document, from the node of any widget
+	var root *html.Node
+	pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		if n, ok := cwb.Property("node").(*html.Node); ok && n != nil {
+			root = n
+			return tree.Break
+		}
+		return tree.Continue
+	})
+	for root != nil && root.Parent != nil {
+		root = root.Parent
+	}
+	el := findElementID(root, id)
+	if el == nil {
+		return nil
+	}
+	// the widgets of the element and its ancestors: the last of them in
+	// the walk is the innermost
+	ancestors := map[*html.Node]bool{}
+	for n := el; n != nil; n = n.Parent {
+		ancestors[n] = true
+	}
+	var target core.Widget
+	pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		n, _ := cwb.Property("node").(*html.Node)
+		if n == nil {
+			return tree.Continue
+		}
+		if !ancestors[n] {
+			return tree.Break // not in this subtree
+		}
+		target = cw
+		return tree.Continue
+	})
+	return target
+}
+
+// findElementID returns the element in the given tree with the given id
+// (or the a element with the given name), or nil if there is none.
+func findElementID(n *html.Node, id string) *html.Node {
+	if n == nil {
+		return nil
+	}
+	if n.Type == html.ElementNode {
+		for _, a := range n.Attr {
+			if (a.Key == "id" || a.Key == "name" && n.Data == "a") && a.Val == id {
+				return n
+			}
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if f := findElementID(c, id); f != nil {
+			return f
+		}
+	}
+	return nil
 }
 
 // Back opens the previous page in the history, if there is one.

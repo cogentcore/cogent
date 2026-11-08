@@ -143,7 +143,7 @@ func TestFragment(t *testing.T) {
 		gets++
 		mu.Unlock()
 		pu, _ := url.Parse(u)
-		r := strings.NewReader(`<p>top</p><div style="height:3000px"></div><h2 id="sec">Section</h2>`)
+		r := strings.NewReader(`<p>top</p><div style="height:3000px"></div><h2 id="sec">Section</h2><div style="height:3000px"></div><div><h2 id="inl" style="display: inline">Inline</h2> <a href="#e">edit</a></div>`)
 		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
 	}
 	pg.OpenURL("https://example.com/page", nil)
@@ -151,6 +151,8 @@ func TestFragment(t *testing.T) {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.True(t, pg.scrollToFragment("sec"))
+		assert.True(t, pg.scrollToFragment("inl"), "an inline element, without a widget of its own (as the headings of Wikipedia)")
+		assert.False(t, pg.scrollToFragment("none"))
 		pg.OpenURL("#sec", nil)
 		assert.Equal(t, []string{"https://example.com/page", "https://example.com/page#sec"}, pg.History)
 		assert.False(t, pg.IsLoading())
