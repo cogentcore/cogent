@@ -9,7 +9,7 @@ package web
 
 import (
 	"bytes"
-	"errors"
+	"context"
 	"fmt"
 	"image"
 	"io"
@@ -148,8 +148,9 @@ const (
 )
 
 // errStopped is the error of resources that are not gotten after
-// the opening of their page has been stopped.
-var errStopped = errors.New("stopped")
+// the opening of their page has been stopped. It is a [context.Canceled],
+// which htmlcore does not log.
+var errStopped = fmt.Errorf("stopped: %w", context.Canceled)
 
 // OpenURL opens the page at the given url, which is added to the history.
 func (pg *Page) OpenURL(url string, e events.Event) {
