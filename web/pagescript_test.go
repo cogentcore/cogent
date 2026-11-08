@@ -5,6 +5,7 @@
 package web
 
 import (
+	"image"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -688,5 +689,41 @@ func TestScriptsScrollKept(t *testing.T) {
 		if fr := side(); assert.NotNil(t, fr) {
 			assert.InDelta(t, -600, fr.Geom.Scroll.Y, 2, "kept its scroll")
 		}
+	})
+}
+
+// TestScriptsHoverEvents tests that the scripts get the events of the
+// mouse moving over the elements (as the onPointerEnter of React, with
+// which the repository grid of github.com reveals its panels).
+func TestScriptsHoverEvents(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="a" style="height: 50px">a</div><div id="b" style="height: 50px">b</div>` +
+			`<script>window.got = []; for (const id of ["a", "b"]) { const el = document.getElementById(id);` +
+			` el.addEventListener("pointerenter", () => got.push("enter " + id)); el.addEventListener("pointerleave", () => got.push("leave " + id)); }</script></body></html>`,
+	})
+	center := func(id string) image.Point {
+		var p image.Point
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == id {
+				bb := wb.Geom.TotalBBox
+				p = bb.Min.Add(bb.Size().Div(2))
+			}
+			return tree.Continue
+		})
+		return p
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		a, bp := center("a"), center("b")
+		b.AsyncUnlock()
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseMove(a)
+		time.Sleep(50 * time.Millisecond)
+		ev.MouseMove(bp)
+	}, func() {
+		assert.Eventually(t, func() bool {
+			v, _ := pg.scripts.engine.RunString(`got.join(", ")`)
+			return v == "enter a, leave a, enter b"
+		}, 3*time.Second, 20*time.Millisecond)
 	})
 }

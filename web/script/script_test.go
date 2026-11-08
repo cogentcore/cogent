@@ -820,3 +820,47 @@ func TestToggleDetails(t *testing.T) {
 		return v == "false 2"
 	}, 3*time.Second, 20*time.Millisecond)
 }
+
+// TestHoverEvents tests the events of the mouse moving between elements:
+// out, leave, over, and enter, with their related targets.
+func TestHoverEvents(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><div id="grid"><a id="a">a</a><a id="b">b</a></div><p id="p">p</p></body></html>`, nil)
+	run(t, e, `window.got = [];
+		for (const id of ["grid", "a", "b", "p"]) {
+			const el = document.getElementById(id);
+			for (const type of ["pointerover", "pointerout", "pointerenter", "pointerleave", "mouseover"]) {
+				el.addEventListener(type, ev => { if (ev.currentTarget === ev.target || type.endsWith("over") || type.endsWith("out")) got.push(type + ":" + id + (ev.relatedTarget ? "<" + ev.relatedTarget.id : "") + "@" + ev.currentTarget.id); });
+			}
+		}`)
+	node := func(id string) *html.Node {
+		for n := range e.Document().Descendants() {
+			if n.Type == html.ElementNode && htmlAttr(n, "id") == id {
+				return n
+			}
+		}
+		return nil
+	}
+	e.Hover(nil, node("a"), 1, 2)
+	e.Hover(node("a"), node("b"), 1, 2)
+	var s string
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got.join(" ")`)
+		s, _ = v.(string)
+		return strings.Contains(s, "pointerenter:b")
+	}, 3*time.Second, 20*time.Millisecond)
+	assert.Contains(t, s, "pointerenter:grid@grid pointerenter:a@a", "entered from the outside, outermost first")
+	assert.Contains(t, s, "pointerout:a<b@a", "out of a, to b")
+	assert.Contains(t, s, "pointerleave:a<b@a", "left a")
+	assert.NotContains(t, s, "pointerleave:grid", "still in the grid")
+	assert.Contains(t, s, "pointerenter:b<a@b", "entered b")
+	assert.NotContains(t, s, "pointerenter:grid<a", "already in the grid")
+}
+
+func htmlAttr(n *html.Node, key string) string {
+	for _, a := range n.Attr {
+		if a.Key == key {
+			return a.Val
+		}
+	}
+	return ""
+}

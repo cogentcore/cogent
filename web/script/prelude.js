@@ -2569,6 +2569,44 @@
 	// state returns the state of the form control of the given id that
 	// is not in its attributes: its value and checked state, or null
 	// for each that the user or scripts have not changed.
+	// hover dispatches the events of the mouse moving from the element of
+	// the first id to that of the second (0 for none), as in browsers:
+	// pointerout and mouseout on the old one, pointerleave and mouseleave
+	// on it and its ancestors that are not around the new one, pointerover
+	// and mouseover on the new one, and pointerenter and mouseenter on it
+	// and its ancestors that are not around the old one, from the outermost
+	// (React makes its onPointerEnter of these, as for the repository grid
+	// of github.com).
+	D.hover = function (oldId, newId, x, y) {
+		const o = oldId ? wrap(oldId) : null, n = newId ? wrap(newId) : null;
+		const ev = (C, type, t, rel, bubbles) => {
+			const e = new C(type, { bubbles, cancelable: bubbles, view: g, relatedTarget: rel, pointerType: "mouse", clientX: x, clientY: y });
+			e.isTrusted = true;
+			t.dispatchEvent(e);
+		};
+		const chain = (from, around) => {
+			const c = [];
+			for (let a = from; a && a.nodeType === 1 && !(around && a.contains(around)); a = a.parentNode) c.push(a);
+			return c;
+		};
+		if (o) {
+			ev(PointerEvent, "pointerout", o, n, true);
+			ev(MouseEvent, "mouseout", o, n, true);
+			for (const a of chain(o, n)) {
+				ev(PointerEvent, "pointerleave", a, n, false);
+				ev(MouseEvent, "mouseleave", a, n, false);
+			}
+		}
+		if (n) {
+			ev(PointerEvent, "pointerover", n, o, true);
+			ev(MouseEvent, "mouseover", n, o, true);
+			for (const a of chain(n, o).reverse()) {
+				ev(PointerEvent, "pointerenter", a, o, false);
+				ev(MouseEvent, "mouseenter", a, o, false);
+			}
+		}
+	};
+
 	// toggleDetails toggles the details element of the given id open or
 	// closed, with its toggle event (see Engine.ToggleDetails).
 	D.toggleDetails = function (id) {

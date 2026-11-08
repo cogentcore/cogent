@@ -950,3 +950,11 @@ func hasSlot(n *html.Node, name string) bool {
 func (e *Engine) ToggleDetails(n *html.Node) {
 	e.Post(func() { e.callPrelude("toggleDetails", e.nodes.id(n)) })
 }
+
+// Hover dispatches the events of the mouse moving from the given element
+// to the other at the given position (in CSS px), either of which can be
+// nil (outside of the page), in a task of the engine: pointerout,
+// pointerleave, pointerover, pointerenter, and their mouse events.
+func (e *Engine) Hover(from, to *html.Node, x, y float32) {
+	e.Post(func() { e.callPrelude("hover", e.nodes.id(from), e.nodes.id(to), x, y) })
+}

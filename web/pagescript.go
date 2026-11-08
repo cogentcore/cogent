@@ -7,6 +7,7 @@ package web
 import (
 	"bytes"
 	"fmt"
+	"image"
 	"log/slog"
 	"math"
 	neturl "net/url"
@@ -66,6 +67,10 @@ type pageScripts struct {
 	// shown is whether the page is shown, before which it is not
 	// rendered again (pending is whether it needs to be then).
 	shown, pending bool
+
+	// hovered is the element that the mouse is over, for the events of the
+	// mouse moving over the elements (see [pageScripts.hoverAt]).
+	hovered *html.Node
 
 	// pushed is the URL that the scripts set (with history.pushState)
 	// before the page was shown, if any.
@@ -279,6 +284,49 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 		// gets the click instead of it, toggles its details in the scripts)
 		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
 	})
+}
+
+// hoverAt dispatches the events of the mouse moving over the elements when
+// the element under the given position in the window (outside of the page
+// if it is not in it) differs from the one that it was over: the deepest
+// widget there that is the box of an element (not of a pseudo-element),
+// in the order of rendering (later on top).
+func (ps *pageScripts) hoverAt(pos image.Point) {
+	if ps.engine.Closed() {
+		return
+	}
+	var deepest *html.Node
+	var visit func(wb *core.WidgetBase)
+	visit = func(wb *core.WidgetBase) {
+		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
+			deepest = n
+		}
+		kids := wb.Children
+		for i := len(kids) - 1; i >= 0; i-- {
+			kw := core.AsWidget(kids[i])
+			if kw == nil || kw.StateIs(states.Invisible) || (kw.Styles.Opacity <= 0 && kw.Styles.Abilities == 0) {
+				continue
+			}
+			if pos.In(kw.Geom.TotalBBox) {
+				visit(kw)
+				return
+			}
+		}
+	}
+	if pos.In(ps.pg.Geom.TotalBBox) {
+		visit(ps.pg.AsWidget())
+	}
+	if deepest == ps.hovered {
+		return
+	}
+	from := ps.hovered
+	ps.hovered = deepest
+	dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp) * ps.pg.zoomFactor()
+	if dp <= 0 {
+		dp = 1
+	}
+	off := ps.pg.Geom.Pos.Content
+	ps.engine.Hover(from, deepest, (float32(pos.X)-off.X)/dp, (float32(pos.Y)-off.Y)/dp)
 }
 
 // restoreScrolls restores the given scroll positions of the elements that

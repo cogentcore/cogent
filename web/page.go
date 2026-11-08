@@ -127,6 +127,17 @@ func (pg *Page) Init() {
 	pg.Scripts = true
 	pg.shown = make(chan struct{})
 	pg.OnShow(func(e events.Event) { pg.setShown() })
+	// the scripts get the events of the mouse moving over the elements
+	pg.On(events.MouseMove, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.hoverAt(e.WindowPos())
+		}
+	})
+	pg.On(events.MouseLeave, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.hoverAt(image.Point{-1, -1})
+		}
+	})
 	pg.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 		s.Shrink.X = 1 // to the width of the frame it scrolls in, as a viewport
