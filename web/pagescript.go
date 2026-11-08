@@ -287,7 +287,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 			e.Dispatch(n, "change", map[string]any{"value": fmt.Sprint(x.CurrentItem.Value)}, nil)
 		})
 		return
-	case *core.Frame:
+	case *core.Frame, *core.Button: // buttons that are not submitters (as the toggles of menus)
 	default:
 		return
 	}

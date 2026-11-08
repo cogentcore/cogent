@@ -2305,7 +2305,11 @@
 		ev.isTrusted = true;
 		if (type === "focus" || type === "focusin") focused = t;
 		if (init.value !== undefined && "value" in t) values.set(t, String(init.value));
-		if (init.checked !== undefined) checks.set(t, !!init.checked);
+		if (init.checked !== undefined) {
+			// a radio button that is checked unchecks the others of its group
+			if (init.checked && t.type === "radio") t.checked = true;
+			else checks.set(t, !!init.checked);
+		}
 		t.dispatchEvent(ev);
 		return ev.defaultPrevented;
 	};
