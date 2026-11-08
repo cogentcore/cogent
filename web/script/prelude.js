@@ -1158,8 +1158,53 @@
 			configurable: true,
 		});
 	});
+	// The 2D context of a canvas draws nothing (the canvas is not rendered),
+	// but scripts that draw on one work (as the QR code of the postings of
+	// craigslist.org, whose script stopped with no context); other contexts
+	// (as webgl) are not supported, which scripts check for.
+	class CanvasRenderingContext2D {
+		constructor(canvas) {
+			this.canvas = canvas;
+			Object.assign(this, {
+				fillStyle: "#000000", strokeStyle: "#000000", lineWidth: 1, lineCap: "butt", lineJoin: "miter",
+				miterLimit: 10, font: "10px sans-serif", textAlign: "start", textBaseline: "alphabetic",
+				globalAlpha: 1, globalCompositeOperation: "source-over", shadowBlur: 0, shadowColor: "rgba(0, 0, 0, 0)",
+				shadowOffsetX: 0, shadowOffsetY: 0, imageSmoothingEnabled: true, direction: "ltr", filter: "none",
+			});
+		}
+		measureText(text) {
+			const size = parseFloat(/(\d+(\.\d+)?)px/.exec(this.font)?.[1] || "10");
+			const width = String(text).length * size * 0.5;
+			return { width, actualBoundingBoxLeft: 0, actualBoundingBoxRight: width, actualBoundingBoxAscent: size * 0.8, actualBoundingBoxDescent: size * 0.2, fontBoundingBoxAscent: size * 0.8, fontBoundingBoxDescent: size * 0.2 };
+		}
+		createImageData(w, h) {
+			if (typeof w === "object") { h = w.height; w = w.width; }
+			return { width: w, height: h, data: new Uint8ClampedArray(Math.max(0, w * h * 4)) };
+		}
+		getImageData(x, y, w, h) { return this.createImageData(w, h); }
+		createLinearGradient() { return { addColorStop() {} }; }
+		createRadialGradient() { return { addColorStop() {} }; }
+		createConicGradient() { return { addColorStop() {} }; }
+		createPattern() { return {}; }
+		getTransform() { return new DOMMatrixStub(); }
+		getLineDash() { return []; }
+		isPointInPath() { return false; }
+		isPointInStroke() { return false; }
+		getContextAttributes() { return { alpha: true }; }
+	}
+	for (const m of ["fillRect", "strokeRect", "clearRect", "fillText", "strokeText", "beginPath", "closePath", "moveTo", "lineTo",
+		"bezierCurveTo", "quadraticCurveTo", "arc", "arcTo", "ellipse", "rect", "roundRect", "fill", "stroke", "clip", "save", "restore",
+		"scale", "rotate", "translate", "transform", "setTransform", "resetTransform", "drawImage", "putImageData", "setLineDash", "drawFocusIfNeeded", "reset"]) {
+		CanvasRenderingContext2D.prototype[m] = function () {};
+	}
+	g.CanvasRenderingContext2D = CanvasRenderingContext2D;
 	const HTMLCanvasElement = elementClass(["canvas"], HTMLElement, cls => {
-		cls.prototype.getContext = function () { return null; };
+		const contexts = new WeakMap();
+		cls.prototype.getContext = function (type) {
+			if (String(type).toLowerCase() !== "2d") return null;
+			if (!contexts.has(this)) contexts.set(this, new CanvasRenderingContext2D(this));
+			return contexts.get(this);
+		};
 		cls.prototype.toDataURL = function () { return "data:,"; };
 		reflect(cls, ["width", "height"]);
 	});

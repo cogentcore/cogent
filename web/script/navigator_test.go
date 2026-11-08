@@ -84,3 +84,30 @@ func TestWeakRef(t *testing.T) {
 		[r.deref() === o, f.unregister(o)].join()`))
 	assert.Empty(t, *logs)
 }
+
+// TestCanvas2D tests the 2D context of a canvas, which draws nothing, but
+// with which scripts that draw (as the QR codes of the postings of
+// craigslist.org, whose script stopped with no context) work; other
+// contexts are not supported.
+func TestCanvas2D(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><canvas id="c" width="10" height="10"></canvas></body></html>`, nil)
+	assert.Equal(t, "true,true,,40,40", run(t, e, `const c = document.getElementById("c"); const x = c.getContext("2d");
+		x.fillStyle = "#fff"; x.fillRect(0, 0, 5, 5); x.beginPath(); x.arc(5, 5, 2, 0, 7); x.fill();
+		[x === c.getContext("2d"), x.canvas === c, c.getContext("webgl"), x.getImageData(0, 0, 2, 5).data.length, x.measureText("abcd").width > 0 ? 40 : 0].join()`))
+	assert.Empty(t, *logs)
+}
+
+// TestThrottleLayout tests that the boxes that scripts get are those of
+// the last render (not a new render of the page) when rendering it is
+// expensive and it was just rendered (as for the scripts of craigslist.org,
+// which re-read its large pages on each of their timers), and not when
+// rendering it is cheap or the last render was long enough ago.
+func TestThrottleLayout(t *testing.T) {
+	e := &Engine{}
+	e.renderCost, e.lastRender = 2*time.Second, time.Now()
+	assert.True(t, e.throttleLayout(), "expensive and just rendered")
+	e.lastRender = time.Now().Add(-5 * time.Second)
+	assert.False(t, e.throttleLayout(), "rendered long enough ago")
+	e.renderCost, e.lastRender = 5*time.Millisecond, time.Now()
+	assert.False(t, e.throttleLayout(), "cheap to render")
+}

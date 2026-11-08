@@ -412,6 +412,23 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	e.renderCost = e.lastRender.Sub(start)
 }
 
+// expensiveRender is the time of rendering a page above which the renders
+// that scripts force by getting the boxes of elements are limited (see
+// [Engine.throttleLayout]).
+const expensiveRender = 50 * time.Millisecond
+
+// throttleLayout returns whether the boxes of elements that scripts get
+// are those of the last render, even if the document has changed since:
+// when rendering the page is expensive and it was rendered less than twice
+// that time ago, so that scripts that change the document and get boxes
+// on each of their timers (as those of craigslist.org, which re-read its
+// large pages continually) do not spend all of the time rendering, and the
+// page still gets the events of the user. (An element with no box yet is
+// rendered for.)
+func (e *Engine) throttleLayout() bool {
+	return e.renderCost > expensiveRender && time.Since(e.lastRender) < 2*e.renderCost
+}
+
 // renderSoon renders the page if the document has changed, after a task
 // (without the lock of the page, which it takes to show it): now, or after
 // [renderInterval] since the last render.

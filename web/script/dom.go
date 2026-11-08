@@ -520,7 +520,7 @@ func (e *Engine) defineDOM() {
 		// The page is rendered first if the element may have changed
 		// (and otherwise its box as last rendered is current), as
 		// rendering a page is costly and scripts get boxes often.
-		if e.dirty && e.changedAround(n) {
+		if e.dirty && e.changedAround(n) && !e.throttleLayout() {
 			e.renderIfDirty(nil, nil) // the lock is held by the task
 		}
 		x, y, w, h, ok := e.opts.Layout(n)
