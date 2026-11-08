@@ -72,6 +72,12 @@ type pageScripts struct {
 	// mouse moving over the elements (see [pageScripts.hoverAt]).
 	hovered *html.Node
 
+	// hoverSet has the elements that the mouse is over (the hovered
+	// element and those it is in) for the :hover selectors of the page
+	// (see [htmlcore.Context.Hovered]), only used in the tasks of the
+	// engine (as the reading of the page).
+	hoverSet map[*html.Node]bool
+
 	// pushed is the URL that the scripts set (with history.pushState)
 	// before the page was shown, if any.
 	pushed string
@@ -151,6 +157,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		}
 		return htmlcore.HasAttr(n, "checked")
 	}
+	ctx.Hovered = func(n *html.Node) bool { return ps.hoverSet[n] }
 	// the children of shadow hosts that are in no slot are not rendered
 	ctx.Unrendered = ps.engine.Unassigned
 	// details are toggled in the document, which is read again
@@ -327,6 +334,34 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 	}
 	off := ps.pg.Geom.Pos.Content
 	ps.engine.Hover(from, deepest, (float32(pos.X)-off.X)/dp, (float32(pos.Y)-off.Y)/dp)
+	ps.engine.Post(func() { ps.setHovered(deepest) })
+}
+
+// setHovered sets the elements that the mouse is over to the given one and
+// those it is in (in a task of the engine), reading the page again if the
+// hover of any element that changes affects the styles of others (as the
+// menu items of pkg.go.dev, whose submenus are shown on their :hover).
+func (ps *pageScripts) setHovered(n *html.Node) {
+	if ps.ctx == nil {
+		return
+	}
+	// only the elements whose hover affects others are marked, as the
+	// page is only read again for them (a link would otherwise keep its
+	// :hover style when the page is read again for something else)
+	set := map[*html.Node]bool{}
+	for ; n != nil; n = n.Parent {
+		if ps.ctx.HoverAffects(n) {
+			set[n] = true
+		}
+	}
+	changed := len(set) != len(ps.hoverSet)
+	for n := range set {
+		changed = changed || !ps.hoverSet[n]
+	}
+	ps.hoverSet = set
+	if changed {
+		ps.engine.Changed()
+	}
 }
 
 // restoreScrolls restores the given scroll positions of the elements that

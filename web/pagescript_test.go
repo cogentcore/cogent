@@ -727,3 +727,49 @@ func TestScriptsHoverEvents(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond)
 	})
 }
+
+// TestScriptsHoverMenu tests a submenu that shows on the :hover of its menu
+// item (as the header menus of pkg.go.dev): the page is read again when the
+// mouse moves over the item, and again when it moves out.
+func TestScriptsHoverMenu(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>.sub { display: none } .item:hover > .label ~ .sub { display: block }</style></head><body>` +
+			`<div class="item" id="item" style="height: 50px"><span class="label">Why Go</span><div class="sub"><p>Case studies</p></div></div>` +
+			`<div id="other" style="height: 200px">other</div><script>window.x = 1</script></body></html>`,
+	})
+	find := func(id, text string) (image.Point, bool) {
+		var p image.Point
+		shown := false
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && id != "" && wb.Property("id") == id {
+				bb := wb.Geom.TotalBBox
+				p = bb.Min.Add(image.Pt(5, 5))
+			}
+			if tx, ok := n.(*core.Text); ok && tx.Text == text {
+				shown = true
+			}
+			return tree.Continue
+		})
+		return p, shown
+	}
+	shownNow := func() bool {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		_, shown := find("", "Case studies")
+		return shown
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		item, shown := find("item", "Case studies")
+		b.AsyncUnlock()
+		assert.False(t, shown, "hidden before the hover")
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseMove(item)
+		assert.Eventually(t, shownNow, 3*time.Second, 20*time.Millisecond, "shown on the hover")
+		b.AsyncLock()
+		other, _ := find("other", "") // below the submenu that is shown
+		b.AsyncUnlock()
+		ev.MouseMove(other)
+		assert.Eventually(t, func() bool { return !shownNow() }, 3*time.Second, 20*time.Millisecond, "hidden after")
+	}, func() {})
+}
