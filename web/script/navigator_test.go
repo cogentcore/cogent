@@ -47,3 +47,16 @@ func TestNavigatorUserAgent(t *testing.T) {
 	assert.Equal(t, "1", got.Get("X-A"))
 	assert.Empty(t, *logs)
 }
+
+// TestDocumentsForEditors tests the features of documents that the
+// VisualEditor of Wikipedia checks for or uses: documents parsed with
+// DOMParser are HTMLDocuments, whose baseURI is that of their base
+// element, and svg elements have createSVGRect.
+func TestDocumentsForEditors(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true,true,true,https://en.wikipedia.org/wiki/,https://example.com/page.html,https://en.wikipedia.org/wiki/Category:X",
+		run(t, e, `const d = new DOMParser().parseFromString('<head><base href="//en.wikipedia.org/wiki/"></head><body><a href="./Category:X">x</a></body>', "text/html");
+			[d instanceof HTMLDocument, document instanceof HTMLDocument, "createSVGRect" in document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+			d.baseURI, document.baseURI, new URL(d.querySelector("a").getAttribute("href"), d.baseURI).href].join(",")`))
+	assert.Empty(t, *logs)
+}

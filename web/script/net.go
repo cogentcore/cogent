@@ -56,8 +56,15 @@ func origin(u string) string {
 // baseURL returns the URL that the URLs of the document are relative to:
 // that of its base element, or the URL of the page.
 func (e *Engine) baseURL() string {
+	return e.baseURLOf(e.doc)
+}
+
+// baseURLOf returns the base URL of the given document (the root of a node,
+// as a document parsed by a script with DOMParser): that of its base
+// element, relative to the URL of the page, or that of the page.
+func (e *Engine) baseURLOf(doc *html.Node) string {
 	base := e.opts.PageURL
-	walk(e.doc, func(n *html.Node) bool {
+	walk(doc, func(n *html.Node) bool {
 		if n.Type == html.ElementNode && n.Data == "base" {
 			for _, a := range n.Attr {
 				if a.Key == "href" {
@@ -100,7 +107,18 @@ func (e *Engine) defineNet() {
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
 
 	set("pageURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.opts.PageURL) })
-	set("baseURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.baseURL()) })
+	set("baseURL", func(call goja.FunctionCall) goja.Value {
+		// of the document of the given node, if any
+		if id := call.Argument(0); !goja.IsUndefined(id) {
+			if n := e.nodes.node(int(id.ToInteger())); n != nil {
+				for n.Parent != nil {
+					n = n.Parent
+				}
+				return vm.ToValue(e.baseURLOf(n))
+			}
+		}
+		return vm.ToValue(e.baseURL())
+	})
 	// parseURL returns the parts of the given URL relative to the given
 	// base (if not undefined), as for the URL class, or null if invalid.
 	set("parseURL", func(call goja.FunctionCall) goja.Value {

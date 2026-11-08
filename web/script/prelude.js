@@ -33,10 +33,10 @@
 		if (w) return w;
 		let cls;
 		switch (D.type(id)) {
-			case 1: cls = D.ns(id) === "svg" ? SVGElement : (tagClasses[D.name(id)] || HTMLElement); break;
+			case 1: cls = D.ns(id) === "svg" ? (D.name(id) === "svg" ? SVGSVGElement : SVGElement) : (tagClasses[D.name(id)] || HTMLElement); break;
 			case 3: cls = Text; break;
 			case 8: cls = Comment; break;
-			case 9: cls = Document; break;
+			case 9: cls = HTMLDocument; break; // (documents are parsed as HTML)
 			case 10: cls = DocumentType; break;
 			case 11: cls = DocumentFragment; break;
 			default: cls = Node;
@@ -440,7 +440,7 @@
 		get isConnected() { return connected(this[ID]); }
 		get textContent() { const t = this.nodeType; return t === 9 || t === 10 ? null : D.text(this[ID]); }
 		set textContent(v) { D.setText(this[ID], v === null || v === undefined ? "" : String(v)); }
-		get baseURI() { return D.baseURL(); }
+		get baseURI() { return D.baseURL(this[ID]); }
 		hasChildNodes() { return D.first(this[ID]) !== 0; }
 		getRootNode() { let n = this; while (n.parentNode) n = n.parentNode; return n; }
 		contains(o) { for (let n = o; n; n = n.parentNode) if (n === this) return true; return false; }
@@ -1107,6 +1107,27 @@
 	const HTMLFieldSetElement = elementClass(["fieldset"]);
 	const HTMLUnknownElement = class extends HTMLElement {};
 	const SVGElement = class extends Element {};
+	// SVGSVGElement has the methods of svg elements that scripts check for
+	// (as the support check of the VisualEditor of Wikipedia), which make
+	// geometry objects that are not connected to the rendering.
+	const SVGSVGElement = class extends SVGElement {
+		createSVGRect() { return { x: 0, y: 0, width: 0, height: 0 }; }
+		createSVGPoint() { return { x: 0, y: 0, matrixTransform() { return { x: this.x, y: this.y }; } }; }
+		createSVGMatrix() { return new DOMMatrixStub(); }
+		createSVGTransform() { return { type: 1, matrix: new DOMMatrixStub(), setMatrix() {}, setTranslate() {}, setScale() {}, setRotate() {} }; }
+		getScreenCTM() { return new DOMMatrixStub(); }
+		getCTM() { return new DOMMatrixStub(); }
+		getBBox() { const r = this.getBoundingClientRect(); return { x: 0, y: 0, width: r.width, height: r.height }; }
+	};
+	// DOMMatrixStub is an identity matrix, for the geometry of SVG.
+	class DOMMatrixStub {
+		constructor() { Object.assign(this, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }); }
+		multiply() { return new DOMMatrixStub(); }
+		inverse() { return new DOMMatrixStub(); }
+		translate() { return new DOMMatrixStub(); }
+		scale() { return new DOMMatrixStub(); }
+		rotate() { return new DOMMatrixStub(); }
+	}
 
 	// submitForm submits the given form, by navigating (as for a GET).
 	function submitForm(form, submitter) {
@@ -2211,7 +2232,7 @@
 		HTMLVideoElement: HTMLMediaElement, HTMLAudioElement: HTMLMediaElement, HTMLDetailsElement, HTMLDialogElement,
 		HTMLDivElement, HTMLSpanElement, HTMLParagraphElement, HTMLHeadingElement, HTMLUListElement, HTMLOListElement,
 		HTMLLIElement, HTMLTableElement, HTMLTableRowElement, HTMLTableCellElement, HTMLHtmlElement, HTMLHeadElement,
-		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement, SVGElement,
+		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement, SVGElement, SVGSVGElement,
 		EventTarget, Event, CustomEvent, UIEvent, MouseEvent, PointerEvent, KeyboardEvent, FocusEvent, InputEvent,
 		WheelEvent, ErrorEvent, MessageEvent, ProgressEvent, PopStateEvent, HashChangeEvent, SubmitEvent, History,
 		AnimationEvent, TransitionEvent, TouchEvent,
