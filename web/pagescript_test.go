@@ -562,3 +562,38 @@ func TestScriptsTransparentControlHover(t *testing.T) {
 		assert.Greater(t, label.Styles.StateLayer, float32(0), "the hover of the label")
 	})
 }
+
+// TestScriptsSummaryTextClick tests that a click on the text of a summary
+// (in a span, which gets the click, on a page with a click listener, as
+// the sidebar of MDN) opens its details, in the document.
+func TestScriptsSummaryTextClick(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><details id="d"><summary><span id="s">Modules</span></summary><p>Anchor positioning</p></details>` +
+			`<script>document.addEventListener("click", e => {});</script></body></html>`,
+	})
+	var text *core.Text
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		pg.WalkDown(func(n tree.Node) bool {
+			if tx, ok := n.(*core.Text); ok && strings.Contains(tx.Text, "Modules") {
+				text = tx
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		if !assert.NotNil(t, text) {
+			return
+		}
+		bb := text.Geom.TotalBBox
+		c := bb.Min.Add(bb.Size().Div(2))
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseButton(events.MouseDown, events.Left, c, 0)
+		ev.MouseButton(events.MouseUp, events.Left, c, 0)
+	}, func() {
+		settle(pg)
+		assert.Eventually(t, func() bool {
+			v, _ := pg.scripts.engine.RunString(`document.getElementById("d").open`)
+			return v == true
+		}, 3*time.Second, 20*time.Millisecond, "opened")
+	})
+}

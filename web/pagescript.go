@@ -232,9 +232,37 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	if n == nil || n.Type != html.ElementNode || !ps.engine.HasListener(n, "click") {
 		return
 	}
+	details := summaryDetails(n)
 	tx.OnClick(func(ev events.Event) {
-		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
+		ps.engine.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+			// a click on the text of a summary toggles its details, as
+			// the text gets the click instead of the summary (the items of
+			// the sidebar of MDN, whose texts are in spans)
+			if details != nil && !prevented {
+				ps.engine.ToggleDetails(details)
+			}
+		})
 	})
+}
+
+// summaryDetails returns the details element whose summary the given
+// element is in (not in a link or button in it), or nil.
+func summaryDetails(n *html.Node) *html.Node {
+	for ; n != nil; n = n.Parent {
+		if n.Type != html.ElementNode {
+			continue
+		}
+		switch n.Data {
+		case "a", "button", "input", "select", "textarea":
+			return nil
+		case "summary":
+			if p := n.Parent; p != nil && p.Type == html.ElementNode && p.Data == "details" {
+				return p
+			}
+			return nil
+		}
+	}
+	return nil
 }
 
 func (ps *pageScripts) handleWidget(w core.Widget) {
