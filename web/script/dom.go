@@ -943,3 +943,10 @@ func hasSlot(n *html.Node, name string) bool {
 	}
 	return false
 }
+
+// ToggleDetails toggles the given details element open or closed (its open
+// attribute), and dispatches its toggle event, as a click on its summary
+// does in browsers, in a task of the engine (which renders the page again).
+func (e *Engine) ToggleDetails(n *html.Node) {
+	e.Post(func() { e.callPrelude("toggleDetails", e.nodes.id(n)) })
+}

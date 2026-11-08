@@ -2548,6 +2548,15 @@
 	// state returns the state of the form control of the given id that
 	// is not in its attributes: its value and checked state, or null
 	// for each that the user or scripts have not changed.
+	// toggleDetails toggles the details element of the given id open or
+	// closed, with its toggle event (see Engine.ToggleDetails).
+	D.toggleDetails = function (id) {
+		const d = wrap(id);
+		if (!(d instanceof HTMLDetailsElement)) return;
+		d.open = !d.open;
+		Promise.resolve().then(() => d.dispatchEvent(new Event("toggle")));
+	};
+
 	D.state = function (id) {
 		const el = wrappers.get(id); // no state without a wrapper (see hasListener)
 		if (!el) return [null, null];

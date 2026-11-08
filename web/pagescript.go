@@ -148,6 +148,8 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	}
 	// the children of shadow hosts that are in no slot are not rendered
 	ctx.Unrendered = ps.engine.Unassigned
+	// details are toggled in the document, which is read again
+	ctx.ToggleDetails = ps.engine.ToggleDetails
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)

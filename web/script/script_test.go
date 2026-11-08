@@ -797,3 +797,26 @@ func TestSlotEvents(t *testing.T) {
 		return got.join(" ");
 	})()`))
 }
+
+// TestToggleDetails tests that toggling a details element (as a click on
+// its summary does) changes its open attribute and dispatches toggle.
+func TestToggleDetails(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><details id="d"><summary>More</summary><p>x</p></details></body></html>`, nil)
+	run(t, e, `window.toggles = 0; document.getElementById("d").addEventListener("toggle", () => toggles++);`)
+	var d *html.Node
+	for n := range e.Document().Descendants() {
+		if n.Type == html.ElementNode && n.Data == "details" {
+			d = n
+		}
+	}
+	e.ToggleDetails(d)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`document.getElementById("d").open + " " + toggles`)
+		return v == "true 1"
+	}, 3*time.Second, 20*time.Millisecond)
+	e.ToggleDetails(d)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`document.getElementById("d").hasAttribute("open") + " " + toggles`)
+		return v == "false 2"
+	}, 3*time.Second, 20*time.Millisecond)
+}
