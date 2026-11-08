@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package script runs the scripts of the web pages of the web browser,
-// with the goja JavaScript engine.
+// with the sobek JavaScript engine.
 //
 // The DOM of a page is its parsed HTML (x/net/html nodes), which htmlcore
 // reads into widgets. Scripts change the nodes through the DOM API, which
@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dop251/goja"
+	"github.com/grafana/sobek"
 	"golang.org/x/net/html"
 )
 
@@ -37,8 +37,8 @@ import (
 var preludeSource string
 
 // prelude is the compiled prelude, which is shared by the engines.
-var prelude = sync.OnceValues(func() (*goja.Program, error) {
-	return goja.Compile("prelude.js", preludeSource, true)
+var prelude = sync.OnceValues(func() (*sobek.Program, error) {
+	return sobek.Compile("prelude.js", preludeSource, true)
 })
 
 // Options are the options of an [Engine]: the functions with which the
@@ -126,7 +126,7 @@ const maxCallStack = 10000
 // Engine runs the scripts of a page (see the package documentation).
 type Engine struct {
 	opts Options
-	vm   *goja.Runtime
+	vm   *sobek.Runtime
 	doc  *html.Node
 
 	// mu protects the fields below it, which are used by other goroutines.
@@ -148,11 +148,11 @@ type Engine struct {
 	dirty    bool
 	loading  bool       // whether the scripts of the page are being loaded
 	current  *html.Node // the script element that is running, if any
-	jsDOM    *goja.Object
-	dispatch goja.Callable // __dom.dispatch, set by the prelude
-	fire     goja.Callable // __dom.fireTimer, set by the prelude
-	callback goja.Callable // __dom.callback, set by the prelude
-	session  *Storage      // the sessionStorage of the page
+	jsDOM    *sobek.Object
+	dispatch sobek.Callable // __dom.dispatch, set by the prelude
+	fire     sobek.Callable // __dom.fireTimer, set by the prelude
+	callback sobek.Callable // __dom.callback, set by the prelude
+	session  *Storage       // the sessionStorage of the page
 	// lastRender is when the page was last rendered, and renderTimer
 	// whether a render is pending (see [Engine.renderSoon]).
 	lastRender time.Time
@@ -187,8 +187,8 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	e := &Engine{opts: opts, doc: doc, wake: make(chan struct{}, 1), stopped: make(chan struct{}),
 		timers: map[int]*time.Timer{}, lock: opts.Lock, unlock: opts.Unlock}
 	e.nodes.init()
-	e.vm = goja.New()
-	e.vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
+	e.vm = sobek.New()
+	e.vm.SetFieldNameMapper(sobek.UncapFieldNameMapper())
 	// a script that recurses without end gets a RangeError (as in browsers)
 	// instead of running until it times out, using ever more memory
 	e.vm.SetMaxCallStackSize(maxCallStack)
@@ -199,8 +199,8 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	if _, err := e.vm.RunProgram(prog); err != nil {
 		return nil, fmt.Errorf("running prelude: %w", err)
 	}
-	for name, dst := range map[string]*goja.Callable{"dispatch": &e.dispatch, "fireTimer": &e.fire, "callback": &e.callback} {
-		f, ok := goja.AssertFunction(e.jsDOM.Get(name))
+	for name, dst := range map[string]*sobek.Callable{"dispatch": &e.dispatch, "fireTimer": &e.fire, "callback": &e.callback} {
+		f, ok := sobek.AssertFunction(e.jsDOM.Get(name))
 		if !ok {
 			return nil, fmt.Errorf("prelude: no __dom.%s", name)
 		}
@@ -439,17 +439,17 @@ func (e *Engine) reportError(err error) {
 	if err == nil {
 		return
 	}
-	var so *goja.StackOverflowError
+	var so *sobek.StackOverflowError
 	if errors.As(err, &so) {
 		e.logf(slog.LevelError, "RangeError: Maximum call stack size exceeded%s", so.String())
 		return
 	}
-	var ex *goja.Exception
+	var ex *sobek.Exception
 	if errors.As(err, &ex) {
 		e.logf(slog.LevelError, "%s", ex.String())
 		return
 	}
-	var ie *goja.InterruptedError
+	var ie *sobek.InterruptedError
 	if errors.As(err, &ie) {
 		if v, ok := ie.Value().(error); ok && errors.Is(v, errClosed) {
 			return
@@ -462,7 +462,7 @@ func (e *Engine) reportError(err error) {
 
 // run runs the given source as a script with the given name, reporting
 // its errors.
-// If it does not compile, it is rewritten without the features that goja
+// If it does not compile, it is rewritten without the features that sobek
 // does not support (see [lower]), or bundled as a module if it has the
 // syntax of modules.
 func (e *Engine) run(name, src string) {
@@ -476,19 +476,19 @@ func (e *Engine) run(name, src string) {
 }
 
 // compile compiles the given script, rewriting it if needed (see [Engine.run]).
-func (e *Engine) compile(name, src string) (*goja.Program, error) {
-	prog, err := goja.Compile(name, rewriteImports(src, name), false)
+func (e *Engine) compile(name, src string) (*sobek.Program, error) {
+	prog, err := sobek.Compile(name, rewriteImports(src, name), false)
 	if err == nil {
 		return prog, nil
 	}
 	if lowered, lerr := lower(src, name); lerr == nil {
-		if p, perr := goja.Compile(name, rewriteImports(lowered, name), false); perr == nil {
+		if p, perr := sobek.Compile(name, rewriteImports(lowered, name), false); perr == nil {
 			return p, nil
 		}
 	}
 	if moduleSyntax.MatchString(src) {
 		if bundled, berr := e.bundleModule(src, name); berr == nil {
-			if p, perr := goja.Compile(name, rewriteImports(bundled, name), false); perr == nil {
+			if p, perr := sobek.Compile(name, rewriteImports(bundled, name), false); perr == nil {
 				return p, nil
 			}
 		}
@@ -568,7 +568,7 @@ func (e *Engine) setTimer(ms float64, repeat bool) int {
 		if !ok {
 			return // cleared
 		}
-		_, err := e.fire(goja.Undefined(), e.vm.ToValue(id))
+		_, err := e.fire(sobek.Undefined(), e.vm.ToValue(id))
 		e.reportError(err)
 	}
 	if d == 0 && !repeat {
@@ -615,11 +615,11 @@ func (e *Engine) clearTimer(id int) {
 // given arguments, in a task (as for the result of a network request).
 func (e *Engine) callBack(id int, args ...any) {
 	e.Post(func() {
-		vals := []goja.Value{e.vm.ToValue(id)}
+		vals := []sobek.Value{e.vm.ToValue(id)}
 		for _, a := range args {
 			vals = append(vals, e.vm.ToValue(a))
 		}
-		_, err := e.callback(goja.Undefined(), vals...)
+		_, err := e.callback(sobek.Undefined(), vals...)
 		e.reportError(err)
 	})
 }

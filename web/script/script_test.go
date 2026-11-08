@@ -227,7 +227,7 @@ func findByID(doc *html.Node, id string) *html.Node {
 }
 
 // TestModules tests module scripts (bundled with the modules that they
-// import), dynamic imports, syntax that goja does not support (async
+// import), dynamic imports, syntax that sobek does not support (async
 // generators, rewritten), and :scope in selectors.
 func TestModules(t *testing.T) {
 	page := `<html><body><div id="out"></div><ul id="l"><li>a</li><li>b</li></ul>
@@ -519,7 +519,7 @@ func TestSharedModules(t *testing.T) {
 	assert.Empty(t, *logs)
 }
 
-// TestIntl tests the minimal Intl (English only), which goja lacks and
+// TestIntl tests the minimal Intl (English only), which sobek lacks and
 // sites (GitHub) use to format numbers and dates.
 func TestIntl(t *testing.T) {
 	e, logs := testEngine(t, `<html><body></body></html>`, nil)

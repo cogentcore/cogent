@@ -13,13 +13,13 @@ require (
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
-	github.com/dop251/goja v0.0.0-20261105002551-2413f2132ac8
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
 	github.com/emersion/go-message v0.18.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
 	github.com/emersion/go-smtp v0.21.1
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
+	github.com/grafana/sobek v0.0.0-20261105103427-a5b602015248
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sgtdi/fswatcher v1.3.0
@@ -60,7 +60,7 @@ require (
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1.0.20260628091122-0bd588dc30cf // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect

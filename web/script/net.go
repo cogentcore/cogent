@@ -18,7 +18,7 @@ import (
 	"unicode/utf8"
 
 	"cogentcore.org/core/htmlcore"
-	"github.com/dop251/goja"
+	"github.com/grafana/sobek"
 	"golang.org/x/net/html"
 )
 
@@ -101,15 +101,15 @@ func resolveURL(u, base string) (string, error) {
 func (e *Engine) defineNet() {
 	vm := e.vm
 	d := e.jsDOM
-	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
+	set := func(name string, f func(call sobek.FunctionCall) sobek.Value) {
 		d.Set(name, f)
 	}
-	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
+	str := func(call sobek.FunctionCall, i int) string { return call.Argument(i).String() }
 
-	set("pageURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.opts.PageURL) })
-	set("baseURL", func(call goja.FunctionCall) goja.Value {
+	set("pageURL", func(call sobek.FunctionCall) sobek.Value { return vm.ToValue(e.opts.PageURL) })
+	set("baseURL", func(call sobek.FunctionCall) sobek.Value {
 		// of the document of the given node, if any
-		if id := call.Argument(0); !goja.IsUndefined(id) {
+		if id := call.Argument(0); !sobek.IsUndefined(id) {
 			if n := e.nodes.node(int(id.ToInteger())); n != nil {
 				for n.Parent != nil {
 					n = n.Parent
@@ -121,15 +121,15 @@ func (e *Engine) defineNet() {
 	})
 	// parseURL returns the parts of the given URL relative to the given
 	// base (if not undefined), as for the URL class, or null if invalid.
-	set("parseURL", func(call goja.FunctionCall) goja.Value {
+	set("parseURL", func(call sobek.FunctionCall) sobek.Value {
 		raw := strings.TrimSpace(str(call, 0))
 		var pu *neturl.URL
 		var err error
-		if b := call.Argument(1); !goja.IsUndefined(b) && !goja.IsNull(b) {
+		if b := call.Argument(1); !sobek.IsUndefined(b) && !sobek.IsNull(b) {
 			var base *neturl.URL
 			base, err = neturl.Parse(b.String())
 			if err != nil || base.Scheme == "" {
-				return goja.Null()
+				return sobek.Null()
 			}
 			var ref *neturl.URL
 			ref, err = neturl.Parse(raw)
@@ -140,7 +140,7 @@ func (e *Engine) defineNet() {
 			pu, err = neturl.Parse(raw)
 		}
 		if err != nil || pu.Scheme == "" {
-			return goja.Null()
+			return sobek.Null()
 		}
 		if (pu.Scheme == "http" || pu.Scheme == "https") && pu.Path == "" {
 			pu.Path = "/"
@@ -168,17 +168,17 @@ func (e *Engine) defineNet() {
 		}
 		return vm.NewArray(pu.String(), pu.Scheme+":", user, pass, pu.Host, pu.Hostname(), pu.Port(), path, search, hash, org)
 	})
-	set("navigate", func(call goja.FunctionCall) goja.Value {
+	set("navigate", func(call sobek.FunctionCall) sobek.Value {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Navigate != nil {
 			replace := call.Argument(1).ToBoolean()
 			go e.opts.Navigate(u, replace) // after the task, which holds the lock
 		}
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
 	// createObjectURL returns a new blob: URL for the given data, of the
 	// given type, which scripts and fetch can get until it is revoked.
-	set("createObjectURL", func(call goja.FunctionCall) goja.Value {
+	set("createObjectURL", func(call sobek.FunctionCall) sobek.Value {
 		e.mu.Lock()
 		defer e.mu.Unlock()
 		if e.blobs == nil {
@@ -189,20 +189,20 @@ func (e *Engine) defineNet() {
 		e.blobs[u] = blob{data: str(call, 0), typ: str(call, 1)}
 		return vm.ToValue(u)
 	})
-	set("revokeObjectURL", func(call goja.FunctionCall) goja.Value {
+	set("revokeObjectURL", func(call sobek.FunctionCall) sobek.Value {
 		e.mu.Lock()
 		delete(e.blobs, str(call, 0))
 		e.mu.Unlock()
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
-	set("submit", func(call goja.FunctionCall) goja.Value {
+	set("submit", func(call sobek.FunctionCall) sobek.Value {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Submit != nil {
 			go e.opts.Submit(u, str(call, 1), []byte(str(call, 2))) // after the task
 		}
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
-	set("pushState", func(call goja.FunctionCall) goja.Value {
+	set("pushState", func(call sobek.FunctionCall) sobek.Value {
 		u, err := resolveURL(str(call, 0), e.opts.PageURL)
 		if err != nil || origin(u) != origin(e.opts.PageURL) {
 			panic(vm.NewGoError(&domException{name: "SecurityError", msg: "the URL is not of the origin of the page"}))
@@ -213,7 +213,7 @@ func (e *Engine) defineNet() {
 		}
 		return vm.ToValue(u)
 	})
-	set("storage", func(call goja.FunctionCall) goja.Value {
+	set("storage", func(call sobek.FunctionCall) sobek.Value {
 		op, kind := str(call, 0), str(call, 1)
 		st := e.opts.Storage
 		if kind == "session" || st == nil {
@@ -230,7 +230,7 @@ func (e *Engine) defineNet() {
 			if v, ok := a[str(call, 2)]; ok {
 				return vm.ToValue(v)
 			}
-			return goja.Null()
+			return sobek.Null()
 		case "set":
 			a[str(call, 2)] = str(call, 3)
 		case "remove":
@@ -244,9 +244,9 @@ func (e *Engine) defineNet() {
 			}
 			return vm.NewArray(ks...)
 		}
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
-	set("cookie", func(call goja.FunctionCall) goja.Value {
+	set("cookie", func(call sobek.FunctionCall) sobek.Value {
 		u, err := neturl.Parse(e.opts.PageURL)
 		if err != nil || e.opts.Cookies == nil {
 			return vm.ToValue("")
@@ -257,22 +257,22 @@ func (e *Engine) defineNet() {
 		}
 		return vm.ToValue(strings.Join(parts, "; "))
 	})
-	set("setCookie", func(call goja.FunctionCall) goja.Value {
+	set("setCookie", func(call sobek.FunctionCall) sobek.Value {
 		u, err := neturl.Parse(e.opts.PageURL)
 		if err != nil || e.opts.Cookies == nil {
-			return goja.Undefined()
+			return sobek.Undefined()
 		}
 		if c, err := http.ParseSetCookie(str(call, 0)); err == nil {
 			c.HttpOnly = false
 			e.opts.Cookies.SetCookies(u, []*http.Cookie{c})
 		}
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
 	// fetch gets the given URL with the given method, headers (an array of
 	// names and values) and body (a string or undefined) in another
 	// goroutine, and calls the callback of the given id with the status,
 	// status text, headers, body (ArrayBuffer), final URL, and error.
-	set("fetch", func(call goja.FunctionCall) goja.Value {
+	set("fetch", func(call sobek.FunctionCall) sobek.Value {
 		cb := int(call.Argument(0).ToInteger())
 		u, err := resolveURL(str(call, 1), e.baseURL())
 		method := strings.ToUpper(str(call, 2))
@@ -284,9 +284,9 @@ func (e *Engine) defineNet() {
 		}
 		var body []byte
 		hasBody := false
-		if b := call.Argument(4); !goja.IsUndefined(b) && !goja.IsNull(b) {
+		if b := call.Argument(4); !sobek.IsUndefined(b) && !sobek.IsNull(b) {
 			hasBody = true
-			if ab, ok := b.Export().(goja.ArrayBuffer); ok {
+			if ab, ok := b.Export().(sobek.ArrayBuffer); ok {
 				body = ab.Bytes()
 			} else {
 				body = []byte(b.String())
@@ -294,7 +294,7 @@ func (e *Engine) defineNet() {
 		}
 		if err != nil {
 			e.callBack(cb, 0, "", nil, nil, "", err.Error())
-			return goja.Undefined()
+			return sobek.Undefined()
 		}
 		go func() {
 			resp, err := e.request(u, method, headers, body, hasBody)
@@ -318,35 +318,35 @@ func (e *Engine) defineNet() {
 			}
 			text := http.StatusText(resp.StatusCode)
 			e.Post(func() {
-				_, err := e.callback(goja.Undefined(), vm.ToValue(cb), vm.ToValue(resp.StatusCode), vm.ToValue(text),
-					vm.NewArray(hs...), vm.ToValue(vm.NewArrayBuffer(data)), vm.ToValue(final), goja.Null())
+				_, err := e.callback(sobek.Undefined(), vm.ToValue(cb), vm.ToValue(resp.StatusCode), vm.ToValue(text),
+					vm.NewArray(hs...), vm.ToValue(vm.NewArrayBuffer(data)), vm.ToValue(final), sobek.Null())
 				e.reportError(err)
 			})
 		}()
-		return goja.Undefined()
+		return sobek.Undefined()
 	})
-	set("decodeUTF8", func(call goja.FunctionCall) goja.Value {
+	set("decodeUTF8", func(call sobek.FunctionCall) sobek.Value {
 		b := bytesOf(call.Argument(0))
 		if !utf8.Valid(b) {
 			b = bytes.ToValidUTF8(b, []byte("�"))
 		}
 		return vm.ToValue(string(b))
 	})
-	set("encodeUTF8", func(call goja.FunctionCall) goja.Value {
+	set("encodeUTF8", func(call sobek.FunctionCall) sobek.Value {
 		return vm.ToValue(vm.NewArrayBuffer([]byte(str(call, 0))))
 	})
 }
 
 // bytesOf returns the bytes of the given ArrayBuffer or typed array value.
-func bytesOf(v goja.Value) []byte {
+func bytesOf(v sobek.Value) []byte {
 	switch x := v.Export().(type) {
-	case goja.ArrayBuffer:
+	case sobek.ArrayBuffer:
 		return x.Bytes()
 	case []byte:
 		return x
 	}
-	if o, ok := v.(*goja.Object); ok {
-		if ab, ok := o.Get("buffer").Export().(goja.ArrayBuffer); ok {
+	if o, ok := v.(*sobek.Object); ok {
+		if ab, ok := o.Get("buffer").Export().(sobek.ArrayBuffer); ok {
 			b := ab.Bytes()
 			off := int(o.Get("byteOffset").ToInteger())
 			n := int(o.Get("byteLength").ToInteger())
@@ -462,17 +462,17 @@ func (e *Engine) Load(done func()) {
 }
 
 // callPrelude calls the function of the given name of __dom.
-func (e *Engine) callPrelude(name string, args ...any) goja.Value {
-	f, ok := goja.AssertFunction(e.jsDOM.Get(name))
+func (e *Engine) callPrelude(name string, args ...any) sobek.Value {
+	f, ok := sobek.AssertFunction(e.jsDOM.Get(name))
 	if !ok {
 		e.logf(slog.LevelError, "prelude: no __dom.%s", name)
-		return goja.Undefined()
+		return sobek.Undefined()
 	}
-	vals := make([]goja.Value, len(args))
+	vals := make([]sobek.Value, len(args))
 	for i, a := range args {
 		vals[i] = e.vm.ToValue(a)
 	}
-	v, err := f(goja.Undefined(), vals...)
+	v, err := f(sobek.Undefined(), vals...)
 	e.reportError(err)
 	return v
 }
@@ -662,7 +662,7 @@ func (e *Engine) write(s string) {
 // preventDefault), for the app to do it otherwise (as following a link).
 func (e *Engine) Dispatch(n *html.Node, typ string, props map[string]any, after func(prevented bool)) {
 	e.Post(func() {
-		v, err := e.dispatch(goja.Undefined(), e.vm.ToValue(e.nodes.id(n)), e.vm.ToValue(typ), e.vm.ToValue(props))
+		v, err := e.dispatch(sobek.Undefined(), e.vm.ToValue(e.nodes.id(n)), e.vm.ToValue(typ), e.vm.ToValue(props))
 		e.reportError(err)
 		prevented := err == nil && v.ToBoolean()
 		if after != nil {
@@ -709,14 +709,14 @@ func dataURL(u string) (string, error) {
 // It must be called when no script runs (as while rendering the page).
 func (e *Engine) ControlState(n *html.Node) (value string, hasValue, checked, hasChecked bool) {
 	v := e.callPrelude("state", e.nodes.id(n))
-	o, ok := v.(*goja.Object)
+	o, ok := v.(*sobek.Object)
 	if !ok {
 		return
 	}
-	if x := o.Get("0"); x != nil && !goja.IsNull(x) && !goja.IsUndefined(x) {
+	if x := o.Get("0"); x != nil && !sobek.IsNull(x) && !sobek.IsUndefined(x) {
 		value, hasValue = x.String(), true
 	}
-	if x := o.Get("1"); x != nil && !goja.IsNull(x) && !goja.IsUndefined(x) {
+	if x := o.Get("1"); x != nil && !sobek.IsNull(x) && !sobek.IsUndefined(x) {
 		checked, hasChecked = x.ToBoolean(), true
 	}
 	return
