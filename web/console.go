@@ -16,9 +16,9 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/text"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 )
 
