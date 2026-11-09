@@ -1154,15 +1154,26 @@ func (pg *Page) showScripts(ps *pageScripts) {
 }
 
 // ScriptConsole returns the console messages of the scripts of the page
-// that is shown (and their errors), oldest first.
+// that is shown (and their errors), oldest first, followed by those of the
+// pages in its frames, each marked with the URL of its frame (as the
+// captchas of bot checks, whose errors were not shown).
 func (pg *Page) ScriptConsole() []string {
-	ps := pg.scripts
-	if ps == nil {
-		return nil
+	var msgs []string
+	if ps := pg.scripts; ps != nil {
+		ps.consoleMu.Lock()
+		msgs = append(msgs, ps.console...)
+		ps.consoleMu.Unlock()
 	}
-	ps.consoleMu.Lock()
-	defer ps.consoleMu.Unlock()
-	return append([]string(nil), ps.console...)
+	for _, fp := range pg.frames {
+		for _, m := range fp.ScriptConsole() {
+			if !strings.HasPrefix(m, "[frame ") {
+				src, _, _ := strings.Cut(fp.frame.src, "?") // (without its long query)
+				m = "[frame " + src + "] " + m
+			}
+			msgs = append(msgs, m)
+		}
+	}
+	return msgs
 }
 
 // showConsole shows the console messages of the scripts of the page.

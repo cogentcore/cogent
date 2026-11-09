@@ -134,6 +134,9 @@ type Options struct {
 	// TaskTimeout is the longest time that a task can run before it is
 	// interrupted (as a script that does not end); 0 is 10 seconds.
 	TaskTimeout time.Duration
+
+	// worker is whether the engine is that of a worker (see worker.go).
+	worker bool
 }
 
 // maxCallStack is the maximum depth of the calls of scripts, about that
@@ -225,6 +228,27 @@ type Engine struct {
 	// still have none, as "Uncaught (in promise)" in browsers; only used
 	// in tasks.
 	rejected []rejection
+
+	// owner is the engine that made this one as a worker, if any, and
+	// ownerID the number of its Worker object there (see worker.go).
+	owner   *Engine
+	ownerID int
+
+	// workers are the workers that the scripts made, by their numbers;
+	// protected by mu.
+	workers map[int]*Engine
+
+	// workerReady is whether the script of a worker has run, before which
+	// the messages to it are workerPending, as in browsers; protected by mu.
+	workerReady   bool
+	workerPending []workerMessage
+}
+
+// workerMessage is a message (as JSON) to a worker, with the pairs of the
+// ends of the ports that it transfers (see transferPorts).
+type workerMessage struct {
+	data  string
+	ports [][2]int64
 }
 
 // rejection is a promise that was rejected without a handler, with the
@@ -275,6 +299,8 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	e.defineDOM()
 	e.defineNavigator()
 	e.defineFrames()
+	e.defineWorkers()
+	e.definePorts()
 	e.vm.Set("__dom", e.jsDOM)
 	if _, err := e.vm.RunProgram(prog); err != nil {
 		return nil, fmt.Errorf("running prelude: %w", err)
@@ -372,6 +398,7 @@ func (e *Engine) Close() {
 	e.mu.Unlock()
 	e.vm.Interrupt(errClosed)
 	close(e.wake)
+	e.closeWorkers()
 }
 
 var errClosed = errors.New("the page is closed")

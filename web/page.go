@@ -869,7 +869,7 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			errs := 0
 			if pg != nil {
 				for _, m := range pg.ScriptConsole() {
-					if strings.HasPrefix(m, "ERROR") {
+					if strings.HasPrefix(m, "ERROR") || strings.Contains(m, "] ERROR") { // (of the page or a frame)
 						errs++
 					}
 				}

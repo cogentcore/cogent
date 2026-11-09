@@ -96,7 +96,7 @@ func urlOrigin(u string) string {
 // "/" for that of this one), as for the postMessage of a window. It is
 // dispatched as a message event to the window of the other engine, in a
 // task of it.
-func (e *Engine) postMessage(to *Engine, data, targetOrigin string) {
+func (e *Engine) postMessage(to *Engine, data, targetOrigin string, ports []int) {
 	if to == nil {
 		return
 	}
@@ -112,8 +112,9 @@ func (e *Engine) postMessage(to *Engine, data, targetOrigin string) {
 			return // as browsers, which do not send it (or report an error)
 		}
 	}
+	pairs := e.transferPorts(to, ports)
 	to.Post(func() {
-		to.callPrelude("message", data, origin, to.windowID(e))
+		to.callPrelude("message", data, origin, to.windowID(e), pairs)
 	})
 }
 
@@ -159,7 +160,7 @@ func (e *Engine) defineFrames() {
 	})
 	d.Set("postTo", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
-		e.postMessage(w, call.Argument(1).String(), call.Argument(2).String())
+		e.postMessage(w, call.Argument(1).String(), call.Argument(2).String(), portIDs(call.Argument(3)))
 		return goja.Undefined()
 	})
 }

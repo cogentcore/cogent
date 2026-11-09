@@ -2469,23 +2469,72 @@
 
 	// MessagePort sends messages to the other port of its channel, in
 	// tasks (as React's scheduler yields with them).
+	// A port can be transferred to another engine (see ports.go): its
+	// partner then posts to the end of the port there (_remote).
 	class MessagePort extends EventTarget {
-		constructor() { super(); this._other = null; this._closed = false; this.onmessage = null; }
+		constructor() { super(); this._other = null; this._remote = 0; this._closed = false; this.onmessage = null; }
 		postMessage(data) {
+			if (this._closed) return;
+			if (this._remote) {
+				D.portPost(this._remote, cloneJSON(data));
+				return;
+			}
 			const to = this._other;
-			if (!to || this._closed) return;
-			setTimer(() => {
-				if (to._closed) return;
-				const ev = new MessageEvent("message", { data });
-				if (typeof to.onmessage === "function") {
-					try { to.onmessage(ev); } catch (e) { reportError(e); }
-				}
-				to.dispatchEvent(ev);
-			}, 0, [], false);
+			if (!to) return;
+			setTimer(() => to._deliver(data), 0, [], false);
+		}
+		_deliver(data) {
+			if (this._closed) {
+				// a message that was on its way to a port that has moved to
+				// another engine follows it there, as in browsers
+				const via = this._movedVia;
+				if (via && via._remote) D.portPost(via._remote, cloneJSON(data));
+				return;
+			}
+			const ev = new MessageEvent("message", { data });
+			if (typeof this.onmessage === "function") {
+				try { this.onmessage(ev); } catch (e) { reportError(e); }
+			}
+			this.dispatchEvent(ev);
 		}
 		start() {}
 		close() { this._closed = true; }
 	}
+	const localPorts = new Map(); // the ports that are linked to other engines, by their numbers
+	let portCount = 0;
+	const portID = p => { if (!p._id) { p._id = ++portCount; localPorts.set(p._id, p); } return p._id; };
+	// transferIDs returns the numbers of the partners of the ports in the
+	// given transfer list of a message to another engine (see ports.go),
+	// which are moved there, and are closed here.
+	function transferIDs(transfer) {
+		const ids = [];
+		for (const p of transfer || []) {
+			if (!(p instanceof MessagePort) || !p._other) continue;
+			const q = p._other;
+			p._other = null;
+			p._closed = true;
+			p._movedVia = q;
+			q._other = null;
+			ids.push(portID(q));
+		}
+		return ids;
+	}
+	// receivedPorts returns the ports of the given pairs of ends of a
+	// message from another engine, which are made here.
+	const receivedPorts = pairs => (pairs || []).map(([partner, end]) => {
+		const p = new MessagePort();
+		p._remote = partner;
+		D.portBind(end, portID(p));
+		return p;
+	});
+	D.linkPort = function (id, end) { const q = localPorts.get(id); if (q) q._remote = end; };
+	D.portMessage = function (id, data) {
+		const p = localPorts.get(id);
+		if (!p) return;
+		let v = null;
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		p._deliver(v);
+	};
 	class MessageChannel {
 		constructor() {
 			this.port1 = new MessagePort();
@@ -2597,11 +2646,71 @@
 	// ---- the windows of frames (see frames.go) ----
 
 	// cloneJSON returns the given message as JSON, as it is copied to the
-	// window that it is posted to.
-	const cloneJSON = v => { try { const s = JSON.stringify(v); return s === undefined ? "null" : s; } catch (e) { throw new DOMException("could not be cloned", "DataCloneError"); } };
+	// window or worker that it is posted to (see cloneDecode), as for the
+	// structured clone of browsers: with its array buffers, typed arrays,
+	// dates, regular expressions, maps, sets, undefined values, and
+	// numbers that JSON has not.
+	const cloneError = () => new DOMException("could not be cloned", "DataCloneError");
+	function cloneEncode(v) {
+		switch (typeof v) {
+			case "undefined": return { $c: "u" };
+			case "bigint": return { $c: "b", v: String(v) };
+			case "number": return isFinite(v) && !Object.is(v, -0) ? v : { $c: "n", v: String(v) };
+			case "function": case "symbol": throw cloneError();
+			case "object": break;
+			default: return v;
+		}
+		if (v === null) return v;
+		if (v instanceof ArrayBuffer) return { $c: "ab", v: Array.from(new Uint8Array(v)) };
+		if (ArrayBuffer.isView(v)) return { $c: "ta", t: v.constructor.name, v: Array.from(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
+		if (v instanceof Date) return { $c: "d", v: v.getTime() };
+		if (v instanceof RegExp) return { $c: "r", s: v.source, f: v.flags };
+		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [cloneEncode(k), cloneEncode(x)]) };
+		if (v instanceof Set) return { $c: "s", v: Array.from(v, cloneEncode) };
+		if (v instanceof Error) return { $c: "e", n: v.name, m: v.message };
+		if (Array.isArray(v)) return v.map(cloneEncode);
+		if (v instanceof Node) throw cloneError();
+		const o = {};
+		for (const k of Object.keys(v)) o[k] = cloneEncode(v[k]);
+		return "$c" in o ? { $c: "o", v: o } : o;
+	}
+	function cloneDecode(v) {
+		if (v === null || typeof v !== "object") return v;
+		if (Array.isArray(v)) return v.map(cloneDecode);
+		const decodeObject = o => { const r = {}; for (const k of Object.keys(o)) r[k] = cloneDecode(o[k]); return r; };
+		switch (v.$c) {
+			case undefined: return decodeObject(v);
+			case "u": return undefined;
+			case "b": return BigInt(v.v);
+			case "n": return Number(v.v);
+			case "ab": return new Uint8Array(v.v).buffer;
+			case "ta": {
+				const buf = new Uint8Array(v.v).buffer;
+				if (v.t === "DataView") return new DataView(buf);
+				const C = g[v.t] || Uint8Array;
+				return new C(buf, 0, buf.byteLength / (C.BYTES_PER_ELEMENT || 1));
+			}
+			case "d": return new Date(v.v);
+			case "r": return new RegExp(v.s, v.f);
+			case "m": return new Map(v.v.map(([k, x]) => [cloneDecode(k), cloneDecode(x)]));
+			case "s": return new Set(v.v.map(cloneDecode));
+			case "e": { const C = g[v.n] || Error; const e = new C(v.m); return e; }
+			case "o": return decodeObject(v.v);
+		}
+		return decodeObject(v);
+	}
+	const cloneJSON = v => JSON.stringify(cloneEncode(v));
 	// targetOrigin returns the target origin of the options of postMessage
 	// (a string, or an object with targetOrigin), "/" by default.
 	const targetOrigin = o => { const t = o !== null && typeof o === "object" ? o.targetOrigin : o; return t === undefined ? "/" : String(t); };
+	// transferOf returns the transfer list of postMessage of a window: of
+	// its options (its second argument, an object, of which an array is
+	// one, as in browsers: reCAPTCHA posts its worker setup with
+	// postMessage(data, [port]) in windows too, which is posted without the
+	// port, and it took its own port as that of its frame), or its third
+	// argument. Workers and ports take a transfer list as their second.
+	const transferOf = (o, transfer) => o !== null && typeof o === "object" ? o.transfer : transfer;
+	const transferList = t => Array.isArray(t) ? t : t !== null && typeof t === "object" ? t.transfer : undefined;
 	const proxies = new Map(); // the window proxies, by their number
 	// windowProxy returns the window of the given number (see
 	// Engine.windowID): null for none, this window for 0, and otherwise a
@@ -2612,7 +2721,7 @@
 		let p = proxies.get(id);
 		if (p) return p;
 		p = {
-			postMessage(data, opts) { D.postTo(id, cloneJSON(data), targetOrigin(opts)); },
+			postMessage(data, opts, transfer) { D.postTo(id, cloneJSON(data), targetOrigin(opts), transferIDs(transferOf(opts, transfer))); },
 			get closed() { return D.windowClosed(id); },
 			get parent() { return windowProxy(D.windowRel(id, "parent")); },
 			get top() { return windowProxy(D.windowRel(id, "top")); },
@@ -2624,11 +2733,28 @@
 		return p;
 	}
 
+	// ---- workers (see worker.go) ----
+
+	const workers = new Map(); // the Worker objects, by their numbers
+	let workerCount = 0;
+	class Worker extends EventTarget {
+		constructor(url, opts) {
+			super();
+			const id = ++workerCount;
+			Object.defineProperty(this, "_id", { value: id });
+			workers.set(id, this);
+			D.newWorker(id, String(url));
+		}
+		postMessage(data, transfer) { D.postToWorker(this._id, cloneJSON(data), transferIDs(transferList(transfer))); }
+		terminate() { D.terminateWorker(this._id); workers.delete(this._id); }
+	}
+	defineSimpleHandlers(Worker, ["message", "error", "messageerror"]);
+
 	// ---- the global object (window) ----
 
 	const props = {
 		window: g, self: g, frames: g, opener: null, frameElement: null, closed: false,
-		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError,
+		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError, Worker,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
@@ -2685,7 +2811,7 @@
 		focus() {},
 		blur() {},
 		stop() {},
-		postMessage(data, opts) { D.postTo(0, cloneJSON(data), targetOrigin(opts)); },
+		postMessage(data, opts, transfer) { D.postTo(0, cloneJSON(data), targetOrigin(opts), transferIDs(transferOf(opts, transfer))); },
 		scrollTo() {}, scrollBy() {}, scroll() {},
 		addEventListener: EventTarget.prototype.addEventListener,
 		removeEventListener: EventTarget.prototype.removeEventListener,
@@ -2910,10 +3036,28 @@
 
 	// message dispatches a message posted to this window (as JSON) from
 	// the given origin and window (see frames.go).
-	D.message = function (data, origin, source) {
+	D.message = function (data, origin, source, pairs) {
 		let v = null;
-		try { v = JSON.parse(data); } catch (e) { }
-		g.dispatchEvent(new MessageEvent("message", { data: v, origin, source: windowProxy(source) }));
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		g.dispatchEvent(new MessageEvent("message", { data: v, origin, source: windowProxy(source), ports: receivedPorts(pairs) }));
+	};
+
+	// workerMessage and workerError dispatch a message (as JSON, see
+	// cloneJSON) and an error from the worker of the given number to its
+	// Worker object (see worker.go).
+	D.workerMessage = function (id, data, pairs) {
+		const w = workers.get(id);
+		if (!w) return;
+		let v = null;
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		w.dispatchEvent(new MessageEvent("message", { data: v, ports: receivedPorts(pairs) }));
+	};
+	D.workerError = function (id, msg) {
+		const w = workers.get(id);
+		if (!w) return;
+		const e = new Event("error", { cancelable: true });
+		e.message = msg;
+		w.dispatchEvent(e);
 	};
 
 	// frameLoaded fires the load event of the given iframe element, after
@@ -2934,4 +3078,27 @@
 			g.dispatchEvent(new Event("pageshow"));
 		}
 	};
+
+	// the global scope of a worker (see worker.go): no window or document
+	// (which scripts check for whether they run in a worker), and
+	// importScripts, and postMessage and close for its owner
+	if (D.isWorker()) {
+		for (const k of ["window", "document", "frames", "parent", "top", "opener", "frameElement", "localStorage", "sessionStorage", "alert", "confirm", "prompt"]) delete g[k];
+		const wprops = {
+			postMessage(data, transfer) { D.postToOwner(cloneJSON(data), transferIDs(transferList(transfer))); },
+			close() { D.closeWorker(); },
+			importScripts(...urls) { for (const u of urls) D.importScripts(String(u)); },
+		};
+		for (const k of Object.keys(wprops)) {
+			Object.defineProperty(g, k, { value: wprops[k], writable: true, configurable: true, enumerable: false });
+		}
+		// (self instanceof WorkerGlobalScope, as scripts check whether
+		// they run in a worker)
+		for (const name of ["WorkerGlobalScope", "DedicatedWorkerGlobalScope"]) {
+			const scope = function () { throw new TypeError("Illegal constructor"); };
+			Object.defineProperty(scope, "name", { value: name });
+			Object.defineProperty(scope, Symbol.hasInstance, { value: o => o === g });
+			Object.defineProperty(g, name, { value: scope, writable: true, configurable: true });
+		}
+	}
 })(globalThis, __dom);
