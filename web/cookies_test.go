@@ -82,9 +82,10 @@ func TestCookieEditor(t *testing.T) {
 	g, _ := url.Parse("https://www.google.com/search")
 	o, _ := url.Parse("https://other.org/")
 	pj := newPersistentJar()
+	exp := time.Date(2036, 1, 2, 12, 0, 0, 0, time.Local) // fixed, for the image of the editor
 	pj.SetCookies(g, []*http.Cookie{
-		{Name: "NID", Value: "flagged", Domain: ".google.com", Path: "/", MaxAge: 3600},
-		{Name: "AEC", Value: "a", Domain: ".google.com", Path: "/", MaxAge: 3600},
+		{Name: "NID", Value: "flagged", Domain: ".google.com", Path: "/", Expires: exp},
+		{Name: "AEC", Value: "a", Domain: ".google.com", Path: "/", Expires: exp},
 		{Name: "sess", Value: "s", Path: "/"},
 	})
 	pj.SetCookies(o, []*http.Cookie{{Name: "x", Value: "1", MaxAge: 3600}})

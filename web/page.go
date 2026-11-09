@@ -857,16 +857,21 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
 				pg.showConsole()
 			})
-			core.NewButton(m).SetText("Cookies").SetIcon(icons.Cookie).SetTooltip("Show and edit the cookies of this site").OnClick(func(e events.Event) {
-				site := ""
-				if u, err := neturl.Parse(pg.currentURL()); err == nil {
-					site = strings.TrimPrefix(u.Hostname(), "www.")
-				}
-				ShowCookies(site)
-			})
 			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
 				ClearCookies()
 			})
+		})
+	})
+	tree.AddAt(p, "cookies", func(w *core.Button) {
+		w.SetIcon(icons.Cookie).SetTooltip("Show and edit the cookies of this site (of all sites if there is no page)")
+		w.OnClick(func(e events.Event) {
+			site := ""
+			if pg := page(); pg != nil {
+				if u, err := neturl.Parse(pg.currentURL()); err == nil {
+					site = strings.TrimPrefix(u.Hostname(), "www.")
+				}
+			}
+			ShowCookies(site)
 		})
 	})
 }
