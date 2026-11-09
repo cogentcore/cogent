@@ -367,6 +367,14 @@ func (pg *Page) postURL(url, contentType string, body []byte, e events.Event) {
 // openPost is [Page.open] with the given POST request, if not nil (as for
 // the submission of a form), instead of a GET request.
 func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index, redirects int) {
+	// a URL relative to the current page (as of a link that is clicked) is
+	// resolved first, for the settings of its site (as its zoom, which the
+	// pages of lobste.rs opened from its links did not have) and history
+	if cur := pg.currentURL(); cur != "" {
+		if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil {
+			url = u.String()
+		}
+	}
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	pg.loading = url

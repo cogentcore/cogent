@@ -54,7 +54,8 @@ func TestSiteSettings(t *testing.T) {
 }
 
 // TestPageZoom tests that zooming a page multiplies its sizes, with and
-// without scripts, and that the zoom is kept for the pages of its site.
+// without scripts, and that the zoom is kept for the pages of its site
+// (also those opened with a relative URL, as from a link of lobste.rs).
 func TestPageZoom(t *testing.T) {
 	for _, scripts := range []bool{true, false} {
 		t.Run(fmt.Sprint("scripts=", scripts), func(t *testing.T) {
@@ -89,7 +90,7 @@ func TestPageZoom(t *testing.T) {
 				assert.True(t, eventually(func() bool { return width() > 1.9*w1 }), "zoomed: %g from %g", width(), w1)
 				assert.Equal(t, float32(2), Site("https://example.com/").Zoom)
 				b.AsyncLock()
-				pg.OpenURL("https://example.com/other", nil)
+				pg.OpenURL("/other", nil) // relative, as a link that is clicked
 				b.AsyncUnlock()
 				settle(pg)
 			}, func() {

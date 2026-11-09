@@ -852,3 +852,54 @@ func TestScriptsLinkOwnClick(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond, "the link is followed")
 	})
 }
+
+// TestScriptsLabelChecksControl tests a click on a label of a hidden
+// checkbox (as the [-] labels of the comments of lobste.rs): it checks the
+// checkbox, whose :checked style hides the thread after it.
+func TestScriptsLabelChecksControl(t *testing.T) {
+	for _, label := range []string{`<label for="f" id="lbl" class="lbl">[-]</label>`, `<label for="f" id="lbl" class="lbl pseudo"></label>`} {
+		t.Run(label, func(t *testing.T) { testLabelChecksControl(t, label) })
+	}
+}
+
+// testLabelChecksControl is TestScriptsLabelChecksControl for the given
+// label (with a text, or empty with the text in its ::before).
+func testLabelChecksControl(t *testing.T, label string) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>.fold { display: none } .fold:checked ~ .thread { display: none } .lbl { display: block; width: 40px; height: 20px } .pseudo::before { content: "[-]" }</style></head><body>` +
+			`<input id="f" class="fold" type="checkbox">` + label + `<div class="thread"><p>Reply text</p></div>` +
+			`<script>window.x = 1</script></body></html>`,
+	})
+	shown := func() bool {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		found := false
+		pg.WalkDown(func(n tree.Node) bool {
+			if tx, ok := n.(*core.Text); ok && tx.Text == "Reply text" {
+				found = true
+			}
+			return tree.Continue
+		})
+		return found
+	}
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, shown(), "the thread is shown")
+		var pos image.Point
+		b.AsyncLock()
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "lbl" {
+				bb := wb.Geom.TotalBBox
+				pos = bb.Min.Add(bb.Size().Div(2))
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseButton(events.MouseDown, events.Left, pos, 0)
+		ev.MouseButton(events.MouseUp, events.Left, pos, 0)
+	}, func() {
+		assert.Eventually(t, func() bool { return !shown() }, 3*time.Second, 20*time.Millisecond, "the thread is folded")
+		v, _ := pg.scripts.engine.RunString(`document.getElementById("f").checked`)
+		assert.Equal(t, true, v)
+	})
+}

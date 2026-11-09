@@ -278,7 +278,19 @@ func (ps *pageScripts) render() func() {
 // of them. Its links open as they do.
 func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	n := htmlcore.NodeOf(tx)
-	if n == nil || n.Type != html.ElementNode || !ps.engine.HasListener(n, "click") {
+	if n == nil || n.Type != html.ElementNode {
+		return
+	}
+	// a text in a label of a control has the default action of clicking it
+	// (as a label of a hidden checkbox that folds a thread of comments)
+	inLabel := false
+	for p := n; p != nil; p = p.Parent {
+		if p.Type == html.ElementNode && p.Data == "label" {
+			inLabel = htmlcore.HasAttr(p, "for") || hasDescendant(p, "input")
+			break
+		}
+	}
+	if !inLabel && !ps.engine.HasListener(n, "click") {
 		return
 	}
 	// a text in a link (as the items of the jump dialog of pkg.go.dev, a
@@ -528,7 +540,10 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	default:
 		return
 	}
-	if n.Data == "a" || n.Data == "summary" || !e.HasListener(n, "click") {
+	// a label of a control has the default action of clicking it (as the
+	// [-] labels of the comments of lobste.rs, of hidden checkboxes)
+	label := n.Data == "label" && (htmlcore.HasAttr(n, "for") || hasDescendant(n, "input"))
+	if n.Data == "a" || n.Data == "summary" || (!label && !e.HasListener(n, "click")) {
 		// links open through openURL, and summaries dispatch their clicks
 		// through Context.ToggleDetails (once)
 		return
@@ -623,6 +638,17 @@ func mouseProps(ev events.Event) map[string]any {
 		"ctrlKey": ev.HasAnyModifier(key.Control), "metaKey": ev.HasAnyModifier(key.Meta),
 		"shiftKey": ev.HasAnyModifier(key.Shift), "altKey": ev.HasAnyModifier(key.Alt),
 	}
+}
+
+// hasDescendant returns whether the given node has an element of the
+// given tag in it.
+func hasDescendant(n *html.Node, tag string) bool {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && (c.Data == tag || hasDescendant(c, tag)) {
+			return true
+		}
+	}
+	return false
 }
 
 // keyProps returns the properties of a KeyboardEvent for the given key

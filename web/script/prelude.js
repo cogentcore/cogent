@@ -2632,7 +2632,10 @@
 			else checks.set(t, !!init.checked);
 		}
 		t.dispatchEvent(ev);
-		if (type === "click" && !ev.defaultPrevented) summaryActivation(t);
+		if (type === "click" && !ev.defaultPrevented) {
+			summaryActivation(t);
+			labelActivation(t);
+		}
 		return ev.defaultPrevented;
 	};
 
@@ -2653,6 +2656,22 @@
 				return;
 			}
 			if (tag === "details") return;
+		}
+	}
+
+	// labelActivation does the default action of a click on the given target
+	// in a label (not in a link or control in it): it clicks the control of
+	// the label, as in browsers (as the hidden checkboxes that the [-]
+	// labels of the comments of lobste.rs check, which fold the threads).
+	function labelActivation(t) {
+		for (let n = t; n && n.nodeType === 1; n = n.parentNode) {
+			const tag = n.localName;
+			if (tag === "a" || tag === "button" || tag === "input" || tag === "select" || tag === "textarea" || tag === "summary") return;
+			if (tag === "label") {
+				const c = n.control;
+				if (c && c !== t && !c.contains(t) && typeof c.click === "function") c.click();
+				return;
+			}
 		}
 	}
 
