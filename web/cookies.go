@@ -57,6 +57,9 @@ type persistentJar struct {
 	jar    *cookiejar.Jar
 	loaded bool
 	saved  map[string]savedCookie // by domain, path, and name
+	// session are the session cookies (with no expiry), which are not
+	// saved, by domain, path, and name, to list them (see [ShowCookies]).
+	session map[string]savedCookie
 	timer  *time.Timer
 }
 
@@ -99,6 +102,7 @@ func (pj *persistentJar) load() {
 		slog.Error("web: loading cookies", "err", err)
 	}
 	pj.saved = map[string]savedCookie{}
+	pj.session = map[string]savedCookie{}
 	now := time.Now()
 	for _, sc := range list {
 		u, err := url.Parse(sc.URL)
@@ -128,15 +132,23 @@ func (pj *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 		if c.MaxAge > 0 {
 			expires = now.Add(time.Duration(c.MaxAge) * time.Second)
 		}
+		sc := savedCookie{URL: u.Scheme + "://" + u.Host + u.Path, Name: c.Name, Value: c.Value,
+			Path: c.Path, Domain: c.Domain, Secure: c.Secure, HttpOnly: c.HttpOnly, SameSite: c.SameSite}
 		if c.MaxAge < 0 || expires.IsZero() || !expires.After(now) {
 			if _, ok := pj.saved[key]; ok { // deleted, expired, or now a session cookie
 				delete(pj.saved, key)
 				changed = true
 			}
+			if c.MaxAge == 0 && expires.IsZero() {
+				pj.session[key] = sc
+			} else {
+				delete(pj.session, key)
+			}
 			continue
 		}
-		pj.saved[key] = savedCookie{URL: u.Scheme + "://" + u.Host + u.Path, Name: c.Name, Value: c.Value,
-			Path: c.Path, Domain: c.Domain, Expires: expires, Secure: c.Secure, HttpOnly: c.HttpOnly, SameSite: c.SameSite}
+		delete(pj.session, key)
+		sc.Expires = expires
+		pj.saved[key] = sc
 		changed = true
 	}
 	if changed {
@@ -159,7 +171,46 @@ func (pj *persistentJar) Clear() {
 	pj.loaded = true
 	pj.jar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	pj.saved = map[string]savedCookie{}
+	pj.session = map[string]savedCookie{}
 	pj.saveLater()
+}
+
+// list returns the cookies that have not expired, saved and session ones,
+// with their keys, by domain and name.
+func (pj *persistentJar) list() map[string]savedCookie {
+	pj.mu.Lock()
+	defer pj.mu.Unlock()
+	pj.load()
+	now := time.Now()
+	all := map[string]savedCookie{}
+	for k, sc := range pj.saved {
+		if sc.Expires.After(now) {
+			all[k] = sc
+		}
+	}
+	for k, sc := range pj.session {
+		all[k] = sc
+	}
+	return all
+}
+
+// remove removes the given cookie (as listed by list).
+func (pj *persistentJar) remove(sc savedCookie) {
+	u, err := url.Parse(sc.URL)
+	if err != nil {
+		return
+	}
+	pj.SetCookies(u, []*http.Cookie{{Name: sc.Name, Path: sc.Path, Domain: sc.Domain, MaxAge: -1}})
+}
+
+// setValue sets the value of the given cookie (as listed by list).
+func (pj *persistentJar) setValue(sc savedCookie, value string) {
+	u, err := url.Parse(sc.URL)
+	if err != nil {
+		return
+	}
+	pj.SetCookies(u, []*http.Cookie{{Name: sc.Name, Value: value, Path: sc.Path, Domain: sc.Domain,
+		Expires: sc.Expires, Secure: sc.Secure, HttpOnly: sc.HttpOnly, SameSite: sc.SameSite}})
 }
 
 // saveLater saves the cookies after the [cookieSaveDelay] (with the lock

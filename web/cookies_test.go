@@ -5,6 +5,7 @@
 package web
 
 import (
+	"cogentcore.org/core/core"
 	"net/http"
 	"net/url"
 	"os"
@@ -65,4 +66,52 @@ func TestPersistentCookies(t *testing.T) {
 	again.Clear()
 	waitSaved(again)
 	assert.Empty(t, names(newPersistentJar(), u))
+}
+
+// TestCookieEditor tests the cookie editor: it lists the saved and the
+// session cookies of a site, and editing the value of a row sets the
+// cookie, and deleting a row (as in its table) deletes it, as to be a new
+// visitor of google.com after it took the pages of the app for those of a
+// bot (with a page of status 429).
+func TestCookieEditor(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "web", "cookies.json")
+	savedFile := cookiesFile
+	cookiesFile = func() string { return file }
+	t.Cleanup(func() { cookiesFile = savedFile })
+
+	g, _ := url.Parse("https://www.google.com/search")
+	o, _ := url.Parse("https://other.org/")
+	pj := newPersistentJar()
+	pj.SetCookies(g, []*http.Cookie{
+		{Name: "NID", Value: "flagged", Domain: ".google.com", Path: "/", MaxAge: 3600},
+		{Name: "AEC", Value: "a", Domain: ".google.com", Path: "/", MaxAge: 3600},
+		{Name: "sess", Value: "s", Path: "/"},
+	})
+	pj.SetCookies(o, []*http.Cookie{{Name: "x", Value: "1", MaxAge: 3600}})
+
+	rows := cookieRows(pj, "google.com")
+	names := func(rs []*CookieRow) []string {
+		var ns []string
+		for _, r := range rs {
+			ns = append(ns, r.Name)
+		}
+		return ns
+	}
+	assert.Equal(t, []string{"AEC", "NID", "sess"}, names(rows), "the saved and session cookies of the site")
+	assert.Len(t, cookieRows(pj, ""), 4, "all sites")
+
+	edited := []*CookieRow{rows[0], rows[2]} // NID deleted
+	edited[0].Value = "b"
+	applyCookieRows(pj, rows, edited)
+	sent := map[string]string{}
+	for _, c := range pj.Cookies(g) {
+		sent[c.Name] = c.Value
+	}
+	assert.Equal(t, map[string]string{"AEC": "b", "sess": "s"}, sent, "NID deleted, AEC edited")
+	assert.Equal(t, []string{"AEC", "sess"}, names(cookieRows(pj, "google")))
+	assert.Len(t, pj.Cookies(o), 1, "the cookie of the other site is kept")
+
+	b := core.NewBody()
+	makeCookieEditor(b, pj, "google")
+	b.AssertRender(t, "cookie-editor")
 }

@@ -63,17 +63,36 @@ func doRequest(method, url string, post *postRequest) (*http.Response, error) {
 	return httpClient.Do(req)
 }
 
-// postPage opens the page of the given URL with the given POST request,
-// returning an error (and closing the body) if its status is not OK, as
-// [htmlcore.Get] does.
+// postPage opens the page of the given URL with the given POST request
+// (see [pageResponse]).
 func postPage(url string, post *postRequest) (*http.Response, error) {
-	resp, err := doRequest(http.MethodPost, url, post)
+	return pageResponse(doRequest(http.MethodPost, url, post))
+}
+
+// getPage gets the page of the given URL with the given context (see
+// [pageResponse]), and other URLs (as data: URLs) as [htmlcore.Get] does.
+func getPage(ctx *htmlcore.Context, url string) (*http.Response, error) {
+	if !strings.HasPrefix(url, "http:") && !strings.HasPrefix(url, "https:") {
+		return htmlcore.Get(ctx, url)
+	}
+	return pageResponse(ctx.GetURL(url))
+}
+
+// pageResponse returns the given response of a page, or an error (closing
+// its body) if its status is not OK, except for a page of HTML with an
+// error status, which is shown as browsers show it (as the page of
+// google.com about unusual traffic, of status 429, which was only an
+// error).
+func pageResponse(resp *http.Response, err error) (*http.Response, error) {
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
-		return resp, fmt.Errorf("got error status %q (code %d)", resp.Status, resp.StatusCode)
+	if resp.StatusCode == http.StatusOK {
+		return resp, nil
 	}
-	return resp, nil
+	if resp.StatusCode >= 400 && strings.Contains(resp.Header.Get("Content-Type"), "html") {
+		return resp, nil
+	}
+	resp.Body.Close()
+	return resp, fmt.Errorf("got error status %q (code %d)", resp.Status, resp.StatusCode)
 }

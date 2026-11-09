@@ -5,8 +5,10 @@
 package web
 
 import (
+	"cogentcore.org/core/styles"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -99,5 +101,29 @@ func TestOpenFile(t *testing.T) {
 			return tree.Continue
 		})
 		assert.True(t, found)
+	})
+}
+
+// TestPageErrorStatusShown tests that a page of HTML with an error status
+// is shown, as browsers show it (as the page of google.com about unusual
+// traffic, of status 429), and that one without HTML is an error.
+func TestPageErrorStatusShown(t *testing.T) {
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.Scripts = false
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		pu, _ := url.Parse(u)
+		h := http.Header{}
+		body := "not a page"
+		if pu.Path == "/sorry" {
+			h.Set("Content-Type", "text/html; charset=UTF-8")
+			body = `<html><body><p>Our systems have detected unusual traffic</p></body></html>`
+		}
+		return &http.Response{StatusCode: 429, Status: "429 Too Many Requests", Header: h, Request: &http.Request{URL: pu}, Body: io.NopCloser(strings.NewReader(body))}, nil
+	}
+	pg.OpenURL("https://example.com/sorry", nil)
+	b.RenderImage(func() { pg.wait() }, func() {
+		assert.Contains(t, pageTexts(b, pg), "unusual traffic")
 	})
 }
