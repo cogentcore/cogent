@@ -5,13 +5,21 @@
 package main
 
 import (
+	_ "embed"
 	"os"
 
 	"cogentcore.org/cogent/web"
 	"cogentcore.org/core/core"
 )
 
+// appIcon is the icon of the app, which core build also sets, but go
+// install does not, as for an app installed with AppGoSymlink.
+//
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Web")
 	br := web.NewBrowser(b)
 	b.AddTopBar(func(bar *core.Frame) {
