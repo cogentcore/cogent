@@ -111,3 +111,13 @@ func TestThrottleLayout(t *testing.T) {
 	e.renderCost, e.lastRender = 5*time.Millisecond, time.Now()
 	assert.False(t, e.throttleLayout(), "cheap to render")
 }
+
+// TestHasListenerInterrupted tests HasListener while the engine is
+// interrupted, as when it is closed while the page is rendered (as by
+// reloading pkg.go.dev, which crashed with a nil value): it is false.
+func TestHasListenerInterrupted(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><a href="#">x</a></body></html>`, nil)
+	body := e.doc.LastChild.LastChild
+	e.vm.Interrupt(errClosed)
+	assert.NotPanics(t, func() { assert.False(t, e.HasListener(body, "click")) })
+}

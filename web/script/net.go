@@ -475,6 +475,11 @@ func (e *Engine) callPrelude(name string, args ...any) goja.Value {
 	}
 	v, err := f(goja.Undefined(), vals...)
 	e.reportError(err)
+	if v == nil {
+		// with an error, as when the engine is interrupted as it is closed
+		// (as by reloading the page while it is rendered)
+		return goja.Undefined()
+	}
 	return v
 }
 
