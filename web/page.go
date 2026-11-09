@@ -99,6 +99,14 @@ type Page struct {
 	// scripts is the state of the scripts of the page that is shown, if
 	// it is run with scripts.
 	scripts *pageScripts
+
+	// frames are the pages in the frames of the iframes of the page that
+	// is shown, by their elements (see frames.go).
+	frames map[*html.Node]*Page
+
+	// frame is the state of the page as the page of a frame of another
+	// page, or nil for a page that is not in a frame.
+	frame *frame
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -440,6 +448,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		if err != nil {
 			core.ErrorSnackbar(pg, err, "Error opening page")
 			pg.opened(pg.currentURL())
+			pg.frameLoaded()
 			return
 		}
 		// a page that redirects (as to a version for browsers without
@@ -454,9 +463,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		pg.Context.PageURL = final
 		pg.Title = ctx.Title
 		pg.setMedia(&pageMedia{ctx: ctx, html: page, url: final, cache: cache})
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 		if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
 			// after it is laid out, as for scrolling to its position
 			pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
@@ -464,6 +471,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			pg.scrollToTop()
 		}
 		pg.opened(final)
+		pg.frameLoaded()
 	}()
 }
 
@@ -664,9 +672,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 			return
 		}
 		pg.setMedia(&pageMedia{ctx: ctx, html: m.html, url: m.url, cache: m.cache})
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 	}()
 }
 
@@ -677,6 +683,9 @@ func (pg *Page) scrollToTop() {
 		if fr := core.AsFrame(n); fr != nil {
 			fr.ScrollDimToContentStart(math32.Y)
 			fr.ScrollDimToContentStart(math32.X)
+		}
+		if pg.frame != nil {
+			break // a page in a frame scrolls itself, not the page around it
 		}
 	}
 }

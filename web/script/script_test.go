@@ -915,3 +915,40 @@ func TestInsertedScriptBeforeLoad(t *testing.T) {
 	assert.Equal(t, "set up on load", run(t, e, `document.getElementById("out").textContent`))
 	assert.Empty(t, *logs)
 }
+
+// TestProxyInstanceof tests instanceof with proxies of functions (as of
+// URL and Request, which scripts wrap to watch them), which threw in goja
+// (as in the getRequestURL of the bot checks of DataDome, for each fetch),
+// and that proxies still work otherwise.
+func TestProxyInstanceof(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true,false,true,5,function,https://a.b/c,1,true,TypeError", run(t, e, `
+		const P = new Proxy(URL, {});
+		const Q = new Proxy(Request, { apply(t, a, args) { return t(...args); }, get(t, k) { return k === "x" ? 5 : t[k]; } });
+		const o = new Proxy({ a: 1 }, {});
+		const r = Proxy.revocable(URL, {});
+		let called = "";
+		try { Proxy(URL, {}); } catch (e) { called = e.constructor.name; }
+		[new URL("https://a.b/") instanceof P, {} instanceof P, new Request("https://a.b/") instanceof Q, Q.x, typeof Q,
+			new Q("https://a.b/c").url, o.a, new URL("https://x.y/") instanceof r.proxy, called].join(",")`))
+	assert.Empty(t, *logs)
+}
+
+// TestUnhandledRejection tests that a promise that is rejected without a
+// handler (as by an error in an async function) is reported with the
+// stack of the error, as "Uncaught (in promise)" in browsers, and that one
+// that is handled is not (the errors of async functions were not shown,
+// as that of the captchas of DataDome, which then did not work).
+func TestUnhandledRejection(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `
+		function g() { let u; return u.hash; }
+		async function f() { await null; g(); }
+		f();
+		f().catch(() => {});
+		Promise.reject(new Error("handled later")).catch(() => {});`)
+	e.Wait() // (the microtasks run in the task)
+	require.Len(t, *logs, 1, *logs)
+	assert.Contains(t, (*logs)[0], "ERROR: Uncaught (in promise) TypeError: Cannot read property 'hash' of undefined")
+	assert.Contains(t, (*logs)[0], "at g (")
+}

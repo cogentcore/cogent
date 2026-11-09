@@ -123,6 +123,8 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		Storage:       localStorage,
 		Cookies:       cookies,
 		Log:           ps.log,
+		Parent:        pg.parentEngine,
+		FrameOf:       pg.frameEngine,
 	})
 	if err != nil {
 		return nil, err
@@ -263,9 +265,7 @@ func (ps *pageScripts) render() func() {
 		}
 		pageScroll := pg.Geom.Scroll
 		pg.Title = ctx.Title
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 		content.Defer(func() {
 			restoreScrolls(content, scrolls)
 			for d := math32.X; d <= math32.Y; d++ {
@@ -1055,6 +1055,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		core.ErrorSnackbar(pg, err, "Error opening page")
 		pg.opened(pg.currentURL())
 		ps.engine.Close()
+		pg.frameLoaded()
 		return true
 	}
 	// a page that redirects is replaced by the page that it redirects to
@@ -1070,16 +1071,14 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	pg.Title = ps.ctx.Title
 	pg.setMedia(&pageMedia{ctx: ps.ctx, html: page, url: final, cache: cache})
 	pg.showScripts(ps)
-	pg.DeleteChildren()
-	pg.AddChild(content)
-	pg.Update()
+	pg.setContent(content)
 	if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
 		pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
 	} else if mode == historyNew {
 		pg.scrollToTop()
 	}
 	pg.opened(final)
-	ps.engine.Load(nil) // rendered again after the load event
+	ps.engine.Load(pg.frameLoaded) // rendered again after the load event
 	return true
 }
 

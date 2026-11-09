@@ -281,7 +281,7 @@
 	class InputEvent extends UIEvent { constructor(type, init) { super(type, init); this.data = (init && init.data) || null; this.inputType = (init && init.inputType) || ""; } }
 	class WheelEvent extends MouseEvent { constructor(type, init) { super(type, init); this.deltaX = (init && init.deltaX) || 0; this.deltaY = (init && init.deltaY) || 0; this.deltaZ = 0; this.deltaMode = 0; } }
 	class ErrorEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.message = init.message || ""; this.error = init.error; this.filename = init.filename || ""; } }
-	class MessageEvent extends Event { constructor(type, init) { super(type, init); this.data = init && init.data; this.origin = (init && init.origin) || ""; } }
+	class MessageEvent extends Event { constructor(type, init) { super(type, init); this.data = init && init.data; this.origin = (init && init.origin) || ""; this.source = (init && init.source) || null; this.ports = (init && init.ports) || []; this.lastEventId = ""; } }
 	class ProgressEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.loaded = init.loaded || 0; this.total = init.total || 0; this.lengthComputable = !!init.lengthComputable; } }
 	const popStates = new WeakMap();
 	class PopStateEvent extends Event {
@@ -988,7 +988,9 @@
 	const HTMLBaseElement = elementClass(["base"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["target"]); });
 	const HTMLIFrameElement = elementClass(["iframe"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]); reflect(cls, ["name", "width", "height", "allow", "loading"]);
-		Object.defineProperty(cls.prototype, "contentWindow", { get() { return null; } });
+		// the window of the page in its frame, a proxy that can only post
+		// messages to it (see frames.go), as for one of another origin
+		Object.defineProperty(cls.prototype, "contentWindow", { get() { return windowProxy(D.frameWindow(this[ID])); } });
 		Object.defineProperty(cls.prototype, "contentDocument", { get() { return null; } });
 	});
 
@@ -2557,10 +2559,75 @@
 		}
 	}
 
+	// ---- instanceof with proxies of functions ----
+
+	// The instanceof of goja throws for a proxy of a function (as of URL
+	// or Request, which scripts wrap to watch them), where browsers use
+	// Function.prototype[Symbol.hasInstance] of its target (as the
+	// getRequestURL of the bot checks of DataDome does for every fetch,
+	// which failed). The proxies of functions get it from a get trap that
+	// gives it for the target, which is all that instanceof gets from them
+	// (Function.prototype[Symbol.hasInstance] cannot be replaced).
+	{
+		const NativeProxy = Proxy;
+		const nativeRevocable = Proxy.revocable; // (defined on the wrapper below, which is the native one's)
+		const fnHasInstance = Function.prototype[Symbol.hasInstance];
+		// handlerFor returns the handler of a proxy of the given target
+		// with the given handler.
+		const handlerFor = (target, handler) => {
+			if (typeof target !== "function" || handler === null || typeof handler !== "object") return handler;
+			const h = Object.create(handler); // (its other traps are the handler's)
+			h.get = function (t, k, r) {
+				const v = typeof handler.get === "function" ? handler.get.call(handler, t, k, r) : Reflect.get(t, k, r);
+				if (k === Symbol.hasInstance && v === fnHasInstance) return function (o) { return fnHasInstance.call(t, o); };
+				return v;
+			};
+			return h;
+		};
+		const WrappedProxy = new NativeProxy(NativeProxy, {
+			construct(T, args, nt) { return Reflect.construct(T, [args[0], handlerFor(args[0], args[1])], nt === WrappedProxy ? T : nt); },
+		});
+		Object.defineProperty(WrappedProxy, "revocable", {
+			value: function revocable(target, handler) { return nativeRevocable(target, handlerFor(target, handler)); },
+			writable: true, configurable: true,
+		});
+		Object.defineProperty(g, "Proxy", { value: WrappedProxy, writable: true, configurable: true, enumerable: false });
+	}
+
+	// ---- the windows of frames (see frames.go) ----
+
+	// cloneJSON returns the given message as JSON, as it is copied to the
+	// window that it is posted to.
+	const cloneJSON = v => { try { const s = JSON.stringify(v); return s === undefined ? "null" : s; } catch (e) { throw new DOMException("could not be cloned", "DataCloneError"); } };
+	// targetOrigin returns the target origin of the options of postMessage
+	// (a string, or an object with targetOrigin), "/" by default.
+	const targetOrigin = o => { const t = o !== null && typeof o === "object" ? o.targetOrigin : o; return t === undefined ? "/" : String(t); };
+	const proxies = new Map(); // the window proxies, by their number
+	// windowProxy returns the window of the given number (see
+	// Engine.windowID): null for none, this window for 0, and otherwise a
+	// proxy of another window, which can post messages to it.
+	function windowProxy(id) {
+		if (id < 0) return null;
+		if (id === 0) return g;
+		let p = proxies.get(id);
+		if (p) return p;
+		p = {
+			postMessage(data, opts) { D.postTo(id, cloneJSON(data), targetOrigin(opts)); },
+			get closed() { return D.windowClosed(id); },
+			get parent() { return windowProxy(D.windowRel(id, "parent")); },
+			get top() { return windowProxy(D.windowRel(id, "top")); },
+			get window() { return p; }, get self() { return p; }, get frames() { return p; },
+			length: 0,
+			focus() {}, blur() {}, close() {},
+		};
+		proxies.set(id, p);
+		return p;
+	}
+
 	// ---- the global object (window) ----
 
 	const props = {
-		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
+		window: g, self: g, frames: g, opener: null, frameElement: null, closed: false,
 		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
@@ -2618,7 +2685,7 @@
 		focus() {},
 		blur() {},
 		stop() {},
-		postMessage(data) { setTimer(() => g.dispatchEvent(new MessageEvent("message", { data, origin: location.origin })), 0, [], false); },
+		postMessage(data, opts) { D.postTo(0, cloneJSON(data), targetOrigin(opts)); },
 		scrollTo() {}, scrollBy() {}, scroll() {},
 		addEventListener: EventTarget.prototype.addEventListener,
 		removeEventListener: EventTarget.prototype.removeEventListener,
@@ -2634,6 +2701,10 @@
 		Object.defineProperty(g, k, { get() { return scrollState[f]; }, configurable: true });
 	}
 	Object.defineProperty(g, "origin", { get() { return location.origin; }, configurable: true });
+	// the window of the page that this one is in a frame of, and the top
+	// one (this window if it is not in a frame)
+	Object.defineProperty(g, "parent", { get() { return windowProxy(D.windowRel(0, "parent")) || g; }, configurable: true });
+	Object.defineProperty(g, "top", { get() { return windowProxy(D.windowRel(0, "top")) || g; }, configurable: true });
 	defineHandlers(g);
 
 	const console = {};
@@ -2816,6 +2887,21 @@
 	// another size.
 	D.resized = function () {
 		g.dispatchEvent(new Event("resize"));
+	};
+
+	// message dispatches a message posted to this window (as JSON) from
+	// the given origin and window (see frames.go).
+	D.message = function (data, origin, source) {
+		let v = null;
+		try { v = JSON.parse(data); } catch (e) { }
+		g.dispatchEvent(new MessageEvent("message", { data: v, origin, source: windowProxy(source) }));
+	};
+
+	// frameLoaded fires the load event of the given iframe element, after
+	// the page in its frame has loaded.
+	D.frameLoaded = function (id) {
+		const el = wrap(id);
+		if (el) el.dispatchEvent(new Event("load"));
 	};
 
 	// loaded sets the ready state of the document, and fires its events.

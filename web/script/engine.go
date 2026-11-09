@@ -20,11 +20,14 @@
 package script
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,6 +118,15 @@ type Options struct {
 	// Cookies, if set, has the cookies of the pages (as for document.cookie).
 	Cookies http.CookieJar
 
+	// Parent, if set, returns the engine of the window that the page is
+	// in a frame of (an iframe), for window.parent and top, or nil.
+	Parent func() *Engine
+
+	// FrameOf, if set, returns the engine of the page in the frame of the
+	// given iframe element, if it has one (with scripts), for the
+	// contentWindow of the iframe. It is called in tasks.
+	FrameOf func(n *html.Node) *Engine
+
 	// Log, if set, receives the messages of the console of the
 	// page (and the errors of its scripts), with their level.
 	Log func(level slog.Level, msg string)
@@ -201,6 +213,26 @@ type Engine struct {
 	pageLayouts int
 	taskStart   time.Time
 	timeouts    int // the number of tasks interrupted for running too long
+
+	// windows are the engines of the windows of frames that the scripts
+	// have seen, by their number less 1, and windowIDs their numbers
+	// (see [Engine.windowID]); only used in tasks.
+	windows   []*Engine
+	windowIDs map[*Engine]int
+
+	// rejected are the promises that were rejected without a handler in
+	// the task that is running, which are reported at its end if they
+	// still have none, as "Uncaught (in promise)" in browsers; only used
+	// in tasks.
+	rejected []rejection
+}
+
+// rejection is a promise that was rejected without a handler, with the
+// call stack where it was rejected (as the error of an async function has
+// no stack of where it was thrown).
+type rejection struct {
+	promise *goja.Promise
+	stack   string
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -224,9 +256,25 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	// a script that recurses without end gets a RangeError (as in browsers)
 	// instead of running until it times out, using ever more memory
 	e.vm.SetMaxCallStackSize(maxCallStack)
+	e.vm.SetPromiseRejectionTracker(func(p *goja.Promise, op goja.PromiseRejectionOperation) {
+		switch op {
+		case goja.PromiseRejectionReject:
+			var b bytes.Buffer
+			for _, f := range e.vm.CaptureCallStack(8, nil) {
+				b.WriteString("\n\tat ")
+				f.Write(&b)
+			}
+			e.rejected = append(e.rejected, rejection{p, b.String()})
+		case goja.PromiseRejectionHandle:
+			if i := slices.IndexFunc(e.rejected, func(r rejection) bool { return r.promise == p }); i >= 0 {
+				e.rejected = slices.Delete(e.rejected, i, i+1)
+			}
+		}
+	})
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
 	e.defineNavigator()
+	e.defineFrames()
 	e.vm.Set("__dom", e.jsDOM)
 	if _, err := e.vm.RunProgram(prog); err != nil {
 		return nil, fmt.Errorf("running prelude: %w", err)
@@ -379,6 +427,7 @@ func (e *Engine) runTask(task func(), unlock func()) {
 		}()
 		task()
 	}()
+	e.reportRejections()
 	e.inTask = false
 	timer.Stop()
 	e.vm.ClearInterrupt()
@@ -504,6 +553,27 @@ func (e *Engine) renderSoon(lock func() bool, unlock func()) {
 	time.AfterFunc(wait, func() {
 		e.Post(func() { e.renderTimer = false }) // renders at its end
 	})
+}
+
+// reportRejections logs the promises that were rejected in the task
+// without a handler, which still have none at its end, as browsers do (as
+// the errors of async functions, which were not shown).
+func (e *Engine) reportRejections() {
+	for _, r := range e.rejected {
+		v := r.promise.Result()
+		msg := "undefined"
+		if v != nil {
+			msg = v.String()
+		}
+		// the stack of an error is where it was thrown
+		if o, ok := v.(*goja.Object); ok {
+			if st := o.Get("stack"); st != nil && !goja.IsUndefined(st) && strings.Contains(st.String(), "\tat ") {
+				msg, r.stack = strings.TrimRight(st.String(), "\n"), ""
+			}
+		}
+		e.logf(slog.LevelError, "Uncaught (in promise) %s%s", msg, r.stack)
+	}
+	e.rejected = e.rejected[:0]
 }
 
 // logf logs the given message to the console of the page.
