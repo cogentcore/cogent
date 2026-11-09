@@ -149,6 +149,7 @@ func (ps *pageScripts) log(level slog.Level, msg string) {
 		ps.console = ps.console[1:]
 	}
 	ps.console = append(ps.console, level.String()+": "+msg)
+	go ps.pg.consoleChanged() // (not with consoleMu)
 }
 
 // read reads the document into a new frame for the content of the page,

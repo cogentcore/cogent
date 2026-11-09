@@ -8,6 +8,7 @@ import (
 	neturl "net/url"
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -22,6 +23,16 @@ type Browser struct {
 
 	// Tabs has the tabs of the pages.
 	Tabs *core.Tabs `set:"-"`
+
+	// Splits has the tabs, and the console panel below them.
+	Splits *core.Splits `set:"-"`
+
+	// Console is the console panel, which shows the console messages of
+	// the scripts of the page of the current tab (see [Browser.ShowConsole]).
+	Console *ConsolePanel `set:"-"`
+
+	// consoleShown is whether the console panel is shown.
+	consoleShown atomic.Bool
 
 	// OnOpen, if set, is called when a page of a tab starts opening or is
 	// opened (see [Page.OnOpen]) and when another tab is selected, as for
@@ -54,13 +65,18 @@ func (br *Browser) Init() {
 			pg.setShown()
 		}
 	})
-	br.Tabs = core.NewTabs(br)
+	br.Splits = core.NewSplits(br)
+	br.Splits.Styler(func(s *styles.Style) { s.Direction = styles.Column })
+	br.Tabs = core.NewTabs(br.Splits)
 	br.Tabs.SetType(core.FunctionalTabs)
 	br.Tabs.NewTabButton = true
 	br.Tabs.NewTabFunc = func(index int) {
 		fr, tab := br.Tabs.TabAtIndex(index)
 		br.addPage(fr, tab)
 	}
+	br.Console = tree.New[ConsolePanel](br.Splits)
+	br.Console.browser = br
+	br.Splits.SetSplits(1, 0) // (the console is not shown)
 	br.Tabs.CloseTabFunc = func(index int) {
 		if index < len(br.pages) {
 			br.pages[index].Stop()
@@ -72,6 +88,9 @@ func (br *Browser) Init() {
 
 // opened calls [Browser.OnOpen], if it is set.
 func (br *Browser) opened() {
+	if br.ConsoleShown() {
+		br.Console.refresh() // (of the page of the current tab)
+	}
 	if br.OnOpen != nil {
 		br.OnOpen()
 	}
@@ -105,6 +124,8 @@ func (br *Browser) addPage(fr *core.Frame, tab *core.Tab) *Page {
 	pg := NewPage(fr)
 	br.pages = append(br.pages, pg)
 	pg.OpenNewTab = func(url string) { br.NewBackgroundTab(url) }
+	pg.onConsole = br.Console.changed
+	pg.onShowConsole = func() { br.ShowConsole(true) }
 	if br.shown {
 		pg.setShown()
 	}

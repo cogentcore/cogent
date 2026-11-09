@@ -63,7 +63,7 @@ type Page struct {
 	// Scripts is whether the scripts (JavaScript) of the pages are run,
 	// which they are by default. It applies to the pages opened after it
 	// is changed (see [Page.SetScripts]).
-	Scripts bool
+	Scripts bool `set:"-"`
 
 	// zoom is the zoom factor of the page that is shown (or being opened),
 	// from the settings of its site (see [SiteSettings]), or 0 for none.
@@ -107,6 +107,12 @@ type Page struct {
 	// frame is the state of the page as the page of a frame of another
 	// page, or nil for a page that is not in a frame.
 	frame *frame
+
+	// onConsole, if set, is called when the scripts of the page (or of its
+	// frames) log a message to the console, from any goroutine (see
+	// [ConsolePanel]), and onShowConsole shows the console.
+	onConsole     func()
+	onShowConsole func()
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -902,6 +908,10 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 				pg.SetScripts(!pg.Scripts)
 			})
 			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
+				if pg.onShowConsole != nil {
+					pg.onShowConsole() // in the panel of the browser
+					return
+				}
 				pg.showConsole()
 			})
 			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
