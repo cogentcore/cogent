@@ -1755,9 +1755,15 @@
 					if (cv === "none") return "none";
 					const byTag = el.matches(inlineTags) ? "inline" : "block";
 					if (box) return byTag;
+					// the html element has no box of its own (nor can the
+					// body), and is displayed unless it is styled not to be,
+					// as the elements in it (scripts check whether they are
+					// shown up to it, and it was none)
+					const root = document.documentElement;
+					if (el === root) return cv || "block";
 					for (let a = el.parentElement; a && a[ID] != null; a = a.parentElement) {
 						if (D.computed(a[ID], "display") === "none") return "none";
-						if (D.rect(a[ID])) return cv || byTag;
+						if (D.rect(a[ID]) || a === root) return cv || byTag;
 					}
 					return "none";
 				}

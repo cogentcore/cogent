@@ -1049,3 +1049,21 @@ func TestScriptsComputedDisplayInline(t *testing.T) {
 		assert.Equal(t, "inline,none", v)
 	})
 }
+
+// TestScriptsComputedDisplayRoot tests that the computed display of the
+// html and body elements is block, though they have no boxes of their own,
+// unless they are styled not to be displayed (the html element was none,
+// as scripts that check whether their elements are shown, up to it, saw).
+func TestScriptsComputedDisplayRoot(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div><span id="s">text</span></div></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		v, err := pg.scripts.engine.RunString(`[document.documentElement, document.body].map(e => getComputedStyle(e).display).join(",")`)
+		assert.NoError(t, err)
+		assert.Equal(t, "block,block", v)
+		v, err = pg.scripts.engine.RunString(`document.documentElement.style.display = "none"; getComputedStyle(document.documentElement).display`)
+		assert.NoError(t, err)
+		assert.Equal(t, "none", v)
+	})
+}

@@ -5,6 +5,7 @@
 package web
 
 import (
+	"html"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -116,7 +117,7 @@ func (cp *ConsolePanel) Init() {
 						s.Color = colors.Scheme.OnSurfaceVariant
 					}
 				})
-				w.Updater(func() { w.SetText(msg()) })
+				w.Updater(func() { w.SetText(html.EscapeString(msg())) }) // (not markup)
 			})
 		}
 	})

@@ -299,11 +299,22 @@ func (e *Engine) defineNet() {
 		}
 		go func() {
 			resp, err := e.request(u, method, headers, body, hasBody)
+			// failed requests are in the console, as in browsers (as those
+			// that a captcha makes, which says only that something went
+			// wrong)
+			m := method
+			if m == "" {
+				m = "GET"
+			}
 			if err != nil {
+				e.logf(slog.LevelWarn, "%s %s: %v", m, logURL(u), err)
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
 			}
 			defer resp.Body.Close()
+			if resp.StatusCode >= 400 {
+				e.logf(slog.LevelWarn, "%s %s: %s", m, logURL(u), resp.Status)
+			}
 			data, err := io.ReadAll(resp.Body)
 			if err != nil {
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
@@ -357,6 +368,19 @@ func bytesOf(v goja.Value) []byte {
 		}
 	}
 	return []byte(v.String())
+}
+
+// logURL returns the given URL for the console: without the data of a
+// data: URL, and at most 200 characters.
+func logURL(u string) string {
+	if strings.HasPrefix(u, "data:") {
+		u, _, _ = strings.Cut(u, ",")
+		return u + ",…"
+	}
+	if len(u) > 200 {
+		return u[:200] + "…"
+	}
+	return u
 }
 
 // request makes the given request: a GET without a body with GetURL, as

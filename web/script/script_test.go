@@ -952,3 +952,14 @@ func TestUnhandledRejection(t *testing.T) {
 	assert.Contains(t, (*logs)[0], "ERROR: Uncaught (in promise) TypeError: Cannot read property 'hash' of undefined")
 	assert.Contains(t, (*logs)[0], "at g (")
 }
+
+// TestFailedRequestLogged tests that a request of a script that fails
+// (with an error status) is in the console, as in browsers (as those of a
+// captcha, which said only that something went wrong).
+func TestFailedRequestLogged(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{"/ok.txt": "ok"})
+	run(t, e, `window.done = 0; fetch("/missing").then(() => done++); fetch("/ok.txt").then(() => done++);`)
+	assert.Eventually(t, func() bool { return run(t, e, `done`) == int64(2) }, 3*time.Second, 10*time.Millisecond)
+	e.Wait()
+	assert.Equal(t, []string{"WARN: GET https://example.com/missing: 404 Not Found"}, *logs)
+}
