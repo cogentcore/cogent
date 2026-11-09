@@ -971,6 +971,15 @@ func (e *Engine) ToggleDetails(n *html.Node) {
 	e.Post(func() { e.callPrelude("toggleDetails", e.nodes.id(n)) })
 }
 
+// Press dispatches the events of a mouse button that is pressed (down) or
+// released on the given element, with the given properties (as clientX):
+// pointerdown and mousedown, or pointerup and mouseup, as in browsers
+// (without the mouse events after a pointerdown whose default is
+// prevented).
+func (e *Engine) Press(n *html.Node, down bool, props map[string]any) {
+	e.Post(func() { e.callPrelude("press", e.nodes.id(n), down, props) })
+}
+
 // Hover dispatches the events of the mouse moving from the given element
 // to the other at the given position (in CSS px), either of which can be
 // nil (outside of the page), in a task of the engine: pointerout,

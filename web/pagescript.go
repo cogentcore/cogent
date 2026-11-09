@@ -30,7 +30,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
@@ -342,7 +341,7 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 		}
 		// (the default action of a click on the text of a summary, which
 		// gets the click instead of it, toggles its details in the scripts)
-		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
+		ps.engine.Dispatch(n, "click", ps.pointerProps(ev), nil)
 	})
 }
 
@@ -355,7 +354,23 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 	if ps.engine.Closed() {
 		return
 	}
-	var deepest *html.Node
+	deepest, _ := ps.nodeAt(pos)
+	if deepest == ps.hovered {
+		return
+	}
+	from := ps.hovered
+	ps.hovered = deepest
+	x, y := ps.clientPos(pos)
+	ps.engine.Hover(from, deepest, x, y)
+	ps.engine.Post(func() { ps.setHovered(deepest) })
+}
+
+// nodeAt returns the deepest element of the page under the given position
+// in the window (nil if it is not in the page), and whether the position
+// is in the page of a frame of the page, whose iframe element it then
+// returns, as the page in the frame gets the events of the mouse there,
+// as in browsers.
+func (ps *pageScripts) nodeAt(pos image.Point) (deepest *html.Node, framed bool) {
 	var visit func(wb *core.WidgetBase)
 	visit = func(wb *core.WidgetBase) {
 		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
@@ -368,6 +383,10 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 				continue
 			}
 			if pos.In(kw.Geom.TotalBBox) {
+				if _, isFrame := kw.This.(*Page); isFrame {
+					framed = true // (of the iframe that it is in)
+					return
+				}
 				visit(kw)
 				return
 			}
@@ -376,18 +395,51 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 	if pos.In(ps.pg.Geom.TotalBBox) {
 		visit(ps.pg.AsWidget())
 	}
-	if deepest == ps.hovered {
-		return
-	}
-	from := ps.hovered
-	ps.hovered = deepest
-	dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp) * ps.pg.zoomFactor()
+	return
+}
+
+// clientPos returns the given position in the window in the CSS px of the
+// page, relative to its top left, as the scripts get the positions of the
+// mouse (as clientX and clientY).
+func (ps *pageScripts) clientPos(pos image.Point) (x, y float32) {
+	dp := ps.pg.pxDots()
 	if dp <= 0 {
 		dp = 1
 	}
 	off := ps.pg.Geom.Pos.Content
-	ps.engine.Hover(from, deepest, (float32(pos.X)-off.X)/dp, (float32(pos.Y)-off.Y)/dp)
-	ps.engine.Post(func() { ps.setHovered(deepest) })
+	return (float32(pos.X) - off.X) / dp, (float32(pos.Y) - off.Y) / dp
+}
+
+// pressAt dispatches the events of a mouse button that is pressed (down)
+// or released at the given position in the window to the element under it
+// (pointerdown and mousedown, or pointerup and mouseup), as for the
+// controls of scripts that act on them rather than on clicks (as the
+// checkbox of reCAPTCHA, which did nothing).
+func (ps *pageScripts) pressAt(ev events.Event, down bool) {
+	if ps.engine.Closed() {
+		return
+	}
+	n, framed := ps.nodeAt(ev.WindowPos())
+	if n == nil || framed {
+		return
+	}
+	ps.engine.Press(n, down, ps.pointerProps(ev))
+}
+
+// pointerProps returns the properties of a mouse event for the given event
+// of the mouse: its modifier keys, its position, and its (left) button.
+func (ps *pageScripts) pointerProps(ev events.Event) map[string]any {
+	props := mouseProps(ev)
+	x, y := ps.clientPos(ev.WindowPos())
+	for _, k := range []string{"clientX", "pageX", "screenX", "x"} {
+		props[k] = x
+	}
+	for _, k := range []string{"clientY", "pageY", "screenY", "y"} {
+		props[k] = y
+	}
+	props["button"] = 0
+	props["detail"] = 1
+	return props
 }
 
 // setHovered sets the elements that the mouse is over to the given one and
@@ -483,7 +535,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		case isSubmitter(n):
 			wb.OnClick(func(ev events.Event) {
 				ev.SetHandled()
-				e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+				e.Dispatch(n, "click", ps.pointerProps(ev), func(prevented bool) {
 					if !prevented {
 						e.Activate(n)
 					}
@@ -600,7 +652,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 			ps.followLink(href, ev)
 			return
 		}
-		e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+		e.Dispatch(n, "click", ps.pointerProps(ev), func(prevented bool) {
 			if !prevented {
 				ps.followLink(href, ev)
 			}
@@ -753,7 +805,7 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 	}
 	props := map[string]any{}
 	if ev != nil {
-		props = mouseProps(ev)
+		props = ps.pointerProps(ev)
 	}
 	ps.engine.Dispatch(link, "click", props, func(prevented bool) {
 		if prevented {
@@ -861,9 +913,9 @@ func (ps *pageScripts) viewportSize() (float32, float32) {
 	pg := ps.pg
 	w := ps.width
 	h := float32(768)
-	if dp := pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 {
+	if dp := pg.pxDots(); dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.Geom.Size.Alloc.Content.Y > 0 {
-			h = fr.Geom.Size.Alloc.Content.Y / dp / pg.zoomFactor()
+			h = fr.Geom.Size.Alloc.Content.Y / dp
 		}
 	}
 	return w, h
@@ -896,7 +948,7 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 	if wb.Styles.Display == styles.DisplayNone || wb.StateIs(states.Invisible) {
 		return
 	}
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
 	if dp <= 0 {
 		return
 	}
@@ -914,7 +966,7 @@ func (ps *pageScripts) elementAt(x, y float32) *html.Node {
 	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
 		return nil
 	}
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
 	if dp <= 0 {
 		return nil
 	}
@@ -957,7 +1009,7 @@ func (ps *pageScripts) computedStyle(n *html.Node, prop string) string {
 	switch {
 	case prop == "font-size":
 		if wb := ps.widgetOf(n); wb != nil {
-			if dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 && wb.Styles.Font.Size.Dots > 0 {
+			if dp := ps.pg.pxDots(); dp > 0 && wb.Styles.Font.Size.Dots > 0 {
 				return strconv.FormatFloat(float64(wb.Styles.Font.Size.Dots/dp), 'f', -1, 32) + "px"
 			}
 		}

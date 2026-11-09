@@ -141,6 +141,17 @@ func (pg *Page) Init() {
 			ps.hoverAt(e.WindowPos())
 		}
 	})
+	// and of its buttons being pressed and released (see pageScripts.pressAt)
+	pg.On(events.MouseDown, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.pressAt(e, true)
+		}
+	})
+	pg.On(events.MouseUp, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.pressAt(e, false)
+		}
+	})
 	pg.On(events.MouseLeave, func(e events.Event) {
 		if ps := pg.scripts; ps != nil {
 			ps.hoverAt(image.Point{-1, -1})
@@ -390,6 +401,9 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
 	pg.zoom = Site(url).Zoom
+	if pg.frame != nil {
+		pg.zoom = pg.topPage().zoom // frames are zoomed with their page
+	}
 	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
@@ -482,12 +496,25 @@ func (pg *Page) SetScripts(on bool) {
 	pg.Reload()
 }
 
-// zoomFactor returns the zoom factor of the page (1 if it is not zoomed).
+// zoomFactor returns the zoom factor of the page (1 if it is not zoomed),
+// that of the top page for a page in a frame.
 func (pg *Page) zoomFactor() float32 {
-	if pg.zoom > 0 {
-		return pg.zoom
+	if z := pg.topPage().zoom; z > 0 {
+		return z
 	}
 	return 1
+}
+
+// pxDots returns the number of dots of a CSS px of the page, with its zoom,
+// for the positions and sizes that its scripts get (as of the mouse and of
+// the boxes of elements). It is of the top page, whose widget is not zoomed
+// (unlike the widget of a page in a frame, which is in the zoomed content
+// of its parent, so that the zoom was applied twice to the positions of
+// the mouse in frames, as for the checkbox of reCAPTCHA, which was hovered
+// to the right of it).
+func (pg *Page) pxDots() float32 {
+	t := pg.topPage()
+	return t.Styles.UnitContext.Dots(units.UnitDp) * t.zoomFactor()
 }
 
 // zoomLevels are the zoom factors that zooming in and out steps through,
@@ -529,10 +556,21 @@ func (pg *Page) SetZoom(zoom float32) {
 	if zoom == pg.zoom {
 		return
 	}
-	pg.zoom = zoom
 	if cur := pg.currentURL(); cur != "" {
 		SetSite(cur, func(ss *SiteSettings) { ss.Zoom = zoom })
+	}
+	pg.applyZoom(zoom)
+	if cur := pg.currentURL(); cur != "" {
 		pg.opened(cur) // for the toolbar to show the zoom
+	}
+}
+
+// applyZoom reads the page again for the given zoom factor (0 for none),
+// and the pages of its frames, which are zoomed with it.
+func (pg *Page) applyZoom(zoom float32) {
+	pg.zoom = zoom
+	for _, fp := range pg.frames {
+		fp.applyZoom(zoom)
 	}
 	width := pg.viewportWidth()
 	pg.checkedWidth = width
@@ -922,18 +960,18 @@ func LocationURL(loc string) string {
 // that the scrollbar does not change it (which, as a page can be read
 // again for another width, could make it read again and again).
 func (pg *Page) viewportWidth() float32 {
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
 			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
 		}
-		return w / dp / pg.zoomFactor()
+		return w / dp
 	}
 	if pg.Scene == nil {
 		return 0
 	}
 	if rw := pg.Scene.RenderWindow(); rw != nil && rw.SystemWindow != nil && dp > 0 {
-		return float32(rw.SystemWindow.Size().X) / dp / pg.zoomFactor()
+		return float32(rw.SystemWindow.Size().X) / dp
 	}
 	return 0
 }

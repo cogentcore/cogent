@@ -2731,7 +2731,8 @@
 		init = init || {};
 		let ev;
 		const opts = Object.assign({ bubbles: true, cancelable: true, view: g }, init);
-		if (/^(click|dblclick|mouse|contextmenu)/.test(type)) ev = new MouseEvent(type, opts);
+		if (/^pointer/.test(type)) ev = new PointerEvent(type, opts);
+		else if (/^(click|dblclick|mouse|contextmenu)/.test(type)) ev = new MouseEvent(type, opts);
 		else if (/^key/.test(type)) ev = new KeyboardEvent(type, opts);
 		else if (/^(focus|blur)/.test(type)) ev = new FocusEvent(type, Object.assign(opts, { bubbles: type === "focusin" || type === "focusout" }));
 		else if (type === "input") ev = new InputEvent(type, opts);
@@ -2814,6 +2815,24 @@
 	// and its ancestors that are not around the old one, from the outermost
 	// (React makes its onPointerEnter of these, as for the repository grid
 	// of github.com).
+	// press dispatches the events of a mouse button pressed (down) or
+	// released on the given element (see Engine.Press).
+	let pressCanceled = false;
+	D.press = function (id, down, init) {
+		const t = wrap(id);
+		if (!t) return;
+		const opts = Object.assign({ bubbles: true, cancelable: true, view: g, pointerType: "mouse" }, init || {}, { buttons: down ? 1 : 0 });
+		const pe = new PointerEvent(down ? "pointerdown" : "pointerup", opts);
+		pe.isTrusted = true;
+		t.dispatchEvent(pe);
+		if (down) pressCanceled = pe.defaultPrevented;
+		if (!pressCanceled) {
+			const me = new MouseEvent(down ? "mousedown" : "mouseup", opts);
+			me.isTrusted = true;
+			t.dispatchEvent(me);
+		}
+	};
+
 	D.hover = function (oldId, newId, x, y) {
 		const o = oldId ? wrap(oldId) : null, n = newId ? wrap(newId) : null;
 		const ev = (C, type, t, rel, bubbles) => {

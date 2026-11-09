@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,5 +91,72 @@ func TestFrameCaptcha(t *testing.T) {
 		b.AsyncLock()
 		assert.Empty(t, pg.frames, "the frame is closed with its page")
 		b.AsyncUnlock()
+	})
+}
+
+// TestFrameMouseEvents tests the events of the mouse in a page in a frame,
+// of a zoomed page: the element under the mouse gets pointerdown,
+// mousedown, mouseup and click (in that order) at the position of the mouse
+// in its box (its clientX and clientY in the coordinates of its bounding
+// rect), and the page around the frame sees the iframe hovered, not the
+// elements of the other page. The checkbox of reCAPTCHA acts on mousedown
+// and mouseup, which were not dispatched, and the zoom was applied twice
+// to the positions of the mouse in frames, so that it was hovered to the
+// right of it.
+func TestFrameMouseEvents(t *testing.T) {
+	tempSites(t)
+	inner := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `<html><body style="margin: 0"><div style="padding: 10px 0 0 30px"><span id="box" style="display: inline-block; width: 40px; height: 40px"></span></div><p id="out">events</p>
+			<script>
+				const b = document.getElementById("box"), o = document.getElementById("out");
+				for (const ty of ["pointerdown", "mousedown", "mouseup", "click"]) b.addEventListener(ty, e => {
+					const r = b.getBoundingClientRect(), in_ = e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom;
+					o.textContent += " " + ty + (in_ ? ":in" : ":out");
+				});
+				o.textContent = "ready";
+			</script></body></html>`)
+	}))
+	defer inner.Close()
+	outer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `<html><body style="margin: 0"><div style="padding: 80px 0 0 120px"><iframe src="`+inner.URL+`/" width="300" height="150" frameborder="0"></iframe></div><p id="pout">parent</p>
+			<script>document.addEventListener("mouseover", e => { document.getElementById("pout").textContent += " over:" + (e.target.id || e.target.localName); });</script></body></html>`)
+	}))
+	defer outer.Close()
+	SetSite(outer.URL+"/", func(ss *SiteSettings) { ss.Zoom = 1.25 })
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(outer.URL+"/", nil)
+	b.RenderImage(func() {
+		settle(pg)
+		var box *core.WidgetBase
+		require.True(t, eventually(func() bool {
+			if !strings.Contains(pageTexts(b, pg), "ready") {
+				return false
+			}
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if cwb.Property("id") == "box" && cwb.Geom.TotalBBox.Dx() > 0 {
+					box = cwb
+				}
+				return tree.Continue
+			})
+			return box != nil
+		}))
+		b.AsyncLock()
+		bb := box.Geom.TotalBBox
+		b.AsyncUnlock()
+		c := bb.Min.Add(bb.Size().Div(2))
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseMove(c)
+		ev.MouseButton(events.MouseDown, events.Left, c, 0)
+		ev.MouseButton(events.MouseUp, events.Left, c, 0)
+		assert.True(t, eventually(func() bool {
+			return strings.Contains(pageTexts(b, pg), "ready pointerdown:in mousedown:in mouseup:in click:in")
+		}), pageTexts(b, pg))
+		assert.Contains(t, pageTexts(b, pg), "parent over:iframe")
+		assert.NotContains(t, pageTexts(b, pg), "over:box")
 	})
 }
