@@ -76,6 +76,11 @@ type Options struct {
 	// with the lock held.
 	Layout func(n *html.Node) (x, y, w, h float32, ok bool)
 
+	// ElementAt, if set, returns the element that a click at the given
+	// position (in CSS px, in the coordinates of Layout) goes to, as for
+	// document.elementFromPoint, or nil. It is called with the lock held.
+	ElementAt func(x, y float32) *html.Node
+
 	// ComputedStyle, if set, returns the computed value of the given CSS
 	// property of the given element, as browsers report it (as colors as
 	// rgb()), from the style sheets of the page as it was last read (not

@@ -6,6 +6,7 @@ package web
 
 import (
 	"cogentcore.org/core/styles/units"
+	"fmt"
 	"image"
 	"io"
 	"net/http"
@@ -1003,5 +1004,48 @@ func TestScriptsMediaOfLaterStyle(t *testing.T) {
 			})
 			return w > 290
 		}, 3*time.Second, 50*time.Millisecond, "the rule for the width of the viewport applies")
+	})
+}
+
+// TestScriptsElementFromPoint tests that elementFromPoint returns the
+// element that a click there goes to: one over another, not one that is
+// not rendered, and the element of a text (as the audit of pages uses
+// to find controls that are covered, as by the consent banner of
+// nytimes.com). Inline elements in a text are in the widget of the text,
+// so the element there is that of the text.
+func TestScriptsElementFromPoint(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body style="margin: 0; position: relative">
+<div id="box" style="width: 300px; height: 100px"><span id="txt">some text</span></div>
+<div id="over" style="position: absolute; top: 0; left: 200px; width: 50px; height: 50px; background: red"></div>
+<div id="hidden" style="position: absolute; top: 60px; left: 200px; width: 50px; height: 30px; visibility: hidden"></div>
+</body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		at := func(x, y int) string {
+			v, err := pg.scripts.engine.RunString(fmt.Sprintf(`(e => e ? e.id : "none")(document.elementFromPoint(%d, %d))`, x, y))
+			assert.NoError(t, err)
+			return fmt.Sprint(v)
+		}
+		assert.Equal(t, "over", at(210, 10), "the element over the box")
+		assert.Equal(t, "box", at(210, 70), "not the hidden one")
+		assert.Equal(t, "box", at(150, 80))
+		assert.Equal(t, "box", at(5, 5), "the element of the text, of the span in it")
+		assert.Equal(t, "none", at(5, 2000), "nothing below the page")
+	})
+}
+
+// TestScriptsComputedDisplayInline tests that the computed display of an
+// inline element in a text, which has no box of its own, is inline (as the
+// link of example.com, which was none), and that of an element in one
+// that is not displayed is none.
+func TestScriptsComputedDisplayInline(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>some text <a id="l" href="#x">a link</a></p><div style="display: none"><span id="h">hidden</span></div></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		v, err := pg.scripts.engine.RunString(`[getComputedStyle(document.getElementById("l")).display, getComputedStyle(document.getElementById("h")).display].join(",")`)
+		assert.NoError(t, err)
+		assert.Equal(t, "inline,none", v)
 	})
 }

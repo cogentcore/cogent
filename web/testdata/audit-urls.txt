@@ -1,0 +1,19 @@
+# Pages audited by TestAudit (go test -run TestAudit -audit): each line is
+# a name and a URL. They are live pages, with their scripts, which are
+# compared with Chrome.
+example https://example.com/
+wikipedia https://en.wikipedia.org/wiki/Cascading_Style_Sheets
+mdn https://developer.mozilla.org/en-US/docs/Web/CSS/display
+gopkg https://pkg.go.dev/net/http
+effectivego https://go.dev/doc/effective_go
+hackernews https://news.ycombinator.com/
+lobsters https://lobste.rs/
+npr https://www.npr.org/
+pythondocs https://docs.python.org/3/tutorial/index.html
+duckduckgo https://duckduckgo.com/?q=cogent+core
+craigslist https://www.craigslist.org/about/sites
+daringfireball https://daringfireball.net/
+rust https://www.rust-lang.org/
+google https://www.google.com/
+github https://github.com/
+wirecutter https://www.nytimes.com/wirecutter/

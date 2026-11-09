@@ -113,6 +113,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		GetURL:        ctx.GetURL,
 		Render:        ps.render,
 		Layout:        ps.layout,
+		ElementAt:     ps.elementAt,
 		ComputedStyle: ps.computedStyle,
 		Viewport:      ps.viewport,
 		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
@@ -902,6 +903,40 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 	pos := wb.Geom.Pos.Total.Sub(pg.Geom.Pos.Content)
 	size := wb.Geom.Size.Actual.Total
 	return pos.X / dp, pos.Y / dp, size.X / dp, size.Y / dp, true
+}
+
+// elementAt returns the element that a click at the given position in CSS
+// px (relative to the top left of the page, as for layout) goes to: that
+// of the widget that gets the events there (see core.Scene.WidgetAt), or
+// of the nearest widget that it is in that has an element of the page.
+func (ps *pageScripts) elementAt(x, y float32) *html.Node {
+	pg := ps.pg
+	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
+		return nil
+	}
+	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	if dp <= 0 {
+		return nil
+	}
+	pos := pg.Geom.Pos.Content.Add(math32.Vec2(x, y).MulScalar(dp))
+	w := pg.Scene.WidgetAt(pos.ToPointFloor())
+	for w != nil {
+		wb := w.AsWidget()
+		if wb == pg.AsWidget() {
+			return nil
+		}
+		if n, ok := wb.Property("node").(*html.Node); ok && n != nil && n.Parent != nil {
+			for n != nil && n.Type != html.ElementNode {
+				n = n.Parent // the element of a text
+			}
+			if n != nil {
+				return n
+			}
+		}
+		p, _ := wb.Parent.(core.Widget)
+		w = p
+	}
+	return nil
 }
 
 // colorProperties are the CSS properties whose computed values are

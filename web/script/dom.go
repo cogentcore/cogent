@@ -540,6 +540,19 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(x, y, w, h)
 	})
+	set("elementAt", func(call goja.FunctionCall) goja.Value {
+		if e.opts.ElementAt == nil {
+			return goja.Null()
+		}
+		if e.dirty && !e.throttleLayout() {
+			e.renderIfDirty(nil, nil) // as for rect (the lock is held by the task)
+		}
+		n := e.opts.ElementAt(float32(call.Argument(0).ToFloat()), float32(call.Argument(1).ToFloat()))
+		if n == nil {
+			return goja.Null()
+		}
+		return id(n)
+	})
 	set("viewport", func(call goja.FunctionCall) goja.Value {
 		w, h := float32(1024), float32(768)
 		if e.opts.Viewport != nil {

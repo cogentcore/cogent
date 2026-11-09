@@ -1475,8 +1475,12 @@
 		execCommand() { return false; }
 		queryCommandSupported() { return false; }
 		getSelection() { return g.getSelection(); }
-		elementFromPoint() { return null; }
-		elementsFromPoint() { return []; }
+		elementFromPoint(x, y) { return wrap(D.elementAt(+x + scrollState.x, +y + scrollState.y)); }
+		elementsFromPoint(x, y) {
+			const out = [];
+			for (let n = this.elementFromPoint(x, y); n && n.nodeType === 1; n = n.parentNode) out.push(n);
+			return out;
+		}
 		exitFullscreen() { return Promise.resolve(); }
 		get fullscreenElement() { return null; }
 	}
@@ -1729,6 +1733,7 @@
 	// getComputedStyle returns an approximation of the computed style:
 	// the inline style, or the value of the style sheets of the page (as
 	// last read), with the display of an element that has no box.
+	const inlineTags = "span, a, b, i, em, strong, code, img, label, small, sup, sub, abbr, q, cite, time, mark, u, s, kbd, var, dfn, bdi, bdo, data, br, wbr";
 	function getComputedStyle(el) {
 		const inline = el && el.style ? el.style : null;
 		const get = p => {
@@ -1740,7 +1745,20 @@
 			const box = el ? D.rect(el[ID]) : null;
 			if (cv && box) return cv; // display
 			switch (p) {
-				case "display": return box ? (el.matches("span, a, b, i, em, strong, code, img, label, small, sup, sub, abbr") ? "inline" : "block") : "none";
+				case "display": {
+					// an element with no box of its own is not displayed only
+					// if it or an element that it is in is not: the inline
+					// elements in a text (as a link in a paragraph) are in the
+					// widget of the text, and are inline
+					if (cv === "none") return "none";
+					const byTag = el.matches(inlineTags) ? "inline" : "block";
+					if (box) return byTag;
+					for (let a = el.parentElement; a && a[ID] != null; a = a.parentElement) {
+						if (D.computed(a[ID], "display") === "none") return "none";
+						if (D.rect(a[ID])) return cv || byTag;
+					}
+					return "none";
+				}
 				case "visibility": return "visible";
 				case "position": return "static";
 				case "opacity": return "1";
