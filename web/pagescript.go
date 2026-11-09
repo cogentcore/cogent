@@ -61,6 +61,10 @@ type pageScripts struct {
 	// width is the width of the viewport that the document is read for.
 	width float32
 
+	// height is the height of the viewport that the page is read for, in
+	// CSS px (see Page.viewportHeight), or 0 if it was not known.
+	height float32
+
 	// seen is the size of the viewport that the scripts last got, if
 	// they have, for firing resize events when it changes.
 	seen math32.Vector2
@@ -106,7 +110,7 @@ type pageScripts struct {
 // newPageScripts returns the scripts of the given parsed document of the
 // page, which was gotten with the given context, for the given final URL.
 func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final string) (*pageScripts, error) {
-	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth}
+	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight}
 	e, err := script.New(doc, script.Options{
 		PageURL:       final,
 		GetURL:        ctx.GetURL,
@@ -160,6 +164,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.GetURL = ps.base.GetURL
 	ctx.ImageCache = ps.base.ImageCache
 	ctx.MediaWidth = ps.width
+	ctx.MediaHeight = ps.height
 	ctx.OpenURL = ps.openURL
 	ctx.OpenLink = ps.openLink
 	ctx.Checked = func(n *html.Node) bool { // the state from the user and the scripts
@@ -243,6 +248,7 @@ func (ps *pageScripts) render() func() {
 			// which were laid out for the width of the screen until the
 			// window was resized)
 			pg.checkedWidth = ctx.MediaWidth
+			pg.checkedHeight = ctx.MediaHeight
 		}
 		// the element that has the focus keeps it in the new widgets, and
 		// the elements that scroll keep their scroll positions (as the

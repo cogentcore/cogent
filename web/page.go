@@ -94,6 +94,10 @@ type Page struct {
 	// and mediaTimer is the pending read of it for that width, if any.
 	media        *pageMedia
 	checkedWidth float32
+
+	// checkedHeight is the last height of the viewport that was checked,
+	// for pages that use it (see [htmlcore.Context.ViewportHeightUsed]).
+	checkedHeight float32
 	mediaTimer   *time.Timer
 
 	// scripts is the state of the scripts of the page that is shown, if
@@ -411,6 +415,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		pg.zoom = pg.topPage().zoom // frames are zoomed with their page
 	}
 	ctx.Zoom = pg.zoom
+	ctx.MediaHeight = pg.viewportHeight()
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
 		ctx.MediaWidth = htmlcore.ScreenMediaWidth() / pg.zoomFactor()
@@ -636,13 +641,23 @@ func (pg *Page) checkMedia() {
 	if m == nil || pg.loading != "" {
 		return
 	}
-	w := pg.viewportWidth()
-	if w <= 0 || w == pg.checkedWidth {
+	// the width, for the media of the page, and the height, if the page
+	// used it (as for its height: 100%, of the viewport)
+	w, h := pg.viewportWidth(), pg.viewportHeight()
+	widthChanged := w > 0 && w != pg.checkedWidth
+	heightChanged := h > 0 && h != pg.checkedHeight
+	if !widthChanged && !heightChanged {
 		return
 	}
-	pg.checkedWidth = w
-	pg.stopMediaTimer() // for an earlier width
-	if !m.ctx.MediaChanged(w) {
+	if widthChanged {
+		pg.checkedWidth = w
+	}
+	if heightChanged {
+		pg.checkedHeight = h
+	}
+	pg.stopMediaTimer() // for an earlier size
+	heightUsed := m.ctx.ViewportHeightUsed() && pg.checkedHeight > 0 && math32.Abs(pg.checkedHeight-m.ctx.MediaHeight) >= 1
+	if !m.ctx.MediaChanged(pg.checkedWidth) && !heightUsed {
 		return
 	}
 	pg.loads.Add(1)
@@ -673,6 +688,7 @@ func (pg *Page) setMedia(m *pageMedia) {
 	pg.stopMediaTimer()
 	pg.media = m
 	pg.checkedWidth = m.ctx.MediaWidth
+	pg.checkedHeight = m.ctx.MediaHeight
 }
 
 // readMedia reads the page that is shown again for the given width of
@@ -682,8 +698,9 @@ func (pg *Page) setMedia(m *pageMedia) {
 func (pg *Page) readMedia(m *pageMedia, width float32) {
 	if ps := pg.scripts; ps != nil {
 		// the document as the scripts have made it is read again
+		height := pg.viewportHeight()
 		ps.engine.Post(func() {
-			ps.width = width
+			ps.width, ps.height = width, height
 			ps.engine.Changed()
 		})
 		return
@@ -693,6 +710,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 	ctx := pg.Context.NewPage()
 	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = width
+	ctx.MediaHeight = pg.viewportHeight()
 	ctx.PageURL = m.url
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
@@ -969,6 +987,22 @@ func LocationURL(loc string) string {
 // includes the vertical scrollbar of the frame that it scrolls in, so
 // that the scrollbar does not change it (which, as a page can be read
 // again for another width, could make it read again and again).
+// viewportHeight returns the height of the viewport of the page in CSS
+// px: of the frame that it scrolls in (as the tab of a browser, or the box
+// of an iframe), or 0 if it does not have one yet, as for the percentage
+// heights of the viewport and vh lengths ([htmlcore.Context.MediaHeight]),
+// which were otherwise of the window, with the toolbar and tabs, so that
+// the footer of google.com was below the bottom of the page, which
+// always had a scrollbar.
+func (pg *Page) viewportHeight() float32 {
+	if fr := core.AsFrame(pg.Parent); fr != nil {
+		if h, dp := fr.Geom.Size.Alloc.Content.Y, pg.pxDots(); h > 0 && dp > 0 {
+			return h / dp
+		}
+	}
+	return 0
+}
+
 func (pg *Page) viewportWidth() float32 {
 	dp := pg.pxDots()
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
