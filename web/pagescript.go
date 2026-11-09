@@ -99,8 +99,10 @@ type pageScripts struct {
 	laidOut bool
 
 	// renders is the number of times that the page has been rendered
-	// again after it was shown (for tests).
+	// again after it was shown, and restyles the number of times that
+	// its widgets were styled again instead (for tests).
 	renders    int
+	restyles   int
 	renderTime time.Duration
 
 	consoleMu sync.Mutex
@@ -115,6 +117,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		PageURL:       final,
 		GetURL:        ctx.GetURL,
 		Render:        ps.render,
+		Restyle:       ps.restyle,
 		Layout:        ps.layout,
 		ElementAt:     ps.elementAt,
 		ComputedStyle: ps.computedStyle,
@@ -296,6 +299,30 @@ func (ps *pageScripts) render() func() {
 	}
 }
 
+// restyle styles the widgets of the given elements again for the changes
+// of their styles (see [script.Options.Restyle]), returning the function
+// that does it with the lock held, which returns false if it can not (for
+// the page to be rendered instead).
+func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
+	if !ps.shown {
+		return nil // (rendered once it is shown)
+	}
+	return func() bool {
+		pg := ps.pg
+		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil {
+			return false
+		}
+		start := time.Now()
+		if !ps.ctx.Restyle(nodes) {
+			return false
+		}
+		ps.restyles++
+		ps.renderTime += time.Since(start)
+		ps.laidOut = false // (laid out again for the boxes of the scripts)
+		return true
+	}
+}
+
 // handleWidget sets up the given widget of the page (as it is read) for
 // the events of its element: clicks for the elements that have listeners
 // for them (or are in elements that do), and the values of form controls.
@@ -466,14 +493,20 @@ func (ps *pageScripts) setHovered(n *html.Node) {
 			set[n] = true
 		}
 	}
-	changed := len(set) != len(ps.hoverSet)
+	// the elements whose hover changed are restyled
+	var changed []*html.Node
 	for n := range set {
-		changed = changed || !ps.hoverSet[n]
+		if !ps.hoverSet[n] {
+			changed = append(changed, n)
+		}
+	}
+	for n := range ps.hoverSet {
+		if !set[n] {
+			changed = append(changed, n)
+		}
 	}
 	ps.hoverSet = set
-	if changed {
-		ps.engine.Changed()
-	}
+	ps.engine.StateChanged(changed...)
 }
 
 // restoreScrolls restores the given scroll positions of the elements that
@@ -602,9 +635,15 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		x.OnChange(func(ev events.Event) {
 			checked := x.IsChecked()
 			e.Dispatch(n, "click", map[string]any{"checked": checked}, func(bool) {
-				// the page is read again, for the :checked selectors (as the
-				// CSS menus of Wikipedia, which show when a checkbox is checked)
-				e.Changed()
+				// the checkbox is restyled, for the :checked selectors (as the
+				// CSS menus of Wikipedia, which show when a checkbox is
+				// checked); the page is read again for the radio buttons
+				// that are unchecked with it
+				if strings.EqualFold(htmlcore.GetAttr(n, "type"), "checkbox") {
+					e.StateChanged(n)
+				} else {
+					e.Changed()
+				}
 				e.Dispatch(n, "input", nil, nil)
 				e.Dispatch(n, "change", nil, nil)
 			})

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/andybalholm/cascadia"
@@ -74,6 +75,44 @@ func (e *Engine) changed(n *html.Node) {
 		} else {
 			e.changedNodes = append(e.changedNodes, e.doc) // all of it
 		}
+	}
+}
+
+// styleChanged records that an attribute or a state of the given element
+// that selects it in style rules has changed (see [restyledAttr]), so that
+// it is restyled at the end of the task, or that it has changed as
+// [Engine.changed] does, if it can not be.
+func (e *Engine) styleChanged(n *html.Node) {
+	if n == nil || n.Type != html.ElementNode || e.opts.Restyle == nil || rootOf(n) != e.doc || len(e.styled) >= maxChangedNodes {
+		e.changed(n) // (as one in a shadow root, which is of its host)
+		return
+	}
+	if !connected(n, e.doc) {
+		return
+	}
+	if !slices.Contains(e.styled, n) {
+		e.styled = append(e.styled, n)
+	}
+	if len(e.changedNodes) < maxChangedNodes {
+		e.changedNodes = append(e.changedNodes, n)
+	}
+}
+
+// restyledAttr returns whether a change of the given attribute only
+// changes the styles of the elements (see [Options.Restyle]): the style
+// and class attributes, and those of data and ARIA, which select them in
+// style rules, and are not otherwise read.
+func restyledAttr(name string) bool {
+	return name == "style" || name == "class" || strings.HasPrefix(name, "data-") || strings.HasPrefix(name, "aria-")
+}
+
+// attrChanged records that the given attribute of the given element has
+// changed.
+func (e *Engine) attrChanged(n *html.Node, name string) {
+	if restyledAttr(name) {
+		e.styleChanged(n)
+	} else {
+		e.changed(n)
 	}
 }
 
@@ -250,13 +289,13 @@ func (e *Engine) defineDOM() {
 			if a.Key == name {
 				if a.Val != val {
 					n.Attr[i].Val = val
-					e.changed(n)
+					e.attrChanged(n, name)
 				}
 				return goja.Undefined()
 			}
 		}
 		n.Attr = append(n.Attr, html.Attribute{Key: name, Val: val})
-		e.changed(n)
+		e.attrChanged(n, name)
 		return goja.Undefined()
 	})
 	set("removeAttr", func(call goja.FunctionCall) goja.Value {
@@ -268,7 +307,7 @@ func (e *Engine) defineDOM() {
 		for i, a := range n.Attr {
 			if a.Key == name {
 				n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
-				e.changed(n)
+				e.attrChanged(n, name)
 				break
 			}
 		}
@@ -527,11 +566,11 @@ func (e *Engine) defineDOM() {
 		// The page is rendered first if the element may have changed
 		// (and otherwise its box as last rendered is current), as
 		// rendering a page is costly and scripts get boxes often.
-		if e.dirty && e.changedAround(n) && !e.throttleLayout() {
+		if e.needsRender() && e.changedAround(n) && !e.throttleLayout() {
 			e.renderIfDirty(nil, nil) // the lock is held by the task
 		}
 		x, y, w, h, ok := e.opts.Layout(n)
-		if !ok && e.dirty {
+		if !ok && e.needsRender() {
 			e.renderIfDirty(nil, nil) // as for an element that has no box yet
 			x, y, w, h, ok = e.opts.Layout(n)
 		}
@@ -544,7 +583,7 @@ func (e *Engine) defineDOM() {
 		if e.opts.ElementAt == nil {
 			return goja.Null()
 		}
-		if e.dirty && !e.throttleLayout() {
+		if e.needsRender() && !e.throttleLayout() {
 			e.renderIfDirty(nil, nil) // as for rect (the lock is held by the task)
 		}
 		n := e.opts.ElementAt(float32(call.Argument(0).ToFloat()), float32(call.Argument(1).ToFloat()))

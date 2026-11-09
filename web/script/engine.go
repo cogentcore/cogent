@@ -72,6 +72,16 @@ type Options struct {
 	// with the lock held, or nil.
 	Render func() (commit func())
 
+	// Restyle, if set, styles the widgets of the given elements again
+	// after a task has changed only attributes of theirs that select them
+	// in style rules (as their class and style), or their states (as their
+	// :hover), without reading the document into new widgets, which is
+	// costly for large pages (as those that animate the styles of their
+	// elements on each frame). It is called as Render is, and its commit
+	// returns false if the elements can not be restyled so (as for a
+	// change of their display), for the page to be rendered instead.
+	Restyle func(nodes []*html.Node) (commit func() bool)
+
 	// Layout, if set, returns the position and size of the box of the
 	// given node in CSS px, relative to the top left of the page, after
 	// the page is laid out (rendering it first if it has changed), and
@@ -194,6 +204,11 @@ type Engine struct {
 	lastRender time.Time
 	imports    *importMap    // the import map of the page, if any
 	renderCost time.Duration // how long the last render took
+	// restyleCost is how long the last restyle took (see Options.Restyle)
+	restyleCost time.Duration
+	// styled are the elements to restyle (see Options.Restyle), whose
+	// changes need no render of the page, as dirty is for the others.
+	styled []*html.Node
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
 	changedNodes []*html.Node
@@ -481,15 +496,18 @@ const maxTimeouts = 3
 // takes at most about a third of the time.
 const renderInterval = 100 * time.Millisecond
 
+// restyleInterval is the shortest time between the restyles of a page
+// (see [Options.Restyle]), which are made as often as frames are rendered,
+// for the animations of scripts.
+const restyleInterval = 16 * time.Millisecond
+
 // renderIfDirty renders the page if the document has changed (now, as
 // for the layout of an element that a script needs). The widgets are
 // shown with the given lock held, if not nil (otherwise it is held).
 func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
-	if !e.dirty || e.opts.Render == nil || e.loading {
+	if !e.needsRender() || e.opts.Render == nil || e.loading {
 		return
 	}
-	e.dirty = false
-	e.changedNodes = e.changedNodes[:0]
 	start := time.Now()
 	// the time of rendering is not that of the scripts of the task
 	if e.taskTimer != nil && e.taskTimer.Stop() {
@@ -499,6 +517,15 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 			e.taskTimer.Reset(max(e.taskLeft, 0))
 		}()
 	}
+	styled := e.styled
+	e.styled = nil
+	e.changedNodes = e.changedNodes[:0]
+	if !e.dirty && e.restyle(styled, lock, unlock) {
+		e.lastRender = time.Now()
+		e.restyleCost = e.lastRender.Sub(start)
+		return
+	}
+	e.dirty = false
 	commit := e.opts.Render()
 	if commit != nil {
 		if lock == nil {
@@ -510,6 +537,42 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	}
 	e.lastRender = time.Now()
 	e.renderCost = e.lastRender.Sub(start)
+}
+
+// restyle restyles the given elements (see [Options.Restyle]), with the
+// given lock held, if not nil (otherwise it is held), returning whether
+// they were.
+func (e *Engine) restyle(nodes []*html.Node, lock func() bool, unlock func()) bool {
+	if e.opts.Restyle == nil || len(nodes) == 0 {
+		return false
+	}
+	commit := e.opts.Restyle(nodes)
+	if commit == nil {
+		return false
+	}
+	if lock == nil {
+		return commit()
+	}
+	if !lock() {
+		return false
+	}
+	defer unlock()
+	return commit()
+}
+
+// needsRender returns whether the page needs to be rendered or restyled
+// for the changes of the document.
+func (e *Engine) needsRender() bool {
+	return e.dirty || len(e.styled) > 0
+}
+
+// pendingCost returns how long the render that the changes of the
+// document need (a restyle, or a render) took the last time.
+func (e *Engine) pendingCost() time.Duration {
+	if !e.dirty && e.opts.Restyle != nil {
+		return e.restyleCost
+	}
+	return e.renderCost
 }
 
 // TakeFocus returns the element that a script focused since the page was
@@ -536,7 +599,7 @@ const expensiveRender = 50 * time.Millisecond
 // page still gets the events of the user. (An element with no box yet is
 // rendered for.)
 func (e *Engine) throttleLayout() bool {
-	if !(e.renderCost > expensiveRender && time.Since(e.lastRender) < 2*e.renderCost) {
+	if cost := e.pendingCost(); !(cost > expensiveRender && time.Since(e.lastRender) < 2*cost) {
 		return false
 	}
 	// The first layouts of a page, as its scripts set it up, and those of
@@ -565,10 +628,14 @@ const maxTaskLayouts = 8
 // (without the lock of the page, which it takes to show it): now, or after
 // [renderInterval] since the last render.
 func (e *Engine) renderSoon(lock func() bool, unlock func()) {
-	if !e.dirty || e.opts.Render == nil || e.loading {
+	if !e.needsRender() || e.opts.Render == nil || e.loading {
 		return
 	}
-	wait := max(renderInterval, 2*e.renderCost) - time.Since(e.lastRender)
+	interval := renderInterval
+	if !e.dirty && e.opts.Restyle != nil {
+		interval = restyleInterval
+	}
+	wait := max(interval, 2*e.pendingCost()) - time.Since(e.lastRender)
 	if wait <= 0 {
 		e.renderIfDirty(lock, unlock)
 		return
@@ -721,6 +788,16 @@ func (e *Engine) Eval(src string) {
 // form control that is changed by the user.
 func (e *Engine) Changed() {
 	e.dirty = true
+}
+
+// StateChanged records that the states of the given elements that select
+// them in style rules have changed (in a task), as their :hover and
+// :checked, so that they are restyled at the end of the task (see
+// [Options.Restyle]).
+func (e *Engine) StateChanged(nodes ...*html.Node) {
+	for _, n := range nodes {
+		e.styleChanged(n)
+	}
 }
 
 // setTimer starts a timer that fires the timer of the given id in the
