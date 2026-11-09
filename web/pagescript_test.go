@@ -903,3 +903,29 @@ func testLabelChecksControl(t *testing.T, label string) {
 		assert.Equal(t, true, v)
 	})
 }
+
+// TestScriptsResizeAfterLayout tests scripts that get the box of an element
+// while the page loads, before it has a layout (as the slider of the photos
+// of the postings of craigslist.org, which got a width of 0): they get a
+// resize event once it has one, on which they get its box again.
+func TestScriptsResizeAfterLayout(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><script>
+			const box = document.createElement("div"); // made by the script, as the slides
+			box.style.cssText = "width: 300px; height: 20px";
+			document.body.appendChild(box);
+			window.widths = [box.getBoundingClientRect().width];
+			window.addEventListener("resize", () => widths.push(box.getBoundingClientRect().width));
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.Eventually(t, func() bool {
+			v, _ := pg.scripts.engine.RunString(`widths[widths.length - 1]`)
+			w, _ := v.(float64)
+			if i, ok := v.(int64); ok {
+				w = float64(i)
+			}
+			return w > 290 && w < 310
+		}, 5*time.Second, 50*time.Millisecond, "the width after the resize")
+	})
+}

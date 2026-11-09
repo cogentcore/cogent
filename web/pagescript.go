@@ -80,6 +80,11 @@ type pageScripts struct {
 	// engine (as the reading of the page).
 	hoverSet map[*html.Node]bool
 
+	// layoutMissed is whether the scripts got the box of an element before
+	// the page had a layout (before it was shown), for which they get a
+	// resize event once it has one.
+	layoutMissed bool
+
 	// pushed is the URL that the scripts set (with history.pushState)
 	// before the page was shown, if any.
 	pushed string
@@ -202,6 +207,14 @@ func (ps *pageScripts) render() func() {
 		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
 			ps.engine.Resized()
 		}
+	}
+	if ps.layoutMissed {
+		// the scripts got the boxes of elements before the page had a
+		// layout (as the slider of the photos of the postings of
+		// craigslist.org, which was as wide as nothing), and they get a
+		// resize event to get them again, now that it has one
+		ps.layoutMissed = false
+		ps.engine.Resized()
 	}
 	start := time.Now()
 	content, err := ps.read()
@@ -854,10 +867,18 @@ func (ps *pageScripts) viewportSize() (float32, float32) {
 func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 	pg := ps.pg
 	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
+		// the page has no layout yet (it is shown once it has loaded), and
+		// the scripts get a resize event once it has one (see render)
+		ps.layoutMissed = true
 		return
 	}
 	wb := ps.widgetOf(n)
 	if wb == nil {
+		if ps.renders == 0 {
+			// an element that the scripts made while the page loads, which
+			// has no widget until the page is rendered (see layoutMissed)
+			ps.layoutMissed = true
+		}
 		return
 	}
 	if !ps.laidOut {
