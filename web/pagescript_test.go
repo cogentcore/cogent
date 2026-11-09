@@ -812,3 +812,43 @@ func TestScriptsFocusAndKeys(t *testing.T) {
 		t.Logf("got %v", got)
 	})
 }
+
+// TestScriptsLinkOwnClick tests a click on a link to the same URL as an
+// earlier link (as an item of the jump dialog of pkg.go.dev, and the link
+// of the same identifier in the documentation): the click goes to the link
+// that is clicked (whose listener closes the dialog), and then the link is
+// followed.
+func TestScriptsLinkOwnClick(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><a id="first" href="#x" style="display: block">First</a>` +
+			`<a id="second" href="#x" style="display: block">Second <i>item</i></a><div style="height: 2000px"></div><h2 id="x">X</h2>` +
+			`<script>window.got = []; for (const id of ["first", "second"]) document.getElementById(id).addEventListener("click", () => got.push(id));</script></body></html>`,
+	})
+	var pos image.Point
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "second" {
+				if _, isText := n.(*core.Text); !isText {
+					bb := wb.Geom.TotalBBox
+					pos = image.Pt(bb.Min.X+5, (bb.Min.Y+bb.Max.Y)/2)
+				}
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.MouseButton(events.MouseDown, events.Left, pos, 0)
+		ev.MouseButton(events.MouseUp, events.Left, pos, 0)
+	}, func() {
+		assert.Eventually(t, func() bool {
+			v, _ := pg.scripts.engine.RunString(`got.join()`)
+			return v == "second"
+		}, 3*time.Second, 20*time.Millisecond, "the clicked link gets the click")
+		assert.Eventually(t, func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			return len(pg.History) > 0 && strings.HasSuffix(pg.History[len(pg.History)-1], "#x")
+		}, 3*time.Second, 20*time.Millisecond, "the link is followed")
+	})
+}

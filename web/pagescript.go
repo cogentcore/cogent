@@ -153,6 +153,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.ImageCache = ps.base.ImageCache
 	ctx.MediaWidth = ps.width
 	ctx.OpenURL = ps.openURL
+	ctx.OpenLink = ps.openLink
 	ctx.Checked = func(n *html.Node) bool { // the state from the user and the scripts
 		if _, _, checked, ok := ps.engine.ControlState(n); ok {
 			return checked
@@ -279,6 +280,19 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	n := htmlcore.NodeOf(tx)
 	if n == nil || n.Type != html.ElementNode || !ps.engine.HasListener(n, "click") {
 		return
+	}
+	// a text in a link (as the items of the jump dialog of pkg.go.dev, a
+	// link of a text and an i element): the click is dispatched to it, and
+	// then the link is followed, unless it is prevented
+	for a := n; a != nil; a = a.Parent {
+		if a.Type == html.ElementNode && a.Data == "a" && htmlcore.HasAttr(a, "href") {
+			href, link := htmlcore.GetAttr(a, "href"), a
+			tx.OnClick(func(ev events.Event) {
+				ev.SetHandled()
+				ps.openLink(link, href, ev)
+			})
+			return
+		}
 	}
 	details := summaryDetails(n)
 	tx.OnClick(func(ev events.Event) {
@@ -672,11 +686,29 @@ func (ps *pageScripts) openURL(url string, ev events.Event) {
 		pg.OpenURL(url, ev)
 		return
 	}
+	ps.openLink(anchor, url, ev)
+}
+
+// openLink dispatches a click to the given link element, and then opens
+// the given URL of it (or runs it, for javascript:), unless the click is
+// prevented. It is used for the clicks on links (see
+// [htmlcore.Context.OpenLink]), whose own element gets the click (as the
+// items of the jump dialog of pkg.go.dev, which close it on their click,
+// not the first link to the same URL in the page).
+func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
+	pg := ps.pg
+	js := strings.HasPrefix(strings.ToLower(strings.TrimSpace(url)), "javascript:")
+	if ps.engine.Closed() {
+		if !js {
+			pg.OpenURL(url, ev)
+		}
+		return
+	}
 	props := map[string]any{}
 	if ev != nil {
 		props = mouseProps(ev)
 	}
-	ps.engine.Dispatch(anchor, "click", props, func(prevented bool) {
+	ps.engine.Dispatch(link, "click", props, func(prevented bool) {
 		if prevented {
 			return
 		}
