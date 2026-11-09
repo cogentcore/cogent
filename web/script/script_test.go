@@ -894,3 +894,24 @@ func TestMicrotasksWithPolyfill(t *testing.T) {
 		return v == true
 	}, 3*time.Second, 20*time.Millisecond)
 }
+
+// TestInsertedScriptBeforeLoad tests a script that a script of the page
+// inserts while it loads (as frontend.js of pkg.go.dev, an async module
+// that sets up its tooltips on the load event): it runs before the load
+// event, so that its listener for it is called.
+func TestInsertedScriptBeforeLoad(t *testing.T) {
+	page := `<html><head><script>
+		const s = document.createElement("script");
+		s.src = "/front.js"; s.type = "module"; s.async = true;
+		document.head.appendChild(s);
+	</script></head><body><div id="out"></div></body></html>`
+	e, logs := testEngine(t, page, map[string]string{
+		"/front.js": `window.addEventListener("load", () => { document.getElementById("out").textContent = "set up on load"; });`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	e.Wait()
+	assert.Equal(t, "set up on load", run(t, e, `document.getElementById("out").textContent`))
+	assert.Empty(t, *logs)
+}

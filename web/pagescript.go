@@ -9,12 +9,14 @@ import (
 	"fmt"
 	"image"
 	"log/slog"
+	"maps"
 	"math"
 	neturl "net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/colors"
@@ -209,6 +211,7 @@ func (ps *pageScripts) render() func() {
 	ps.renders++
 	ps.renderTime += time.Since(start)
 	ctx := ps.ctx
+	requested := ps.engine.TakeFocus() // which a script focused
 	return func() {
 		pg := ps.pg
 		if pg.scripts != ps {
@@ -233,6 +236,9 @@ func (ps *pageScripts) render() func() {
 			}
 			return tree.Continue
 		})
+		if requested != nil {
+			focused = requested
+		}
 		pageScroll := pg.Geom.Scroll
 		pg.Title = ctx.Title
 		pg.DeleteChildren()
@@ -467,6 +473,18 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	}
 	switch x := w.(type) {
 	case *core.TextField:
+		// the keys typed in it: keydown before the field gets the key, and
+		// keyup after it (with its text), as for the filters that pages
+		// update on keyup (as the jump dialog of pkg.go.dev)
+		x.OnFirst(events.KeyChord, func(ev events.Event) {
+			props := keyProps(ev)
+			e.Dispatch(n, "keydown", props, nil)
+			x.Defer(func() {
+				up := maps.Clone(props)
+				up["value"] = x.Text()
+				e.Dispatch(n, "keyup", up, nil)
+			})
+		})
 		x.OnInput(func(ev events.Event) {
 			e.Dispatch(n, "input", map[string]any{"value": x.Text()}, nil)
 		})
@@ -591,6 +609,44 @@ func mouseProps(ev events.Event) map[string]any {
 		"ctrlKey": ev.HasAnyModifier(key.Control), "metaKey": ev.HasAnyModifier(key.Meta),
 		"shiftKey": ev.HasAnyModifier(key.Shift), "altKey": ev.HasAnyModifier(key.Alt),
 	}
+}
+
+// keyProps returns the properties of a KeyboardEvent for the given key
+// event: its key, code, and keyCode (and which), and its modifiers.
+func keyProps(ev events.Event) map[string]any {
+	props := mouseProps(ev)
+	kc, ok := ev.(*events.Key)
+	if !ok {
+		return props
+	}
+	named := map[key.Codes][2]any{
+		key.CodeReturnEnter: {"Enter", 13}, key.CodeKeypadEnter: {"Enter", 13}, key.CodeEscape: {"Escape", 27},
+		key.CodeTab: {"Tab", 9}, key.CodeBackspace: {"Backspace", 8}, key.CodeDelete: {"Delete", 46},
+		key.CodeUpArrow: {"ArrowUp", 38}, key.CodeDownArrow: {"ArrowDown", 40},
+		key.CodeLeftArrow: {"ArrowLeft", 37}, key.CodeRightArrow: {"ArrowRight", 39},
+		key.CodeHome: {"Home", 36}, key.CodeEnd: {"End", 35}, key.CodePageUp: {"PageUp", 33}, key.CodePageDown: {"PageDown", 34},
+	}
+	if v, ok := named[kc.Code]; ok {
+		props["key"], props["code"], props["keyCode"] = v[0], v[0], v[1]
+		return props
+	}
+	if r := kc.Rune; r > 0 {
+		props["key"] = string(r)
+		code := int(unicode.ToUpper(r))
+		if code > 0xff {
+			code = 0
+		}
+		props["keyCode"] = code
+		switch {
+		case unicode.IsLetter(r) && r < 0x80:
+			props["code"] = "Key" + string(unicode.ToUpper(r))
+		case unicode.IsDigit(r) && r < 0x80:
+			props["code"] = "Digit" + string(r)
+		case r == ' ':
+			props["code"] = "Space"
+		}
+	}
+	return props
 }
 
 // openURL opens the given URL of a link that is clicked, after its click

@@ -788,7 +788,7 @@
 		scrollTo() {}
 		scrollBy() {}
 		scroll() {}
-		focus() { focused = this; }
+		focus() { focused = this; D.focus(this[ID]); }
 		blur() { if (focused === this) focused = null; }
 		click() { this.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })); }
 		attachShadow(init) {
@@ -1317,9 +1317,17 @@
 	const HTMLDetailsElement = elementClass(["details"], HTMLElement, cls => reflect(cls, [], ["open"]));
 	const HTMLDialogElement = elementClass(["dialog"], HTMLElement, cls => {
 		reflect(cls, [], ["open"]);
+		// a modal dialog is marked for the :modal selector of the style
+		// sheets (htmlcore.ModalAttr), which is in the top layer
 		cls.prototype.show = function () { this.open = true; };
-		cls.prototype.showModal = function () { this.open = true; };
-		cls.prototype.close = function (v) { this.open = false; this.returnValue = v || ""; this.dispatchEvent(new Event("close")); };
+		cls.prototype.showModal = function () { this.setAttribute("data-htmlcore-modal", ""); this.open = true; };
+		cls.prototype.close = function (v) {
+			if (!this.open) return;
+			this.removeAttribute("data-htmlcore-modal");
+			this.open = false;
+			this.returnValue = v === undefined ? this.returnValue || "" : String(v);
+			this.dispatchEvent(new Event("close"));
+		};
 	});
 	const HTMLDivElement = elementClass(["div"]);
 	const HTMLSpanElement = elementClass(["span"]);

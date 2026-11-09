@@ -21,6 +21,7 @@ import (
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // newScriptPage returns a body with a page that serves the given pages
@@ -772,4 +773,42 @@ func TestScriptsHoverMenu(t *testing.T) {
 		ev.MouseMove(other)
 		assert.Eventually(t, func() bool { return !shownNow() }, 3*time.Second, 20*time.Millisecond, "hidden after")
 	}, func() {})
+}
+
+// TestScriptsFocusAndKeys tests a text input that a script focuses (as the
+// input of the jump dialog of pkg.go.dev): its text field gets the focus,
+// and the keys typed in it are dispatched to the scripts, keydown before
+// it gets them and keyup after (with its value), on which pages filter.
+func TestScriptsFocusAndKeys(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><input id="in" type="text"><script>window.keys = [];
+			const i = document.getElementById("in");
+			i.addEventListener("keydown", e => keys.push("down " + e.key + " " + e.keyCode));
+			i.addEventListener("keyup", e => keys.push("up " + i.value));
+			setTimeout(() => i.focus(), 0);</script></body></html>`,
+	})
+	var tf *core.TextField
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		pg.WalkDown(func(n tree.Node) bool {
+			if f, ok := n.(*core.TextField); ok {
+				tf = f
+			}
+			return tree.Continue
+		})
+		focused := tf != nil && tf.StateIs(states.Focused)
+		b.AsyncUnlock()
+		require.True(t, focused, "the text field has the focus")
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		ev.KeyChord('h', 0, 0)
+		time.Sleep(200 * time.Millisecond) // as typed by a person
+		ev.KeyChord('i', 0, 0)
+	}, func() {
+		var got any
+		assert.Eventually(t, func() bool {
+			got, _ = pg.scripts.engine.RunString(`keys.join(", ")`)
+			return got == "down h 72, up h, down i 73, up hi"
+		}, 3*time.Second, 20*time.Millisecond, "the keys")
+		t.Logf("got %v", got)
+	})
 }

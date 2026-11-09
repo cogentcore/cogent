@@ -129,6 +129,15 @@ type Engine struct {
 	vm   *goja.Runtime
 	doc  *html.Node
 
+	// insertedPending is the number of the scripts that were inserted in
+	// the document while it loaded that have not run yet, which the load
+	// event is after (see [Engine.Load]); only used in tasks.
+	insertedPending int
+
+	// focusRequest is the element that a script last focused (with focus),
+	// if the page has not been rendered since (see [Engine.TakeFocus]).
+	focusRequest *html.Node
+
 	// shadowRoots has the shadow roots (fragments) of the elements that
 	// scripts have attached them to, for [Engine.Unassigned].
 	shadowRoots map[*html.Node]*html.Node
@@ -410,6 +419,16 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	}
 	e.lastRender = time.Now()
 	e.renderCost = e.lastRender.Sub(start)
+}
+
+// TakeFocus returns the element that a script focused since the page was
+// last rendered (as the input of the jump dialog of pkg.go.dev, which it
+// focuses when it opens it), if any, for its widget to get the focus, and
+// forgets it. It must be called in a task (as when rendering the page).
+func (e *Engine) TakeFocus() *html.Node {
+	n := e.focusRequest
+	e.focusRequest = nil
+	return n
 }
 
 // expensiveRender is the time of rendering a page above which the renders

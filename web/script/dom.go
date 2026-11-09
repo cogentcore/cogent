@@ -512,6 +512,13 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.ToValue(e.opts.ComputedStyle(n, str(call, 1)))
 	})
+	set("focus", func(call goja.FunctionCall) goja.Value {
+		// the element that a script focused, whose widget gets the focus
+		// when the page is rendered (see Engine.TakeFocus)
+		e.focusRequest = node(arg(call, 0))
+		e.dirty = true
+		return goja.Undefined()
+	})
 	set("rect", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n == nil || e.opts.Layout == nil {

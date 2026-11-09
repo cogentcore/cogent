@@ -453,13 +453,22 @@ func (e *Engine) Load(done func()) {
 	e.Post(func() {
 		e.callPrelude("loaded", "interactive")
 	})
-	e.Post(func() {
+	// the load event is after the scripts that were inserted while the
+	// page loaded, as in browsers (as frontend.js of pkg.go.dev, which a
+	// script of the page inserts, and which sets up its tooltips on load)
+	var complete func()
+	complete = func() {
+		if e.insertedPending > 0 {
+			e.Post(complete) // after them
+			return
+		}
 		e.loading = false
 		e.callPrelude("loaded", "complete")
 		if done != nil {
 			done()
 		}
-	})
+	}
+	e.Post(complete)
 }
 
 // callPrelude calls the function of the given name of __dom.
@@ -583,13 +592,20 @@ func (e *Engine) runInserted(n *html.Node) {
 			e.ran = map[*html.Node]bool{}
 		}
 		e.ran[c] = true
-		if _, ok := attr(c, "src"); ok {
-			e.Post(func() { e.runScript(c, false) })
+		_, hasSrc := attr(c, "src")
+		if !hasSrc && strings.TrimSpace(textContent(c)) == "" {
 			return true
 		}
-		if strings.TrimSpace(textContent(c)) != "" {
-			e.Post(func() { e.runScript(c, false) })
+		pending := e.loading // which the load event is after (see Load)
+		if pending {
+			e.insertedPending++
 		}
+		e.Post(func() {
+			e.runScript(c, false)
+			if pending {
+				e.insertedPending--
+			}
+		})
 		return true
 	})
 }

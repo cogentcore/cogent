@@ -121,3 +121,15 @@ func TestHasListenerInterrupted(t *testing.T) {
 	e.vm.Interrupt(errClosed)
 	assert.NotPanics(t, func() { assert.False(t, e.HasListener(body, "click")) })
 }
+
+// TestDialogModal tests showModal, which marks the dialog for the :modal
+// selector of the style sheets (htmlcore.ModalAttr, as the jump dialog of
+// pkg.go.dev, centered over the page), and close, which unmarks it.
+func TestDialogModal(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><dialog id="d"><p>x</p></dialog></body></html>`, nil)
+	assert.Equal(t, "true,true,false,false,close", run(t, e, `const d = document.getElementById("d"); let ev = "";
+		d.addEventListener("close", e => ev = e.type); d.showModal();
+		const a = [d.open, d.hasAttribute("data-htmlcore-modal")]; d.close();
+		a.concat([d.open, d.hasAttribute("data-htmlcore-modal"), ev]).join()`))
+	assert.Empty(t, *logs)
+}
