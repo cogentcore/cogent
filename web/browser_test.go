@@ -87,3 +87,15 @@ func TestBrowserNewTabClick(t *testing.T) {
 		}
 	})
 }
+
+// TestTabLabelEmptyTitle tests that the tab of a page with a blank title
+// shows the name of the page (its host and path).
+func TestTabLabelEmptyTitle(t *testing.T) {
+	pg := NewPage()
+	pg.Title = " \n "
+	assert.Equal(t, "github.com/cogentcore/core", tabLabel(pg, "https://github.com/cogentcore/core?tab=readme#top"))
+	pg.Title = " GitHub  home "
+	assert.Equal(t, "GitHub home", tabLabel(pg, "https://github.com/"))
+	pg.Title = ""
+	assert.Equal(t, "github.com", tabLabel(pg, "https://github.com/"))
+}

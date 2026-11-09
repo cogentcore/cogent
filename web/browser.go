@@ -5,7 +5,9 @@
 package web
 
 import (
+	neturl "net/url"
 	"slices"
+	"strings"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -122,13 +124,24 @@ func (br *Browser) addPage(fr *core.Frame, tab *core.Tab) *Page {
 // tabLabel returns the label of the tab of the given page, which is
 // opening or has opened the given URL: its title, or else the URL.
 func tabLabel(pg *Page, url string) string {
-	if pg.loading == "" && pg.Title != "" {
-		return pg.Title
+	if title := strings.Join(strings.Fields(pg.Title), " "); pg.loading == "" && title != "" {
+		return title
 	}
 	if url == "" {
 		return "New tab"
 	}
-	return url
+	return pageName(url)
+}
+
+// pageName returns the name of the page at the given URL, for a tab
+// without a title: its host and path, without the scheme, query, or
+// fragment (as github.com/cogentcore/core), or the URL if it has none.
+func pageName(url string) string {
+	u, err := neturl.Parse(url)
+	if err != nil || u.Host == "" {
+		return url
+	}
+	return strings.TrimSuffix(u.Host+u.Path, "/")
 }
 
 // CurrentPage returns the page of the current tab, or nil if there is none.
