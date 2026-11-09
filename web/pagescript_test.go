@@ -5,6 +5,7 @@
 package web
 
 import (
+	"cogentcore.org/core/styles/units"
 	"image"
 	"io"
 	"net/http"
@@ -927,5 +928,80 @@ func TestScriptsResizeAfterLayout(t *testing.T) {
 			}
 			return w > 290 && w < 310
 		}, 5*time.Second, 50*time.Millisecond, "the width after the resize")
+	})
+}
+
+// TestScriptsFloatOfFloats tests a header that a script builds (as that of
+// the postings of craigslist.org), with a floating nav of a list of
+// floating crumbs: the nav is as wide as its crumbs, side by side, so that
+// the header has one line, also when the page is laid out again.
+func TestScriptsFloatOfFloats(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>* { margin: 0; padding: 0 } ul { list-style: none }
+			.hd { background: #eee; height: 1.925em; line-height: 1.925em }
+			.logo { display: block; float: left }
+			.nav { float: left; font-size: 0.9375em; min-height: 1.3em; position: relative }
+			.crumb { float: left; line-height: 1.5em; margin: 0 5px 0 0 }
+			.links { float: right }</style></head><body><div id="root"></div><script>
+			setTimeout(() => {
+				document.getElementById("root").innerHTML = '<header class="hd" id="h"><a class="logo" href="/">CL</a>' +
+					'<nav class="nav" id="nav"><ul><li class="crumb"><p><a href="/a">boulder</a> <span>&gt;</span></p></li>' +
+					'<li class="crumb"><p><a href="/b">for sale by owner</a> <span>&gt;</span></p></li>' +
+					'<li class="crumb" id="last"><p><a href="/c">bicycles</a></p></li></ul></nav>' +
+					'<div class="links"><a href="/p">post</a></div></header><p>reply</p>';
+			}, 10);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg); time.Sleep(200 * time.Millisecond); settle(pg) }, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var nav, last, h image.Rectangle
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil {
+				switch wb.Property("id") {
+				case "nav":
+					nav = wb.Geom.TotalBBox
+				case "last":
+					last = wb.Geom.TotalBBox
+				case "h":
+					h = wb.Geom.TotalBBox
+				}
+			}
+			return tree.Continue
+		})
+		assert.Greater(t, nav.Dx(), 100, "the nav is as wide as its crumbs")
+		assert.GreaterOrEqual(t, nav.Max.X, last.Max.X-1)
+		assert.Less(t, h.Dy(), 45, "the header is one line")
+	})
+}
+
+// TestScriptsMediaOfLaterStyle tests a style sheet that a script adds after
+// the page is shown (as of the postings of craigslist.org), whose media
+// query matches the width of the viewport but not the width that the page
+// was first read for (before it had a size): the page is read again for the
+// width of the viewport, so that its rule applies.
+func TestScriptsMediaOfLaterStyle(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="box" style="height: 20px">box</div><script>
+			setTimeout(() => {
+				const s = document.createElement("style");
+				s.textContent = "#box { width: 100px } @media (min-width: 795px) { #box { width: 300px } }";
+				document.head.appendChild(s);
+			}, 20);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg); time.Sleep(300 * time.Millisecond); settle(pg) }, func() {
+		assert.Eventually(t, func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			w := float32(0)
+			pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if cwb.Property("id") == "box" {
+					w = cwb.Geom.Size.Actual.Content.X / cwb.Styles.UnitContext.Dots(units.UnitDp)
+				}
+				return tree.Continue
+			})
+			return w > 290
+		}, 3*time.Second, 50*time.Millisecond, "the rule for the width of the viewport applies")
 	})
 }

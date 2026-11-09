@@ -233,6 +233,13 @@ func (ps *pageScripts) render() func() {
 		}
 		if pg.media != nil {
 			pg.media.ctx = ctx
+			// the width is checked again for the media queries of the new
+			// context (see Page.checkMedia), which may have more than the
+			// one that was checked (as those of a style sheet that loads
+			// after the page is shown, as of the postings of craigslist.org,
+			// which were laid out for the width of the screen until the
+			// window was resized)
+			pg.checkedWidth = ctx.MediaWidth
 		}
 		// the element that has the focus keeps it in the new widgets, and
 		// the elements that scroll keep their scroll positions (as the
