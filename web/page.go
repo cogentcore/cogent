@@ -98,7 +98,7 @@ type Page struct {
 	// checkedHeight is the last height of the viewport that was checked,
 	// for pages that use it (see [htmlcore.Context.ViewportHeightUsed]).
 	checkedHeight float32
-	mediaTimer   *time.Timer
+	mediaTimer    *time.Timer
 
 	// scripts is the state of the scripts of the page that is shown, if
 	// it is run with scripts.
