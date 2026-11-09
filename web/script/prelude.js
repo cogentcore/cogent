@@ -2214,19 +2214,43 @@
 		disconnect() { this._targets = []; }
 		takeRecords() { return []; }
 	}
+	// ResizeObserver reports the size of each target when it is observed,
+	// and then when it changes, which a timer shared by all of them checks
+	// for while any are observed (as the header of edition.cnn.com, which
+	// sizes itself by its ad slot as that is laid out).
+	const resizeObservers = new Set();
+	let resizeTimer = 0;
+	const checkResizes = () => {
+		resizeTimer = 0;
+		for (const ro of resizeObservers) ro._check(false);
+		if (resizeObservers.size > 0) resizeTimer = setTimer(checkResizes, 250, [], false);
+	};
 	class ResizeObserver {
-		constructor(cb) { this._cb = cb; this._targets = []; }
+		constructor(cb) { this._cb = cb; this._targets = []; this._sizes = new Map(); }
 		observe(t) {
-			this._targets.push(t);
-			setTimer(() => {
-				if (this._targets.indexOf(t) < 0) return;
-				const r = t.getBoundingClientRect();
-				const size = [{ inlineSize: r.width, blockSize: r.height }];
-				this._cb([{ target: t, contentRect: r, borderBoxSize: size, contentBoxSize: size, devicePixelContentBoxSize: size }], this);
-			}, 0, [], false);
+			if (this._targets.indexOf(t) < 0) this._targets.push(t);
+			this._sizes.delete(t);
+			resizeObservers.add(this);
+			setTimer(() => this._check(true), 0, [], false);
+			if (!resizeTimer) resizeTimer = setTimer(checkResizes, 250, [], false);
 		}
-		unobserve(t) { this._targets = this._targets.filter(x => x !== t); }
-		disconnect() { this._targets = []; }
+		// _check reports the targets whose size changed since they were
+		// last reported (all of those not yet reported, if first).
+		_check(first) {
+			const entries = [];
+			for (const t of this._targets) {
+				const r = t.getBoundingClientRect();
+				const last = this._sizes.get(t);
+				if (last && last[0] === r.width && last[1] === r.height) continue;
+				if (!last && !first) continue;
+				this._sizes.set(t, [r.width, r.height]);
+				const size = [{ inlineSize: r.width, blockSize: r.height }];
+				entries.push({ target: t, contentRect: r, borderBoxSize: size, contentBoxSize: size, devicePixelContentBoxSize: size });
+			}
+			if (entries.length > 0) this._cb(entries, this);
+		}
+		unobserve(t) { this._targets = this._targets.filter(x => x !== t); this._sizes.delete(t); if (this._targets.length === 0) resizeObservers.delete(this); }
+		disconnect() { this._targets = []; this._sizes.clear(); resizeObservers.delete(this); }
 	}
 	class PerformanceObserver { observe() {} disconnect() {} static get supportedEntryTypes() { return []; } }
 

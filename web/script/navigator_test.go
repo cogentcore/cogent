@@ -7,12 +7,16 @@ package script
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"cogentcore.org/core/htmlcore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/net/html"
 )
 
 // TestNavigatorUserAgent tests that the user agent and languages of
@@ -101,15 +105,37 @@ func TestCanvas2D(t *testing.T) {
 // the last render (not a new render of the page) when rendering it is
 // expensive and it was just rendered (as for the scripts of craigslist.org,
 // which re-read its large pages on each of their timers), and not when
-// rendering it is cheap or the last render was long enough ago.
+// rendering it is cheap or the last render was long enough ago, or when a
+// task gets boxes again (a few times).
 func TestThrottleLayout(t *testing.T) {
-	e := &Engine{}
+	e := &Engine{pageLayouts: maxPageLayouts}
 	e.renderCost, e.lastRender = 2*time.Second, time.Now()
 	assert.True(t, e.throttleLayout(), "expensive and just rendered")
 	e.lastRender = time.Now().Add(-5 * time.Second)
 	assert.False(t, e.throttleLayout(), "rendered long enough ago")
 	e.renderCost, e.lastRender = 5*time.Millisecond, time.Now()
 	assert.False(t, e.throttleLayout(), "cheap to render")
+
+	// a task that gets boxes again (after it changed the document, as the
+	// script of the navigation of edition.cnn.com) gets them rendered, a
+	// few times
+	e = &Engine{pageLayouts: maxPageLayouts}
+	e.renderCost, e.lastRender = 2*time.Second, time.Now()
+	assert.True(t, e.throttleLayout(), "the first boxes of a task")
+	for i := range maxTaskLayouts {
+		assert.False(t, e.throttleLayout(), "again in the task %d", i)
+	}
+	assert.True(t, e.throttleLayout(), "too many times in the task")
+
+	// the first layouts of a page are not limited
+	e = &Engine{}
+	e.renderCost, e.lastRender = 2*time.Second, time.Now()
+	for i := range maxPageLayouts {
+		e.taskBoxes = 0
+		assert.False(t, e.throttleLayout(), "a first layout of the page %d", i)
+	}
+	e.taskBoxes = 0
+	assert.True(t, e.throttleLayout(), "after the first layouts")
 }
 
 // TestHasListenerInterrupted tests HasListener while the engine is
@@ -132,4 +158,30 @@ func TestDialogModal(t *testing.T) {
 		const a = [d.open, d.hasAttribute("data-htmlcore-modal")]; d.close();
 		a.concat([d.open, d.hasAttribute("data-htmlcore-modal"), ev]).join()`))
 	assert.Empty(t, *logs)
+}
+
+// TestResizeObserverChanges tests that a ResizeObserver reports the size
+// of its target when it is observed and again when it changes (as the
+// header of edition.cnn.com, which sizes itself by its ad slot as that is
+// laid out), and not when it does not.
+func TestResizeObserverChanges(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><div id="d"></div></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	var h atomic.Int64
+	h.Store(10)
+	e, err := New(doc, Options{PageURL: "https://example.com/",
+		Layout: func(n *html.Node) (x, y, w, hh float32, ok bool) { return 0, 0, 100, float32(h.Load()), true }})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	_, err = e.RunString(`window.sizes = []; new ResizeObserver(es => { for (const x of es) sizes.push(x.contentRect.height) }).observe(document.getElementById("d"))`)
+	require.NoError(t, err)
+	time.Sleep(600 * time.Millisecond)
+	h.Store(40)
+	time.Sleep(600 * time.Millisecond)
+	v, err := e.RunString(`sizes.join()`)
+	require.NoError(t, err)
+	assert.Equal(t, "10,40", v)
 }

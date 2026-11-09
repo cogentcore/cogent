@@ -190,8 +190,17 @@ type Engine struct {
 	// left since taskStart. They are used by the goroutine of the engine.
 	taskTimer *time.Timer
 	taskLeft  time.Duration
-	taskStart time.Time
-	timeouts  int // the number of tasks interrupted for running too long
+
+	// taskBoxes is the number of times that the task got boxes while
+	// they were throttled, and taskLayouts the renders that it got then
+	// (see [Engine.throttleLayout]).
+	taskBoxes, taskLayouts int
+
+	// pageLayouts is the number of renders for boxes that throttleLayout
+	// allowed while it would have throttled them.
+	pageLayouts int
+	taskStart   time.Time
+	timeouts    int // the number of tasks interrupted for running too long
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -353,6 +362,7 @@ func (e *Engine) runTask(task func(), unlock func()) {
 	}
 	e.taskLeft = e.opts.TaskTimeout
 	e.taskStart = time.Now()
+	e.taskBoxes, e.taskLayouts = 0, 0
 	var timedOut atomic.Bool
 	timer := time.AfterFunc(e.opts.TaskTimeout, func() {
 		timedOut.Store(true)
@@ -450,8 +460,30 @@ const expensiveRender = 50 * time.Millisecond
 // page still gets the events of the user. (An element with no box yet is
 // rendered for.)
 func (e *Engine) throttleLayout() bool {
-	return e.renderCost > expensiveRender && time.Since(e.lastRender) < 2*e.renderCost
+	if !(e.renderCost > expensiveRender && time.Since(e.lastRender) < 2*e.renderCost) {
+		return false
+	}
+	// The first layouts of a page, as its scripts set it up, and those of
+	// a task that gets boxes again after it changed the document, a few
+	// times in a task, are as it is (as the script of edition.cnn.com that
+	// hides the items of its navigation one at a time until the rest fit,
+	// which hid them all, or too few, with the boxes of the last render).
+	e.taskBoxes++
+	if e.pageLayouts < maxPageLayouts || (e.taskBoxes > 1 && e.taskLayouts < maxTaskLayouts) {
+		e.pageLayouts++
+		e.taskLayouts++
+		return false
+	}
+	return true
 }
+
+// maxPageLayouts is the number of renders for boxes of a page that
+// [Engine.throttleLayout] does not limit, as its scripts set it up.
+const maxPageLayouts = 32
+
+// maxTaskLayouts is the number of renders in a task that [Engine.throttleLayout]
+// allows for a task that gets boxes after it changed the document.
+const maxTaskLayouts = 8
 
 // renderSoon renders the page if the document has changed, after a task
 // (without the lock of the page, which it takes to show it): now, or after
