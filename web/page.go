@@ -110,6 +110,10 @@ type Page struct {
 	// is shown, by their elements (see frames.go).
 	frames map[*html.Node]*Page
 
+	// videos are the videos of the video elements of the page that is
+	// shown, by their elements (see video.go).
+	videos map[*html.Node]*pageVideo
+
 	// frameOpens are the pages to open in the frames of iframes that do
 	// not have pages yet, by their elements, as for a form submitted to
 	// an iframe as soon as it is inserted (see pageScripts.submitFrame).
