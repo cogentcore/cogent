@@ -1198,3 +1198,21 @@ func TestSaveDOM(t *testing.T) {
 	assert.Contains(t, string(data), "made by script")
 	assert.True(t, strings.HasPrefix(string(data), "<!DOCTYPE html>"))
 }
+
+// TestPreLayoutContent tests that new content of a page is laid out before
+// it is shown, without the lock of the page (see Page.preLayoutContent),
+// as it is once the page has been laid out, and that it is in no scene.
+func TestPreLayoutContent(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>page</p></body></html>`})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.NotNil(t, pg.preLayout.Load(), "the page has a pre-layout once laid out")
+		content := newPageContent()
+		tx := core.NewText(content).SetText("new content of the page, which wraps in its width")
+		pg.preLayoutContent(content) // (without the lock)
+		assert.Nil(t, content.Parent, "it is in no scene")
+		assert.Greater(t, tx.Geom.Size.Actual.Total.X, float32(0), "it is laid out")
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.InDelta(t, pg.Geom.Size.Alloc.Content.X, content.Geom.Size.Actual.Total.X, 1, "as wide as the page")
+	})
+}

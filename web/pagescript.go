@@ -248,6 +248,7 @@ func (ps *pageScripts) render() func() {
 	if d := time.Since(start); Settings.VerboseConsole && d >= 50*time.Millisecond {
 		ps.log(slog.LevelDebug, fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond)))
 	}
+	ps.pg.preLayoutContent(content)
 	ps.renders++
 	ps.renderTime += time.Since(start)
 	ctx := ps.ctx

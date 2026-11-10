@@ -123,6 +123,11 @@ type Page struct {
 	// the page in its last layout, in CSS px (as float32 bits), for its
 	// scripts, which run without its lock.
 	viewportW, viewportH atomic.Uint32
+
+	// preLayout is the function of [core.Scene.PreLayout] for the content
+	// of the page, as of its last layout, with which new content is laid
+	// out before it is shown (see [Page.preLayoutContent]).
+	preLayout atomic.Pointer[func(core.Widget)]
 	onShowConsole        func()
 }
 
@@ -462,6 +467,9 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			if err == nil {
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
+			if err == nil && !canceled() {
+				pg.preLayoutContent(content)
+			}
 		}
 		if canceled() {
 			return
@@ -642,7 +650,23 @@ func (pg *Page) SizeFinal() {
 	// widgets without the lock of the page (see pageScripts.viewportSize)
 	pg.viewportW.Store(math.Float32bits(pg.viewportWidth()))
 	pg.viewportH.Store(math.Float32bits(pg.viewportHeight()))
+	if pg.Scene != nil {
+		if pl := pg.Scene.PreLayout(pg); pl != nil {
+			pg.preLayout.Store(&pl)
+		}
+	}
 	pg.checkMedia()
+}
+
+// preLayoutContent lays out the given new content of the page, which is
+// not in it yet, as it will be in it (see [core.Scene.PreLayout]), without
+// the lock of the page, so that laying it out again once it is shown, with
+// the lock held, is quick (as the texts in it are shaped and wrapped from
+// the caches of the text shaper): the page stays responsive meanwhile.
+func (pg *Page) preLayoutContent(content *core.Frame) {
+	if pl := pg.preLayout.Load(); pl != nil {
+		(*pl)(content)
+	}
 }
 
 // checkMedia checks whether the page needs to be read again for the
