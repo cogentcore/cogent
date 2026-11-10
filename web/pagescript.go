@@ -349,6 +349,10 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 	}
 }
 
+// longTask is how long a task of the scripts of a page holds the page
+// (which is not responsive meanwhile) for it to be in a verbose console.
+const longTask = 100 * time.Millisecond
+
 // reread reads the given elements of the page again for the changes of
 // the document (see [script.Options.Reread]), returning the function that
 // does it with the lock held, which returns false if it can not (for the
@@ -1305,7 +1309,21 @@ func (pg *Page) showScripts(ps *pageScripts) {
 		return
 	}
 	ps.shown = true
-	ps.engine.SetLock(pg.AsyncLockIfShown, pg.AsyncUnlock)
+	// (the tasks that hold the page for long, which it is not responsive
+	// for, are in a verbose console)
+	var locked time.Time
+	ps.engine.SetLock(func() bool {
+		ok := pg.AsyncLockIfShown()
+		if ok {
+			locked = time.Now()
+		}
+		return ok
+	}, func() {
+		if d := time.Since(locked); Settings.VerboseConsole && d >= longTask {
+			ps.log(slog.LevelDebug, fmt.Sprintf("a task of the scripts held the page for %v", d.Round(time.Millisecond)))
+		}
+		pg.AsyncUnlock()
+	})
 	if ps.pending {
 		ps.pending = false
 		ps.engine.Changed()

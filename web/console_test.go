@@ -94,6 +94,7 @@ func TestConsoleVerbose(t *testing.T) {
 				const b = typeof notDefinedAnywhere;
 				const c = document.body.notAProperty;
 				window.postMessage({ hello: "there" }, "*");
+				setTimeout(() => { const t = Date.now(); while (Date.now() - t < 150) {} }, 10);
 				</script></body></html>`,
 			"/data.json": `{"a": 1}`,
 		})
@@ -115,6 +116,9 @@ func TestConsoleVerbose(t *testing.T) {
 			assert.Contains(t, all, "missing: window.notDefinedAnywhere")
 			assert.Contains(t, all, "missing: <body>.notAProperty")
 			assert.Contains(t, all, `postMessage to https://example.com: {"hello":"there"}`)
+			assert.True(t, eventually(func() bool {
+				return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "a task of the scripts held the page for")
+			}), "a long task")
 		})
 	}
 	Settings.VerboseConsole = false
