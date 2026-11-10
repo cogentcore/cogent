@@ -200,7 +200,18 @@ func (e *Engine) defineNet() {
 	})
 	set("submit", func(call goja.FunctionCall) goja.Value {
 		u, err := resolveURL(str(call, 0), e.baseURL())
-		if err == nil && e.opts.Submit != nil {
+		if err != nil {
+			return goja.Undefined()
+		}
+		// in the frame of an iframe that the form targets, if any
+		if id := call.Argument(3); !goja.IsUndefined(id) && !goja.IsNull(id) && e.opts.SubmitFrame != nil {
+			if n := e.nodes.node(int(id.ToInteger())); n != nil {
+				post := call.Argument(4).ToBoolean()
+				go e.opts.SubmitFrame(n, u, str(call, 1), []byte(str(call, 2)), post) // after the task
+				return goja.Undefined()
+			}
+		}
+		if e.opts.Submit != nil {
 			go e.opts.Submit(u, str(call, 1), []byte(str(call, 2))) // after the task
 		}
 		return goja.Undefined()

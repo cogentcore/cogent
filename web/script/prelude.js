@@ -1742,6 +1742,25 @@
 		if (submitter && submitter.name) fd.append(submitter.name, submitter.value);
 		const q = new URLSearchParams();
 		for (const [k, v] of fd) q.append(k, typeof v === "string" ? v : v.name || "");
+		// the iframe that the form targets by its name, if any (as Google
+		// opens its account menu in a frame), in which the page is opened
+		const target = (submitter && submitter.getAttribute && submitter.getAttribute("formtarget")) || form.getAttribute("target") || "";
+		let frame = null;
+		if (target && !/^_(self|top|parent|blank)$/i.test(target)) {
+			for (const f of document.getElementsByTagName("iframe")) {
+				if (f.getAttribute("name") === target) { frame = f; break; }
+			}
+		}
+		if (frame) {
+			if (method === "get") {
+				const u = new URL(action);
+				u.search = "?" + q.toString();
+				D.submit(u.href, "", "", frame[ID], false);
+			} else {
+				D.submit(action, "application/x-www-form-urlencoded", q.toString(), frame[ID], true);
+			}
+			return;
+		}
 		if (method === "get") {
 			const u = new URL(action);
 			u.search = "?" + q.toString();

@@ -132,6 +132,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, ope
 		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
 		Navigate:      ps.navigate,
 		Submit:        ps.submit,
+		SubmitFrame:   ps.submitFrame,
 		PushState:     ps.pushState,
 		Storage:       localStorage,
 		Cookies:       cookies,
@@ -1057,6 +1058,28 @@ func (ps *pageScripts) submit(url, contentType string, body []byte) {
 	}
 	pg.openedBy = "a form of " + pg.currentURL()
 	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+}
+
+// submitFrame opens the page of the given URL in the frame of the given
+// iframe of the page, as for a form whose target is its name, with a POST
+// request with the given body (of the given content type) if post, or
+// else a GET (after the task of the scripts).
+func (ps *pageScripts) submitFrame(iframe *html.Node, url, contentType string, body []byte, post bool) {
+	pg := ps.pg
+	if !pg.AsyncLockIfShown() {
+		return
+	}
+	defer pg.AsyncUnlock()
+	fp := pg.frames[iframe]
+	if pg.scripts != ps || fp == nil {
+		return
+	}
+	fp.openedBy = "a form of " + pg.currentURL()
+	if !post {
+		fp.OpenURL(url, nil)
+		return
+	}
+	fp.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
 }
 
 // pushState changes the URL of the page without opening it, as for

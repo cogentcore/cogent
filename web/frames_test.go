@@ -285,3 +285,42 @@ func TestFrameScrollingNo(t *testing.T) {
 		}
 	})
 }
+
+// TestFrameFormTarget tests that a form whose target is the name of an
+// iframe opens its page in the frame (with its POST request), not in the
+// page itself, as Google opens its account menu in a frame, which opened
+// in place of the page.
+func TestFrameFormTarget(t *testing.T) {
+	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/menu":
+			r.ParseForm()
+			io.WriteString(w, `<html><body><p>menu of `+r.Method+` `+r.PostForm.Get("dpi")+`</p></body></html>`)
+		case "/blank":
+			io.WriteString(w, `<html><body></body></html>`)
+		default:
+			io.WriteString(w, `<html><body><p>the page</p>
+				<iframe name="account" src="/blank" width="300" height="100"></iframe>
+				<form id="f" method="post" action="/menu" target="account"><input type="hidden" name="dpi" value="42"></form>
+				<script>document.querySelector("iframe").addEventListener("load", function once() {
+					this.removeEventListener("load", once);
+					document.getElementById("f").submit();
+				});</script></body></html>`)
+		}
+	}))
+	defer site.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(site.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(pageTexts(b, pg), "menu of POST 42")
+		}), pageTexts(b, pg))
+		assert.Contains(t, pageTexts(b, pg), "the page", "the page itself stays")
+		b.AsyncLock()
+		assert.Equal(t, site.URL+"/", pg.currentURL())
+		b.AsyncUnlock()
+	})
+}

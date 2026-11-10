@@ -128,6 +128,13 @@ type Options struct {
 	// submission of a form with the POST method.
 	Submit func(url, contentType string, body []byte)
 
+	// SubmitFrame, if set, opens the page of the given URL in the frame of
+	// the given iframe element of the page, as for the submission of a
+	// form whose target is the name of the iframe: with a POST request
+	// with the given body, of the given content type, or a GET if post is
+	// false (as Google opens its account menu in a frame).
+	SubmitFrame func(iframe *html.Node, url, contentType string, body []byte, post bool)
+
 	// PushState, if set, is called when a script changes the URL of the
 	// page without opening it (history.pushState and replaceState).
 	PushState func(url string, replace bool)
