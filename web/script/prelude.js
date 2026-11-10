@@ -3227,6 +3227,14 @@
 	// windowProxy returns the window of the given number (see
 	// Engine.windowID): null for none, this window for 0, and otherwise a
 	// proxy of another window, which can post messages to it.
+	// Window is the class of windows: the global object and the proxies of
+	// the windows of other frames are its instances (GitHub checks for
+	// instanceof Window, which was not defined).
+	class Window extends EventTarget {
+		constructor() { super(); throw new TypeError("Illegal constructor"); }
+		static [Symbol.hasInstance](o) { return o === g || windowProxies.has(o); }
+	}
+	const windowProxies = new WeakSet();
 	function windowProxy(id) {
 		if (id < 0) return null;
 		if (id === 0) return g;
@@ -3251,6 +3259,7 @@
 				return w || undefined;
 			},
 		});
+		windowProxies.add(p);
 		proxies.set(id, p);
 		return p;
 	}
@@ -3284,7 +3293,7 @@
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
 		devicePixelRatio: 1, status: "", isSecureContext: true,
-		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range,
+		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
 		HTMLOptionElement, HTMLButtonElement, HTMLFormElement, HTMLTemplateElement, HTMLCanvasElement, HTMLMediaElement,

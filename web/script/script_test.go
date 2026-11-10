@@ -1295,3 +1295,10 @@ func TestInsertedScriptSync(t *testing.T) {
 		[window.bgDefined, window.cur, String(window.mod), window.outer].join("|")`))
 	assert.Empty(t, *logs)
 }
+
+// TestWindowClass tests the Window class (GitHub checks if a scroll
+// container is a window with instanceof Window, which was not defined).
+func TestWindowClass(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true|false|false|true", run(t, e, `[window instanceof Window, document.body instanceof Window, ({}) instanceof Window, typeof Window === "function"].join("|")`))
+}
