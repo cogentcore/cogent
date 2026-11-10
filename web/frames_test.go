@@ -300,12 +300,22 @@ func TestFrameFormTarget(t *testing.T) {
 			io.WriteString(w, `<html><body></body></html>`)
 		default:
 			io.WriteString(w, `<html><body><p>the page</p>
-				<iframe name="account" src="/blank" width="300" height="100"></iframe>
-				<form id="f" method="post" action="/menu" target="account"><input type="hidden" name="dpi" value="42"></form>
-				<script>document.querySelector("iframe").addEventListener("load", function once() {
-					this.removeEventListener("load", once);
-					document.getElementById("f").submit();
-				});</script></body></html>`)
+				<script>
+					// the iframe is inserted, and the form submitted to it at
+					// once, before it has a page (as Google does)
+					const f = document.createElement("iframe");
+					f.name = "account"; f.style.visibility = "hidden"; f.width = 300; f.height = 100;
+					f.src = "about:blank";
+					document.body.appendChild(f);
+					const form = document.createElement("form");
+					form.method = "POST"; form.target = "account"; form.action = "/menu"; form.style.display = "none";
+					const i = document.createElement("input");
+					i.type = "hidden"; i.name = "dpi"; i.value = "42";
+					form.appendChild(i);
+					document.body.appendChild(form);
+					form.submit();
+					document.body.removeChild(form);
+				</script></body></html>`)
 		}
 	}))
 	defer site.Close()

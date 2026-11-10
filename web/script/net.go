@@ -483,12 +483,17 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	req.Header.Set("Accept", "*/*")
 	set := map[string]bool{}
 	for i := 0; i+1 < len(headers); i += 2 {
-		if k := http.CanonicalHeaderKey(headers[i]); !set[k] {
+		k := http.CanonicalHeaderKey(headers[i])
+		if forbiddenHeaders[k] {
+			continue // (which scripts can not set)
+		}
+		if !set[k] {
 			set[k] = true
 			req.Header.Del(k)
 		}
 		req.Header.Add(headers[i], headers[i+1])
 	}
+	setOriginHeaders(req, e.opts.PageURL, method)
 	// The cookies are only sent to the origin of the page, as browsers do
 	// by default (not with the requests of a page to other sites), unless
 	// the request is with credentials (as the APIs of Google, of other
@@ -498,6 +503,35 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 		client.Jar = e.opts.Cookies
 	}
 	return client.Do(req)
+}
+
+// forbiddenHeaders are the headers of requests that scripts can not set,
+// as in browsers.
+var forbiddenHeaders = map[string]bool{"Origin": true, "Referer": true, "Cookie": true, "Host": true,
+	"Content-Length": true, "Connection": true}
+
+// setOriginHeaders sets the Origin and Referer headers of the given request
+// of a script of the page of the given URL, as browsers do: the origin of
+// the page for requests to other origins and those that are not GET or
+// HEAD, and the referrer of the page (only its origin for other origins).
+// The APIs of Google check that the origin in the hash of their
+// authorization (SAPISIDHASH) is that of the request, which were 401
+// Unauthorized without it.
+func setOriginHeaders(req *http.Request, page, method string) {
+	po := origin(page)
+	if po == "null" {
+		return
+	}
+	cross := origin(req.URL.String()) != po
+	if cross || (method != "" && method != "GET" && method != "HEAD") {
+		req.Header.Set("Origin", po)
+	}
+	if cross {
+		req.Header.Set("Referer", po+"/")
+	} else {
+		ref, _, _ := strings.Cut(page, "#")
+		req.Header.Set("Referer", ref)
+	}
 }
 
 // isScript returns whether the given node is a script element of

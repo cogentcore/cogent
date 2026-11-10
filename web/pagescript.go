@@ -1070,16 +1070,30 @@ func (ps *pageScripts) submitFrame(iframe *html.Node, url, contentType string, b
 		return
 	}
 	defer pg.AsyncUnlock()
+	if pg.scripts != ps {
+		return
+	}
+	by := "a form of " + pg.currentURL()
+	open := func(fp *Page) {
+		fp.openedBy = by
+		if !post {
+			fp.OpenURL(url, nil)
+			return
+		}
+		fp.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+	}
 	fp := pg.frames[iframe]
-	if pg.scripts != ps || fp == nil {
+	if fp == nil {
+		// an iframe that is not shown yet (as Google inserts the iframe
+		// of its account menu and submits its form to it at once), which
+		// opens it when it is
+		if pg.frameOpens == nil {
+			pg.frameOpens = map[*html.Node]func(fp *Page){}
+		}
+		pg.frameOpens[iframe] = open
 		return
 	}
-	fp.openedBy = "a form of " + pg.currentURL()
-	if !post {
-		fp.OpenURL(url, nil)
-		return
-	}
-	fp.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+	open(fp)
 }
 
 // pushState changes the URL of the page without opening it, as for

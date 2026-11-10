@@ -273,3 +273,27 @@ func TestFetchCredentials(t *testing.T) {
 		return v == "fetch secret|plain none|xhr secret"
 	}, 3*time.Second, 20*time.Millisecond)
 }
+
+// TestRequestOriginHeaders tests the Origin and Referer headers of the
+// requests of scripts, as browsers send them (the APIs of Google check
+// the origin, which were 401 Unauthorized without it), and that scripts
+// can not set them.
+func TestRequestOriginHeaders(t *testing.T) {
+	var mu sync.Mutex
+	got := map[string]string{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		got[r.Method] = r.Header.Get("Origin") + "|" + r.Header.Get("Referer")
+		mu.Unlock()
+	}))
+	defer srv.Close()
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.n = 0;
+		fetch("`+srv.URL+`/a", {method: "POST", body: "x", headers: {Origin: "https://evil.example", Referer: "https://evil.example/"}}).then(() => n++);
+		fetch("`+srv.URL+`/b", {headers: {"X-A": "1"}}).then(() => n++); 0`)
+	assert.Eventually(t, func() bool { v, _ := e.RunString(`n`); return v == int64(2) }, 3*time.Second, 20*time.Millisecond)
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, "https://example.com|https://example.com/", got["POST"])
+	assert.Equal(t, "https://example.com|https://example.com/", got["GET"])
+}

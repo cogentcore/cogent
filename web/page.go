@@ -110,6 +110,11 @@ type Page struct {
 	// is shown, by their elements (see frames.go).
 	frames map[*html.Node]*Page
 
+	// frameOpens are the pages to open in the frames of iframes that do
+	// not have pages yet, by their elements, as for a form submitted to
+	// an iframe as soon as it is inserted (see pageScripts.submitFrame).
+	frameOpens map[*html.Node]func(fp *Page)
+
 	// frame is the state of the page as the page of a frame of another
 	// page, or nil for a page that is not in a frame.
 	frame *frame

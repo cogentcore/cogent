@@ -86,7 +86,12 @@ func (pg *Page) attachFrames(content *core.Frame) (opens []func()) {
 			fp = pg.newFrame(n)
 		}
 		tree.MoveToParent(fp, cw)
-		if src != fp.frame.src {
+		if open := pg.frameOpens[n]; open != nil {
+			// a page opened in it before it had a page (in place of its src)
+			delete(pg.frameOpens, n)
+			fp.frame.src = src
+			opens = append(opens, func() { open(fp) })
+		} else if src != fp.frame.src {
 			fp.frame.src = src
 			opens = append(opens, func() {
 				if src == "" {
@@ -105,6 +110,11 @@ func (pg *Page) attachFrames(content *core.Frame) (opens []func()) {
 		if !seen[n] {
 			fp.closeFrame()
 			delete(pg.frames, n)
+		}
+	}
+	for n := range pg.frameOpens {
+		if !seen[n] && n.Parent == nil { // (an iframe that is gone)
+			delete(pg.frameOpens, n)
 		}
 	}
 	return opens
