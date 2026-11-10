@@ -7,10 +7,13 @@ package web
 import (
 	"image/color"
 	"strings"
+	"sync"
 	"testing"
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,5 +82,46 @@ func TestScriptsRestyle(t *testing.T) {
 		b.AsyncLock()
 		assert.Greater(t, ps.renders, renders, "the page is read again")
 		b.AsyncUnlock()
+	})
+}
+
+// TestScriptsKeepContainerSizes tests that the elements in containers of a
+// page that is read again after its scripts change it are styled for the
+// sizes of the containers from the start (see
+// [htmlcore.Context.KeepContainerSizes]), not for the viewport, as the
+// panels of repositories of github.com, of font-size: 1cqw, which were
+// shown much larger for a moment each time that the page was read again.
+func TestScriptsKeepContainerSizes(t *testing.T) {
+	var mu sync.Mutex
+	var sizes []float32 // of the font of the text, as each widget of it is first styled
+	b, pg := newScriptPageWith(t, map[string]string{
+		"/": `<html><body><div style="container-type: inline-size; width: 200px">` +
+			`<div id="text" style="font-size: 10cqw">text</div></div><div id="other">other</div></body></html>`,
+	}, func(pg *Page) {
+		pg.Context.WidgetHandlers = append(pg.Context.WidgetHandlers, func(w core.Widget) {
+			if htmlcore.GetAttr(htmlcore.NodeOf(w), "id") != "text" {
+				return
+			}
+			first := true
+			w.AsWidget().FinalStyler(func(s *styles.Style) {
+				if first {
+					first = false
+					mu.Lock()
+					sizes = append(sizes, s.Font.Size.Value)
+					mu.Unlock()
+				}
+			})
+		})
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		_, err := ps.engine.RunString(`document.getElementById("other").textContent = "changed"`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "changed") }), "the page is read again")
+		mu.Lock()
+		defer mu.Unlock()
+		require.GreaterOrEqual(t, len(sizes), 2)
+		assert.InDelta(t, 20, sizes[len(sizes)-1], 0.5, "10%% of the width of its container from the start: %v", sizes)
 	})
 }

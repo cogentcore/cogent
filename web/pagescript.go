@@ -195,6 +195,10 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		return true
 	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
+	// the containers start with the sizes that they have now, for the
+	// elements in them, as of font-size: 1cqw, not to be shown at the
+	// size of the viewport until the new widgets are laid out
+	ctx.KeepContainerSizes(ps.ctx)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
 	ps.ctx = ctx

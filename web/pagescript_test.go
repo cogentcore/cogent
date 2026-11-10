@@ -5,7 +5,6 @@
 package web
 
 import (
-	"cogentcore.org/core/styles/units"
 	"fmt"
 	"image"
 	"io"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"cogentcore.org/core/styles/units"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -29,9 +30,18 @@ import (
 // newScriptPage returns a body with a page that serves the given pages
 // and resources by path (of https://example.com/), opening "/".
 func newScriptPage(t *testing.T, pages map[string]string) (*core.Body, *Page) {
+	return newScriptPageWith(t, pages, nil)
+}
+
+// newScriptPageWith returns a body with a page as [newScriptPage] does,
+// calling setup (if not nil) on the page before it opens.
+func newScriptPageWith(t *testing.T, pages map[string]string, setup func(pg *Page)) (*core.Body, *Page) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
+	if setup != nil {
+		setup(pg)
+	}
 	pg.Context.GetURL = func(u string) (*http.Response, error) {
 		pu, _ := url.Parse(u)
 		body, ok := pages[pu.Path]
