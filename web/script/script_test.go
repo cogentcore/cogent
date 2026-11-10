@@ -234,7 +234,7 @@ func TestModules(t *testing.T) {
 		<script type="module">
 			import { greet, chunk, where } from "./js/lib.js";
 			import data from "./data.json";
-			document.getElementById("out").textContent = greet(data.name) + ";" + where + ";";
+			document.getElementById("out").textContent += greet(data.name) + ";" + where + ";";
 			chunk().then(c => { document.getElementById("out").textContent += c + ";"; });
 			import("./later.js").then(m => { document.getElementById("out").textContent += m.default + ";"; });
 		</script>
@@ -1343,4 +1343,24 @@ func TestSelectorIsWhere(t *testing.T) {
 	assert.Equal(t, "true|false|false|false|b,a", run(t, e, `const sel = ":is(button, a, input, [tabindex]):not(:disabled):not([data-overflowing])";
 		[document.getElementById("b").matches(sel), document.getElementById("d").matches(sel), document.getElementById("a").matches(sel), document.getElementById("p").matches(sel),
 		[...document.querySelectorAll(":where(button, a):not([disabled])")].map(x => x.id).join(",")].join("|")`))
+}
+
+// TestDeferredScripts tests that the scripts with defer (and modules) of
+// a document run after the others, in order, before DOMContentLoaded, as
+// in browsers: a deferred script in the head uses a variable of an inline
+// script in the body.
+func TestDeferredScripts(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><script>window.order = ["head"];</script>
+		<script defer src="/d.js"></script><script async src="/a.js"></script></head>
+		<body><script>var config = { ok: 1 }; order.push("body");</script>
+		<script type="module">order.push("module");</script>
+		<script>document.addEventListener("DOMContentLoaded", () => order.push("loaded"));</script></body></html>`, map[string]string{
+		"/d.js": `order.push("defer " + config.ok);`,
+		"/a.js": `order.push("async");`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "head,async,body,defer 1,module,loaded", run(t, e, `order.join(",")`))
+	assert.Empty(t, *logs)
 }

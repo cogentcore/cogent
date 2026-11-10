@@ -553,6 +553,21 @@ func isScript(n *html.Node) bool {
 	return false
 }
 
+// isDeferred returns whether the given script element of the document
+// runs after it is parsed: a classic script with a src and the defer
+// attribute, or a module, unless it is async.
+func isDeferred(n *html.Node) bool {
+	if _, async := attr(n, "async"); async {
+		return false
+	}
+	if typ, _ := attr(n, "type"); strings.EqualFold(strings.TrimSpace(typ), "module") {
+		return true
+	}
+	_, src := attr(n, "src")
+	_, def := attr(n, "defer")
+	return src && def
+}
+
 // attr returns the value of the given attribute of the given node.
 func attr(n *html.Node, key string) (string, bool) {
 	for _, a := range n.Attr {
@@ -599,7 +614,18 @@ func (e *Engine) Load(done func()) {
 			e.loadStyleLink(l)
 		}
 	})
+	// the deferred scripts (with defer, and modules) run after the others,
+	// in order, before DOMContentLoaded, as in browsers (a deferred script
+	// in the head uses the variables of inline scripts in the body)
+	var deferred []*html.Node
 	for _, s := range scripts {
+		if isDeferred(s) {
+			deferred = append(deferred, s)
+			continue
+		}
+		e.Post(func() { e.runScript(s, true) })
+	}
+	for _, s := range deferred {
 		e.Post(func() { e.runScript(s, true) })
 	}
 	e.Post(func() {
