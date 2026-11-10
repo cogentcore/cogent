@@ -94,7 +94,8 @@ func TestConsoleVerbose(t *testing.T) {
 				const b = typeof notDefinedAnywhere;
 				const c = document.body.notAProperty;
 				window.postMessage({ hello: "there" }, "*");
-				setTimeout(() => { const t = Date.now(); while (Date.now() - t < 150) {} }, 10);
+				// (a task that holds the page, as it gets a box, for long)
+				setTimeout(() => { document.body.getBoundingClientRect(); const t = Date.now(); while (Date.now() - t < 150) {} }, 10);
 				</script></body></html>`,
 			"/data.json": `{"a": 1}`,
 		})
@@ -149,5 +150,39 @@ func TestConsolePanelVerbose(t *testing.T) {
 		br.ShowConsole(true)
 		b.AsyncUnlock()
 		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "DEBUG: GET https://example.com/data.txt") }), consoleTexts(b, br))
+	})
+}
+
+// TestConsoleShownBySplitter tests that the console panel shows the
+// messages of the page when it is shown by dragging the splitter of the
+// browser (by its splits), not by ShowConsole, as it never did.
+func TestConsoleShownBySplitter(t *testing.T) {
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	br := NewBrowser(b)
+	br.PageFunc = func(pg *Page) {
+		pg.Context.GetURL = func(u string) (*http.Response, error) {
+			pu, _ := url.Parse(u)
+			r := strings.NewReader(`<html><body><p>page</p><script>console.log("hello"); setTimeout(() => console.log("later"), 500);</script></body></html>`)
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
+		}
+	}
+	br.NewTab("https://example.com/")
+	b.RenderImage(func() {
+		for _, pg := range br.Pages() {
+			settle(pg)
+		}
+		b.AsyncLock()
+		br.Splits.SetSplits(0.7, 0.3) // (as by dragging the splitter)
+		br.Splits.NeedsLayout()
+		b.AsyncUnlock()
+	}, func() {
+		// (the splits give the panel its size as they render, after the layout)
+		b.AsyncLock()
+		br.Splits.NeedsLayout()
+		b.AsyncUnlock()
+	}, func() {
+		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "INFO: hello") }), consoleTexts(b, br))
+		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "INFO: later") }), "and the messages that come later: "+consoleTexts(b, br))
 	})
 }

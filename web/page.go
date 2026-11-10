@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"math"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -82,7 +83,7 @@ type Page struct {
 	load atomic.Int64
 
 	// loads is the opening of pages in progress, for tests.
-	loads sync.WaitGroup
+	loads pendingLoads
 
 	// shown is closed when the page is first shown, which the opening of
 	// a page waits for before it updates the page (with AsyncLock).
@@ -116,8 +117,13 @@ type Page struct {
 	// onConsole, if set, is called when the scripts of the page (or of its
 	// frames) log a message to the console, from any goroutine (see
 	// [ConsolePanel]), and onShowConsole shows the console.
-	onConsole     func()
-	onShowConsole func()
+	onConsole func()
+
+	// viewportW and viewportH are the width and height of the viewport of
+	// the page in its last layout, in CSS px (as float32 bits), for its
+	// scripts, which run without its lock.
+	viewportW, viewportH atomic.Uint32
+	onShowConsole        func()
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -632,6 +638,10 @@ func newPageContent() *core.Frame {
 // [mediaDelay], as browsers apply the @media rules of the new width.
 func (pg *Page) SizeFinal() {
 	pg.Frame.SizeFinal()
+	// the size of the viewport, for the scripts, which do not read the
+	// widgets without the lock of the page (see pageScripts.viewportSize)
+	pg.viewportW.Store(math.Float32bits(pg.viewportWidth()))
+	pg.viewportH.Store(math.Float32bits(pg.viewportHeight()))
 	pg.checkMedia()
 }
 
@@ -1041,4 +1051,38 @@ func (pg *Page) viewportWidth() float32 {
 		return float32(rw.SystemWindow.Size().X) / dp
 	}
 	return 0
+}
+
+// pendingLoads counts the openings of pages in progress (see Page.loads),
+// as a WaitGroup that can be added to while it is waited on (as when the
+// page is read again for its media while a test waits for it to load).
+type pendingLoads struct {
+	mu   sync.Mutex
+	n    int
+	cond *sync.Cond
+}
+
+// Add adds the given number of openings in progress.
+func (pl *pendingLoads) Add(n int) {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+	pl.n += n
+	if pl.n <= 0 && pl.cond != nil {
+		pl.cond.Broadcast()
+	}
+}
+
+// Done records that an opening is done.
+func (pl *pendingLoads) Done() { pl.Add(-1) }
+
+// Wait waits until no opening is in progress.
+func (pl *pendingLoads) Wait() {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+	if pl.cond == nil {
+		pl.cond = sync.NewCond(&pl.mu)
+	}
+	for pl.n > 0 {
+		pl.cond.Wait()
+	}
 }

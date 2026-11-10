@@ -130,6 +130,19 @@ func (cp *ConsolePanel) Init() {
 	})
 }
 
+// SizeFinal records whether the panel is shown, from its size, as it can
+// be shown by dragging the splitter of the browser, not only by
+// [Browser.ShowConsole]: one shown so never showed the messages (it was not
+// updated for them, as it was taken to be hidden), and shows them when it
+// is shown.
+func (cp *ConsolePanel) SizeFinal() {
+	cp.Frame.SizeFinal()
+	shown := cp.Geom.Size.Actual.Total.Y > 1 && !cp.StateIs(states.Invisible)
+	if cp.browser != nil && cp.browser.consoleShown.Swap(shown) != shown && shown {
+		cp.Defer(cp.refresh)
+	}
+}
+
 // consoleLevel returns the level of the given console message (as ERROR),
 // after the URL of its frame, if any.
 func consoleLevel(m string) string {

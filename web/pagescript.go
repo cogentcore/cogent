@@ -236,6 +236,9 @@ func (ps *pageScripts) render() func() {
 		return nil
 	}
 	ps.resizeIfNeeded()
+	if testReadHook != nil {
+		testReadHook(ps)
+	}
 	start := time.Now()
 	content, err := ps.read()
 	if err != nil {
@@ -354,6 +357,9 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 		return true
 	}
 }
+
+// testReadHook, if set, is called before a page is read again (for tests).
+var testReadHook func(ps *pageScripts)
 
 // longTask is how long a task of the scripts of a page holds the page
 // (which is not responsive meanwhile) for it to be in a verbose console.
@@ -1073,19 +1079,19 @@ func (ps *pageScripts) viewport() (float32, float32) {
 func (ps *pageScripts) viewportSize() (float32, float32) {
 	pg := ps.pg
 	w := ps.width
+	// (as of the last layout of the page: the widgets are not read here,
+	// without the lock of the page)
 	if pg.frame != nil {
 		// that of the frame as it is now (as for the scripts of the page
 		// of a frame that was read for its width before it was laid out,
 		// which get a resize event for it; see render)
-		if fw := pg.viewportWidth(); fw > 0 {
+		if fw := math.Float32frombits(pg.viewportW.Load()); fw > 0 {
 			w = fw
 		}
 	}
 	h := float32(768)
-	if dp := pg.pxDots(); dp > 0 {
-		if fr := core.AsFrame(pg.Parent); fr != nil && fr.Geom.Size.Alloc.Content.Y > 0 {
-			h = fr.Geom.Size.Alloc.Content.Y / dp
-		}
+	if vh := math.Float32frombits(pg.viewportH.Load()); vh > 0 {
+		h = vh
 	}
 	return w, h
 }
@@ -1411,34 +1417,71 @@ func isSubmitter(n *html.Node) bool {
 // saveDOM saves the document of the page as its scripts have made it (its
 // DOM, as document.documentElement.outerHTML) to an HTML file in the
 // Downloads directory, named for the host of the page and the time, and
-// shows where in a snackbar (not with the lock of the page held: the DOM is
-// gotten in a task of the scripts, which locks the page).
+// those of the pages of its frames (as the challenge of reCAPTCHA) to files
+// named for it and their hosts, and shows where in a snackbar (not with
+// the lock of the page held: the DOMs are gotten in tasks of the scripts,
+// which lock the page).
 func (pg *Page) saveDOM() {
-	ps := pg.scripts
 	snack := func(msg string) {
 		if pg.AsyncLockIfShown() {
 			core.MessageSnackbar(pg, msg)
 			pg.AsyncUnlock()
 		}
 	}
-	if ps == nil {
+	if pg.scripts == nil {
 		snack("Only pages with JavaScript on can be saved")
 		return
 	}
-	v, err := ps.engine.RunString(`"<!DOCTYPE html>\n" + document.documentElement.outerHTML`)
-	if err != nil {
-		snack("Error saving the page: " + err.Error())
-		return
-	}
-	host := "page"
-	if u, err := url.Parse(ps.engine.PageURL()); err == nil && u.Host != "" {
-		host = u.Host
-	}
 	home, _ := os.UserHomeDir()
-	file := filepath.Join(home, "Downloads", host+"-"+time.Now().Format("20060102-150405")+".html")
-	if err := os.WriteFile(file, []byte(fmt.Sprint(v)), 0o644); err != nil {
+	base := filepath.Join(home, "Downloads", hostOf(pg.scripts.engine.PageURL())+"-"+time.Now().Format("20060102-150405"))
+	n := 0
+	var save func(p *Page, file string) error
+	save = func(p *Page, file string) error {
+		ps := p.scripts
+		if ps == nil {
+			return nil
+		}
+		v, err := ps.engine.RunString(`"<!DOCTYPE html>\n" + document.documentElement.outerHTML`)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(file, []byte(fmt.Sprint(v)), 0o644); err != nil {
+			return err
+		}
+		n++
+		var frames []*Page
+		if p.AsyncLockIfShown() {
+			for _, fp := range p.frames {
+				frames = append(frames, fp)
+			}
+			p.AsyncUnlock()
+		}
+		for i, fp := range frames {
+			if fp.scripts == nil {
+				continue
+			}
+			ff := strings.TrimSuffix(file, ".html") + fmt.Sprintf("-frame%d-%s.html", i+1, hostOf(fp.scripts.engine.PageURL()))
+			if err := save(fp, ff); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := save(pg, base+".html"); err != nil {
 		snack("Error saving the page: " + err.Error())
 		return
 	}
-	snack("Saved the page to " + file)
+	msg := "Saved the page to " + base + ".html"
+	if n > 1 {
+		msg += fmt.Sprintf(" (and %d frames)", n-1)
+	}
+	snack(msg)
+}
+
+// hostOf returns the host of the given URL, or "page".
+func hostOf(u string) string {
+	if pu, err := url.Parse(u); err == nil && pu.Host != "" {
+		return pu.Host
+	}
+	return "page"
 }

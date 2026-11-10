@@ -602,6 +602,9 @@ func (e *Engine) defineDOM() {
 		if n == nil || e.opts.ComputedStyle == nil {
 			return vm.ToValue("")
 		}
+		if !e.lockTask() {
+			return vm.ToValue("")
+		}
 		return vm.ToValue(e.opts.ComputedStyle(n, str(call, 1)))
 	})
 	set("focus", func(call goja.FunctionCall) goja.Value {
@@ -613,7 +616,7 @@ func (e *Engine) defineDOM() {
 	})
 	set("rect", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
-		if n == nil || e.opts.Layout == nil {
+		if n == nil || e.opts.Layout == nil || !e.lockTask() {
 			return goja.Null()
 		}
 		// The page is rendered first if the element may have changed
@@ -633,7 +636,7 @@ func (e *Engine) defineDOM() {
 		return vm.NewArray(x, y, w, h)
 	})
 	set("elementAt", func(call goja.FunctionCall) goja.Value {
-		if e.opts.ElementAt == nil {
+		if e.opts.ElementAt == nil || !e.lockTask() {
 			return goja.Null()
 		}
 		if e.needsRender() && !e.throttleLayout() {
@@ -647,7 +650,7 @@ func (e *Engine) defineDOM() {
 	})
 	set("viewport", func(call goja.FunctionCall) goja.Value {
 		w, h := float32(1024), float32(768)
-		if e.opts.Viewport != nil {
+		if e.opts.Viewport != nil && e.lockTask() {
 			w, h = e.opts.Viewport()
 		}
 		return vm.NewArray(w, h)

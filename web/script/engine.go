@@ -237,10 +237,12 @@ type Engine struct {
 	selfNodes, childNodes []*html.Node
 	whole                 bool
 	// taskLock and taskUnlock are the functions that lock and unlock the
-	// page for the task that is running (see [Engine.renderIfDirty]), and
-	// lockLost is whether it could not be locked again (the page is gone).
+	// page for the task that is running (see [Engine.lockTask]),
+	// taskLocked is whether it is locked, and lockLost is whether it could
+	// not be locked (the page is gone).
 	taskLock   func() bool
 	taskUnlock func()
+	taskLocked bool
 	lockLost   bool
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
@@ -470,31 +472,51 @@ func (e *Engine) loop() {
 			e.queue = e.queue[1:]
 			lock, unlock := e.lock, e.unlock
 			e.mu.Unlock()
-			if lock != nil && !lock() {
+			// The task runs without the lock of the page, which it takes
+			// only when it needs the widgets of the page (see lockTask), so
+			// that the app is responsive while scripts run.
+			e.taskLock, e.taskUnlock, e.taskLocked = lock, unlock, false
+			e.runTask(task)
+			if e.taskLocked && !e.lockLost {
+				unlock()
+			}
+			gone := e.lockLost
+			e.taskLock, e.taskUnlock, e.taskLocked, e.lockLost = nil, nil, false, false
+			if gone {
 				e.done()
 				go e.Close() // the page is gone
 				continue
 			}
-			e.taskLock, e.taskUnlock = lock, unlock
-			e.runTask(task, unlock)
-			e.taskLock, e.taskUnlock = nil, nil
 			e.renderSoon(lock, unlock)
 			e.done()
 		}
 	}
 }
 
-// runTask runs the given task (with the lock of the page held, which
-// unlock unlocks if not nil, at the end), within the time limit of a task.
-func (e *Engine) runTask(task func(), unlock func()) {
-	if unlock != nil {
-		defer func() {
-			if !e.lockLost { // (not if it was not locked again; see renderIfDirty)
-				unlock()
-			}
-			e.lockLost = false
-		}()
+// InTask returns whether a task of the scripts is running, as for a render
+// that a script forces (in the goroutine of the engine).
+func (e *Engine) InTask() bool {
+	return e.inTask
+}
+
+// lockTask locks the page for the task that is running, until its end,
+// if it is not locked yet, for what needs the widgets of the page (as the
+// boxes of elements), returning false if the page is gone. A task runs
+// without the lock until it needs it (see loop).
+func (e *Engine) lockTask() bool {
+	if e.taskLock == nil || e.taskLocked {
+		return !e.lockLost
 	}
+	if !e.taskLock() {
+		e.lockLost = true
+		return false
+	}
+	e.taskLocked = true
+	return true
+}
+
+// runTask runs the given task, within the time limit of a task.
+func (e *Engine) runTask(task func()) {
 	e.taskLeft = e.opts.TaskTimeout
 	e.taskStart = time.Now()
 	e.taskBoxes, e.taskLayouts = 0, 0
@@ -581,7 +603,7 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		return
 	}
 	e.dirty = false
-	if lock == nil && e.taskLock != nil && e.taskUnlock != nil {
+	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && e.taskLocked {
 		// A render forced by a script (for the box of an element), in its
 		// task, with the lock held: the page is read without it (as for
 		// the renders after tasks), as no script runs meanwhile, so that it
@@ -589,9 +611,9 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		// it is locked again to show the new widgets (to the end of the
 		// task), unless the page is gone.
 		e.taskUnlock()
+		e.taskLocked = false
 		commit := e.opts.Render()
-		if !e.taskLock() {
-			e.lockLost = true
+		if !e.lockTask() {
 			return
 		}
 		if commit != nil {

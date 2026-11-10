@@ -13,8 +13,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1121,50 +1121,52 @@ func TestScriptsAdoptedStyleSheets(t *testing.T) {
 // TestScriptsForcedRenderUnlocked tests that a render that a script forces
 // (to get the box of an element after changing the page) reads the page
 // without the lock of the page, so that the app is responsive meanwhile:
-// the task does not hold the page for as long as the reading takes (on
-// theguardian.com, tasks held it for seconds, in which nothing responded).
+// the page can be locked while it is read (on theguardian.com, tasks held
+// it for seconds, in which nothing responded).
 func TestScriptsForcedRenderUnlocked(t *testing.T) {
-	Settings.VerboseConsole = true
-	defer func() { Settings.VerboseConsole = false }()
+	var reads, lockable atomic.Int32
+	var body atomic.Pointer[core.Body]
+	testReadHook = func(ps *pageScripts) {
+		b := body.Load()
+		if !ps.engine.InTask() || b == nil {
+			return
+		}
+		reads.Add(1)
+		got := make(chan bool)
+		go func() {
+			b.AsyncLock()
+			b.AsyncUnlock()
+			close(got)
+		}()
+		select {
+		case <-got:
+			lockable.Add(1)
+		case <-time.After(time.Second):
+		}
+	}
+	defer func() { testReadHook = nil }()
 	b, pg := newScriptPage(t, map[string]string{
-		"/": `<html><body><div id="big">` + strings.Repeat(`<div class="row"><span>a</span> <b>b</b> <i>c</i></div>`, 4000) + `</div><script>
+		"/": `<html><body><p>page</p><script>
 			setTimeout(() => {
 				for (let i = 0; i < 3; i++) {
 					const d = document.createElement("div");
 					d.textContent = "added " + i;
 					document.body.append(d);
+					document.documentElement.setAttribute("lang", "x" + i); // (all of it is read again)
 					d.getBoundingClientRect();
 				}
 				window.done = true;
-			}, 50);
+			}, 300);
 			</script></body></html>`,
 	})
+	body.Store(b)
 	b.RenderImage(func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			v, _ := pg.scripts.engine.RunString(`!!window.done`)
 			return v == true
 		}))
-		all := strings.Join(pg.ScriptConsole(), "\n")
-		assert.Contains(t, all, "forced by a script", "renders that the script forced: "+all)
-		// the longest that a task held the page is less than the shortest
-		// reading (the slowest part of rendering), which it does not hold
-		// the page for, also when all is slower (as with -race)
-		durations := func(prefix string) []time.Duration {
-			var ds []time.Duration
-			for _, m := range pg.ScriptConsole() {
-				if _, v, ok := strings.Cut(m, prefix); ok {
-					if d, err := time.ParseDuration(strings.TrimSpace(v)); err == nil {
-						ds = append(ds, d)
-					}
-				}
-			}
-			return ds
-		}
-		reads, holds := durations("reading the page took "), durations("a task of the scripts held the page for ")
-		require.NotEmpty(t, reads)
-		if len(holds) > 0 {
-			assert.Less(t, slices.Max(holds), slices.Min(reads), "the task holds the page only to show the new widgets: "+all)
-		}
+		assert.Equal(t, int32(3), reads.Load(), "renders that the script forced")
+		assert.Equal(t, reads.Load(), lockable.Load(), "the page could be locked while it was read")
 	})
 }
 

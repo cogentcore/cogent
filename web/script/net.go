@@ -211,7 +211,9 @@ func (e *Engine) defineNet() {
 		}
 		e.opts.PageURL = u
 		if e.opts.PushState != nil {
-			e.opts.PushState(u, call.Argument(1).ToBoolean())
+			if e.lockTask() {
+				e.opts.PushState(u, call.Argument(1).ToBoolean())
+			}
 		}
 		return vm.ToValue(u)
 	})
