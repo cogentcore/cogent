@@ -7,7 +7,9 @@ package script
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/andybalholm/cascadia"
@@ -54,9 +56,25 @@ func (ni *nodeIDs) node(id int) *html.Node {
 // fragments (as made by createDocumentFragment).
 const fragmentData = "#document-fragment"
 
-// changed records that the document has changed, so that the page is
-// rendered again at the end of the task.
+// changed records that the children of the given node have changed (as
+// nodes added to it, or its text), so that the page is rendered again at
+// the end of the task (see [Options.Reread]); all of it if n is nil.
 func (e *Engine) changed(n *html.Node) {
+	e.recordChange(n, false)
+}
+
+// selfChanged records that the given element has changed itself (as its
+// attributes that do not only select it in style rules, or the listeners
+// of its events), so that the page is rendered again at the end of the
+// task (see [Options.Reread]).
+func (e *Engine) selfChanged(n *html.Node) {
+	e.recordChange(n, true)
+}
+
+// recordChange records a change of the given node, of itself if self is
+// set, or of its children (see [Engine.changed]).
+func (e *Engine) recordChange(n *html.Node, self bool) {
+	e.domChanges++
 	// a change in a shadow root (which is not rendered itself) is one of
 	// its host, as it can change which children of the host are rendered
 	// (as the slots of the menus of MDN, which open them)
@@ -65,16 +83,88 @@ func (e *Engine) changed(n *html.Node) {
 		if host == nil {
 			break
 		}
-		n = host
+		n, self = host, false
 	}
 	if n == nil || connected(n, e.doc) {
 		e.dirty = true
+		list := &e.childNodes
+		if self {
+			list = &e.selfNodes
+		}
+		if n == nil || len(*list) >= maxChangedNodes {
+			e.whole = true
+			if n == nil {
+				e.wholeWhy = "a change of the document"
+			} else {
+				e.wholeWhy = fmt.Sprintf("more than %d changed elements", maxChangedNodes)
+			}
+		} else if !slices.Contains(*list, n) {
+			*list = append(*list, n)
+		}
 		if n != nil && len(e.changedNodes) < maxChangedNodes {
 			e.changedNodes = append(e.changedNodes, n)
 		} else {
 			e.changedNodes = append(e.changedNodes, e.doc) // all of it
 		}
 	}
+}
+
+// styleChanged records that an attribute or a state of the given element
+// that selects it in style rules has changed (see [restyledAttr]), so that
+// it is restyled at the end of the task, or that it has changed as
+// [Engine.changed] does, if it can not be.
+func (e *Engine) styleChanged(n *html.Node) {
+	if n == nil || n.Type != html.ElementNode || e.opts.Restyle == nil || rootOf(n) != e.doc || len(e.styled) >= maxChangedNodes {
+		e.changed(n) // (as one in a shadow root, which is of its host)
+		return
+	}
+	if !connected(n, e.doc) {
+		return
+	}
+	if !slices.Contains(e.styled, n) {
+		e.styled = append(e.styled, n)
+	}
+	if len(e.changedNodes) < maxChangedNodes {
+		e.changedNodes = append(e.changedNodes, n)
+	}
+}
+
+// restyledAttr returns whether a change of the given attribute only
+// changes the styles of the elements (see [Options.Restyle]): the style
+// and class attributes, and those of data and ARIA, which select them in
+// style rules, and are not otherwise read.
+func restyledAttr(name string) bool {
+	return name == "style" || name == "class" || strings.HasPrefix(name, "data-") || strings.HasPrefix(name, "aria-")
+}
+
+// attrChanged records that the given attribute of the given element has
+// changed.
+func (e *Engine) attrChanged(n *html.Node, name string) {
+	if restyledAttr(name) {
+		e.styleChanged(n)
+	} else {
+		e.selfChanged(n)
+	}
+}
+
+// rendered returns whether the given node may be rendered, so that adding
+// or removing it changes the page: not a comment, nor a script or another
+// element that is never shown (as those that scripts add to the head to
+// load more scripts).
+func rendered(n *html.Node) bool {
+	switch n.Type {
+	case html.CommentNode, html.DoctypeNode:
+		return false
+	case html.ElementNode:
+		switch n.Data {
+		case "script", "meta", "template", "noscript":
+			return false
+		case "link":
+			rel, _ := attr(n, "rel")
+			return strings.Contains(strings.ToLower(rel), "stylesheet")
+		}
+	}
+	return true
 }
 
 // maxChangedNodes is the number of changed nodes that are recorded (see
@@ -142,6 +232,11 @@ func (e *Engine) defineDOM() {
 	}
 	compile := func(sel string) cascadia.Matcher {
 		g, err := cascadia.ParseGroup(sel)
+		if err != nil && (strings.Contains(sel, ":is(") || strings.Contains(sel, ":where(")) {
+			if rg, rerr := cascadia.ParseGroup(rewriteIsWhere(sel)); rerr == nil {
+				g, err = rg, nil
+			}
+		}
 		if err != nil {
 			// the brackets and parentheses that are open at the end are
 			// closed, as in CSS (as for '[class^="x"')
@@ -250,13 +345,13 @@ func (e *Engine) defineDOM() {
 			if a.Key == name {
 				if a.Val != val {
 					n.Attr[i].Val = val
-					e.changed(n)
+					e.attrChanged(n, name)
 				}
 				return goja.Undefined()
 			}
 		}
 		n.Attr = append(n.Attr, html.Attribute{Key: name, Val: val})
-		e.changed(n)
+		e.attrChanged(n, name)
 		return goja.Undefined()
 	})
 	set("removeAttr", func(call goja.FunctionCall) goja.Value {
@@ -268,7 +363,7 @@ func (e *Engine) defineDOM() {
 		for i, a := range n.Attr {
 			if a.Key == name {
 				n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
-				e.changed(n)
+				e.attrChanged(n, name)
 				break
 			}
 		}
@@ -300,6 +395,12 @@ func (e *Engine) defineDOM() {
 			}
 		}
 		return goja.Undefined()
+	})
+	// domChanges is the number of changes of the document so far, with
+	// which the prelude keeps what it derives from it until it changes
+	// (as the rules of style sheets)
+	set("domChanges", func(call goja.FunctionCall) goja.Value {
+		return vm.ToValue(e.domChanges)
 	})
 	set("text", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(textContent(node(arg(call, 0))))
@@ -369,26 +470,34 @@ func (e *Engine) defineDOM() {
 		} else {
 			kids = []*html.Node{child}
 		}
+		shown := false
 		for _, k := range kids {
 			if k == before {
 				continue
 			}
+			shown = shown || rendered(k)
 			if k.Parent != nil {
-				e.changed(k.Parent)
+				if rendered(k) {
+					e.changed(k.Parent)
+				}
 				k.Parent.RemoveChild(k)
 			}
 			parent.InsertBefore(k, before)
 		}
-		e.changed(parent)
+		if shown {
+			e.changed(parent)
+		}
 		for _, k := range kids {
-			e.runInserted(k)
+			e.runInserted(k, true)
 		}
 		return goja.Undefined()
 	})
 	set("remove", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n != nil && n.Parent != nil {
-			e.changed(n.Parent)
+			if rendered(n) {
+				e.changed(n.Parent)
+			}
 			n.Parent.RemoveChild(n)
 		}
 		return goja.Undefined()
@@ -510,6 +619,9 @@ func (e *Engine) defineDOM() {
 		if n == nil || e.opts.ComputedStyle == nil {
 			return vm.ToValue("")
 		}
+		if !e.lockTask() {
+			return vm.ToValue("")
+		}
 		return vm.ToValue(e.opts.ComputedStyle(n, str(call, 1)))
 	})
 	set("focus", func(call goja.FunctionCall) goja.Value {
@@ -521,17 +633,17 @@ func (e *Engine) defineDOM() {
 	})
 	set("rect", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
-		if n == nil || e.opts.Layout == nil {
+		if n == nil || e.opts.Layout == nil || !e.lockTask() {
 			return goja.Null()
 		}
 		// The page is rendered first if the element may have changed
 		// (and otherwise its box as last rendered is current), as
 		// rendering a page is costly and scripts get boxes often.
-		if e.dirty && e.changedAround(n) && !e.throttleLayout() {
+		if e.needsRender() && e.changedAround(n) && !e.throttleLayout() {
 			e.renderIfDirty(nil, nil) // the lock is held by the task
 		}
 		x, y, w, h, ok := e.opts.Layout(n)
-		if !ok && e.dirty {
+		if !ok && e.needsRender() {
 			e.renderIfDirty(nil, nil) // as for an element that has no box yet
 			x, y, w, h, ok = e.opts.Layout(n)
 		}
@@ -541,10 +653,10 @@ func (e *Engine) defineDOM() {
 		return vm.NewArray(x, y, w, h)
 	})
 	set("elementAt", func(call goja.FunctionCall) goja.Value {
-		if e.opts.ElementAt == nil {
+		if e.opts.ElementAt == nil || !e.lockTask() {
 			return goja.Null()
 		}
-		if e.dirty && !e.throttleLayout() {
+		if e.needsRender() && !e.throttleLayout() {
 			e.renderIfDirty(nil, nil) // as for rect (the lock is held by the task)
 		}
 		n := e.opts.ElementAt(float32(call.Argument(0).ToFloat()), float32(call.Argument(1).ToFloat()))
@@ -555,7 +667,7 @@ func (e *Engine) defineDOM() {
 	})
 	set("viewport", func(call goja.FunctionCall) goja.Value {
 		w, h := float32(1024), float32(768)
-		if e.opts.Viewport != nil {
+		if e.opts.Viewport != nil && e.lockTask() {
 			w, h = e.opts.Viewport()
 		}
 		return vm.NewArray(w, h)
@@ -565,6 +677,9 @@ func (e *Engine) defineDOM() {
 			return vm.ToValue(false)
 		}
 		return vm.ToValue(e.opts.MediaMatches(str(call, 0)))
+	})
+	set("tracing", func(call goja.FunctionCall) goja.Value {
+		return vm.ToValue(e.tracing())
 	})
 	set("log", func(call goja.FunctionCall) goja.Value {
 		level := slog.LevelInfo
@@ -663,7 +778,7 @@ func (e *Engine) defineDOM() {
 	// widgets are set up (as clicks) was added to the given node, so that
 	// the page is rendered again.
 	set("listenerAdded", func(call goja.FunctionCall) goja.Value {
-		e.changed(node(arg(call, 0)))
+		e.selfChanged(node(arg(call, 0)))
 		return goja.Undefined()
 	})
 	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })
@@ -781,6 +896,42 @@ func scoped(n *html.Node) func() {
 			}
 		}
 	}
+}
+
+// rewriteIsWhere rewrites the :is(X) and :where(X) of the given selector,
+// which the selector library does not support, as :not(:not(X)), as the
+// cascade of htmlcore does (as the focusable elements of the menus of
+// GitHub, :is(button, a, input, [tabindex]):not(:disabled), which were not
+// a valid selector, and failed the pull request list).
+func rewriteIsWhere(sel string) string {
+	var sb strings.Builder
+	var closes []bool // for each open parenthesis, whether its close is doubled
+	for i := 0; i < len(sel); i++ {
+		switch {
+		case strings.HasPrefix(sel[i:], ":is("):
+			sb.WriteString(":not(:not(")
+			closes = append(closes, true)
+			i += len(":is(") - 1
+		case strings.HasPrefix(sel[i:], ":where("):
+			sb.WriteString(":not(:not(")
+			closes = append(closes, true)
+			i += len(":where(") - 1
+		case sel[i] == '(':
+			sb.WriteByte('(')
+			closes = append(closes, false)
+		case sel[i] == ')':
+			sb.WriteByte(')')
+			if n := len(closes); n > 0 {
+				if closes[n-1] {
+					sb.WriteByte(')')
+				}
+				closes = closes[:n-1]
+			}
+		default:
+			sb.WriteByte(sel[i])
+		}
+	}
+	return sb.String()
 }
 
 // closeSelector returns the given selector with the brackets, parentheses
@@ -969,6 +1120,15 @@ func hasSlot(n *html.Node, name string) bool {
 // does in browsers, in a task of the engine (which renders the page again).
 func (e *Engine) ToggleDetails(n *html.Node) {
 	e.Post(func() { e.callPrelude("toggleDetails", e.nodes.id(n)) })
+}
+
+// Press dispatches the events of a mouse button that is pressed (down) or
+// released on the given element, with the given properties (as clientX):
+// pointerdown and mousedown, or pointerup and mouseup, as in browsers
+// (without the mouse events after a pointerdown whose default is
+// prevented).
+func (e *Engine) Press(n *html.Node, down bool, props map[string]any) {
+	e.Post(func() { e.callPrelude("press", e.nodes.id(n), down, props) })
 }
 
 // Hover dispatches the events of the mouse moving from the given element

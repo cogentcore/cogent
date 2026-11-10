@@ -13,10 +13,12 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"math"
 	"net/http"
 	neturl "net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -63,7 +65,7 @@ type Page struct {
 	// Scripts is whether the scripts (JavaScript) of the pages are run,
 	// which they are by default. It applies to the pages opened after it
 	// is changed (see [Page.SetScripts]).
-	Scripts bool
+	Scripts bool `set:"-"`
 
 	// zoom is the zoom factor of the page that is shown (or being opened),
 	// from the settings of its site (see [SiteSettings]), or 0 for none.
@@ -81,7 +83,7 @@ type Page struct {
 	load atomic.Int64
 
 	// loads is the opening of pages in progress, for tests.
-	loads sync.WaitGroup
+	loads pendingLoads
 
 	// shown is closed when the page is first shown, which the opening of
 	// a page waits for before it updates the page (with AsyncLock).
@@ -94,11 +96,49 @@ type Page struct {
 	// and mediaTimer is the pending read of it for that width, if any.
 	media        *pageMedia
 	checkedWidth float32
-	mediaTimer   *time.Timer
+
+	// checkedHeight is the last height of the viewport that was checked,
+	// for pages that use it (see [htmlcore.Context.ViewportHeightUsed]).
+	checkedHeight float32
+	mediaTimer    *time.Timer
 
 	// scripts is the state of the scripts of the page that is shown, if
 	// it is run with scripts.
 	scripts *pageScripts
+
+	// frames are the pages in the frames of the iframes of the page that
+	// is shown, by their elements (see frames.go).
+	frames map[*html.Node]*Page
+
+	// frameOpens are the pages to open in the frames of iframes that do
+	// not have pages yet, by their elements, as for a form submitted to
+	// an iframe as soon as it is inserted (see pageScripts.submitFrame).
+	frameOpens map[*html.Node]func(fp *Page)
+
+	// frame is the state of the page as the page of a frame of another
+	// page, or nil for a page that is not in a frame.
+	frame *frame
+
+	// onConsole, if set, is called when the scripts of the page (or of its
+	// frames) log a message to the console, from any goroutine (see
+	// [ConsolePanel]), and onShowConsole shows the console.
+	onConsole func()
+
+	// viewportW and viewportH are the width and height of the viewport of
+	// the page in its last layout, in CSS px (as float32 bits), for its
+	// scripts, which run without its lock.
+	viewportW, viewportH atomic.Uint32
+
+	// preLayout is the function of [core.Scene.PreLayout] for the content
+	// of the page, as of its last layout, with which new content is laid
+	// out before it is shown (see [Page.preLayoutContent]).
+	preLayout atomic.Pointer[func(core.Widget)]
+
+	// openedBy is how the page that is being opened was opened (by a
+	// link, a script or a form of the page before it), for the verbose
+	// console (see [SettingsData.VerboseConsole]).
+	openedBy      string
+	onShowConsole func()
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -131,6 +171,17 @@ func (pg *Page) Init() {
 	pg.On(events.MouseMove, func(e events.Event) {
 		if ps := pg.scripts; ps != nil {
 			ps.hoverAt(e.WindowPos())
+		}
+	})
+	// and of its buttons being pressed and released (see pageScripts.pressAt)
+	pg.On(events.MouseDown, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.pressAt(e, true)
+		}
+	})
+	pg.On(events.MouseUp, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.pressAt(e, false)
 		}
 	})
 	pg.On(events.MouseLeave, func(e events.Event) {
@@ -377,12 +428,18 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	}
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
+	openedBy := pg.openedBy // (for its console)
+	pg.openedBy = ""
 	pg.loading = url
 	pg.failed = ""
 	pg.opened(url)
 	ctx := pg.Context.NewPage()
 	pg.zoom = Site(url).Zoom
+	if pg.frame != nil {
+		pg.zoom = pg.topPage().zoom // frames are zoomed with their page
+	}
 	ctx.Zoom = pg.zoom
+	ctx.MediaHeight = pg.viewportHeight()
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
 		ctx.MediaWidth = htmlcore.ScreenMediaWidth() / pg.zoomFactor()
@@ -415,12 +472,15 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			resp.Body.Close()
 			if err == nil && scripts {
 				// the page is shown by its scripts once they have run
-				if pg.openScripts(ctx, page, final, mode, index, cache, canceled) {
+				if pg.openScripts(ctx, page, final, mode, index, cache, canceled, openedBy) {
 					return
 				}
 			}
 			if err == nil {
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
+			}
+			if err == nil && !canceled() {
+				pg.preLayoutContent(content)
 			}
 		}
 		if canceled() {
@@ -440,6 +500,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		if err != nil {
 			core.ErrorSnackbar(pg, err, "Error opening page")
 			pg.opened(pg.currentURL())
+			pg.frameLoaded()
 			return
 		}
 		// a page that redirects (as to a version for browsers without
@@ -454,9 +515,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		pg.Context.PageURL = final
 		pg.Title = ctx.Title
 		pg.setMedia(&pageMedia{ctx: ctx, html: page, url: final, cache: cache})
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 		if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
 			// after it is laid out, as for scrolling to its position
 			pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
@@ -464,6 +523,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			pg.scrollToTop()
 		}
 		pg.opened(final)
+		pg.frameLoaded()
 	}()
 }
 
@@ -474,12 +534,25 @@ func (pg *Page) SetScripts(on bool) {
 	pg.Reload()
 }
 
-// zoomFactor returns the zoom factor of the page (1 if it is not zoomed).
+// zoomFactor returns the zoom factor of the page (1 if it is not zoomed),
+// that of the top page for a page in a frame.
 func (pg *Page) zoomFactor() float32 {
-	if pg.zoom > 0 {
-		return pg.zoom
+	if z := pg.topPage().zoom; z > 0 {
+		return z
 	}
 	return 1
+}
+
+// pxDots returns the number of dots of a CSS px of the page, with its zoom,
+// for the positions and sizes that its scripts get (as of the mouse and of
+// the boxes of elements). It is of the top page, whose widget is not zoomed
+// (unlike the widget of a page in a frame, which is in the zoomed content
+// of its parent, so that the zoom was applied twice to the positions of
+// the mouse in frames, as for the checkbox of reCAPTCHA, which was hovered
+// to the right of it).
+func (pg *Page) pxDots() float32 {
+	t := pg.topPage()
+	return t.Styles.UnitContext.Dots(units.UnitDp) * t.zoomFactor()
 }
 
 // zoomLevels are the zoom factors that zooming in and out steps through,
@@ -521,10 +594,21 @@ func (pg *Page) SetZoom(zoom float32) {
 	if zoom == pg.zoom {
 		return
 	}
-	pg.zoom = zoom
 	if cur := pg.currentURL(); cur != "" {
 		SetSite(cur, func(ss *SiteSettings) { ss.Zoom = zoom })
+	}
+	pg.applyZoom(zoom)
+	if cur := pg.currentURL(); cur != "" {
 		pg.opened(cur) // for the toolbar to show the zoom
+	}
+}
+
+// applyZoom reads the page again for the given zoom factor (0 for none),
+// and the pages of its frames, which are zoomed with it.
+func (pg *Page) applyZoom(zoom float32) {
+	pg.zoom = zoom
+	for _, fp := range pg.frames {
+		fp.applyZoom(zoom)
 	}
 	width := pg.viewportWidth()
 	pg.checkedWidth = width
@@ -574,7 +658,27 @@ func newPageContent() *core.Frame {
 // [mediaDelay], as browsers apply the @media rules of the new width.
 func (pg *Page) SizeFinal() {
 	pg.Frame.SizeFinal()
+	// the size of the viewport, for the scripts, which do not read the
+	// widgets without the lock of the page (see pageScripts.viewportSize)
+	pg.viewportW.Store(math.Float32bits(pg.viewportWidth()))
+	pg.viewportH.Store(math.Float32bits(pg.viewportHeight()))
+	if pg.Scene != nil {
+		if pl := pg.Scene.PreLayout(pg); pl != nil {
+			pg.preLayout.Store(&pl)
+		}
+	}
 	pg.checkMedia()
+}
+
+// preLayoutContent lays out the given new content of the page, which is
+// not in it yet, as it will be in it (see [core.Scene.PreLayout]), without
+// the lock of the page, so that laying it out again once it is shown, with
+// the lock held, is quick (as the texts in it are shaped and wrapped from
+// the caches of the text shaper): the page stays responsive meanwhile.
+func (pg *Page) preLayoutContent(content *core.Frame) {
+	if pl := pg.preLayout.Load(); pl != nil {
+		(*pl)(content)
+	}
 }
 
 // checkMedia checks whether the page needs to be read again for the
@@ -584,13 +688,23 @@ func (pg *Page) checkMedia() {
 	if m == nil || pg.loading != "" {
 		return
 	}
-	w := pg.viewportWidth()
-	if w <= 0 || w == pg.checkedWidth {
+	// the width, for the media of the page, and the height, if the page
+	// used it (as for its height: 100%, of the viewport)
+	w, h := pg.viewportWidth(), pg.viewportHeight()
+	widthChanged := w > 0 && w != pg.checkedWidth
+	heightChanged := h > 0 && h != pg.checkedHeight
+	if !widthChanged && !heightChanged {
 		return
 	}
-	pg.checkedWidth = w
-	pg.stopMediaTimer() // for an earlier width
-	if !m.ctx.MediaChanged(w) {
+	if widthChanged {
+		pg.checkedWidth = w
+	}
+	if heightChanged {
+		pg.checkedHeight = h
+	}
+	pg.stopMediaTimer() // for an earlier size
+	heightUsed := m.ctx.ViewportHeightUsed() && pg.checkedHeight > 0 && math32.Abs(pg.checkedHeight-m.ctx.MediaHeight) >= 1
+	if !m.ctx.MediaChanged(pg.checkedWidth) && !heightUsed {
 		return
 	}
 	pg.loads.Add(1)
@@ -621,6 +735,7 @@ func (pg *Page) setMedia(m *pageMedia) {
 	pg.stopMediaTimer()
 	pg.media = m
 	pg.checkedWidth = m.ctx.MediaWidth
+	pg.checkedHeight = m.ctx.MediaHeight
 }
 
 // readMedia reads the page that is shown again for the given width of
@@ -630,8 +745,9 @@ func (pg *Page) setMedia(m *pageMedia) {
 func (pg *Page) readMedia(m *pageMedia, width float32) {
 	if ps := pg.scripts; ps != nil {
 		// the document as the scripts have made it is read again
+		height := pg.viewportHeight()
 		ps.engine.Post(func() {
-			ps.width = width
+			ps.width, ps.height = width, height
 			ps.engine.Changed()
 		})
 		return
@@ -641,6 +757,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 	ctx := pg.Context.NewPage()
 	ctx.Zoom = pg.zoom
 	ctx.MediaWidth = width
+	ctx.MediaHeight = pg.viewportHeight()
 	ctx.PageURL = m.url
 	ctx.GetURL = func(u string) (*http.Response, error) {
 		if canceled() {
@@ -664,9 +781,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 			return
 		}
 		pg.setMedia(&pageMedia{ctx: ctx, html: m.html, url: m.url, cache: m.cache})
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 	}()
 }
 
@@ -677,6 +792,9 @@ func (pg *Page) scrollToTop() {
 		if fr := core.AsFrame(n); fr != nil {
 			fr.ScrollDimToContentStart(math32.Y)
 			fr.ScrollDimToContentStart(math32.X)
+		}
+		if pg.frame != nil {
+			break // a page in a frame scrolls itself, not the page around it
 		}
 	}
 }
@@ -753,6 +871,9 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 	tree.AddAt(p, "url", func(w *core.TextField) {
 		w.SetPlaceholder("Address or search")
 		w.Styler(func(s *styles.Style) {
+			// one line, which scrolls (a long URL, as of a search with all
+			// of its parameters, made it many lines high)
+			s.SetTextWrap(false)
 			s.Grow.Set(1, 0)
 			s.Min.X.Em(30)
 			s.Max.X.Ch(80)
@@ -822,7 +943,7 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 			errs := 0
 			if pg != nil {
 				for _, m := range pg.ScriptConsole() {
-					if strings.HasPrefix(m, "ERROR") {
+					if strings.HasPrefix(m, "ERROR") || strings.Contains(m, "] ERROR") { // (of the page or a frame)
 						errs++
 					}
 				}
@@ -855,7 +976,14 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 				pg.SetScripts(!pg.Scripts)
 			})
 			core.NewButton(m).SetText("Script console").SetIcon(icons.Terminal).OnClick(func(e events.Event) {
+				if pg.onShowConsole != nil {
+					pg.onShowConsole() // in the panel of the browser
+					return
+				}
 				pg.showConsole()
+			})
+			core.NewButton(m).SetText("Save page").SetIcon(icons.Download).SetTooltip("Save the document of the page as its scripts have made it (its DOM) to an HTML file in Downloads").OnClick(func(e events.Event) {
+				go pg.saveDOM()
 			})
 			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
 				ClearCookies()
@@ -912,19 +1040,85 @@ func LocationURL(loc string) string {
 // includes the vertical scrollbar of the frame that it scrolls in, so
 // that the scrollbar does not change it (which, as a page can be read
 // again for another width, could make it read again and again).
+// viewportHeight returns the height of the viewport of the page in CSS
+// px: of the frame that it scrolls in (as the tab of a browser, or the box
+// of an iframe), or 0 if it does not have one yet, as for the percentage
+// heights of the viewport and vh lengths ([htmlcore.Context.MediaHeight]),
+// which were otherwise of the window, with the toolbar and tabs, so that
+// the footer of google.com was below the bottom of the page, which
+// always had a scrollbar.
+func (pg *Page) viewportHeight() float32 {
+	if fr := core.AsFrame(pg.Parent); fr != nil {
+		if h, dp := fr.Geom.Size.Alloc.Content.Y, pg.pxDots(); h > 0 && dp > 0 {
+			return h / dp
+		}
+	}
+	return 0
+}
+
 func (pg *Page) viewportWidth() float32 {
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
+	if pg.frame != nil {
+		// the page of a frame: the width of its iframe (which it scrolls
+		// in, with its scrollbar, as innerWidth in browsers), or that of
+		// the iframe element before it is laid out (the page of the frame
+		// of the challenge of reCAPTCHA was read, and its scripts run, for
+		// the width of the window, so that it overflowed its frame)
+		if fr := core.AsFrame(pg.Parent); fr != nil && dp > 0 {
+			if w := fr.Geom.Size.Alloc.Content.X; w > 0 {
+				return w / dp
+			}
+		}
+		if w, err := strconv.Atoi(strings.TrimSpace(htmlcore.GetAttr(pg.frame.node, "width"))); err == nil && w > 0 {
+			return float32(w)
+		}
+		return htmlcore.IframeDefaultWidth
+	}
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
 			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
 		}
-		return w / dp / pg.zoomFactor()
+		return w / dp
 	}
 	if pg.Scene == nil {
 		return 0
 	}
 	if rw := pg.Scene.RenderWindow(); rw != nil && rw.SystemWindow != nil && dp > 0 {
-		return float32(rw.SystemWindow.Size().X) / dp / pg.zoomFactor()
+		return float32(rw.SystemWindow.Size().X) / dp
 	}
 	return 0
+}
+
+// pendingLoads counts the openings of pages in progress (see Page.loads),
+// as a WaitGroup that can be added to while it is waited on (as when the
+// page is read again for its media while a test waits for it to load).
+type pendingLoads struct {
+	mu   sync.Mutex
+	n    int
+	cond *sync.Cond
+}
+
+// Add adds the given number of openings in progress.
+func (pl *pendingLoads) Add(n int) {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+	pl.n += n
+	if pl.n <= 0 && pl.cond != nil {
+		pl.cond.Broadcast()
+	}
+}
+
+// Done records that an opening is done.
+func (pl *pendingLoads) Done() { pl.Add(-1) }
+
+// Wait waits until no opening is in progress.
+func (pl *pendingLoads) Wait() {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+	if pl.cond == nil {
+		pl.cond = sync.NewCond(&pl.mu)
+	}
+	for pl.n > 0 {
+		pl.cond.Wait()
+	}
 }

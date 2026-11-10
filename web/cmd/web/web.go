@@ -7,6 +7,7 @@ package main
 import (
 	_ "embed"
 	"os"
+	"path/filepath"
 
 	"cogentcore.org/cogent/web"
 	"cogentcore.org/core/core"
@@ -17,6 +18,12 @@ import (
 //
 //go:embed icon.svg
 var appIcon string
+
+func init() {
+	core.TheApp.SetName("Cogent Web")
+	web.Settings.File = filepath.Join(core.TheApp.AppDataDir(), "settings.toml") // makes the directory
+	core.AddAppSettings(web.Settings)
+}
 
 func main() {
 	core.AppIcon = appIcon

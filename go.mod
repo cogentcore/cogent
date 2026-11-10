@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.28
+	cogentcore.org/core v0.5.29
 	cogentcore.org/lab v0.2.16
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
@@ -13,7 +13,7 @@ require (
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/corentings/chess/v2 v2.0.8
 	github.com/coreos/go-oidc/v3 v3.17.0
-	github.com/dop251/goja v0.0.0-20261108153707-d8dfb4d8b999
+	github.com/dop251/goja v0.0.0-20261110190325-844f1a0e4767
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
 	github.com/emersion/go-message v0.18.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43

@@ -5,8 +5,11 @@
 package script
 
 import (
+	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
+	neturl "net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -184,4 +187,113 @@ func TestResizeObserverChanges(t *testing.T) {
 	v, err := e.RunString(`sizes.join()`)
 	require.NoError(t, err)
 	assert.Equal(t, "10,40", v)
+}
+
+// TestFetchGetHeaders tests that a GET of a script with headers is sent
+// with them (not with GetURL, which has none: the page_data of github.com,
+// with Accept: application/json, was 406 Not Acceptable).
+func TestFetchGetHeaders(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Accept") != "application/json" {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+		w.Write([]byte(`{"ok": 1}`))
+	}))
+	defer srv.Close()
+	run(t, e, `window.got = ""; fetch("`+srv.URL+`/page_data", {headers: {"Accept": "application/json"}}).then(r => r.status === 200 ? r.json() : {ok: r.status}).then(j => { got = String(j.ok); })`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return v == "1"
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestNavigatorMediaDevicesCredentials tests the media devices (none, as
+// Google account pages list them) and the credentials (which sites fall
+// back from) of navigator.
+func TestNavigatorMediaDevicesCredentials(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.res = "";
+		navigator.mediaDevices.enumerateDevices().then(ds => { res += "devices " + ds.length + ";"; });
+		navigator.mediaDevices.getUserMedia({audio: true}).catch(err => { res += err.name + ";"; });
+		navigator.credentials.get({publicKey: {}}).catch(err => { res += "credentials " + err.name + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "devices 0;") && strings.Contains(s, "NotAllowedError;") && strings.Contains(s, "credentials NotAllowedError;")
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestSubtleDigest tests crypto.subtle.digest (Google signs the requests
+// of its APIs with SHA-1 digests, which threw).
+func TestSubtleDigest(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.res = "";
+		const hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join("");
+		crypto.subtle.digest("SHA-1", new TextEncoder().encode("abc")).then(b => { res += hex(b) + ";"; });
+		crypto.subtle.digest({name: "SHA-256"}, new TextEncoder().encode("abc")).then(b => { res += hex(b).slice(0, 8) + ";"; });
+		crypto.subtle.digest("MD5", new Uint8Array(1)).catch(err => { res += err.name + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "a9993e364706816aba3e25717850c26c9cd0d89d;") && strings.Contains(s, "ba7816bf;") && strings.Contains(s, "NotSupportedError;")
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestFetchCredentials tests that the requests of scripts to other origins
+// have the cookies of those origins only with credentials (fetch with
+// credentials: "include", or XMLHttpRequest withCredentials), as the APIs
+// of Google, which were 401 Unauthorized without them.
+func TestFetchCredentials(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := r.Cookie("SID")
+		if err != nil {
+			io.WriteString(w, "none")
+			return
+		}
+		io.WriteString(w, c.Value)
+	}))
+	defer srv.Close()
+	jar, _ := cookiejar.New(nil)
+	su, _ := neturl.Parse(srv.URL)
+	jar.SetCookies(su, []*http.Cookie{{Name: "SID", Value: "secret"}})
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	e, err := New(doc, Options{PageURL: "https://example.com/", Cookies: jar})
+	require.NoError(t, err)
+	defer e.Close()
+	run(t, e, `window.res = [];
+		fetch("`+srv.URL+`/a").then(r => r.text()).then(t => res.push("plain " + t));
+		fetch("`+srv.URL+`/b", {credentials: "include"}).then(r => r.text()).then(t => res.push("fetch " + t));
+		const x = new XMLHttpRequest(); x.open("POST", "`+srv.URL+`/c"); x.withCredentials = true;
+		x.onload = () => res.push("xhr " + x.responseText); x.send("y"); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res.sort().join("|")`)
+		return v == "fetch secret|plain none|xhr secret"
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
+// TestRequestOriginHeaders tests the Origin and Referer headers of the
+// requests of scripts, as browsers send them (the APIs of Google check
+// the origin, which were 401 Unauthorized without it), and that scripts
+// can not set them.
+func TestRequestOriginHeaders(t *testing.T) {
+	var mu sync.Mutex
+	got := map[string]string{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		got[r.Method] = r.Header.Get("Origin") + "|" + r.Header.Get("Referer")
+		mu.Unlock()
+	}))
+	defer srv.Close()
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.n = 0;
+		fetch("`+srv.URL+`/a", {method: "POST", body: "x", headers: {Origin: "https://evil.example", Referer: "https://evil.example/"}}).then(() => n++);
+		fetch("`+srv.URL+`/b", {headers: {"X-A": "1"}}).then(() => n++); 0`)
+	assert.Eventually(t, func() bool { v, _ := e.RunString(`n`); return v == int64(2) }, 3*time.Second, 20*time.Millisecond)
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, "https://example.com|https://example.com/", got["POST"])
+	assert.Equal(t, "https://example.com|https://example.com/", got["GET"])
 }

@@ -5,16 +5,20 @@
 package web
 
 import (
-	"cogentcore.org/core/styles/units"
 	"fmt"
 	"image"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"cogentcore.org/core/styles/units"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -29,9 +33,18 @@ import (
 // newScriptPage returns a body with a page that serves the given pages
 // and resources by path (of https://example.com/), opening "/".
 func newScriptPage(t *testing.T, pages map[string]string) (*core.Body, *Page) {
+	return newScriptPageWith(t, pages, nil)
+}
+
+// newScriptPageWith returns a body with a page as [newScriptPage] does,
+// calling setup (if not nil) on the page before it opens.
+func newScriptPageWith(t *testing.T, pages map[string]string, setup func(pg *Page)) (*core.Body, *Page) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
+	if setup != nil {
+		setup(pg)
+	}
 	pg.Context.GetURL = func(u string) (*http.Response, error) {
 		pu, _ := url.Parse(u)
 		body, ok := pages[pu.Path]
@@ -303,7 +316,7 @@ func TestScriptsTyping(t *testing.T) {
 		defer b.AsyncUnlock()
 		tf := field()
 		if assert.NotNil(t, tf) {
-			assert.NotSame(t, first, tf, "the page was rendered again")
+			assert.Same(t, first, tf, "the field is kept, as only the output is read again")
 			assert.Equal(t, "abc", tf.Text(), "the field keeps what was typed")
 			assert.True(t, tf.StateIs(states.Focused), "the field keeps the focus")
 		}
@@ -1047,5 +1060,207 @@ func TestScriptsComputedDisplayInline(t *testing.T) {
 		v, err := pg.scripts.engine.RunString(`[getComputedStyle(document.getElementById("l")).display, getComputedStyle(document.getElementById("h")).display].join(",")`)
 		assert.NoError(t, err)
 		assert.Equal(t, "inline,none", v)
+	})
+}
+
+// TestScriptsComputedDisplayRoot tests that the computed display of the
+// html and body elements is block, though they have no boxes of their own,
+// unless they are styled not to be displayed (the html element was none,
+// as scripts that check whether their elements are shown, up to it, saw).
+func TestScriptsComputedDisplayRoot(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div><span id="s">text</span></div></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		v, err := pg.scripts.engine.RunString(`[document.documentElement, document.body].map(e => getComputedStyle(e).display).join(",")`)
+		assert.NoError(t, err)
+		assert.Equal(t, "block,block", v)
+		v, err = pg.scripts.engine.RunString(`document.documentElement.style.display = "none"; getComputedStyle(document.documentElement).display`)
+		assert.NoError(t, err)
+		assert.Equal(t, "none", v)
+	})
+}
+
+// TestScriptsPreloadStyleSheet tests a style sheet that is preloaded and
+// made a style sheet by the load event of its link (as those of
+// trekbikes.com, rel="preload" as="style" with
+// onload="this.rel='stylesheet'"), which was not applied, as the links of
+// the document, and those that preload, had no load events.
+func TestScriptsPreloadStyleSheet(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><link href="/style.css" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"></head>` +
+			`<body><p class="hidden">not shown</p><p>shown</p></body></html>`,
+		"/style.css": `.hidden { display: none }`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
+		assert.Contains(t, pageTexts(b, pg), "shown")
+	})
+}
+
+// TestScriptsAdoptedStyleSheets tests that the constructed style sheets
+// that the document adopts (document.adoptedStyleSheets, as the dialog of
+// Cookiebot is styled by, where it is supported) are applied, also as
+// they change, which they were not (the dialog was not styled).
+func TestScriptsAdoptedStyleSheets(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p class="hidden">not shown</p><p>shown</p><script>
+			window.sheet = new CSSStyleSheet();
+			sheet.replaceSync(".hidden { display: none }");
+			document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
+		_, err := pg.scripts.engine.RunString(`sheet.replaceSync("p { color: red }")`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "not shown") }), "shown again: "+pageTexts(b, pg))
+	})
+}
+
+// TestScriptsForcedRenderUnlocked tests that a render that a script forces
+// (to get the box of an element after changing the page) reads the page
+// without the lock of the page, so that the app is responsive meanwhile:
+// the page can be locked while it is read (on theguardian.com, tasks held
+// it for seconds, in which nothing responded).
+func TestScriptsForcedRenderUnlocked(t *testing.T) {
+	var reads, lockable atomic.Int32
+	var body atomic.Pointer[core.Body]
+	testReadHook = func(ps *pageScripts) {
+		b := body.Load()
+		if !ps.engine.InTask() || b == nil {
+			return
+		}
+		reads.Add(1)
+		got := make(chan bool)
+		go func() {
+			b.AsyncLock()
+			b.AsyncUnlock()
+			close(got)
+		}()
+		select {
+		case <-got:
+			lockable.Add(1)
+		case <-time.After(time.Second):
+		}
+	}
+	defer func() { testReadHook = nil }()
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>page</p><script>
+			setTimeout(() => {
+				for (let i = 0; i < 3; i++) {
+					const d = document.createElement("div");
+					d.textContent = "added " + i;
+					document.body.append(d);
+					document.documentElement.setAttribute("lang", "x" + i); // (all of it is read again)
+					d.getBoundingClientRect();
+				}
+				window.done = true;
+			}, 300);
+			</script></body></html>`,
+	})
+	body.Store(b)
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+		assert.Equal(t, int32(3), reads.Load(), "renders that the script forced")
+		assert.Equal(t, reads.Load(), lockable.Load(), "the page could be locked while it was read")
+	})
+}
+
+// TestSaveDOM tests that the document of a page, as its scripts have made
+// it, is saved to an HTML file in the Downloads directory, with its
+// console messages in a text file.
+func TestSaveDOM(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	require.NoError(t, os.MkdirAll(filepath.Join(home, "Downloads"), 0o755))
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>static</p><script>document.body.append("made by script"); console.log("logged")</script></body></html>`,
+	})
+	b.RenderImage(func() {
+		settle(pg)
+		pg.saveDOM()
+	})
+	logs, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*-console.txt"))
+	require.NoError(t, err)
+	require.Len(t, logs, 1)
+	log, err := os.ReadFile(logs[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(log), "logged")
+	files, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*.html"))
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "made by script")
+	assert.True(t, strings.HasPrefix(string(data), "<!DOCTYPE html>"))
+}
+
+// TestSaveDOMStopped tests that the document of a page whose scripts were
+// stopped (as those of nytimes.com, which ran too long) is saved, as they
+// left it, which failed as the page was closed.
+func TestSaveDOMStopped(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	require.NoError(t, os.MkdirAll(filepath.Join(home, "Downloads"), 0o755))
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>static</p><script>document.body.append("made by script")</script></body></html>`,
+	})
+	b.RenderImage(func() {
+		settle(pg)
+		pg.scripts.engine.Close() // (as when they are stopped)
+		pg.saveDOM()
+	})
+	files, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*.html"))
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "made by script")
+}
+
+// TestPreLayoutContent tests that new content of a page is laid out before
+// it is shown, without the lock of the page (see Page.preLayoutContent),
+// as it is once the page has been laid out, and that it is in no scene.
+func TestPreLayoutContent(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>page</p></body></html>`})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.NotNil(t, pg.preLayout.Load(), "the page has a pre-layout once laid out")
+		content := newPageContent()
+		tx := core.NewText(content).SetText("new content of the page, which wraps in its width")
+		pg.preLayoutContent(content) // (without the lock)
+		assert.Nil(t, content.Parent, "it is in no scene")
+		assert.Greater(t, tx.Geom.Size.Actual.Total.X, float32(0), "it is laid out")
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.InDelta(t, pg.Geom.Size.Alloc.Content.X, content.Geom.Size.Actual.Total.X, 1, "as wide as the page")
+	})
+}
+
+// TestConsoleOpenedBy tests that the verbose console of a page that a
+// script of another page opened says so, with where in the script (as for
+// finding why a page was replaced by the widget of the account of Google,
+// whose console started with that of the widget).
+func TestConsoleOpenedBy(t *testing.T) {
+	Settings.VerboseConsole = true
+	defer func() { Settings.VerboseConsole = false }()
+	b, pg := newScriptPage(t, map[string]string{
+		"/":    `<html><body><script>setTimeout(function go() { location.href = "/two"; }, 10)</script></body></html>`,
+		"/two": `<html><body><p>two</p><script>1</script></body></html>`,
+	})
+	console := func() string { // (with the lock, as the page changes)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		return strings.Join(pg.ScriptConsole(), "\n")
+	}
+	b.RenderImage(func() {
+		settle(pg)
+		require.True(t, eventually(func() bool { return strings.Contains(console(), "opened by") }), console())
+		all := console()
+		assert.Contains(t, all, "opened by a script of https://example.com/")
+		assert.Contains(t, all, "at go (")
 	})
 }

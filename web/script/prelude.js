@@ -185,6 +185,68 @@
 		D.removeAttr = (id, n) => attrChanged(id, n, () => removeAttr(id, n));
 	}
 
+	// the records of the changes of the DOM for the mutation observers (see
+	// MutationObserver), made as the DOM is changed while any observe
+	const mutationObservers = new Set();
+	{
+		const insert = D.insert, remove = D.remove, setInner = D.setInner, setText = D.setText;
+		const setAttr = D.setAttr, removeAttr = D.removeAttr, setData = D.setData;
+		const record = (type, target, init) => {
+			for (const mo of mutationObservers) mo._record(type, target, init);
+		};
+		const nodes = ids => ids.map(wrap);
+		const childList = (p, added, removed, prev, next) => record("childList", p, {
+			addedNodes: nodes(added), removedNodes: nodes(removed),
+			previousSibling: wrap(prev), nextSibling: wrap(next),
+		});
+		D.insert = function (p, c, ref) {
+			if (!mutationObservers.size) return insert(p, c, ref);
+			const added = D.type(c) === 11 ? D.children(c) : [c];
+			const old = D.type(c) === 11 ? 0 : D.parent(c);
+			if (old) childList(old, [], [c], D.prev(c), D.next(c));
+			const prev = ref ? D.prev(ref) : D.last(p);
+			insert(p, c, ref);
+			if (added.length) childList(p, added, [], prev, ref || 0);
+		};
+		D.remove = function (id) {
+			const p = mutationObservers.size ? D.parent(id) : 0;
+			if (!p) return remove(id);
+			const prev = D.prev(id), next = D.next(id);
+			remove(id);
+			childList(p, [], [id], prev, next);
+		};
+		const replacing = f => function (id, v) {
+			if (!mutationObservers.size) return f(id, v);
+			if (D.type(id) === 3 || D.type(id) === 8) {
+				const old = D.data(id);
+				f(id, v);
+				record("characterData", id, { oldValue: old });
+				return;
+			}
+			const removed = D.children(id);
+			f(id, v);
+			const added = D.children(id);
+			if (removed.length || added.length) childList(id, added, removed, 0, 0);
+		};
+		D.setInner = replacing(setInner);
+		D.setText = replacing(setText);
+		D.setData = function (id, v) {
+			if (!mutationObservers.size) return setData(id, v);
+			const old = D.data(id);
+			setData(id, v);
+			record("characterData", id, { oldValue: old });
+		};
+		const attr = (f, removing) => function (id, n, v) {
+			if (!mutationObservers.size) return f(id, n, v);
+			const old = D.attr(id, n);
+			if (removing && old === undefined) return f(id, n, v);
+			f(id, n, v);
+			record("attributes", id, { attributeName: String(n).toLowerCase(), oldValue: old === undefined ? null : old });
+		};
+		D.setAttr = attr(setAttr, false);
+		D.removeAttr = attr(removeAttr, true);
+	}
+
 	function idOf(n) {
 		if (n === null || n === undefined || n[ID] === undefined) {
 			throw new TypeError("the value is not a node");
@@ -209,10 +271,20 @@
 		return a;
 	}
 
+	// DOMException is the error of the DOM, whose name is its kind (as
+	// NotSupportedError), as scripts check it (as the custom elements of
+	// GitHub, which ignore a NotSupportedError DOMException of a name that
+	// is already defined, and got an Error).
+	const domExceptionCodes = { IndexSizeError: 1, HierarchyRequestError: 3, WrongDocumentError: 4, InvalidCharacterError: 5, NoModificationAllowedError: 7, NotFoundError: 8, NotSupportedError: 9, InvalidStateError: 11, SyntaxError: 12, InvalidModificationError: 13, NamespaceError: 14, InvalidAccessError: 15, TypeMismatchError: 17, SecurityError: 18, NetworkError: 19, AbortError: 20, URLMismatchError: 21, QuotaExceededError: 22, TimeoutError: 23, InvalidNodeTypeError: 24, DataCloneError: 25 };
+	class DOMException extends Error {
+		constructor(msg, name) { super(msg === undefined ? "" : String(msg)); this.name = name === undefined ? "Error" : String(name); }
+		get code() { return domExceptionCodes[this.name] || 0; }
+	}
+	for (const [k, v] of Object.entries(domExceptionCodes)) {
+		DOMException[k.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase().replace(/_ERROR$/, "_ERR")] = v;
+	}
 	function domException(name, msg) {
-		const e = new Error(msg);
-		e.name = name;
-		return e;
+		return new DOMException(msg, name);
 	}
 
 	// ---- events ----
@@ -227,9 +299,9 @@
 			this.cancelable = !!init.cancelable;
 			this.composed = !!init.composed;
 			this.defaultPrevented = false;
-			this.target = null;
-			this.currentTarget = null;
-			this.eventPhase = 0;
+			this._target = null;
+			this._currentTarget = null;
+			this._phase = 0;
 			this.timeStamp = performance.now();
 			this.isTrusted = false;
 			this._stop = false;
@@ -239,6 +311,12 @@
 		stopPropagation() { this._stop = true; }
 		stopImmediatePropagation() { this._stop = true; this._stopNow = true; }
 		composedPath() { return this._path ? this._path.slice() : []; }
+		// (accessors of the prototype, as in browsers, whose getters
+		// libraries use, as the delegated events of GitHub, which define
+		// the currentTarget of an event with that of Event.prototype)
+		get target() { return this._target; }
+		get currentTarget() { return this._currentTarget; }
+		get eventPhase() { return this._phase; }
 		get srcElement() { return this.target; }
 		get returnValue() { return !this.defaultPrevented; }
 		set returnValue(v) { if (!v) this.preventDefault(); }
@@ -281,7 +359,7 @@
 	class InputEvent extends UIEvent { constructor(type, init) { super(type, init); this.data = (init && init.data) || null; this.inputType = (init && init.inputType) || ""; } }
 	class WheelEvent extends MouseEvent { constructor(type, init) { super(type, init); this.deltaX = (init && init.deltaX) || 0; this.deltaY = (init && init.deltaY) || 0; this.deltaZ = 0; this.deltaMode = 0; } }
 	class ErrorEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.message = init.message || ""; this.error = init.error; this.filename = init.filename || ""; } }
-	class MessageEvent extends Event { constructor(type, init) { super(type, init); this.data = init && init.data; this.origin = (init && init.origin) || ""; } }
+	class MessageEvent extends Event { constructor(type, init) { super(type, init); this.data = init && init.data; this.origin = (init && init.origin) || ""; this.source = (init && init.source) || null; this.ports = (init && init.ports) || []; this.lastEventId = ""; } }
 	class ProgressEvent extends Event { constructor(type, init) { super(type, init); init = init || {}; this.loaded = init.loaded || 0; this.total = init.total || 0; this.lengthComputable = !!init.lengthComputable; } }
 	const popStates = new WeakMap();
 	class PopStateEvent extends Event {
@@ -290,8 +368,12 @@
 	}
 	class HashChangeEvent extends Event { constructor(type, init) { super(type, init); this.oldURL = (init && init.oldURL) || ""; this.newURL = (init && init.newURL) || ""; } }
 	class SubmitEvent extends Event { constructor(type, init) { super(type, init); this.submitter = (init && init.submitter) || null; } }
-	class AnimationEvent extends Event {}
-	class TransitionEvent extends Event {}
+	class AnimationEvent extends Event {
+		constructor(type, init) { super(type, init); init = init || {}; this.animationName = init.animationName || ""; this.elapsedTime = init.elapsedTime || 0; this.pseudoElement = init.pseudoElement || ""; }
+	}
+	class TransitionEvent extends Event {
+		constructor(type, init) { super(type, init); init = init || {}; this.propertyName = init.propertyName || ""; this.elapsedTime = init.elapsedTime || 0; this.pseudoElement = init.pseudoElement || ""; }
+	}
 	class TouchEvent extends UIEvent {}
 
 	class EventTarget {
@@ -319,13 +401,13 @@
 		}
 		dispatchEvent(ev) {
 			if (this === undefined || this === null) return g.dispatchEvent(ev);
-			ev.target = this;
+			ev._target = this;
 			const path = [];
-			for (let t = this; t; t = parentTarget(t)) path.push(t);
+			for (let t = this; t; t = parentTarget(t, ev.type)) path.push(t);
 			ev._path = path;
 			const invoke = (t, phase) => {
-				ev.currentTarget = t;
-				ev.eventPhase = phase;
+				ev._currentTarget = t;
+				ev._phase = phase;
 				const m = listeners.get(t);
 				const ls = m && m[ev.type] ? m[ev.type].slice() : [];
 				for (const x of ls) {
@@ -346,8 +428,8 @@
 			for (let i = path.length - 1; i > 0 && !ev._stop; i--) invoke(path[i], 1);
 			if (!ev._stop) invoke(this, 2);
 			if (ev.bubbles) for (let i = 1; i < path.length && !ev._stop; i++) invoke(path[i], 3);
-			ev.currentTarget = null;
-			ev.eventPhase = 0;
+			ev._currentTarget = null;
+			ev._phase = 0;
 			return !ev.defaultPrevented;
 		}
 	}
@@ -386,8 +468,14 @@
 	// shadow root, or the host of a shadow root, as events propagate in the
 	// composed tree in browsers (the menus of MDN open on clicks on their
 	// buttons, which their shadow roots listen to on their slots).
-	function parentTarget(t) {
+	function parentTarget(t, type) {
 		if (t === g) return null;
+		// a load event of an element (as a script or an image) does not
+		// reach the window, as in browsers: whenReady of web-vitals (on
+		// nytimes.com) listens for the load of the window with a capturing
+		// listener, which adds another for each load until the page is
+		// complete, so that they doubled with each script that loaded
+		if (type === "load" && t instanceof Document) return null;
 		if (t instanceof Node) {
 			const p = t.parentNode;
 			if (p) {
@@ -689,6 +777,26 @@
 		});
 	}
 
+	// Attr is an attribute of an element as a node, whose value is that
+	// of the attribute of its element (or its own when it has none).
+	class Attr {
+		constructor(name, owner) { this._name = String(name); this._owner = owner || null; this._value = ""; }
+		get name() { return this._name; }
+		get localName() { return this._name; }
+		get nodeName() { return this._name; }
+		get nodeType() { return 2; }
+		get namespaceURI() { return null; }
+		get prefix() { return null; }
+		get specified() { return true; }
+		get ownerElement() { return this._owner; }
+		get value() { return this._owner ? (this._owner.getAttribute(this._name) ?? "") : this._value; }
+		set value(v) { if (this._owner) this._owner.setAttribute(this._name, v); else this._value = String(v); }
+		get nodeValue() { return this.value; }
+		set nodeValue(v) { this.value = v; }
+		get textContent() { return this.value; }
+		set textContent(v) { this.value = v; }
+	}
+
 	class Element extends Node {
 		get tagName() { const n = D.name(this[ID]); return D.ns(this[ID]) ? n : n.toUpperCase(); }
 		get localName() { return D.name(this[ID]); }
@@ -720,10 +828,30 @@
 		get attributes() {
 			const kv = D.attrs(this[ID]);
 			const a = [];
-			for (let i = 0; i < kv.length; i += 2) a.push({ name: kv[i], localName: kv[i], value: kv[i + 1], nodeValue: kv[i + 1], specified: true });
+			for (let i = 0; i < kv.length; i += 2) a.push(new Attr(kv[i], this));
 			a.getNamedItem = n => a.find(x => x.name === String(n).toLowerCase()) || null;
 			a.item = i => a[i] || null;
+			a.setNamedItem = at => this.setAttributeNode(at);
+			a.removeNamedItem = n => { const at = this.getAttributeNode(n); if (!at) throw domException("NotFoundError", "no such attribute"); this.removeAttribute(n); return at; };
 			return a;
+		}
+		// the attributes as nodes (as the key handler of the sign in of
+		// Google, which gets the tabindex with getAttributeNode, which
+		// was not defined, so that it stopped at its email)
+		getAttributeNode(n) { n = String(n).toLowerCase(); return this.hasAttribute(n) ? new Attr(n, this) : null; }
+		setAttributeNode(at) {
+			const old = this.getAttributeNode(at.name);
+			this.setAttribute(at.name, at.value);
+			at._owner = this;
+			return old;
+		}
+		removeAttributeNode(at) {
+			if (!this.hasAttribute(at.name)) throw domException("NotFoundError", "no such attribute");
+			const v = this.getAttribute(at.name);
+			this.removeAttribute(at.name);
+			const r = new Attr(at.name, null);
+			r._value = v;
+			return r;
 		}
 		get style() { return styleOf(this); }
 		set style(v) { this.setAttribute("style", v); }
@@ -770,7 +898,13 @@
 		get offsetHeight() { const r = D.rect(this[ID]); return r ? Math.round(r[3]) : 0; }
 		get offsetLeft() { const r = D.rect(this[ID]); return r ? Math.round(r[0]) : 0; }
 		get offsetTop() { const r = D.rect(this[ID]); return r ? Math.round(r[1]) : 0; }
-		get offsetParent() { return D.rect(this[ID]) ? document.body : null; }
+		// the body, as offsetLeft and offsetTop are of the page, but none for
+		// the body and the root element, as in browsers (GitHub walks up
+		// the offset parents to null, which never ended at the body)
+		get offsetParent() {
+			if (this === document.body || this === document.documentElement) return null;
+			return D.rect(this[ID]) ? document.body : null;
+		}
 		// the client size of the root element is that of the viewport, as
 		// pages read for their layout (craigslist shows its mobile layout
 		// for a width of 0)
@@ -800,7 +934,6 @@
 			shadowHosts.set(id, this[ID]);
 			D.setShadow(this[ID], id);
 			shadows.set(this, { root: sr, mode: init && init.mode === "closed" ? "closed" : "open" });
-			sr.adoptedStyleSheets = [];
 			return sr;
 		}
 		get shadowRoot() { const s = shadows.get(this); return s && s.mode === "open" ? s.root : null; }
@@ -935,8 +1068,10 @@
 	const HTMLLinkElement = elementClass(["link"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["rel", "type", "media", "as", "crossOrigin", "integrity"]); Object.defineProperty(cls.prototype, "relList", { get() { return new DOMTokenList(this, "rel"); } }); });
 	// CSSStyleSheet has the rules of a style sheet as text. That of a style
 	// element changes its text (as CSS-in-JS inserts rules), so that the
-	// page is styled by them; constructed ones (adoptedStyleSheets, as of
-	// Lit) are not applied.
+	// page is styled by them; constructed ones that a document or shadow
+	// root adopts (adoptedStyleSheets, as of Lit, and the dialog of
+	// Cookiebot, which was not styled) are applied by a style element of
+	// it that has their rules (see syncAdopted).
 	function cssBlocks(text) {
 		const out = [];
 		let depth = 0, start = 0, quote = "";
@@ -951,26 +1086,200 @@
 		}
 		return out;
 	}
+	// CSSRule and its subclasses are the rules of style sheets (cssRules),
+	// made from the text of each rule, as libraries (and the page scripts of
+	// Google) read and extend their prototypes. The style of a style rule
+	// sets the text of the rule in its sheet.
+	class CSSRule {
+		constructor(sheet, index, text) { this._sheet = sheet; this._index = index; this._text = text; }
+		get cssText() { return this._text; }
+		get parentStyleSheet() { return this._sheet || null; }
+		get parentRule() { return null; }
+		get type() { return 0; }
+	}
+	Object.assign(CSSRule, { STYLE_RULE: 1, CHARSET_RULE: 2, IMPORT_RULE: 3, MEDIA_RULE: 4, FONT_FACE_RULE: 5, PAGE_RULE: 6, KEYFRAMES_RULE: 7, KEYFRAME_RULE: 8, NAMESPACE_RULE: 10, SUPPORTS_RULE: 12 });
+	// ruleBody returns the text of the block of the given rule, without its braces.
+	function ruleBody(text) { const i = text.indexOf("{"); return i < 0 ? "" : text.slice(i + 1, text.lastIndexOf("}")).trim(); }
+	// rulePrelude returns the text of the given rule before its block.
+	function rulePrelude(text) { const i = text.indexOf("{"); return (i < 0 ? text.replace(/;$/, "") : text.slice(0, i)).trim(); }
+	class CSSStyleRule extends CSSRule {
+		get type() { return 1; }
+		get selectorText() { return rulePrelude(this._text); }
+		set selectorText(v) { this._update(String(v) + " { " + ruleBody(this._text) + " }"); }
+		get style() {
+			if (!this._style) {
+				const rule = this;
+				const decl = {
+					getAttribute() { return ruleBody(rule._text) || null; },
+					setAttribute(_, v) { rule._update(rule.selectorText + " { " + v + " }"); },
+					removeAttribute() { rule._update(rule.selectorText + " { }"); },
+				};
+				this._style = new Proxy(new CSSStyleDeclaration(decl), styleHandler);
+			}
+			return this._style;
+		}
+		_update(text) {
+			this._text = text;
+			const sh = this._sheet;
+			if (!sh) return;
+			const rules = sh._current().slice();
+			if (this._index < rules.length) { rules[this._index] = text; sh._set(rules); }
+		}
+	}
+	class CSSGroupingRule extends CSSRule {
+		get cssRules() { return cssBlocks(ruleBody(this._text)).map((t, i) => makeRule(null, i, t)); }
+		insertRule() { throw domException("NotSupportedError", "rules cannot be inserted into grouping rules"); }
+		deleteRule() { throw domException("NotSupportedError", "rules cannot be deleted from grouping rules"); }
+	}
+	class CSSConditionRule extends CSSGroupingRule {
+		get conditionText() { return rulePrelude(this._text).replace(/^@[\w-]+\s*/, ""); }
+	}
+	class CSSMediaRule extends CSSConditionRule {
+		get type() { return 4; }
+		get media() { return { mediaText: this.conditionText, length: 1 }; }
+	}
+	class CSSSupportsRule extends CSSConditionRule { get type() { return 12; } }
+	class CSSContainerRule extends CSSConditionRule { get containerName() { return ""; } }
+	class CSSLayerBlockRule extends CSSGroupingRule { get name() { return rulePrelude(this._text).replace(/^@layer\s*/, ""); } }
+	class CSSImportRule extends CSSRule {
+		get type() { return 3; }
+		get href() { const m = /url\(\s*["']?([^"')]*)|["']([^"']*)/.exec(rulePrelude(this._text).slice(7)); return m ? (m[1] || m[2] || "") : ""; }
+		get media() { return { mediaText: "" }; }
+		get styleSheet() { return null; }
+	}
+	class CSSFontFaceRule extends CSSRule { get type() { return 5; } }
+	class CSSPageRule extends CSSRule { get type() { return 6; } }
+	class CSSKeyframesRule extends CSSRule {
+		get type() { return 7; }
+		get name() { return rulePrelude(this._text).replace(/^@[\w-]*keyframes\s*/, ""); }
+		get cssRules() { return cssBlocks(ruleBody(this._text)).map((t, i) => new CSSKeyframeRule(null, i, t)); }
+	}
+	class CSSKeyframeRule extends CSSRule {
+		get type() { return 8; }
+		get keyText() { return rulePrelude(this._text); }
+	}
+	class CSSNamespaceRule extends CSSRule { get type() { return 10; } }
+	class CSSCharsetRule extends CSSRule { get type() { return 2; } }
+	// makeRule returns the rule of the given text, at the given index of the given sheet.
+	function makeRule(sheet, index, text) {
+		const at = /^@(-[a-z]+-)?([a-z-]+)/i.exec(text);
+		const kind = at ? at[2].toLowerCase() : "";
+		const cls = !at ? CSSStyleRule : {
+			media: CSSMediaRule, supports: CSSSupportsRule, container: CSSContainerRule, layer: text.includes("{") ? CSSLayerBlockRule : CSSRule,
+			import: CSSImportRule, "font-face": CSSFontFaceRule, page: CSSPageRule, keyframes: CSSKeyframesRule,
+			namespace: CSSNamespaceRule, charset: CSSCharsetRule,
+		}[kind] || CSSRule;
+		return new cls(sheet, index, text);
+	}
 	const sheetOwners = new WeakMap(); // style sheet -> style element
+	// CSSRuleList is the list of the rules of a style sheet (cssRules),
+	// whose rules are made as they are gotten, by index (and its length is
+	// that of the rules of the sheet, without making them).
+	class CSSRuleList {
+		constructor(sheet) { this._sheet = sheet; }
+		get length() { return this._sheet._current().length; }
+		item(i) { return this._sheet._rule(i >>> 0); }
+		*[Symbol.iterator]() { const n = this.length; for (let i = 0; i < n; i++) yield this.item(i); }
+	}
+	const ruleListHandler = {
+		get(t, p, r) {
+			if (typeof p === "string" && /^\d+$/.test(p)) return t.item(Number(p)) || undefined;
+			return Reflect.get(t, p, t);
+		},
+		has(t, p) { return typeof p === "string" && /^\d+$/.test(p) ? Number(p) < t.length : p in t; },
+	};
 	class CSSStyleSheet {
-		constructor(opts) { this._rules = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
-		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map(t => ({ cssText: t, type: 1 })); }
+		constructor(opts) { this._rules = []; this._objs = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
+		// _current returns the texts of the rules of the sheet, parsed from
+		// the text of its style element again only when the document has
+		// changed (nytimes.com read them in loops of its scripts, which ran
+		// too long, as they were parsed on each read).
+		_current() {
+			const o = sheetOwners.get(this);
+			if (o && this._at !== D.domChanges()) {
+				const text = o.textContent;
+				if (text !== this._text) { this._text = text; this._rules = cssBlocks(text); this._objs = []; }
+				this._at = D.domChanges();
+			}
+			return this._rules;
+		}
+		// _rule returns the rule at the given index, made once.
+		_rule(i) {
+			const rules = this._current();
+			if (i >= rules.length) return null;
+			return this._objs[i] || (this._objs[i] = makeRule(this, i, rules[i]));
+		}
+		get cssRules() { return this._list || (this._list = new Proxy(new CSSRuleList(this), ruleListHandler)); }
 		get rules() { return this.cssRules; }
 		get ownerNode() { return sheetOwners.get(this) || null; }
-		_set(rules) { this._rules = rules; const o = sheetOwners.get(this); if (o) o.textContent = rules.join("\n"); }
+		_set(rules) {
+			this._rules = rules;
+			this._objs = [];
+			const o = sheetOwners.get(this);
+			if (o) {
+				o.textContent = rules.join("\n");
+				this._text = undefined; // (the rules are current)
+				this._at = D.domChanges();
+			}
+			if (this._adopters) for (const owner of this._adopters) syncAdopted(owner);
+		}
 		insertRule(rule, index) {
-			const rules = this.cssRules.map(r => r.cssText);
+			const rules = this._current();
 			index = index === undefined ? 0 : index >>> 0;
 			if (index > rules.length) throw domException("IndexSizeError", "the index is beyond the rules");
-			rules.splice(index, 0, String(rule));
-			this._set(rules);
+			rule = String(rule);
+			const o = sheetOwners.get(this);
+			if (o && (index === rules.length || index === 0)) {
+				// a rule at the end (or the start) is a text of its own in the
+				// element, not all of its text again (as the rules that
+				// emotion inserts one by one, which took too long as each
+				// wrote the text of all of them)
+				if (index === rules.length) {
+					o.appendChild(document.createTextNode("\n" + rule));
+					rules.push(rule);
+				} else {
+					o.insertBefore(document.createTextNode(rule + "\n"), o.firstChild);
+					rules.unshift(rule);
+				}
+				this._objs = [];
+				this._text = undefined;
+				this._at = D.domChanges();
+				return index;
+			}
+			const all = rules.slice();
+			all.splice(index, 0, rule);
+			this._set(all);
 			return index;
 		}
-		deleteRule(index) { const rules = this.cssRules.map(r => r.cssText); rules.splice(index >>> 0, 1); this._set(rules); }
-		addRule(sel, style, index) { return this.insertRule(sel + "{" + style + "}", index === undefined ? this.cssRules.length : index); }
+		deleteRule(index) { const rules = this._current().slice(); rules.splice(index >>> 0, 1); this._set(rules); }
+		addRule(sel, style, index) { return this.insertRule(sel + "{" + style + "}", index === undefined ? this._current().length : index); }
 		removeRule(index) { this.deleteRule(index || 0); }
 		replaceSync(text) { this._set(cssBlocks(String(text))); }
 		replace(text) { this.replaceSync(text); return Promise.resolve(this); }
+	}
+	// setAdopted sets the style sheets that the given document or shadow
+	// root adopts (adoptedStyleSheets), which are applied (see syncAdopted).
+	function setAdopted(owner, v) {
+		for (const sh of owner._adopted || []) if (sh._adopters) sh._adopters.delete(owner);
+		owner._adopted = Array.from(v);
+		for (const sh of owner._adopted) (sh._adopters || (sh._adopters = new Set())).add(owner);
+		syncAdopted(owner);
+	}
+	// syncAdopted applies the style sheets that the given document or shadow
+	// root has adopted, by the text of a style element of it that has their
+	// rules (after the others of a document, in its head).
+	function syncAdopted(owner) {
+		const text = (owner._adopted || []).map(sh => sh._rules.join("\n")).join("\n");
+		let el = owner._adoptedStyle;
+		if (!el) {
+			if (!text) return;
+			el = document.createElement("style");
+			el.setAttribute("data-adopted-style-sheets", "");
+			owner._adoptedStyle = el;
+		}
+		const parent = owner === document ? (document.head || document.documentElement) : owner;
+		if (el.parentNode !== parent && parent) parent.appendChild(el);
+		if (el.textContent !== text) el.textContent = text;
 	}
 	const styleSheets = new WeakMap(); // style element -> its sheet
 	const HTMLStyleElement = elementClass(["style"], HTMLElement, cls => {
@@ -987,8 +1296,12 @@
 	const HTMLMetaElement = elementClass(["meta"], HTMLElement, cls => reflect(cls, ["name", "content", "httpEquiv", "charset"]));
 	const HTMLBaseElement = elementClass(["base"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["target"]); });
 	const HTMLIFrameElement = elementClass(["iframe"], HTMLElement, cls => {
-		reflectURL(cls, ["src"]); reflect(cls, ["name", "width", "height", "allow", "loading"]);
-		Object.defineProperty(cls.prototype, "contentWindow", { get() { return null; } });
+		reflectURL(cls, ["src"]); reflect(cls, ["name", "width", "height", "allow", "loading", "srcdoc", "referrerPolicy"]);
+		// the restrictions of its page, as a token list (Google adds them)
+		Object.defineProperty(cls.prototype, "sandbox", { get() { return new DOMTokenList(this, "sandbox"); }, set(v) { this.setAttribute("sandbox", String(v)); } });
+		// the window of the page in its frame, a proxy that can only post
+		// messages to it (see frames.go), as for one of another origin
+		Object.defineProperty(cls.prototype, "contentWindow", { get() { return windowProxy(D.frameWindow(this[ID])); } });
 		Object.defineProperty(cls.prototype, "contentDocument", { get() { return null; } });
 	});
 
@@ -1066,6 +1379,52 @@
 		cls.prototype.select = function () {};
 		cls.prototype.setSelectionRange = function () {};
 	});
+	// the classes of the other elements, which scripts use (as the select
+	// panel of the pull requests of GitHub, which checks for
+	// HTMLOptGroupElement), with their attributes
+	const HTMLOptGroupElement = elementClass(["optgroup"], HTMLElement, cls => { reflect(cls, ["label"], ["disabled"]); });
+	const HTMLLegendElement = elementClass(["legend"], HTMLElement);
+	const HTMLProgressElement = elementClass(["progress"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "value", { get() { return parseFloat(this.getAttribute("value")) || 0; }, set(v) { this.setAttribute("value", String(v)); } });
+		Object.defineProperty(cls.prototype, "max", { get() { return parseFloat(this.getAttribute("max")) || 1; }, set(v) { this.setAttribute("max", String(v)); } });
+	});
+	const HTMLMeterElement = elementClass(["meter"], HTMLElement, cls => {
+		for (const k of ["value", "min", "max", "low", "high", "optimum"]) {
+			Object.defineProperty(cls.prototype, k, { get() { return parseFloat(this.getAttribute(k)) || 0; }, set(v) { this.setAttribute(k, String(v)); } });
+		}
+	});
+	const HTMLOutputElement = elementClass(["output"], HTMLElement, cls => {
+		reflect(cls, ["name"]);
+		Object.defineProperty(cls.prototype, "value", { get() { return this.textContent; }, set(v) { this.textContent = v; } });
+	});
+	const HTMLSourceElement = elementClass(["source"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["srcset", "sizes", "media", "type"]); });
+	const HTMLPictureElement = elementClass(["picture"], HTMLElement);
+	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["kind", "srclang", "label"], ["default"]); });
+	const HTMLTimeElement = elementClass(["time"], HTMLElement, cls => { reflect(cls, ["dateTime"]); });
+	const HTMLDataElement = elementClass(["data"], HTMLElement, cls => { reflect(cls, ["value"]); });
+	const HTMLDataListElement = elementClass(["datalist"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "options", { get() { return this.querySelectorAll("option"); } });
+	});
+	const HTMLMapElement = elementClass(["map"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	const HTMLQuoteElement = elementClass(["q", "blockquote"], HTMLElement, cls => { reflectURL(cls, ["cite"]); });
+	const HTMLModElement = elementClass(["ins", "del"], HTMLElement, cls => { reflectURL(cls, ["cite"]); reflect(cls, ["dateTime"]); });
+	const HTMLTableSectionElement = elementClass(["thead", "tbody", "tfoot"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "rows", { get() { return Array.from(this.children).filter(c => c.localName === "tr"); } });
+	});
+	const HTMLTableCaptionElement = elementClass(["caption"], HTMLElement);
+	const HTMLTableColElement = elementClass(["col", "colgroup"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "span", { get() { return parseInt(this.getAttribute("span"), 10) || 1; }, set(v) { this.setAttribute("span", String(v)); } });
+	});
+	const HTMLTitleElement = elementClass(["title"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "text", { get() { return this.textContent; }, set(v) { this.textContent = v; } });
+	});
+	const HTMLMenuElement = elementClass(["menu"], HTMLElement);
+	const HTMLDListElement = elementClass(["dl"], HTMLElement);
+	const HTMLEmbedElement = elementClass(["embed"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["type", "width", "height"]); });
+	const HTMLObjectElement = elementClass(["object"], HTMLElement, cls => { reflectURL(cls, ["data"]); reflect(cls, ["type", "name", "width", "height"]); });
+	const HTMLParamElement = elementClass(["param"], HTMLElement, cls => { reflect(cls, ["name", "value"]); });
+	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	const HTMLFontElement = elementClass(["font"], HTMLElement, cls => { reflect(cls, ["color", "face", "size"]); });
 	const HTMLOptionElement = elementClass(["option"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "value", { get() { const v = this.getAttribute("value"); return v === null ? this.textContent.trim() : v; }, set(v) { this.setAttribute("value", v); } });
 		Object.defineProperty(cls.prototype, "text", { get() { return this.textContent.trim(); }, set(v) { this.textContent = v; } });
@@ -1130,7 +1489,7 @@
 		cls.prototype.checkValidity = function () { return true; };
 		cls.prototype.reportValidity = function () { return true; };
 	});
-	elementClass(["label"], HTMLElement, cls => {
+	const HTMLLabelElement = elementClass(["label"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "htmlFor", { get() { return this.getAttribute("for") || ""; }, set(v) { this.setAttribute("for", v); } });
 		Object.defineProperty(cls.prototype, "control", { get() { const f = this.htmlFor; return f ? document.getElementById(f) : this.querySelector("input, select, textarea, button"); } });
 	});
@@ -1383,6 +1742,25 @@
 		if (submitter && submitter.name) fd.append(submitter.name, submitter.value);
 		const q = new URLSearchParams();
 		for (const [k, v] of fd) q.append(k, typeof v === "string" ? v : v.name || "");
+		// the iframe that the form targets by its name, if any (as Google
+		// opens its account menu in a frame), in which the page is opened
+		const target = (submitter && submitter.getAttribute && submitter.getAttribute("formtarget")) || form.getAttribute("target") || "";
+		let frame = null;
+		if (target && !/^_(self|top|parent|blank)$/i.test(target)) {
+			for (const f of document.getElementsByTagName("iframe")) {
+				if (f.getAttribute("name") === target) { frame = f; break; }
+			}
+		}
+		if (frame) {
+			if (method === "get") {
+				const u = new URL(action);
+				u.search = "?" + q.toString();
+				D.submit(u.href, "", "", frame[ID], false);
+			} else {
+				D.submit(action, "application/x-www-form-urlencoded", q.toString(), frame[ID], true);
+			}
+			return;
+		}
 		if (method === "get") {
 			const u = new URL(action);
 			u.search = "?" + q.toString();
@@ -1441,10 +1819,11 @@
 		get scripts() { return this.querySelectorAll("script"); }
 		get styleSheets() { return this.querySelectorAll("style").map(st => st.sheet); }
 		get adoptedStyleSheets() { return this._adopted || (this._adopted = []); }
-		set adoptedStyleSheets(v) { this._adopted = Array.from(v); }
+		set adoptedStyleSheets(v) { setAdopted(this, v); }
 		get fonts() { return { ready: Promise.resolve(), check() { return true; }, load() { return Promise.resolve([]); }, addEventListener() {}, add() {}, forEach() {} }; }
 		get implementation() { return { createHTMLDocument(title) { return wrap(D.parseDocument("<!DOCTYPE html><title>" + (title || "") + "</title>")); }, hasFeature() { return true; } }; }
 		createElement(tag) { return wrap(D.create(String(tag))); }
+		createAttribute(name) { return new Attr(String(name).toLowerCase(), null); }
 		createElementNS(ns, tag) {
 			let n = String(tag);
 			if (n.indexOf(":") >= 0) n = n.split(":")[1];
@@ -1460,7 +1839,7 @@
 			e.initMouseEvent = e.initEvent;
 			return e;
 		}
-		createRange() { return { setStart() {}, setEnd() {}, selectNodeContents() {}, collapse() {}, getBoundingClientRect() { return new DOMRect(); }, getClientRects() { return []; }, createContextualFragment: html => wrap(D.parse(String(html), 0)) }; }
+		createRange() { return new Range(); }
 		createTreeWalker(root, what, filter) { return treeWalker(root, what, filter); }
 		createNodeIterator(root, what, filter) { const w = treeWalker(root, what, filter); return { nextNode: () => w.nextNode() }; }
 		importNode(n, deep) { return n.cloneNode(deep); }
@@ -1497,10 +1876,116 @@
 	// ShadowRoot is the shadow root of an element, a fragment whose content
 	// is not rendered (only the children of the element are), but which
 	// scripts use (as web components render into them).
+	// Range is a range of the DOM between two boundary points (nodes and
+	// offsets in them: of characters in character data, of children in the
+	// others). Its contents can be deleted, extracted and cloned when its
+	// points are in the same node (as the frames of Turbo on GitHub, which
+	// replace the children of an element with those of another).
+	class Range {
+		constructor() {
+			this.startContainer = this.endContainer = document;
+			this.startOffset = this.endOffset = 0;
+		}
+		get collapsed() { return this.startContainer === this.endContainer && this.startOffset === this.endOffset; }
+		get commonAncestorContainer() {
+			for (let a = this.startContainer; a; a = a.parentNode) {
+				if (a === this.endContainer || a.contains(this.endContainer)) return a;
+			}
+			return this.startContainer;
+		}
+		setStart(n, o) { this.startContainer = n; this.startOffset = o | 0; if (this.collapsedAfterEnd()) this.collapse(true); }
+		setEnd(n, o) { this.endContainer = n; this.endOffset = o | 0; if (this.collapsedAfterEnd()) this.collapse(false); }
+		// collapsedAfterEnd returns whether the start is after the end in
+		// the same node (then the range collapses to the point set).
+		collapsedAfterEnd() { return this.startContainer === this.endContainer && this.startOffset > this.endOffset; }
+		setStartBefore(n) { this.setStart(n.parentNode, rangeIndex(n)); }
+		setStartAfter(n) { this.setStart(n.parentNode, rangeIndex(n) + 1); }
+		setEndBefore(n) { this.setEnd(n.parentNode, rangeIndex(n)); }
+		setEndAfter(n) { this.setEnd(n.parentNode, rangeIndex(n) + 1); }
+		selectNode(n) { const p = n.parentNode, i = rangeIndex(n); this.startContainer = this.endContainer = p; this.startOffset = i; this.endOffset = i + 1; }
+		selectNodeContents(n) { this.startContainer = this.endContainer = n; this.startOffset = 0; this.endOffset = rangeLength(n); }
+		collapse(toStart) {
+			if (toStart) { this.endContainer = this.startContainer; this.endOffset = this.startOffset; }
+			else { this.startContainer = this.endContainer; this.startOffset = this.endOffset; }
+		}
+		cloneRange() { const r = new Range(); Object.assign(r, { startContainer: this.startContainer, startOffset: this.startOffset, endContainer: this.endContainer, endOffset: this.endOffset }); return r; }
+		detach() {}
+		// rangeNodes returns the container of the range and the children of
+		// it in the range, or null if its points are in different nodes.
+		rangeNodes() {
+			const c = this.startContainer;
+			if (c !== this.endContainer) { D.log("debug", "missing: contents of a Range in different nodes"); return null; }
+			return Array.from(c.childNodes).slice(this.startOffset, this.endOffset);
+		}
+		isText() { const t = this.startContainer.nodeType; return t === 3 || t === 4 || t === 8; }
+		deleteContents() {
+			if (this.isText() && this.startContainer === this.endContainer) {
+				const c = this.startContainer, d = c.data;
+				c.data = d.slice(0, this.startOffset) + d.slice(this.endOffset);
+			} else {
+				const ns = this.rangeNodes();
+				if (ns) for (const n of ns) n.remove();
+			}
+			this.collapse(true);
+		}
+		cloneContents() {
+			const f = document.createDocumentFragment();
+			if (this.isText() && this.startContainer === this.endContainer) {
+				f.appendChild(document.createTextNode(this.startContainer.data.slice(this.startOffset, this.endOffset)));
+			} else {
+				const ns = this.rangeNodes();
+				if (ns) for (const n of ns) f.appendChild(n.cloneNode(true));
+			}
+			return f;
+		}
+		extractContents() {
+			if (this.isText() && this.startContainer === this.endContainer) {
+				const f = this.cloneContents();
+				this.deleteContents();
+				return f;
+			}
+			const f = document.createDocumentFragment();
+			const ns = this.rangeNodes();
+			if (ns) for (const n of ns) f.appendChild(n);
+			this.collapse(true);
+			return f;
+		}
+		insertNode(n) {
+			const c = this.startContainer;
+			if (this.isText()) {
+				const after = c.splitText(this.startOffset);
+				c.parentNode.insertBefore(n, after);
+			} else {
+				c.insertBefore(n, c.childNodes[this.startOffset] || null);
+			}
+			if (this.startContainer === this.endContainer && !this.isText()) this.endOffset += n.nodeType === 11 ? 0 : 1;
+		}
+		surroundContents(n) { n.appendChild(this.extractContents()); this.insertNode(n); this.selectNode(n); }
+		toString() {
+			if (this.isText() && this.startContainer === this.endContainer) return this.startContainer.data.slice(this.startOffset, this.endOffset);
+			const ns = this.startContainer === this.endContainer ? Array.from(this.startContainer.childNodes || []).slice(this.startOffset, this.endOffset) : [];
+			return ns.map(n => n.textContent || "").join("");
+		}
+		compareBoundaryPoints() { return 0; }
+		isPointInRange(n, o) { return this.startContainer === n ? o >= this.startOffset && o <= this.endOffset : this.commonAncestorContainer.contains(n); }
+		intersectsNode(n) { return this.commonAncestorContainer.contains(n); }
+		getBoundingClientRect() { return new DOMRect(); }
+		getClientRects() { return []; }
+		createContextualFragment(html) { return wrap(D.parse(String(html), 0)); }
+	}
+	Object.assign(Range, { START_TO_START: 0, START_TO_END: 1, END_TO_END: 2, END_TO_START: 3 });
+	// rangeIndex returns the index of the given node in its parent.
+	function rangeIndex(n) { return n.parentNode ? Array.prototype.indexOf.call(n.parentNode.childNodes, n) : 0; }
+	// rangeLength returns the length of a node as a boundary point: its
+	// characters for character data, else its children.
+	function rangeLength(n) { const t = n.nodeType; return t === 3 || t === 4 || t === 8 ? n.data.length : n.childNodes.length; }
+
 	class ShadowRoot extends DocumentFragment {
 		get host() { return wrap(shadowHosts.get(this[ID])); }
 		get mode() { const s = shadows.get(this.host); return s ? s.mode : "open"; }
 		get activeElement() { return null; }
+		get adoptedStyleSheets() { return this._adopted || (this._adopted = []); }
+		set adoptedStyleSheets(v) { setAdopted(this, v); }
 	}
 
 	// treeWalker returns a TreeWalker, which walks the live tree from its
@@ -1700,16 +2185,37 @@
 		permissions: { query() { return Promise.resolve({ state: "denied", addEventListener() {} }); } },
 		storage: { estimate() { return Promise.resolve({ quota: 0, usage: 0 }); }, persist() { return Promise.resolve(false); } },
 		userActivation: { hasBeenActive: false, isActive: false },
+		// no cameras or microphones (Google account security pages list
+		// them), and no credentials of the browser (passkeys or saved
+		// passwords): sites fall back to their other ways
+		mediaDevices: Object.assign(new EventTarget(), {
+			enumerateDevices() { return Promise.resolve([]); },
+			getSupportedConstraints() { return {}; },
+			getUserMedia() { return Promise.reject(domException("NotAllowedError", "Permission denied")); },
+			getDisplayMedia() { return Promise.reject(domException("NotAllowedError", "Permission denied")); },
+			ondevicechange: null,
+		}),
+		credentials: {
+			get() { return Promise.reject(domException("NotAllowedError", "The operation is not allowed")); },
+			create() { return Promise.reject(domException("NotAllowedError", "The operation is not allowed")); },
+			store(c) { return Promise.resolve(c); },
+			preventSilentAccess() { return Promise.resolve(); },
+		},
 	};
 
+	// storageKinds are the kinds (local or session) of the Storage objects,
+	// not in properties of them: the keys of their proxies are only their
+	// items, and a proxy cannot hide a non-configurable property of its
+	// target (Object.keys(localStorage) threw on GitHub).
+	const storageKinds = new WeakMap();
 	class Storage {
-		constructor(kind) { Object.defineProperty(this, "_kind", { value: kind }); }
-		getItem(k) { return D.storage("get", this._kind, String(k)); }
-		setItem(k, v) { D.storage("set", this._kind, String(k), String(v)); }
-		removeItem(k) { D.storage("remove", this._kind, String(k)); }
-		clear() { D.storage("clear", this._kind); }
-		key(i) { const ks = D.storage("keys", this._kind); return i < ks.length ? ks[i] : null; }
-		get length() { return D.storage("keys", this._kind).length; }
+		constructor(kind) { storageKinds.set(this, kind); }
+		getItem(k) { return D.storage("get", storageKinds.get(this), String(k)); }
+		setItem(k, v) { D.storage("set", storageKinds.get(this), String(k), String(v)); }
+		removeItem(k) { D.storage("remove", storageKinds.get(this), String(k)); }
+		clear() { D.storage("clear", storageKinds.get(this)); }
+		key(i) { const ks = D.storage("keys", storageKinds.get(this)); return i < ks.length ? ks[i] : null; }
+		get length() { return D.storage("keys", storageKinds.get(this)).length; }
 	}
 	function storageProxy(kind) {
 		return new Proxy(new Storage(kind), {
@@ -1717,7 +2223,7 @@
 			set(t, p, v) { if (typeof p !== "string" || p in t) return Reflect.set(t, p, v, t); t.setItem(p, v); return true; },
 			deleteProperty(t, p) { t.removeItem(p); return true; },
 			has(t, p) { return p in t || t.getItem(p) !== null; },
-			ownKeys(t) { return D.storage("keys", t._kind); },
+			ownKeys(t) { return D.storage("keys", storageKinds.get(t)); },
 			getOwnPropertyDescriptor(t, p) { const v = t.getItem(p); return v === null ? undefined : { value: v, enumerable: true, configurable: true, writable: true }; },
 		});
 	}
@@ -1753,9 +2259,15 @@
 					if (cv === "none") return "none";
 					const byTag = el.matches(inlineTags) ? "inline" : "block";
 					if (box) return byTag;
+					// the html element has no box of its own (nor can the
+					// body), and is displayed unless it is styled not to be,
+					// as the elements in it (scripts check whether they are
+					// shown up to it, and it was none)
+					const root = document.documentElement;
+					if (el === root) return cv || "block";
 					for (let a = el.parentElement; a && a[ID] != null; a = a.parentElement) {
 						if (D.computed(a[ID], "display") === "none") return "none";
-						if (D.rect(a[ID])) return cv || byTag;
+						if (D.rect(a[ID]) || a === root) return cv || byTag;
 					}
 					return "none";
 				}
@@ -2025,8 +2537,11 @@
 		static redirect(u, s) { return new Response(null, { status: s || 302, headers: { location: u } }); }
 	}
 
-	function goFetch(url, method, headers, body, cb) {
-		D.fetch(newCallback(cb), url, method, headers, body);
+	// goFetch makes the given request, with the cookies of other origins if
+	// credentials (as fetch with credentials: "include", and XMLHttpRequest
+	// withCredentials, as the APIs of Google on clients6.google.com).
+	function goFetch(url, method, headers, body, cb, credentials) {
+		D.fetch(newCallback(cb), url, method, headers, body, !!credentials);
 	}
 
 	function fetch(input, init) {
@@ -2046,7 +2561,7 @@
 				r.url = final;
 				r.redirected = final !== req.url;
 				resolve(r);
-			});
+			}, req.credentials === "include");
 		});
 	}
 
@@ -2096,7 +2611,7 @@
 				this._setState(4);
 				this.dispatchEvent(new ProgressEvent("load", { loaded: text.length, total: text.length, lengthComputable: true }));
 				this.dispatchEvent(new ProgressEvent("loadend"));
-			});
+			}, this.withCredentials);
 		}
 		abort() { this._aborted = true; this.readyState = 0; this.dispatchEvent(new ProgressEvent("abort")); }
 	}
@@ -2194,11 +2709,52 @@
 
 	// observers: mutations are not reported (MutationObserver), and every
 	// observed element is taken to be visible, of its laid out size
+	// MutationObserver reports the changes of the DOM in the nodes that it
+	// observes (and in their subtrees, with subtree), in records that are
+	// delivered together after the task that made them (as the selector
+	// observer of GitHub, which schedules its work with the change of an
+	// attribute of a detached element, and polls for the sign in with
+	// GitHub Mobile when its element is added: it never did).
+	class MutationRecord {
+		constructor(type, target, init) {
+			Object.assign(this, { type, target, addedNodes: [], removedNodes: [], previousSibling: null, nextSibling: null, attributeName: null, attributeNamespace: null, oldValue: null }, init);
+		}
+	}
 	class MutationObserver {
-		constructor(cb) { this._cb = cb; }
-		observe() {}
-		disconnect() {}
-		takeRecords() { return []; }
+		constructor(cb) { this._cb = cb; this._targets = new Map(); this._records = []; }
+		observe(target, opts) {
+			opts = Object.assign({}, opts);
+			if (opts.attributeOldValue || opts.attributeFilter) opts.attributes = opts.attributes !== false;
+			if (opts.characterDataOldValue) opts.characterData = opts.characterData !== false;
+			if (!opts.childList && !opts.attributes && !opts.characterData) throw new TypeError("the options observe nothing");
+			this._targets.set(idOf(target), opts);
+			mutationObservers.add(this);
+		}
+		disconnect() { this._targets.clear(); this._records = []; mutationObservers.delete(this); }
+		takeRecords() { const r = this._records; this._records = []; return r; }
+		// _record records the change of the given type of the node of the
+		// given id, if it observes it.
+		_record(type, id, init) {
+			for (let n = id, own = true; n; n = D.parent(n) || shadowHosts.get(n), own = false) {
+				const o = this._targets.get(n);
+				if (!o || (!own && !o.subtree)) continue;
+				if (type === "attributes" && (!o.attributes || (o.attributeFilter && !o.attributeFilter.includes(init.attributeName)))) continue;
+				if (type === "childList" && !o.childList) continue;
+				if (type === "characterData" && !o.characterData) continue;
+				const rec = new MutationRecord(type, wrap(id), init);
+				if (!(type === "attributes" ? o.attributeOldValue : type === "characterData" ? o.characterDataOldValue : false)) rec.oldValue = null;
+				this._records.push(rec);
+				if (!this._pending) {
+					this._pending = true;
+					queueMicrotask(() => {
+						this._pending = false;
+						const records = this.takeRecords();
+						if (records.length) this._cb(records, this);
+					});
+				}
+				return;
+			}
+		}
 	}
 	class IntersectionObserver {
 		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; }
@@ -2462,28 +3018,89 @@
 			supportedValuesOf: () => [],
 		};
 	})();
+	// the locale strings of numbers are of Intl.NumberFormat, as in
+	// browsers: goja took the locale as a radix ((1234).toLocaleString("en-US")
+	// threw a RangeError, which broke the pull request list of GitHub)
+	Object.defineProperty(Number.prototype, "toLocaleString", {
+		value: function toLocaleString(locales, options) { return new Intl.NumberFormat(locales, options).format(Number(this)); },
+		writable: true, configurable: true,
+	});
 
 	// ---- MessageChannel ----
 
 	// MessagePort sends messages to the other port of its channel, in
 	// tasks (as React's scheduler yields with them).
+	// A port can be transferred to another engine (see ports.go): its
+	// partner then posts to the end of the port there (_remote).
 	class MessagePort extends EventTarget {
-		constructor() { super(); this._other = null; this._closed = false; this.onmessage = null; }
-		postMessage(data) {
+		constructor() { super(); this._other = null; this._remote = 0; this._closed = false; this.onmessage = null; }
+		// postMessage posts the given message to the entangled port, with
+		// the ports of the given transfer list (an array, or the transfer
+		// of options), which move with it (as Google replies to the
+		// messages of its account menu through the port of each message)
+		postMessage(data, transfer) {
+			if (this._closed) return;
+			const ports = (Array.isArray(transfer) ? transfer : (transfer && transfer.transfer) || []).filter(p => p instanceof MessagePort);
+			if (this._remote) {
+				D.portPost(this._remote, cloneJSON(data), transferIDs(ports));
+				return;
+			}
 			const to = this._other;
-			if (!to || this._closed) return;
-			setTimer(() => {
-				if (to._closed) return;
-				const ev = new MessageEvent("message", { data });
-				if (typeof to.onmessage === "function") {
-					try { to.onmessage(ev); } catch (e) { reportError(e); }
-				}
-				to.dispatchEvent(ev);
-			}, 0, [], false);
+			if (!to) return;
+			setTimer(() => to._deliver(data, ports), 0, [], false);
+		}
+		_deliver(data, ports) {
+			if (this._closed) {
+				// a message that was on its way to a port that has moved to
+				// another engine follows it there, as in browsers
+				const via = this._movedVia;
+				if (via && via._remote) D.portPost(via._remote, cloneJSON(data), transferIDs(ports));
+				return;
+			}
+			const ev = new MessageEvent("message", { data, ports: ports || [] });
+			if (typeof this.onmessage === "function") {
+				try { this.onmessage(ev); } catch (e) { reportError(e); }
+			}
+			this.dispatchEvent(ev);
 		}
 		start() {}
 		close() { this._closed = true; }
 	}
+	const localPorts = new Map(); // the ports that are linked to other engines, by their numbers
+	let portCount = 0;
+	const portID = p => { if (!p._id) { p._id = ++portCount; localPorts.set(p._id, p); } return p._id; };
+	// transferIDs returns the numbers of the partners of the ports in the
+	// given transfer list of a message to another engine (see ports.go),
+	// which are moved there, and are closed here.
+	function transferIDs(transfer) {
+		const ids = [];
+		for (const p of transfer || []) {
+			if (!(p instanceof MessagePort) || !p._other) continue;
+			const q = p._other;
+			p._other = null;
+			p._closed = true;
+			p._movedVia = q;
+			q._other = null;
+			ids.push(portID(q));
+		}
+		return ids;
+	}
+	// receivedPorts returns the ports of the given pairs of ends of a
+	// message from another engine, which are made here.
+	const receivedPorts = pairs => (pairs || []).map(([partner, end]) => {
+		const p = new MessagePort();
+		p._remote = partner;
+		D.portBind(end, portID(p));
+		return p;
+	});
+	D.linkPort = function (id, end) { const q = localPorts.get(id); if (q) q._remote = end; };
+	D.portMessage = function (id, data, pairs) {
+		const p = localPorts.get(id);
+		if (!p) return;
+		let v = null;
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		p._deliver(v, receivedPorts(pairs));
+	};
 	class MessageChannel {
 		constructor() {
 			this.port1 = new MessagePort();
@@ -2523,13 +3140,26 @@
 	const performance = {
 		now() { return Date.now() - t0; },
 		timeOrigin: t0,
-		mark() {}, measure() {}, clearMarks() {}, clearMeasures() {},
+		mark() {}, measure() {}, clearMarks() {}, clearMeasures() {}, clearResourceTimings() {}, setResourceTimingBufferSize() {},
 		getEntries() { return []; }, getEntriesByType() { return []; }, getEntriesByName() { return []; },
 		timing: { navigationStart: t0 },
 		navigation: { type: 0 },
 	};
 
+	// subtle has the digests of data (as Google signs the requests of its
+	// APIs with), but no keys, encryption or signatures
+	const subtle = {
+		digest(alg, data) {
+			const name = typeof alg === "string" ? alg : alg && alg.name;
+			const d = D.digest(String(name || ""), data);
+			return d ? Promise.resolve(d) : Promise.reject(domException("NotSupportedError", "Unrecognized algorithm name"));
+		},
+	};
+	for (const m of ["encrypt", "decrypt", "sign", "verify", "generateKey", "deriveKey", "deriveBits", "importKey", "exportKey", "wrapKey", "unwrapKey"]) {
+		subtle[m] = () => Promise.reject(domException("NotSupportedError", "The operation is not supported"));
+	}
 	const crypto = {
+		subtle,
 		getRandomValues(a) { for (let i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256); return a; },
 		randomUUID() {
 			const h = "0123456789abcdef";
@@ -2557,38 +3187,206 @@
 		}
 	}
 
+	// ---- instanceof with proxies of functions ----
+
+	// The instanceof of goja throws for a proxy of a function (as of URL
+	// or Request, which scripts wrap to watch them), where browsers use
+	// Function.prototype[Symbol.hasInstance] of its target (as the
+	// getRequestURL of the bot checks of DataDome does for every fetch,
+	// which failed). The proxies of functions get it from a get trap that
+	// gives it for the target, which is all that instanceof gets from them
+	// (Function.prototype[Symbol.hasInstance] cannot be replaced).
+	{
+		const NativeProxy = Proxy;
+		const nativeRevocable = Proxy.revocable; // (defined on the wrapper below, which is the native one's)
+		const fnHasInstance = Function.prototype[Symbol.hasInstance];
+		// handlerFor returns the handler of a proxy of the given target
+		// with the given handler.
+		const handlerFor = (target, handler) => {
+			if (typeof target !== "function" || handler === null || typeof handler !== "object") return handler;
+			const h = Object.create(handler); // (its other traps are the handler's)
+			h.get = function (t, k, r) {
+				const v = typeof handler.get === "function" ? handler.get.call(handler, t, k, r) : Reflect.get(t, k, r);
+				if (k === Symbol.hasInstance && v === fnHasInstance) return function (o) { return fnHasInstance.call(t, o); };
+				return v;
+			};
+			return h;
+		};
+		const WrappedProxy = new NativeProxy(NativeProxy, {
+			construct(T, args, nt) { return Reflect.construct(T, [args[0], handlerFor(args[0], args[1])], nt === WrappedProxy ? T : nt); },
+		});
+		Object.defineProperty(WrappedProxy, "revocable", {
+			value: function revocable(target, handler) { return nativeRevocable(target, handlerFor(target, handler)); },
+			writable: true, configurable: true,
+		});
+		Object.defineProperty(g, "Proxy", { value: WrappedProxy, writable: true, configurable: true, enumerable: false });
+	}
+
+	// ---- the windows of frames (see frames.go) ----
+
+	// cloneJSON returns the given message as JSON, as it is copied to the
+	// window or worker that it is posted to (see cloneDecode), as for the
+	// structured clone of browsers: with its array buffers, typed arrays,
+	// dates, regular expressions, maps, sets, undefined values, and
+	// numbers that JSON has not.
+	const cloneError = () => new DOMException("could not be cloned", "DataCloneError");
+	function cloneEncode(v) {
+		switch (typeof v) {
+			case "undefined": return { $c: "u" };
+			case "bigint": return { $c: "b", v: String(v) };
+			case "number": return isFinite(v) && !Object.is(v, -0) ? v : { $c: "n", v: String(v) };
+			case "function": case "symbol": throw cloneError();
+			case "object": break;
+			default: return v;
+		}
+		if (v === null) return v;
+		if (v instanceof ArrayBuffer) return { $c: "ab", v: Array.from(new Uint8Array(v)) };
+		if (ArrayBuffer.isView(v)) return { $c: "ta", t: v.constructor.name, v: Array.from(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
+		if (v instanceof Date) return { $c: "d", v: v.getTime() };
+		if (v instanceof RegExp) return { $c: "r", s: v.source, f: v.flags };
+		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [cloneEncode(k), cloneEncode(x)]) };
+		if (v instanceof Set) return { $c: "s", v: Array.from(v, cloneEncode) };
+		if (v instanceof Error) return { $c: "e", n: v.name, m: v.message };
+		if (Array.isArray(v)) return v.map(cloneEncode);
+		if (v instanceof Node) throw cloneError();
+		const o = {};
+		for (const k of Object.keys(v)) o[k] = cloneEncode(v[k]);
+		return "$c" in o ? { $c: "o", v: o } : o;
+	}
+	function cloneDecode(v) {
+		if (v === null || typeof v !== "object") return v;
+		if (Array.isArray(v)) return v.map(cloneDecode);
+		const decodeObject = o => { const r = {}; for (const k of Object.keys(o)) r[k] = cloneDecode(o[k]); return r; };
+		switch (v.$c) {
+			case undefined: return decodeObject(v);
+			case "u": return undefined;
+			case "b": return BigInt(v.v);
+			case "n": return Number(v.v);
+			case "ab": return new Uint8Array(v.v).buffer;
+			case "ta": {
+				const buf = new Uint8Array(v.v).buffer;
+				if (v.t === "DataView") return new DataView(buf);
+				const C = g[v.t] || Uint8Array;
+				return new C(buf, 0, buf.byteLength / (C.BYTES_PER_ELEMENT || 1));
+			}
+			case "d": return new Date(v.v);
+			case "r": return new RegExp(v.s, v.f);
+			case "m": return new Map(v.v.map(([k, x]) => [cloneDecode(k), cloneDecode(x)]));
+			case "s": return new Set(v.v.map(cloneDecode));
+			case "e": { const C = g[v.n] || Error; const e = new C(v.m); return e; }
+			case "o": return decodeObject(v.v);
+		}
+		return decodeObject(v);
+	}
+	const cloneJSON = v => JSON.stringify(cloneEncode(v));
+	// targetOrigin returns the target origin of the options of postMessage
+	// (a string, or an object with targetOrigin), "/" by default.
+	const targetOrigin = o => { const t = o !== null && typeof o === "object" ? o.targetOrigin : o; return t === undefined ? "/" : String(t); };
+	// transferOf returns the transfer list of postMessage of a window: of
+	// its options (its second argument, an object, of which an array is
+	// one, as in browsers: reCAPTCHA posts its worker setup with
+	// postMessage(data, [port]) in windows too, which is posted without the
+	// port, and it took its own port as that of its frame), or its third
+	// argument. Workers and ports take a transfer list as their second.
+	const transferOf = (o, transfer) => o !== null && typeof o === "object" ? o.transfer : transfer;
+	const transferList = t => Array.isArray(t) ? t : t !== null && typeof t === "object" ? t.transfer : undefined;
+	const proxies = new Map(); // the window proxies, by their number
+	// windowProxy returns the window of the given number (see
+	// Engine.windowID): null for none, this window for 0, and otherwise a
+	// proxy of another window, which can post messages to it.
+	// Window is the class of windows: the global object and the proxies of
+	// the windows of other frames are its instances (GitHub checks for
+	// instanceof Window, which was not defined).
+	class Window extends EventTarget {
+		constructor() { super(); throw new TypeError("Illegal constructor"); }
+		static [Symbol.hasInstance](o) { return o === g || windowProxies.has(o); }
+	}
+	const windowProxies = new WeakSet();
+	function windowProxy(id) {
+		if (id < 0) return null;
+		if (id === 0) return g;
+		let p = proxies.get(id);
+		if (p) return p;
+		const base = {
+			postMessage(data, opts, transfer) { D.postTo(id, cloneJSON(data), targetOrigin(opts), transferIDs(transferOf(opts, transfer))); },
+			get closed() { return D.windowClosed(id); },
+			get parent() { return windowProxy(D.windowRel(id, "parent")); },
+			get top() { return windowProxy(D.windowRel(id, "top")); },
+			get window() { return p; }, get self() { return p; }, get frames() { return p; },
+			get length() { return D.windowLength(id); },
+			focus() {}, blur() {}, close() {},
+		};
+		// the windows of its frames by their names and indexes (as
+		// reCAPTCHA gets the window of its checkbox by parent.frames[name])
+		p = new Proxy(base, {
+			get(t, k, r) {
+				if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
+				const w = windowProxy(D.windowFrame(id, k));
+				if (!w && traceGlobal) D.log("debug", "missing: frame " + JSON.stringify(k) + " of another window (frames: " + D.windowFrameNames(id) + ")");
+				return w || undefined;
+			},
+		});
+		windowProxies.add(p);
+		proxies.set(id, p);
+		return p;
+	}
+
+	// ---- workers (see worker.go) ----
+
+	const workers = new Map(); // the Worker objects, by their numbers
+	let workerCount = 0;
+	class Worker extends EventTarget {
+		constructor(url, opts) {
+			super();
+			const id = ++workerCount;
+			Object.defineProperty(this, "_id", { value: id });
+			workers.set(id, this);
+			D.newWorker(id, String(url));
+		}
+		postMessage(data, transfer) { D.postToWorker(this._id, cloneJSON(data), transferIDs(transferList(transfer))); }
+		terminate() { D.terminateWorker(this._id); workers.delete(this._id); }
+	}
+	defineSimpleHandlers(Worker, ["message", "error", "messageerror"]);
+
 	// ---- the global object (window) ----
 
 	const props = {
-		window: g, self: g, top: g, parent: g, frames: g, opener: null, frameElement: null, closed: false,
-		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError,
+		window: g, self: g, frames: g, opener: null, frameElement: null, closed: false,
+		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
+		CSSRule, CSSRuleList, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
+		CSSImportRule, CSSFontFaceRule, CSSPageRule, CSSKeyframesRule, CSSKeyframeRule, CSSNamespaceRule, CSSCharsetRule, MessageChannel, MessagePort, MediaError, Worker,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
-		devicePixelRatio: 1, name: "", status: "", length: 0, isSecureContext: true,
-		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType,
+		devicePixelRatio: 1, status: "", isSecureContext: true,
+		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
 		HTMLOptionElement, HTMLButtonElement, HTMLFormElement, HTMLTemplateElement, HTMLCanvasElement, HTMLMediaElement,
 		HTMLVideoElement: HTMLMediaElement, HTMLAudioElement: HTMLMediaElement, HTMLDetailsElement, HTMLDialogElement,
 		HTMLDivElement, HTMLSpanElement, HTMLParagraphElement, HTMLHeadingElement, HTMLUListElement, HTMLOListElement,
 		HTMLLIElement, HTMLTableElement, HTMLTableRowElement, HTMLTableCellElement, HTMLHtmlElement, HTMLHeadElement,
-		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement, SVGElement, SVGSVGElement,
+		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement,
+		Attr, HTMLOptGroupElement, HTMLLabelElement, HTMLLegendElement, HTMLProgressElement, HTMLMeterElement, HTMLOutputElement,
+		HTMLSourceElement, HTMLPictureElement, HTMLTrackElement, HTMLTimeElement, HTMLDataElement, HTMLDataListElement,
+		HTMLMapElement, HTMLQuoteElement, HTMLModElement, HTMLTableSectionElement, HTMLTableCaptionElement, HTMLTableColElement,
+		HTMLTitleElement, HTMLMenuElement, HTMLDListElement, HTMLEmbedElement, HTMLObjectElement, HTMLParamElement,
+		HTMLSlotElement, HTMLFontElement, SVGElement, SVGSVGElement,
 		EventTarget, Event, CustomEvent, UIEvent, MouseEvent, PointerEvent, KeyboardEvent, FocusEvent, InputEvent,
 		WheelEvent, ErrorEvent, MessageEvent, ProgressEvent, PopStateEvent, HashChangeEvent, SubmitEvent, History,
 		AnimationEvent, TransitionEvent, TouchEvent,
 		DOMTokenList, CSSStyleDeclaration, DOMRect, DOMRectReadOnly: DOMRect, Location, MediaQueryList,
 		URL, URLSearchParams, Headers, Request, Response, XMLHttpRequest, Blob, File, FileReader, FormData,
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
-		MutationObserver, IntersectionObserver, ResizeObserver, PerformanceObserver,
+		MutationObserver, MutationRecord, IntersectionObserver, ResizeObserver, PerformanceObserver,
 		fetch,
 		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,
 		__defineModule: defineModule,
 		__requireModule: requireModule,
 		NodeFilter: { SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 1, SHOW_TEXT: 4, SHOW_COMMENT: 128, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 },
-		DOMException: class DOMException extends Error { constructor(msg, name) { super(msg); this.name = name || "Error"; } },
+		DOMException,
 		CSS: { supports() { return false; }, escape: cssEscape },
 		Image: function Image(w, h) { const i = document.createElement("img"); if (w !== undefined) i.width = w; if (h !== undefined) i.height = h; return i; },
 		Option: function Option(text, value, def, sel) { const o = document.createElement("option"); if (text !== undefined) o.text = text; if (value !== undefined) o.value = value; if (sel) o.selected = true; return o; },
@@ -2618,7 +3416,7 @@
 		focus() {},
 		blur() {},
 		stop() {},
-		postMessage(data) { setTimer(() => g.dispatchEvent(new MessageEvent("message", { data, origin: location.origin })), 0, [], false); },
+		postMessage(data, opts, transfer) { D.postTo(0, cloneJSON(data), targetOrigin(opts), transferIDs(transferOf(opts, transfer))); },
 		scrollTo() {}, scrollBy() {}, scroll() {},
 		addEventListener: EventTarget.prototype.addEventListener,
 		removeEventListener: EventTarget.prototype.removeEventListener,
@@ -2634,6 +3432,10 @@
 		Object.defineProperty(g, k, { get() { return scrollState[f]; }, configurable: true });
 	}
 	Object.defineProperty(g, "origin", { get() { return location.origin; }, configurable: true });
+	// the window of the page that this one is in a frame of, and the top
+	// one (this window if it is not in a frame)
+	Object.defineProperty(g, "parent", { get() { return windowProxy(D.windowRel(0, "parent")) || g; }, configurable: true });
+	Object.defineProperty(g, "top", { get() { return windowProxy(D.windowRel(0, "top")) || g; }, configurable: true });
 	defineHandlers(g);
 
 	const console = {};
@@ -2660,10 +3462,13 @@
 		init = init || {};
 		let ev;
 		const opts = Object.assign({ bubbles: true, cancelable: true, view: g }, init);
-		if (/^(click|dblclick|mouse|contextmenu)/.test(type)) ev = new MouseEvent(type, opts);
+		if (/^pointer/.test(type)) ev = new PointerEvent(type, opts);
+		else if (/^(click|dblclick|mouse|contextmenu)/.test(type)) ev = new MouseEvent(type, opts);
 		else if (/^key/.test(type)) ev = new KeyboardEvent(type, opts);
 		else if (/^(focus|blur)/.test(type)) ev = new FocusEvent(type, Object.assign(opts, { bubbles: type === "focusin" || type === "focusout" }));
 		else if (type === "input") ev = new InputEvent(type, opts);
+		else if (/^transition/.test(type)) ev = new TransitionEvent(type, Object.assign(opts, { cancelable: false }));
+		else if (/^animation/.test(type)) ev = new AnimationEvent(type, Object.assign(opts, { cancelable: false }));
 		else ev = new Event(type, opts);
 		ev.isTrusted = true;
 		if (type === "focus" || type === "focusin") focused = t;
@@ -2743,6 +3548,24 @@
 	// and its ancestors that are not around the old one, from the outermost
 	// (React makes its onPointerEnter of these, as for the repository grid
 	// of github.com).
+	// press dispatches the events of a mouse button pressed (down) or
+	// released on the given element (see Engine.Press).
+	let pressCanceled = false;
+	D.press = function (id, down, init) {
+		const t = wrap(id);
+		if (!t) return;
+		const opts = Object.assign({ bubbles: true, cancelable: true, view: g, pointerType: "mouse" }, init || {}, { buttons: down ? 1 : 0 });
+		const pe = new PointerEvent(down ? "pointerdown" : "pointerup", opts);
+		pe.isTrusted = true;
+		t.dispatchEvent(pe);
+		if (down) pressCanceled = pe.defaultPrevented;
+		if (!pressCanceled) {
+			const me = new MouseEvent(down ? "mousedown" : "mouseup", opts);
+			me.isTrusted = true;
+			t.dispatchEvent(me);
+		}
+	};
+
 	D.hover = function (oldId, newId, x, y) {
 		const o = oldId ? wrap(oldId) : null, n = newId ? wrap(newId) : null;
 		const ev = (C, type, t, rel, bubbles) => {
@@ -2818,6 +3641,39 @@
 		g.dispatchEvent(new Event("resize"));
 	};
 
+	// message dispatches a message posted to this window (as JSON) from
+	// the given origin and window (see frames.go).
+	D.message = function (data, origin, source, pairs) {
+		let v = null;
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		g.dispatchEvent(new MessageEvent("message", { data: v, origin, source: windowProxy(source), ports: receivedPorts(pairs) }));
+	};
+
+	// workerMessage and workerError dispatch a message (as JSON, see
+	// cloneJSON) and an error from the worker of the given number to its
+	// Worker object (see worker.go).
+	D.workerMessage = function (id, data, pairs) {
+		const w = workers.get(id);
+		if (!w) return;
+		let v = null;
+		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
+		w.dispatchEvent(new MessageEvent("message", { data: v, ports: receivedPorts(pairs) }));
+	};
+	D.workerError = function (id, msg) {
+		const w = workers.get(id);
+		if (!w) return;
+		const e = new Event("error", { cancelable: true });
+		e.message = msg;
+		w.dispatchEvent(e);
+	};
+
+	// frameLoaded fires the load event of the given iframe element, after
+	// the page in its frame has loaded.
+	D.frameLoaded = function (id) {
+		const el = wrap(id);
+		if (el) el.dispatchEvent(new Event("load"));
+	};
+
 	// loaded sets the ready state of the document, and fires its events.
 	D.loaded = function (state) {
 		readyState = state;
@@ -2829,4 +3685,115 @@
 			g.dispatchEvent(new Event("pageshow"));
 		}
 	};
+
+	// the global scope of a worker (see worker.go): no window or document
+	// (which scripts check for whether they run in a worker), and
+	// importScripts, and postMessage and close for its owner
+	if (D.isWorker()) {
+		for (const k of ["window", "document", "frames", "parent", "top", "opener", "frameElement", "localStorage", "sessionStorage", "alert", "confirm", "prompt"]) delete g[k];
+		const wprops = {
+			postMessage(data, transfer) { D.postToOwner(cloneJSON(data), transferIDs(transferList(transfer))); },
+			close() { D.closeWorker(); },
+			importScripts(...urls) { for (const u of urls) D.importScripts(String(u)); },
+		};
+		for (const k of Object.keys(wprops)) {
+			Object.defineProperty(g, k, { value: wprops[k], writable: true, configurable: true, enumerable: false });
+		}
+		// (self instanceof WorkerGlobalScope, as scripts check whether
+		// they run in a worker)
+		for (const name of ["WorkerGlobalScope", "DedicatedWorkerGlobalScope"]) {
+			const scope = function () { throw new TypeError("Illegal constructor"); };
+			Object.defineProperty(scope, "name", { value: name });
+			Object.defineProperty(scope, Symbol.hasInstance, { value: o => o === g });
+			Object.defineProperty(g, name, { value: scope, writable: true, configurable: true });
+		}
+	}
+
+	// the properties that scripts get that the objects of the browser do
+	// not have, in the console (once each), when the engine traces (see
+	// Options.Trace): the root of the prototypes of the global object, of
+	// the DOM (EventTarget), and of the other objects of the browser, is a
+	// proxy of Object.prototype that reports them (as for the functions
+	// of browsers that a captcha uses, whose errors it catches)
+	let traceGlobal = null;
+	if (D.tracing()) {
+		const seen = new Set();
+		let reporting = false;
+		const ignored = new Set(["then", "toJSON", "constructor", "prototype", "length", "name", "inspect", "nodeType", "$$typeof", "asymmetricMatch"]);
+		const objectName = (o) => {
+			if (o === g) return "window";
+			for (const k of ["navigator", "screen", "location", "history", "performance", "crypto", "document"]) {
+				try { if (o === g[k]) return k; } catch (e) { }
+			}
+			if (o && o.nodeType === 1) return "<" + o.localName + ">";
+			if (o && o.nodeType === 3) return "#text";
+			const c = o && o.constructor;
+			return (c && c.name) || "Object";
+		};
+		const report = (o, k, kind) => {
+			if (typeof k !== "string" || k.startsWith("_") || ignored.has(k) || reporting) return;
+			reporting = true;
+			try {
+				const key = kind + objectName(o) + "." + k;
+				if (!seen.has(key)) {
+					seen.add(key);
+					D.log("debug", key);
+				}
+			} catch (e) { } finally { reporting = false; }
+		};
+		const proxy = new Proxy(Object.prototype, {
+			get(t, k, r) {
+				if (!(k in t)) report(r, k, "missing: ");
+				return Reflect.get(t, k, r);
+			},
+		});
+		traceGlobal = (k) => report(g, k, "missing: ");
+		const rootOf = (o) => {
+			for (let p = o; p; p = Object.getPrototypeOf(p)) {
+				if (Object.getPrototypeOf(p) === Object.prototype) return p;
+			}
+			return null;
+		};
+		const roots = new Set();
+		for (const o of [g.EventTarget && g.EventTarget.prototype, g.navigator, g.screen, g.location, g.history, g.performance, g.crypto]) {
+			const r = o && rootOf(o);
+			if (r && r !== g) roots.add(r);
+		}
+		for (const r of roots) {
+			try { Object.setPrototypeOf(r, proxy); } catch (e) { }
+		}
+	}
+
+	// the windows of the frames of this window by their names and indexes
+	// (as window[name] and frames[name]), from the root of the prototypes
+	// of the global object, a proxy of Object.prototype, which also reports
+	// the global names that are not defined when the engine traces
+	// the name of the window: that of its iframe, for a frame, until it is
+	// set (as reCAPTCHA gets the name of the frame of its checkbox, by
+	// parent.frames[name], from that of its challenge)
+	let windowName = null;
+	Object.defineProperty(g, "name", {
+		get() { return windowName !== null ? windowName : D.isWorker() ? "" : D.frameName(); },
+		set(v) { windowName = String(v); },
+		configurable: true, enumerable: true,
+	});
+	try {
+		Object.defineProperty(g, "length", { get() { return D.windowLength(0); }, configurable: true });
+		if (Object.getPrototypeOf(g) === Object.prototype) {
+			Object.setPrototypeOf(g, new Proxy(Object.prototype, {
+				get(t, k, r) {
+					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
+					const f = D.windowFrame(0, k);
+					if (f >= 0) return windowProxy(f);
+					if (traceGlobal) traceGlobal(k);
+					return undefined;
+				},
+				has(t, k) {
+					const has = k in t;
+					if (!has && traceGlobal) traceGlobal(k);
+					return has;
+				},
+			}));
+		}
+	} catch (e) { }
 })(globalThis, __dom);

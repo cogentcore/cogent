@@ -28,8 +28,31 @@ type moduleDef struct {
 	url, script string
 }
 
-// requireCall matches the imports of a module transformed by esbuild.
-var requireCall = regexp.MustCompile(`\brequire\(("(?:[^"\\]|\\.)*")\)`)
+// importsSpec returns whether the given source of a module imports the
+// given specifier (with import or export from), as its require calls
+// after it is transformed by esbuild are then imports.
+func importsSpec(src, spec string) bool {
+	for _, q := range []string{`"`, `'`} {
+		lit := q + spec + q
+		for i := strings.Index(src, lit); i >= 0; {
+			before := strings.TrimRight(src[:i], " \t\n(")
+			if strings.HasSuffix(before, "from") || strings.HasSuffix(before, "import") {
+				return true
+			}
+			j := strings.Index(src[i+len(lit):], lit)
+			if j < 0 {
+				break
+			}
+			i += len(lit) + j
+		}
+	}
+	return false
+}
+
+// requireCall matches the imports of a module transformed by esbuild:
+// calls of require, not of methods named require (as a.require("util")
+// of lodash in a chunk of GitHub, which was fetched as a module).
+var requireCall = regexp.MustCompile(`(?:^|[^.\w$])require\(("(?:[^"\\]|\\.)*")\)`)
 
 // moduleGraph returns the definitions of the module at the given URL
 // (with the given code, if not nil, as for a module script in the page,
@@ -144,11 +167,22 @@ func (e *Engine) transformModule(src, u, metaURL string) (string, []string, erro
 		return "", nil, buildError(res.Errors)
 	}
 	out := string(res.Code)
+	// the calls of require in the module itself are not imports (as the
+	// optional dependency of framer-motion in a chunk of GitHub,
+	// require("@emotion/is-prop-valid") in a try, which failed the module
+	// as it was not found): they throw when they run, as in browsers
+	own := map[string]bool{}
+	for _, m := range requireCall.FindAllStringSubmatch(src, -1) {
+		var spec string
+		if json.Unmarshal([]byte(m[1]), &spec) == nil && !importsSpec(src, spec) {
+			own[spec] = true
+		}
+	}
 	deps := map[string]string{}
 	var urls []string
 	for _, m := range requireCall.FindAllStringSubmatch(out, -1) {
 		var spec string
-		if json.Unmarshal([]byte(m[1]), &spec) != nil {
+		if json.Unmarshal([]byte(m[1]), &spec) != nil || own[spec] {
 			continue
 		}
 		if _, ok := deps[spec]; ok {

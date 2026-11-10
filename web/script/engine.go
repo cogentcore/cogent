@@ -20,11 +20,14 @@
 package script
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -69,6 +72,26 @@ type Options struct {
 	// with the lock held, or nil.
 	Render func() (commit func())
 
+	// Restyle, if set, styles the widgets of the given elements again
+	// after a task has changed only attributes of theirs that select them
+	// in style rules (as their class and style), or their states (as their
+	// :hover), without reading the document into new widgets, which is
+	// costly for large pages (as those that animate the styles of their
+	// elements on each frame). It is called as Render is, and its commit
+	// returns false if the elements can not be restyled so (as for a
+	// change of their display), for the page to be rendered instead.
+	Restyle func(nodes []*html.Node) (commit func() bool)
+
+	// Reread, if set, updates the widgets of the page after a task has
+	// changed the given elements themselves (as their attributes), the
+	// children of the given elements (as nodes added to them, or their
+	// text), and the given elements as Restyle does, by reading only the
+	// elements that have changed again, keeping the widgets of the others.
+	// It is called as Render is, and its commit returns false if the
+	// changes can not be made so (as for a new style sheet), for the page
+	// to be rendered instead.
+	Reread func(self, children, styled []*html.Node) (commit func() bool)
+
 	// Layout, if set, returns the position and size of the box of the
 	// given node in CSS px, relative to the top left of the page, after
 	// the page is laid out (rendering it first if it has changed), and
@@ -105,6 +128,13 @@ type Options struct {
 	// submission of a form with the POST method.
 	Submit func(url, contentType string, body []byte)
 
+	// SubmitFrame, if set, opens the page of the given URL in the frame of
+	// the given iframe element of the page, as for the submission of a
+	// form whose target is the name of the iframe: with a POST request
+	// with the given body, of the given content type, or a GET if post is
+	// false (as Google opens its account menu in a frame).
+	SubmitFrame func(iframe *html.Node, url, contentType string, body []byte, post bool)
+
 	// PushState, if set, is called when a script changes the URL of the
 	// page without opening it (history.pushState and replaceState).
 	PushState func(url string, replace bool)
@@ -115,13 +145,35 @@ type Options struct {
 	// Cookies, if set, has the cookies of the pages (as for document.cookie).
 	Cookies http.CookieJar
 
+	// Parent, if set, returns the engine of the window that the page is
+	// in a frame of (an iframe), for window.parent and top, or nil.
+	Parent func() *Engine
+
+	// FrameOf, if set, returns the engine of the page in the frame of the
+	// given iframe element, if it has one (with scripts), for the
+	// contentWindow of the iframe. It is called in tasks.
+	FrameOf func(n *html.Node) *Engine
+
 	// Log, if set, receives the messages of the console of the
 	// page (and the errors of its scripts), with their level.
 	Log func(level slog.Level, msg string)
 
+	// Trace, if set and returning true, makes the engine log what the
+	// scripts do (with Log, at the debug level), for finding why a page
+	// does not work (as a captcha that only says that something went
+	// wrong): the requests that they make and the scripts that they load,
+	// with their statuses and sizes, the messages that they post to other
+	// windows (and those that are not delivered for their target origin),
+	// and the properties that they get that the objects of the browser
+	// (the global object, the DOM, navigator, ...) do not have, once each.
+	Trace func() bool
+
 	// TaskTimeout is the longest time that a task can run before it is
 	// interrupted (as a script that does not end); 0 is 10 seconds.
 	TaskTimeout time.Duration
+
+	// worker is whether the engine is that of a worker (see worker.go).
+	worker bool
 }
 
 // maxCallStack is the maximum depth of the calls of scripts, about that
@@ -179,6 +231,37 @@ type Engine struct {
 	lastRender time.Time
 	imports    *importMap    // the import map of the page, if any
 	renderCost time.Duration // how long the last render took
+	// restyleCost is how long the last restyle took (see Options.Restyle),
+	// and rereadCost the last reread (see Options.Reread)
+	restyleCost, rereadCost time.Duration
+	// styled are the elements to restyle (see Options.Restyle), whose
+	// changes need no render of the page, as dirty is for the others.
+	styled []*html.Node
+	// selfNodes are the elements that have changed themselves, and
+	// childNodes those whose children have, since the page was last
+	// rendered (see Options.Reread), unless whole is set, for which all
+	// of it is rendered again.
+	selfNodes, childNodes []*html.Node
+	whole                 bool
+	// wholeWhy is why whole is set, for the verbose console.
+	wholeWhy string
+	// taskLock and taskUnlock are the functions that lock and unlock the
+	// page for the task that is running (see [Engine.lockTask]),
+	// taskLocked is whether it is locked, and lockLost is whether it could
+	// not be locked (the page is gone).
+	taskLock   func() bool
+	taskUnlock func()
+	taskLocked bool
+	lockLost   bool
+	// domChanges is the number of changes of the document, by which the
+	// iframe elements of it, frameNodes, are found again when it has
+	// changed since framesAt (minus one; see [Engine.forFrames]).
+	domChanges, framesAt int
+
+	// navStack is the call stack of the script that last navigated the
+	// page (see [Engine.NavigateStack]).
+	navStack   atomic.Value
+	frameNodes []*html.Node
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
 	changedNodes []*html.Node
@@ -201,6 +284,47 @@ type Engine struct {
 	pageLayouts int
 	taskStart   time.Time
 	timeouts    int // the number of tasks interrupted for running too long
+
+	// windows are the engines of the windows of frames that the scripts
+	// have seen, by their number less 1, and windowIDs their numbers
+	// (see [Engine.windowID]); only used in tasks.
+	windows   []*Engine
+	windowIDs map[*Engine]int
+
+	// rejected are the promises that were rejected without a handler in
+	// the task that is running, which are reported at its end if they
+	// still have none, as "Uncaught (in promise)" in browsers; only used
+	// in tasks.
+	rejected []rejection
+
+	// owner is the engine that made this one as a worker, if any, and
+	// ownerID the number of its Worker object there (see worker.go).
+	owner   *Engine
+	ownerID int
+
+	// workers are the workers that the scripts made, by their numbers;
+	// protected by mu.
+	workers map[int]*Engine
+
+	// workerReady is whether the script of a worker has run, before which
+	// the messages to it are workerPending, as in browsers; protected by mu.
+	workerReady   bool
+	workerPending []workerMessage
+}
+
+// workerMessage is a message (as JSON) to a worker, with the pairs of the
+// ends of the ports that it transfers (see transferPorts).
+type workerMessage struct {
+	data  string
+	ports [][2]int64
+}
+
+// rejection is a promise that was rejected without a handler, with the
+// call stack where it was rejected (as the error of an async function has
+// no stack of where it was thrown).
+type rejection struct {
+	promise *goja.Promise
+	stack   string
 }
 
 // New returns a new [Engine] for the given parsed document with the given
@@ -224,9 +348,27 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	// a script that recurses without end gets a RangeError (as in browsers)
 	// instead of running until it times out, using ever more memory
 	e.vm.SetMaxCallStackSize(maxCallStack)
+	e.vm.SetPromiseRejectionTracker(func(p *goja.Promise, op goja.PromiseRejectionOperation) {
+		switch op {
+		case goja.PromiseRejectionReject:
+			var b bytes.Buffer
+			for _, f := range e.vm.CaptureCallStack(8, nil) {
+				b.WriteString("\n\tat ")
+				f.Write(&b)
+			}
+			e.rejected = append(e.rejected, rejection{p, b.String()})
+		case goja.PromiseRejectionHandle:
+			if i := slices.IndexFunc(e.rejected, func(r rejection) bool { return r.promise == p }); i >= 0 {
+				e.rejected = slices.Delete(e.rejected, i, i+1)
+			}
+		}
+	})
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
 	e.defineNavigator()
+	e.defineFrames()
+	e.defineWorkers()
+	e.definePorts()
 	e.vm.Set("__dom", e.jsDOM)
 	if _, err := e.vm.RunProgram(prog); err != nil {
 		return nil, fmt.Errorf("running prelude: %w", err)
@@ -324,6 +466,7 @@ func (e *Engine) Close() {
 	e.mu.Unlock()
 	e.vm.Interrupt(errClosed)
 	close(e.wake)
+	e.closeWorkers()
 }
 
 var errClosed = errors.New("the page is closed")
@@ -342,24 +485,51 @@ func (e *Engine) loop() {
 			e.queue = e.queue[1:]
 			lock, unlock := e.lock, e.unlock
 			e.mu.Unlock()
-			if lock != nil && !lock() {
+			// The task runs without the lock of the page, which it takes
+			// only when it needs the widgets of the page (see lockTask), so
+			// that the app is responsive while scripts run.
+			e.taskLock, e.taskUnlock, e.taskLocked = lock, unlock, false
+			e.runTask(task)
+			if e.taskLocked && !e.lockLost {
+				unlock()
+			}
+			gone := e.lockLost
+			e.taskLock, e.taskUnlock, e.taskLocked, e.lockLost = nil, nil, false, false
+			if gone {
 				e.done()
 				go e.Close() // the page is gone
 				continue
 			}
-			e.runTask(task, unlock)
 			e.renderSoon(lock, unlock)
 			e.done()
 		}
 	}
 }
 
-// runTask runs the given task (with the lock of the page held, which
-// unlock unlocks if not nil, at the end), within the time limit of a task.
-func (e *Engine) runTask(task func(), unlock func()) {
-	if unlock != nil {
-		defer unlock()
+// InTask returns whether a task of the scripts is running, as for a render
+// that a script forces (in the goroutine of the engine).
+func (e *Engine) InTask() bool {
+	return e.inTask
+}
+
+// lockTask locks the page for the task that is running, until its end,
+// if it is not locked yet, for what needs the widgets of the page (as the
+// boxes of elements), returning false if the page is gone. A task runs
+// without the lock until it needs it (see loop).
+func (e *Engine) lockTask() bool {
+	if e.taskLock == nil || e.taskLocked {
+		return !e.lockLost
 	}
+	if !e.taskLock() {
+		e.lockLost = true
+		return false
+	}
+	e.taskLocked = true
+	return true
+}
+
+// runTask runs the given task, within the time limit of a task.
+func (e *Engine) runTask(task func()) {
 	e.taskLeft = e.opts.TaskTimeout
 	e.taskStart = time.Now()
 	e.taskBoxes, e.taskLayouts = 0, 0
@@ -379,6 +549,7 @@ func (e *Engine) runTask(task func(), unlock func()) {
 		}()
 		task()
 	}()
+	e.reportRejections()
 	e.inTask = false
 	timer.Stop()
 	e.vm.ClearInterrupt()
@@ -405,15 +576,18 @@ const maxTimeouts = 3
 // takes at most about a third of the time.
 const renderInterval = 100 * time.Millisecond
 
+// restyleInterval is the shortest time between the restyles of a page
+// (see [Options.Restyle]), which are made as often as frames are rendered,
+// for the animations of scripts.
+const restyleInterval = 16 * time.Millisecond
+
 // renderIfDirty renders the page if the document has changed (now, as
 // for the layout of an element that a script needs). The widgets are
 // shown with the given lock held, if not nil (otherwise it is held).
 func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
-	if !e.dirty || e.opts.Render == nil || e.loading {
+	if !e.needsRender() || e.opts.Render == nil || e.loading {
 		return
 	}
-	e.dirty = false
-	e.changedNodes = e.changedNodes[:0]
 	start := time.Now()
 	// the time of rendering is not that of the scripts of the task
 	if e.taskTimer != nil && e.taskTimer.Stop() {
@@ -422,6 +596,49 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 			e.taskStart = time.Now()
 			e.taskTimer.Reset(max(e.taskLeft, 0))
 		}()
+	}
+	styled, self, children, whole, wholeWhy := e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy
+	e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy = nil, nil, nil, false, ""
+	e.changedNodes = e.changedNodes[:0]
+	if !e.dirty && e.restyle(styled, lock, unlock) {
+		e.lastRender = time.Now()
+		e.restyleCost = e.lastRender.Sub(start)
+		e.traceSlow("restyle", e.restyleCost, lock == nil)
+		return
+	}
+	// (the elements whose restyle failed, as for a change of their
+	// display, are read again)
+	if !whole && e.reread(self, children, styled, lock, unlock) {
+		e.dirty = false
+		e.lastRender = time.Now()
+		e.rereadCost = e.lastRender.Sub(start)
+		e.traceSlow("reread", e.rereadCost, lock == nil)
+		return
+	}
+	if whole {
+		e.tracef("reading the page whole: %s", wholeWhy)
+	}
+	e.dirty = false
+	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && e.taskLocked {
+		// A render forced by a script (for the box of an element), in its
+		// task, with the lock held: the page is read without it (as for
+		// the renders after tasks), as no script runs meanwhile, so that it
+		// is responsive (it was not for seconds on theguardian.com), and
+		// it is locked again to show the new widgets (to the end of the
+		// task), unless the page is gone.
+		e.taskUnlock()
+		e.taskLocked = false
+		commit := e.opts.Render()
+		if !e.lockTask() {
+			return
+		}
+		if commit != nil {
+			commit()
+		}
+		e.lastRender = time.Now()
+		e.renderCost = e.lastRender.Sub(start)
+		e.traceSlow("render", e.renderCost, true)
+		return
 	}
 	commit := e.opts.Render()
 	if commit != nil {
@@ -434,6 +651,109 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	}
 	e.lastRender = time.Now()
 	e.renderCost = e.lastRender.Sub(start)
+	e.traceSlow("render", e.renderCost, lock == nil)
+}
+
+// NavigateStack returns the call stack of the script that last navigated
+// the page (see [Options.Navigate]), as [Engine.Stack] returns it.
+func (e *Engine) NavigateStack() string {
+	s, _ := e.navStack.Load().(string)
+	return s
+}
+
+// Stack returns the call stack of the scripts that are running, at most
+// the given number of frames, each on a line of its own starting with a
+// tab, or "" when no script is running (as for the script that navigates
+// the page, for the console).
+func (e *Engine) Stack(n int) string {
+	var b bytes.Buffer
+	for _, f := range e.vm.CaptureCallStack(n, nil) {
+		b.WriteString("\n\tat ")
+		f.Write(&b)
+	}
+	return b.String()
+}
+
+// slowRender is how long a render (or restyle or reread) of the page takes
+// for it to be traced (see [Options.Trace]).
+const slowRender = 50 * time.Millisecond
+
+// traceSlow traces the given kind of render of the page that took the
+// given time, if it is slow, and whether a script forced it (to get the
+// box of an element, with the lock of the page held, in its task).
+func (e *Engine) traceSlow(kind string, d time.Duration, forced bool) {
+	if d < slowRender {
+		return
+	}
+	how := "after a task"
+	if forced {
+		how = "forced by a script, in its task"
+	}
+	e.tracef("%s of the page took %v (%s)", kind, d.Round(time.Millisecond), how)
+}
+
+// restyle restyles the given elements (see [Options.Restyle]), with the
+// given lock held, if not nil (otherwise it is held), returning whether
+// they were.
+func (e *Engine) restyle(nodes []*html.Node, lock func() bool, unlock func()) bool {
+	if e.opts.Restyle == nil || len(nodes) == 0 {
+		return false
+	}
+	commit := e.opts.Restyle(nodes)
+	if commit == nil {
+		return false
+	}
+	if lock == nil {
+		return commit()
+	}
+	if !lock() {
+		return false
+	}
+	defer unlock()
+	return commit()
+}
+
+// reread reads the given changed elements again (see [Options.Reread]),
+// with the given lock held, if not nil (otherwise it is held), returning
+// whether they were.
+func (e *Engine) reread(self, children, styled []*html.Node, lock func() bool, unlock func()) bool {
+	if e.opts.Reread == nil {
+		return false
+	}
+	if e.focusRequest != nil {
+		e.tracef("reading the page whole: an element is to get the focus")
+		return false // (the focus is given to the widget of the element as the page is rendered)
+	}
+	commit := e.opts.Reread(self, children, styled)
+	if commit == nil {
+		return false
+	}
+	if lock == nil {
+		return commit()
+	}
+	if !lock() {
+		return false
+	}
+	defer unlock()
+	return commit()
+}
+
+// needsRender returns whether the page needs to be rendered or restyled
+// for the changes of the document.
+func (e *Engine) needsRender() bool {
+	return e.dirty || len(e.styled) > 0
+}
+
+// pendingCost returns how long the render that the changes of the
+// document need (a restyle, or a render) took the last time.
+func (e *Engine) pendingCost() time.Duration {
+	switch {
+	case !e.dirty && e.opts.Restyle != nil:
+		return e.restyleCost
+	case !e.whole && e.opts.Reread != nil:
+		return e.rereadCost
+	}
+	return e.renderCost
 }
 
 // TakeFocus returns the element that a script focused since the page was
@@ -460,7 +780,7 @@ const expensiveRender = 50 * time.Millisecond
 // page still gets the events of the user. (An element with no box yet is
 // rendered for.)
 func (e *Engine) throttleLayout() bool {
-	if !(e.renderCost > expensiveRender && time.Since(e.lastRender) < 2*e.renderCost) {
+	if cost := e.pendingCost(); !(cost > expensiveRender && time.Since(e.lastRender) < 2*cost) {
 		return false
 	}
 	// The first layouts of a page, as its scripts set it up, and those of
@@ -489,10 +809,14 @@ const maxTaskLayouts = 8
 // (without the lock of the page, which it takes to show it): now, or after
 // [renderInterval] since the last render.
 func (e *Engine) renderSoon(lock func() bool, unlock func()) {
-	if !e.dirty || e.opts.Render == nil || e.loading {
+	if !e.needsRender() || e.opts.Render == nil || e.loading {
 		return
 	}
-	wait := max(renderInterval, 2*e.renderCost) - time.Since(e.lastRender)
+	interval := renderInterval
+	if !e.dirty && e.opts.Restyle != nil || !e.whole && e.opts.Reread != nil {
+		interval = restyleInterval
+	}
+	wait := max(interval, 2*e.pendingCost()) - time.Since(e.lastRender)
 	if wait <= 0 {
 		e.renderIfDirty(lock, unlock)
 		return
@@ -506,7 +830,42 @@ func (e *Engine) renderSoon(lock func() bool, unlock func()) {
 	})
 }
 
+// reportRejections logs the promises that were rejected in the task
+// without a handler, which still have none at its end, as browsers do (as
+// the errors of async functions, which were not shown).
+func (e *Engine) reportRejections() {
+	for _, r := range e.rejected {
+		v := r.promise.Result()
+		msg := "undefined"
+		if v != nil {
+			msg = v.String()
+		}
+		// the stack of an error is where it was thrown
+		if o, ok := v.(*goja.Object); ok {
+			if st := o.Get("stack"); st != nil && !goja.IsUndefined(st) && strings.Contains(st.String(), "\tat ") {
+				msg, r.stack = strings.TrimRight(st.String(), "\n"), ""
+			}
+		}
+		e.logf(slog.LevelError, "Uncaught (in promise) %s%s", msg, r.stack)
+	}
+	e.rejected = e.rejected[:0]
+}
+
 // logf logs the given message to the console of the page.
+// tracing returns whether the engine logs what the scripts do (see
+// [Options.Trace]).
+func (e *Engine) tracing() bool {
+	return e.opts.Trace != nil && e.opts.Trace()
+}
+
+// tracef logs the given message at the debug level if the engine traces
+// (see [Options.Trace]).
+func (e *Engine) tracef(format string, args ...any) {
+	if e.tracing() {
+		e.logf(slog.LevelDebug, format, args...)
+	}
+}
+
 func (e *Engine) logf(level slog.Level, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	if e.opts.Log != nil {
@@ -605,7 +964,7 @@ func (e *Engine) RunString(src string) (any, error) {
 // Rerender renders the page again in a task, as when it is read again
 // for another width of its viewport.
 func (e *Engine) Rerender() {
-	e.Post(func() { e.dirty = true })
+	e.Post(func() { e.dirty, e.whole, e.wholeWhy = true, true, "the viewport changed" })
 }
 
 // Resized fires the resize event of the window in a task, as when the
@@ -623,7 +982,17 @@ func (e *Engine) Eval(src string) {
 // page is rendered again at the end of the task, as for the value of a
 // form control that is changed by the user.
 func (e *Engine) Changed() {
-	e.dirty = true
+	e.dirty, e.whole, e.wholeWhy = true, true, "a control was changed"
+}
+
+// StateChanged records that the states of the given elements that select
+// them in style rules have changed (in a task), as their :hover and
+// :checked, so that they are restyled at the end of the task (see
+// [Options.Restyle]).
+func (e *Engine) StateChanged(nodes ...*html.Node) {
+	for _, n := range nodes {
+		e.styleChanged(n)
+	}
 }
 
 // setTimer starts a timer that fires the timer of the given id in the

@@ -234,7 +234,7 @@ func TestModules(t *testing.T) {
 		<script type="module">
 			import { greet, chunk, where } from "./js/lib.js";
 			import data from "./data.json";
-			document.getElementById("out").textContent = greet(data.name) + ";" + where + ";";
+			document.getElementById("out").textContent += greet(data.name) + ";" + where + ";";
 			chunk().then(c => { document.getElementById("out").textContent += c + ";"; });
 			import("./later.js").then(m => { document.getElementById("out").textContent += m.default + ";"; });
 		</script>
@@ -489,6 +489,26 @@ func TestStyleSheets(t *testing.T) {
 		c.replaceSync("p{x:y}");
 		document.adoptedStyleSheets = [...document.adoptedStyleSheets, c];
 		[st.sheet.cssRules.length, st.textContent.split("\n").reverse().join("|"), c.cssRules.length, c.cssRules[0].cssText].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestCSSRules tests the CSSOM rule classes (CSSStyleRule etc), whose
+// prototypes the scripts of Google extend, and the rules of style sheets
+// as their instances, with the style of a style rule setting its text.
+func TestCSSRules(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s">a { color: red }
+@media (max-width: 500px) { b { color: blue } }
+@keyframes spin { from { opacity: 0 } to { opacity: 1 } }</style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true function true a 1 4 7 (max-width: 500px) b spin to green", run(t, e, `
+		const rs = document.getElementById("s").sheet.cssRules;
+		const st = rs[0];
+		st.style.color = "green";
+		[st instanceof CSSStyleRule, typeof CSSStyleRule.prototype.constructor, st instanceof CSSRule, st.selectorText,
+			st.type, rs[1].type, rs[2].type, rs[1].conditionText, rs[1].cssRules[0].selectorText, rs[2].name,
+			rs[2].cssRules[1].keyText, document.getElementById("s").sheet.cssRules[0].style.color].join(" ")`))
 	assert.Empty(t, *logs)
 }
 
@@ -913,5 +933,434 @@ func TestInsertedScriptBeforeLoad(t *testing.T) {
 	<-loaded
 	e.Wait()
 	assert.Equal(t, "set up on load", run(t, e, `document.getElementById("out").textContent`))
+	assert.Empty(t, *logs)
+}
+
+// TestProxyInstanceof tests instanceof with proxies of functions (as of
+// URL and Request, which scripts wrap to watch them), which threw in goja
+// (as in the getRequestURL of the bot checks of DataDome, for each fetch),
+// and that proxies still work otherwise.
+func TestProxyInstanceof(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true,false,true,5,function,https://a.b/c,1,true,TypeError", run(t, e, `
+		const P = new Proxy(URL, {});
+		const Q = new Proxy(Request, { apply(t, a, args) { return t(...args); }, get(t, k) { return k === "x" ? 5 : t[k]; } });
+		const o = new Proxy({ a: 1 }, {});
+		const r = Proxy.revocable(URL, {});
+		let called = "";
+		try { Proxy(URL, {}); } catch (e) { called = e.constructor.name; }
+		[new URL("https://a.b/") instanceof P, {} instanceof P, new Request("https://a.b/") instanceof Q, Q.x, typeof Q,
+			new Q("https://a.b/c").url, o.a, new URL("https://x.y/") instanceof r.proxy, called].join(",")`))
+	assert.Empty(t, *logs)
+}
+
+// TestUnhandledRejection tests that a promise that is rejected without a
+// handler (as by an error in an async function) is reported with the
+// stack of the error, as "Uncaught (in promise)" in browsers, and that one
+// that is handled is not (the errors of async functions were not shown,
+// as that of the captchas of DataDome, which then did not work).
+func TestUnhandledRejection(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `
+		function g() { let u; return u.hash; }
+		async function f() { await null; g(); }
+		f();
+		f().catch(() => {});
+		Promise.reject(new Error("handled later")).catch(() => {});`)
+	e.Wait() // (the microtasks run in the task)
+	require.Len(t, *logs, 1, *logs)
+	assert.Contains(t, (*logs)[0], "ERROR: Uncaught (in promise) TypeError: Cannot read property 'hash' of undefined")
+	assert.Contains(t, (*logs)[0], "at g (")
+}
+
+// TestFailedRequestLogged tests that a request of a script that fails
+// (with an error status) is in the console, as in browsers (as those of a
+// captcha, which said only that something went wrong).
+func TestFailedRequestLogged(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{"/ok.txt": "ok"})
+	run(t, e, `window.done = 0; fetch("/missing").then(() => done++); fetch("/ok.txt").then(() => done++);`)
+	assert.Eventually(t, func() bool { return run(t, e, `done`) == int64(2) }, 3*time.Second, 10*time.Millisecond)
+	e.Wait()
+	assert.Equal(t, []string{"WARN: GET https://example.com/missing: 404 Not Found"}, *logs)
+}
+
+// TestEventPrototypeAccessors tests that the target, currentTarget and
+// eventPhase of events are accessors of Event.prototype, as in browsers,
+// with which the delegated events of GitHub define the currentTarget of an
+// event as the element that matches their selector (its "More options"
+// of the sign in with a passkey got undefined).
+func TestEventPrototypeAccessors(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div class="js-details-target" id="d"><span id="s">x</span></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true js-details-target d BODY 0", run(t, e, `
+		const desc = Object.getOwnPropertyDescriptor(Event.prototype, "currentTarget");
+		let got = "";
+		document.addEventListener("click", ev => {
+			const match = ev.target.closest(".js-details-target");
+			Object.defineProperty(ev, "currentTarget", { configurable: true, enumerable: true, get() { return match; } });
+			got = ev.currentTarget.className + " " + ev.currentTarget.id;
+			Object.defineProperty(ev, "currentTarget", { configurable: true, enumerable: true, get: desc.get });
+		});
+		let after = "";
+		document.body.addEventListener("click", ev => { after = ev.currentTarget.tagName; });
+		const ev = new MouseEvent("click", { bubbles: true });
+		document.getElementById("s").dispatchEvent(ev);
+		[typeof desc.get === "function", got, after, ev.eventPhase].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestLoadEventNotInWindow tests that the load event of an element does not
+// reach a capturing listener of the window, as in browsers, while other
+// events do: whenReady of web-vitals (on nytimes.com) added another
+// listener for each load until the page was complete, which doubled them
+// until its scripts were stopped.
+func TestLoadEventNotInWindow(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><img id="i"></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "0 1 1", run(t, e, `
+		let loads = 0, errors = 0, docLoads = 0;
+		window.addEventListener("load", () => loads++, true);
+		window.addEventListener("error", () => errors++, true);
+		document.addEventListener("load", () => docLoads++, true);
+		const img = document.getElementById("i");
+		img.dispatchEvent(new Event("load"));
+		img.dispatchEvent(new Event("error"));
+		[loads, errors, docLoads].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestCSSRulesCached tests that the rules of a style sheet are not parsed
+// again on each read while the document does not change (nytimes.com read
+// them in loops, which ran for more than 10s), and that they are when the
+// sheet changes.
+func TestCSSRulesCached(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s"></style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	start := time.Now()
+	assert.Equal(t, "2000 true 2001", run(t, e, `
+		const st = document.getElementById("s");
+		let css = "";
+		for (let i = 0; i < 2000; i++) css += ".c" + i + " { color: red }\n";
+		st.textContent = css;
+		const sheet = st.sheet;
+		let n = 0;
+		for (let i = 0; i < sheet.cssRules.length; i++) if (sheet.cssRules[i].selectorText === ".c" + i) n++;
+		sheet.insertRule(".x { color: blue }", 0);
+		[n, sheet.cssRules[0].selectorText === ".x", sheet.cssRules.length].join(" ")`))
+	assert.Less(t, time.Since(start), 2*time.Second)
+	assert.Empty(t, *logs)
+}
+
+// TestInsertRuleSpeedy tests that the rules inserted one by one at the end
+// of the sheet of a style element (as emotion does, reading the length of
+// its rules for each) are quick to insert, and are in its text: on
+// nytimes.com this took more than 10s, as each insertion wrote the text of
+// all of the rules, and each read parsed them.
+func TestInsertRuleSpeedy(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s"></style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	start := time.Now()
+	assert.Equal(t, "5000 .c0 .c4999 true", run(t, e, `
+		const st = document.getElementById("s");
+		const sheet = st.sheet;
+		for (let i = 0; i < 5000; i++) sheet.insertRule(".c" + i + " { color: red; margin: 1px 2px 3px 4px }", sheet.cssRules.length);
+		[sheet.cssRules.length, sheet.cssRules[0].selectorText, sheet.cssRules[4999].selectorText, st.textContent.includes(".c2500 {")].join(" ")`))
+	assert.Less(t, time.Since(start), 3*time.Second)
+	assert.Empty(t, *logs)
+}
+
+// TestMutationObserver tests the records of the changes of the DOM that
+// mutation observers get: of the attributes of a detached element (with
+// which the selector observer of GitHub schedules its work, so that it
+// never polled for the sign in with GitHub Mobile), of the children added
+// to and removed from a subtree, with an attribute filter and old values,
+// and of text.
+func TestMutationObserver(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="root"><p id="p">text</p></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		window.__out = [];
+		const d = document.createElement("div");
+		new MutationObserver(rs => __out.push("twiddle:" + rs.length)).observe(d, {attributes: true});
+		d.setAttribute("data-twiddle", "1");
+		const root = document.getElementById("root");
+		new MutationObserver(rs => {
+			for (const r of rs) __out.push(r.type + ":" + (r.attributeName || "") + ":" + (r.oldValue || "") + ":" + r.addedNodes.length + "/" + r.removedNodes.length + ":" + r.target.nodeName);
+		}).observe(root, {subtree: true, childList: true, attributeFilter: ["class"], attributeOldValue: true, characterDataOldValue: true});
+		const s = document.createElement("span");
+		root.appendChild(s);
+		s.className = "a";
+		s.className = "b";
+		s.id = "ignored";
+		document.getElementById("p").firstChild.data = "new";
+		s.remove();
+		0`)
+	time.Sleep(200 * time.Millisecond)
+	assert.Equal(t, "twiddle:1 childList:::1/0:DIV attributes:class::0/0:SPAN attributes:class:a:0/0:SPAN characterData::text:0/0:#text childList:::0/1:DIV", run(t, e, `__out.join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestElementClasses tests the classes of more elements, which scripts use
+// (as the select panel of the pull requests of GitHub, which checks for
+// HTMLOptGroupElement, which was not defined).
+func TestElementClasses(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><select><optgroup id="g" label="Group"><option>a</option></optgroup></select><table><tbody id="tb"><tr><td>x</td></tr></tbody></table><time id="t" datetime="2026-11-10">today</time></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true Group true 1 true 2026-11-10 true true", run(t, e, `
+		const g = document.getElementById("g");
+		[g instanceof HTMLOptGroupElement, g.label, document.getElementById("tb") instanceof HTMLTableSectionElement,
+			document.getElementById("tb").rows.length, document.getElementById("t") instanceof HTMLTimeElement,
+			document.getElementById("t").dateTime, document.createElement("picture") instanceof HTMLPictureElement,
+			typeof HTMLProgressElement === "function"].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestDOMExceptionErrors tests that the errors of the DOM are
+// DOMExceptions, with their names and codes, which the scripts of GitHub
+// check for, to ignore defining a custom element again (as the toggle
+// switch, which threw).
+func TestDOMExceptionErrors(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "ignored true NotSupportedError 9 9", run(t, e, `
+		class A extends HTMLElement {}
+		customElements.define("my-a", A);
+		let out = "";
+		try {
+			customElements.define("my-a", class extends HTMLElement {});
+		} catch (e) {
+			if (!(e instanceof DOMException && e.name === "NotSupportedError")) throw e;
+			out = ["ignored", e instanceof Error, e.name, e.code, DOMException.NOT_SUPPORTED_ERR].join(" ");
+		}
+		out`))
+	assert.Empty(t, *logs)
+}
+
+// TestAttributeNodes tests the attributes of elements as nodes (Attr), as
+// getAttributeNode, which the key handler of the sign in of Google uses
+// for the tabindex (it was not defined, so that the sign in stopped).
+func TestAttributeNodes(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d" tabindex="0" class="a"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "tabindex 0 true  b 3 x y", run(t, e, `
+		const d = document.getElementById("d");
+		const at = d.getAttributeNode("tabindex");
+		const out = [at.name, at.value, at.ownerElement === d, d.getAttributeNode("nope")];
+		d.attributes.getNamedItem("class").value = "b";
+		out.push(d.className, d.attributes.length);
+		const n = document.createAttribute("data-x");
+		n.value = "x";
+		d.setAttributeNode(n);
+		n.value = "y";
+		out.push(d.removeAttributeNode(d.getAttributeNode("data-x")).value === "y" ? "x" : "?", "y");
+		out.join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestModuleMethodRequire tests that a method named require in a module
+// (as a.require("util") of lodash in the chunks of GitHub) is not an
+// import of it, which failed the import of the module.
+func TestModuleMethodRequire(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{
+		"/chunk.js": `export const ids = ["d"]; export const util = function () { var a = { require: null }; try { return a && a.require && a.require("util").types; } catch (e) {} }();`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.res = ""; __dynamicImport("https://example.com/page.html", "./chunk.js").then(m => { window.res = "ok " + m.ids; }, err => { window.res = "err " + err; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`window.res`)
+		return v == "ok d"
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestRange tests the contents of ranges: the children of an element
+// replaced by those of another (as the frames of Turbo on GitHub do), and
+// the characters of text.
+func TestRange(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="a"><b>1</b><i>2</i></div><div id="b"><u>3</u><s>4</s></div><p id="t">hello world</p></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "<u>3</u><s>4</s>|", run(t, e, `
+		const a = document.getElementById("a"), b = document.getElementById("b");
+		const r = document.createRange();
+		r.selectNodeContents(a);
+		r.deleteContents();
+		const s = b.ownerDocument.createRange();
+		s.selectNodeContents(b);
+		a.appendChild(s.extractContents());
+		a.innerHTML + "|" + b.innerHTML`))
+	assert.Equal(t, "world|hello x|true", run(t, e, `
+		const tx = document.getElementById("t").firstChild;
+		const q = new Range();
+		q.setStart(tx, 6); q.setEnd(tx, 11);
+		const w = q.toString();
+		q.deleteContents();
+		q.insertNode(document.createTextNode("x"));
+		w + "|" + document.getElementById("t").textContent + "|" + q.collapsed`))
+	assert.Empty(t, *logs)
+}
+
+// TestPerformanceResourceTimings tests the resource timing methods of
+// performance (clearResourceTimings, called on a soft navigation of
+// GitHub, which threw on a click of a link).
+func TestPerformanceResourceTimings(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "ok", run(t, e, `performance.clearResourceTimings(); performance.setResourceTimingBufferSize(250); "ok"`))
+}
+
+// TestLogURL tests that long URLs in logs keep both of their ends (the
+// module lists at the ends of the URLs of the scripts of Google).
+func TestLogURL(t *testing.T) {
+	u := "https://www.gstatic.com/_/js/k=x/" + strings.Repeat("a", 1500) + "/m=ZwDk9d,RMhBfe"
+	l := logURL(u)
+	assert.True(t, strings.HasPrefix(l, "https://www.gstatic.com/_/js/k=x/"))
+	assert.True(t, strings.HasSuffix(l, "/m=ZwDk9d,RMhBfe"))
+	assert.Less(t, len(l), 260)
+	assert.Equal(t, "data:text/plain,…", logURL("data:text/plain,hello"))
+}
+
+// TestStorageKeys tests the keys of localStorage (Object.keys, as GitHub
+// gets them, which threw for a hidden property of its proxy) and that its
+// methods work on it.
+func TestStorageKeys(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "a,b|1|2", run(t, e, `localStorage.setItem("a", "1"); localStorage.b = "2";
+		Object.keys(localStorage).sort().join(",") + "|" + localStorage.getItem("a") + "|" + localStorage.length`))
+}
+
+// TestIframeSandbox tests the sandbox token list of iframes (which Google
+// adds restrictions to, and which was undefined).
+func TestIframeSandbox(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "allow-scripts allow-forms|true", run(t, e, `const f = document.createElement("iframe");
+		f.setAttribute("sandbox", "");
+		for (const t of ["allow-scripts", "allow-forms"]) f.sandbox.supports && !f.sandbox.supports(t) || f.sandbox.add(t);
+		f.getAttribute("sandbox") + "|" + f.sandbox.contains("allow-forms")`))
+}
+
+// TestOffsetParentEnds tests that walking up the offset parents ends (the
+// body has none, as in browsers: the files of GitHub pull requests walked
+// up them to null, which hung the page at the body).
+func TestOffsetParentEnds(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><div><textarea></textarea></div></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	e, err := New(doc, Options{PageURL: "https://example.com/",
+		Layout: func(n *html.Node) (x, y, w, h float32, ok bool) { return 0, 0, 10, 10, true }})
+	require.NoError(t, err)
+	defer e.Close()
+	assert.Equal(t, "null|null|true", run(t, e, `
+		let n = 0;
+		for (let t = document.querySelector("textarea"); t && n < 10; t = t.offsetParent instanceof HTMLElement ? t.offsetParent : null) n++;
+		String(document.body.offsetParent) + "|" + String(document.documentElement.offsetParent) + "|" + (n < 10)`))
+}
+
+// TestInsertedScriptSync tests that an inline script inserted by a script
+// runs in appendChild, as in browsers (Google inserts the code of its bot
+// check, removes it right after, and uses what it defined), with it as
+// the current script, and that modules and scripts set by innerHTML do not.
+func TestInsertedScriptSync(t *testing.T) {
+	e, logs := testEngine(t, `<html><head></head><body></body></html>`, nil)
+	assert.Equal(t, "1|true|undefined|outer", run(t, e, `
+		window.outer = "outer";
+		const s = document.createElement("script");
+		s.id = "bg";
+		s.textContent = "window.bgDefined = 1; window.cur = document.currentScript && document.currentScript.id === 'bg';";
+		document.head.appendChild(s);
+		s.remove();
+		const d = document.createElement("div");
+		d.innerHTML = "<script>window.inner = 1<\/script>";
+		document.body.appendChild(d);
+		const m = document.createElement("script");
+		m.type = "module";
+		m.textContent = "window.mod = 1";
+		document.body.appendChild(m);
+		[window.bgDefined, window.cur, String(window.mod), window.outer].join("|")`))
+	assert.Empty(t, *logs)
+}
+
+// TestWindowClass tests the Window class (GitHub checks if a scroll
+// container is a window with instanceof Window, which was not defined).
+func TestWindowClass(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true|false|false|true", run(t, e, `[window instanceof Window, document.body instanceof Window, ({}) instanceof Window, typeof Window === "function"].join("|")`))
+}
+
+// TestModuleOwnRequire tests that a call of require in a module itself is
+// not an import of it, but throws when it runs, as in browsers (as the
+// optional dependency of framer-motion in a chunk of GitHub, in a try,
+// which failed the import of the chunk as it was not found), and that a
+// module that also imports it gets it.
+func TestModuleOwnRequire(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{
+		"/chunk.js": `let h = null; try { h = require("@emotion/is-prop-valid").default; } catch {} export const ids = ["t1r"], optional = h === null;`,
+		"/both.js":  `import x from "./dep.js"; export const v = x + require("./dep.js").default;`,
+		"/dep.js":   `export default 2;`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.res = "";
+		__dynamicImport("https://example.com/page.html", "./chunk.js").then(m => { res += "ok " + m.ids + " " + m.optional + ";"; }, err => { res += "err " + err + ";"; });
+		__dynamicImport("https://example.com/page.html", "./both.js").then(m => { res += "both " + m.v + ";"; }, err => { res += "err " + err + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "ok t1r true;") && strings.Contains(s, "both 4;")
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestNumberToLocaleString tests the locale strings of numbers, with a
+// locale and options (goja took the locale as a radix, and threw a
+// RangeError, which broke the pull request list of GitHub).
+func TestNumberToLocaleString(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "1,234.5|1,234|12M|0.5", run(t, e, `[(1234.5).toLocaleString("en-US"), (1234).toLocaleString(), (12345678).toLocaleString("en-US", {notation: "compact"}), (0.5).toLocaleString(undefined, {maximumFractionDigits: 1})].join("|")`))
+}
+
+// TestSelectorIsWhere tests :is() and :where() in the selectors of
+// scripts (as the focusable elements of the menus of GitHub, which were
+// not a valid selector, and failed the pull request list).
+func TestSelectorIsWhere(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><button id="b">b</button><button id="d" disabled>d</button><a id="a" href="#" data-overflowing>a</a><p id="p">p</p></body></html>`, nil)
+	assert.Equal(t, "true|false|false|false|b,a", run(t, e, `const sel = ":is(button, a, input, [tabindex]):not(:disabled):not([data-overflowing])";
+		[document.getElementById("b").matches(sel), document.getElementById("d").matches(sel), document.getElementById("a").matches(sel), document.getElementById("p").matches(sel),
+		[...document.querySelectorAll(":where(button, a):not([disabled])")].map(x => x.id).join(",")].join("|")`))
+}
+
+// TestDeferredScripts tests that the scripts with defer (and modules) of
+// a document run after the others, in order, before DOMContentLoaded, as
+// in browsers: a deferred script in the head uses a variable of an inline
+// script in the body.
+func TestDeferredScripts(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><script>window.order = ["head"];</script>
+		<script defer src="/d.js"></script><script async src="/a.js"></script></head>
+		<body><script>var config = { ok: 1 }; order.push("body");</script>
+		<script type="module">order.push("module");</script>
+		<script>document.addEventListener("DOMContentLoaded", () => order.push("loaded"));</script></body></html>`, map[string]string{
+		"/d.js": `order.push("defer " + config.ok);`,
+		"/a.js": `order.push("async");`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "head,async,body,defer 1,module,loaded", run(t, e, `order.join(",")`))
 	assert.Empty(t, *logs)
 }

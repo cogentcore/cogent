@@ -11,7 +11,11 @@ import (
 	"log/slog"
 	"maps"
 	"math"
+	"net/url"
 	neturl "net/url"
+	"os"
+	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,7 +34,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
@@ -61,6 +64,10 @@ type pageScripts struct {
 
 	// width is the width of the viewport that the document is read for.
 	width float32
+
+	// height is the height of the viewport that the page is read for, in
+	// CSS px (see Page.viewportHeight), or 0 if it was not known.
+	height float32
 
 	// seen is the size of the viewport that the scripts last got, if
 	// they have, for firing resize events when it changes.
@@ -96,8 +103,12 @@ type pageScripts struct {
 	laidOut bool
 
 	// renders is the number of times that the page has been rendered
-	// again after it was shown (for tests).
+	// again after it was shown, restyles the number of times that its
+	// widgets were styled again instead, and rereads the number of times
+	// that only the elements that changed were read again (for tests).
 	renders    int
+	restyles   int
+	rereads    int
 	renderTime time.Duration
 
 	consoleMu sync.Mutex
@@ -106,12 +117,14 @@ type pageScripts struct {
 
 // newPageScripts returns the scripts of the given parsed document of the
 // page, which was gotten with the given context, for the given final URL.
-func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final string) (*pageScripts, error) {
-	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth}
+func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, openedBy string) (*pageScripts, error) {
+	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight}
 	e, err := script.New(doc, script.Options{
 		PageURL:       final,
 		GetURL:        ctx.GetURL,
 		Render:        ps.render,
+		Restyle:       ps.restyle,
+		Reread:        ps.reread,
 		Layout:        ps.layout,
 		ElementAt:     ps.elementAt,
 		ComputedStyle: ps.computedStyle,
@@ -119,15 +132,33 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
 		Navigate:      ps.navigate,
 		Submit:        ps.submit,
+		SubmitFrame:   ps.submitFrame,
 		PushState:     ps.pushState,
 		Storage:       localStorage,
 		Cookies:       cookies,
 		Log:           ps.log,
+		Trace:         func() bool { return Settings.VerboseConsole },
+		Parent:        pg.parentEngine,
+		FrameOf:       pg.frameEngine,
 	})
 	if err != nil {
 		return nil, err
 	}
 	ps.engine = e
+	if Settings.VerboseConsole {
+		// the page itself, as the first message (a page without scripts
+		// has no others)
+		n := 0
+		for k := range doc.Descendants() {
+			if k.Type == html.ElementNode && k.Data == "script" {
+				n++
+			}
+		}
+		ps.log(slog.LevelDebug, fmt.Sprintf("page %s: %d scripts", final, n))
+		if openedBy != "" {
+			ps.log(slog.LevelDebug, "opened by "+openedBy)
+		}
+	}
 	return ps, nil
 }
 
@@ -148,6 +179,7 @@ func (ps *pageScripts) log(level slog.Level, msg string) {
 		ps.console = ps.console[1:]
 	}
 	ps.console = append(ps.console, level.String()+": "+msg)
+	go ps.pg.consoleChanged() // (not with consoleMu)
 }
 
 // read reads the document into a new frame for the content of the page,
@@ -158,6 +190,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.GetURL = ps.base.GetURL
 	ctx.ImageCache = ps.base.ImageCache
 	ctx.MediaWidth = ps.width
+	ctx.MediaHeight = ps.height
 	ctx.OpenURL = ps.openURL
 	ctx.OpenLink = ps.openLink
 	ctx.Checked = func(n *html.Node) bool { // the state from the user and the scripts
@@ -185,6 +218,11 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		return true
 	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
+	ctx.OnTransition = ps.transitions
+	// the containers start with the sizes that they have now, for the
+	// elements in them, as of font-size: 1cqw, not to be shown at the
+	// size of the viewport until the new widgets are laid out
+	ctx.KeepContainerSizes(ps.ctx)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
 	ps.ctx = ctx
@@ -202,20 +240,9 @@ func (ps *pageScripts) render() func() {
 		ps.pending = true
 		return nil
 	}
-	// the scripts get a resize event if the viewport has another size
-	// than they got (as it may not have its size while the page loads)
-	if ps.seen != (math32.Vector2{}) {
-		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
-			ps.engine.Resized()
-		}
-	}
-	if ps.layoutMissed {
-		// the scripts got the boxes of elements before the page had a
-		// layout (as the slider of the photos of the postings of
-		// craigslist.org, which was as wide as nothing), and they get a
-		// resize event to get them again, now that it has one
-		ps.layoutMissed = false
-		ps.engine.Resized()
+	ps.resizeIfNeeded()
+	if testReadHook != nil {
+		testReadHook(ps)
 	}
 	start := time.Now()
 	content, err := ps.read()
@@ -223,6 +250,10 @@ func (ps *pageScripts) render() func() {
 		ps.log(slog.LevelError, "reading the page: "+err.Error())
 		return nil
 	}
+	if d := time.Since(start); Settings.VerboseConsole && d >= 50*time.Millisecond {
+		ps.log(slog.LevelDebug, fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond)))
+	}
+	ps.pg.preLayoutContent(content)
 	ps.renders++
 	ps.renderTime += time.Since(start)
 	ctx := ps.ctx
@@ -241,6 +272,7 @@ func (ps *pageScripts) render() func() {
 			// which were laid out for the width of the screen until the
 			// window was resized)
 			pg.checkedWidth = ctx.MediaWidth
+			pg.checkedHeight = ctx.MediaHeight
 		}
 		// the element that has the focus keeps it in the new widgets, and
 		// the elements that scroll keep their scroll positions (as the
@@ -263,9 +295,7 @@ func (ps *pageScripts) render() func() {
 		}
 		pageScroll := pg.Geom.Scroll
 		pg.Title = ctx.Title
-		pg.DeleteChildren()
-		pg.AddChild(content)
-		pg.Update()
+		pg.setContent(content)
 		content.Defer(func() {
 			restoreScrolls(content, scrolls)
 			for d := math32.X; d <= math32.Y; d++ {
@@ -287,6 +317,146 @@ func (ps *pageScripts) render() func() {
 				return tree.Continue
 			})
 		}
+	}
+}
+
+// resizeIfNeeded fires a resize event for the scripts as the page is
+// rendered, if they need one.
+func (ps *pageScripts) resizeIfNeeded() {
+	// the scripts get a resize event if the viewport has another size
+	// than they got (as it may not have its size while the page loads)
+	if ps.seen != (math32.Vector2{}) {
+		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
+			ps.engine.Resized()
+		}
+	}
+	if ps.layoutMissed {
+		// the scripts got the boxes of elements before the page had a
+		// layout (as the slider of the photos of the postings of
+		// craigslist.org, which was as wide as nothing), and they get a
+		// resize event to get them again, now that it has one
+		ps.layoutMissed = false
+		ps.engine.Resized()
+	}
+}
+
+// restyle styles the widgets of the given elements again for the changes
+// of their styles (see [script.Options.Restyle]), returning the function
+// that does it with the lock held, which returns false if it can not (for
+// the page to be rendered instead).
+func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
+	if !ps.shown {
+		return nil // (rendered once it is shown)
+	}
+	return func() bool {
+		pg := ps.pg
+		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil {
+			return false
+		}
+		start := time.Now()
+		if !ps.ctx.Restyle(nodes) {
+			ps.logFallback("restyle", "reading the changed elements again")
+			return false
+		}
+		ps.restyles++
+		ps.renderTime += time.Since(start)
+		ps.laidOut = false // (laid out again for the boxes of the scripts)
+		return true
+	}
+}
+
+// testReadHook, if set, is called before a page is read again (for tests).
+var testReadHook func(ps *pageScripts)
+
+// longTask is how long a task of the scripts of a page holds the page
+// (which is not responsive meanwhile) for it to be in a verbose console.
+const longTask = 100 * time.Millisecond
+
+// reread reads the given elements of the page again for the changes of
+// the document (see [script.Options.Reread]), returning the function that
+// does it with the lock held, which returns false if it can not (for the
+// page to be rendered instead).
+func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
+	if !ps.shown {
+		return nil // (rendered once it is shown)
+	}
+	ps.resizeIfNeeded()
+	return func() bool {
+		pg := ps.pg
+		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil || pg.NumChildren() != 1 {
+			return false
+		}
+		content, ok := pg.Child(0).(*core.Frame)
+		if !ok {
+			return false
+		}
+		start := time.Now()
+		if len(styled) > 0 && !ps.ctx.Restyle(styled) {
+			// (as for a change of their display, for which they are read
+			// again as elements that have changed themselves)
+			ps.logFallback("restyle", "reading the changed elements again")
+			self = append(slices.Clip(self), styled...)
+		}
+		// the element that has the focus, and the scroll positions, for
+		// the widgets that are made new; the pages of the frames are kept
+		// out of their boxes, which may be made new, and put back in them
+		var focused *html.Node
+		var focusedWidget core.Widget
+		scrolls := map[*html.Node]math32.Vector2{}
+		content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if cwb.StateIs(states.Focused) {
+				focused, focusedWidget = htmlcore.NodeOf(cw), cw
+			}
+			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
+				if n := htmlcore.NodeOf(cw); n != nil {
+					scrolls[n] = fr.Geom.Scroll
+				}
+			}
+			if _, isFrame := cw.(*Page); isFrame {
+				return tree.Break
+			}
+			return tree.Continue
+		})
+		hold := core.NewFrame()
+		for _, fp := range pg.frames {
+			if fp.Parent != nil {
+				tree.MoveToParent(fp, hold)
+			}
+		}
+		ok = ps.ctx.Reread(self, children)
+		opens := pg.attachFrames(content)
+		for _, fp := range pg.frames {
+			fp.setShown()
+		}
+		if !ok {
+			ps.logFallback("reread", "reading the page whole")
+			return false
+		}
+		if pg.media != nil && pg.media.ctx == ps.ctx {
+			// the width is checked again for the media queries of the
+			// rules that the changes may have added to the style sheets of
+			// the page (as when it is read whole, see render)
+			pg.checkedWidth = ps.ctx.MediaWidth
+			pg.checkedHeight = ps.ctx.MediaHeight
+		}
+		for _, open := range opens {
+			open()
+		}
+		restoreScrolls(content, scrolls)
+		if focused != nil && focusedWidget.AsTree().This == nil { // (made new)
+			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if htmlcore.NodeOf(cw) == focused {
+					cwb.SetFocus()
+					return tree.Break
+				}
+				return tree.Continue
+			})
+		}
+		ps.rereads++
+		ps.renderTime += time.Since(start)
+		ps.widgets = nil
+		ps.laidOut = false
+		return true
 	}
 }
 
@@ -342,7 +512,7 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 		}
 		// (the default action of a click on the text of a summary, which
 		// gets the click instead of it, toggles its details in the scripts)
-		ps.engine.Dispatch(n, "click", mouseProps(ev), nil)
+		ps.engine.Dispatch(n, "click", ps.pointerProps(ev), nil)
 	})
 }
 
@@ -355,7 +525,23 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 	if ps.engine.Closed() {
 		return
 	}
-	var deepest *html.Node
+	deepest, _ := ps.nodeAt(pos)
+	if deepest == ps.hovered {
+		return
+	}
+	from := ps.hovered
+	ps.hovered = deepest
+	x, y := ps.clientPos(pos)
+	ps.engine.Hover(from, deepest, x, y)
+	ps.engine.Post(func() { ps.setHovered(deepest) })
+}
+
+// nodeAt returns the deepest element of the page under the given position
+// in the window (nil if it is not in the page), and whether the position
+// is in the page of a frame of the page, whose iframe element it then
+// returns, as the page in the frame gets the events of the mouse there,
+// as in browsers.
+func (ps *pageScripts) nodeAt(pos image.Point) (deepest *html.Node, framed bool) {
 	var visit func(wb *core.WidgetBase)
 	visit = func(wb *core.WidgetBase) {
 		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
@@ -368,6 +554,10 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 				continue
 			}
 			if pos.In(kw.Geom.TotalBBox) {
+				if _, isFrame := kw.This.(*Page); isFrame {
+					framed = true // (of the iframe that it is in)
+					return
+				}
 				visit(kw)
 				return
 			}
@@ -376,18 +566,51 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 	if pos.In(ps.pg.Geom.TotalBBox) {
 		visit(ps.pg.AsWidget())
 	}
-	if deepest == ps.hovered {
-		return
-	}
-	from := ps.hovered
-	ps.hovered = deepest
-	dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp) * ps.pg.zoomFactor()
+	return
+}
+
+// clientPos returns the given position in the window in the CSS px of the
+// page, relative to its top left, as the scripts get the positions of the
+// mouse (as clientX and clientY).
+func (ps *pageScripts) clientPos(pos image.Point) (x, y float32) {
+	dp := ps.pg.pxDots()
 	if dp <= 0 {
 		dp = 1
 	}
 	off := ps.pg.Geom.Pos.Content
-	ps.engine.Hover(from, deepest, (float32(pos.X)-off.X)/dp, (float32(pos.Y)-off.Y)/dp)
-	ps.engine.Post(func() { ps.setHovered(deepest) })
+	return (float32(pos.X) - off.X) / dp, (float32(pos.Y) - off.Y) / dp
+}
+
+// pressAt dispatches the events of a mouse button that is pressed (down)
+// or released at the given position in the window to the element under it
+// (pointerdown and mousedown, or pointerup and mouseup), as for the
+// controls of scripts that act on them rather than on clicks (as the
+// checkbox of reCAPTCHA, which did nothing).
+func (ps *pageScripts) pressAt(ev events.Event, down bool) {
+	if ps.engine.Closed() {
+		return
+	}
+	n, framed := ps.nodeAt(ev.WindowPos())
+	if n == nil || framed {
+		return
+	}
+	ps.engine.Press(n, down, ps.pointerProps(ev))
+}
+
+// pointerProps returns the properties of a mouse event for the given event
+// of the mouse: its modifier keys, its position, and its (left) button.
+func (ps *pageScripts) pointerProps(ev events.Event) map[string]any {
+	props := mouseProps(ev)
+	x, y := ps.clientPos(ev.WindowPos())
+	for _, k := range []string{"clientX", "pageX", "screenX", "x"} {
+		props[k] = x
+	}
+	for _, k := range []string{"clientY", "pageY", "screenY", "y"} {
+		props[k] = y
+	}
+	props["button"] = 0
+	props["detail"] = 1
+	return props
 }
 
 // setHovered sets the elements that the mouse is over to the given one and
@@ -407,14 +630,20 @@ func (ps *pageScripts) setHovered(n *html.Node) {
 			set[n] = true
 		}
 	}
-	changed := len(set) != len(ps.hoverSet)
+	// the elements whose hover changed are restyled
+	var changed []*html.Node
 	for n := range set {
-		changed = changed || !ps.hoverSet[n]
+		if !ps.hoverSet[n] {
+			changed = append(changed, n)
+		}
+	}
+	for n := range ps.hoverSet {
+		if !set[n] {
+			changed = append(changed, n)
+		}
 	}
 	ps.hoverSet = set
-	if changed {
-		ps.engine.Changed()
-	}
+	ps.engine.StateChanged(changed...)
 }
 
 // restoreScrolls restores the given scroll positions of the elements that
@@ -483,7 +712,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		case isSubmitter(n):
 			wb.OnClick(func(ev events.Event) {
 				ev.SetHandled()
-				e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+				e.Dispatch(n, "click", ps.pointerProps(ev), func(prevented bool) {
 					if !prevented {
 						e.Activate(n)
 					}
@@ -543,9 +772,15 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		x.OnChange(func(ev events.Event) {
 			checked := x.IsChecked()
 			e.Dispatch(n, "click", map[string]any{"checked": checked}, func(bool) {
-				// the page is read again, for the :checked selectors (as the
-				// CSS menus of Wikipedia, which show when a checkbox is checked)
-				e.Changed()
+				// the checkbox is restyled, for the :checked selectors (as the
+				// CSS menus of Wikipedia, which show when a checkbox is
+				// checked); the page is read again for the radio buttons
+				// that are unchecked with it
+				if strings.EqualFold(htmlcore.GetAttr(n, "type"), "checkbox") {
+					e.StateChanged(n)
+				} else {
+					e.Changed()
+				}
 				e.Dispatch(n, "input", nil, nil)
 				e.Dispatch(n, "change", nil, nil)
 			})
@@ -600,7 +835,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 			ps.followLink(href, ev)
 			return
 		}
-		e.Dispatch(n, "click", mouseProps(ev), func(prevented bool) {
+		e.Dispatch(n, "click", ps.pointerProps(ev), func(prevented bool) {
 			if !prevented {
 				ps.followLink(href, ev)
 			}
@@ -753,7 +988,7 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 	}
 	props := map[string]any{}
 	if ev != nil {
-		props = mouseProps(ev)
+		props = ps.pointerProps(ev)
 	}
 	ps.engine.Dispatch(link, "click", props, func(prevented bool) {
 		if prevented {
@@ -763,6 +998,28 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 			ps.engine.Eval(strings.TrimSpace(url)[len("javascript:"):])
 			return
 		}
+		by := "a link of " + pg.currentURL() + " (" + htmlcore.GetAttr(link, "href") + ")"
+		// in the page of its target (as _top, of the links of the account
+		// menu of Google in a frame)
+		if t := htmlcore.GetAttr(link, "target"); t != "" {
+			if u, err := htmlcore.ParseRelativeURL(url, pg.currentURL()); err == nil {
+				url = u.String()
+			}
+			tp := pg.targetPage(t)
+			if tp == nil {
+				if top := pg.topPage(); top.OpenNewTab != nil {
+					top.OpenNewTab(url)
+					return
+				}
+				tp = pg.topPage()
+			}
+			if tp != pg {
+				tp.openedBy = by
+				tp.OpenURL(url, nil)
+				return
+			}
+		}
+		pg.openedBy = by
 		pg.OpenURL(url, ev)
 	})
 }
@@ -811,6 +1068,7 @@ func (ps *pageScripts) navigate(url string, replace bool) {
 	if pg.scripts != ps {
 		return
 	}
+	pg.openedBy = "a script of " + pg.currentURL() + ps.engine.NavigateStack()
 	if replace && pg.Current < len(pg.History) {
 		pg.open(url, historyAt, pg.Current, 0)
 		return
@@ -829,7 +1087,44 @@ func (ps *pageScripts) submit(url, contentType string, body []byte) {
 	if pg.scripts != ps {
 		return
 	}
+	pg.openedBy = "a form of " + pg.currentURL()
 	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+}
+
+// submitFrame opens the page of the given URL in the frame of the given
+// iframe of the page, as for a form whose target is its name, with a POST
+// request with the given body (of the given content type) if post, or
+// else a GET (after the task of the scripts).
+func (ps *pageScripts) submitFrame(iframe *html.Node, url, contentType string, body []byte, post bool) {
+	pg := ps.pg
+	if !pg.AsyncLockIfShown() {
+		return
+	}
+	defer pg.AsyncUnlock()
+	if pg.scripts != ps {
+		return
+	}
+	by := "a form of " + pg.currentURL()
+	open := func(fp *Page) {
+		fp.openedBy = by
+		if !post {
+			fp.OpenURL(url, nil)
+			return
+		}
+		fp.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
+	}
+	fp := pg.frames[iframe]
+	if fp == nil {
+		// an iframe that is not shown yet (as Google inserts the iframe
+		// of its account menu and submits its form to it at once), which
+		// opens it when it is
+		if pg.frameOpens == nil {
+			pg.frameOpens = map[*html.Node]func(fp *Page){}
+		}
+		pg.frameOpens[iframe] = open
+		return
+	}
+	open(fp)
 }
 
 // pushState changes the URL of the page without opening it, as for
@@ -860,11 +1155,19 @@ func (ps *pageScripts) viewport() (float32, float32) {
 func (ps *pageScripts) viewportSize() (float32, float32) {
 	pg := ps.pg
 	w := ps.width
-	h := float32(768)
-	if dp := pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 {
-		if fr := core.AsFrame(pg.Parent); fr != nil && fr.Geom.Size.Alloc.Content.Y > 0 {
-			h = fr.Geom.Size.Alloc.Content.Y / dp / pg.zoomFactor()
+	// (as of the last layout of the page: the widgets are not read here,
+	// without the lock of the page)
+	if pg.frame != nil {
+		// that of the frame as it is now (as for the scripts of the page
+		// of a frame that was read for its width before it was laid out,
+		// which get a resize event for it; see render)
+		if fw := math.Float32frombits(pg.viewportW.Load()); fw > 0 {
+			w = fw
 		}
+	}
+	h := float32(768)
+	if vh := math.Float32frombits(pg.viewportH.Load()); vh > 0 {
+		h = vh
 	}
 	return w, h
 }
@@ -890,13 +1193,17 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 		return
 	}
 	if !ps.laidOut {
+		lt := time.Now()
 		pg.Scene.LayoutScene()
 		ps.laidOut = true
+		if d := time.Since(lt); Settings.VerboseConsole && d >= 50*time.Millisecond {
+			ps.log(slog.LevelDebug, fmt.Sprintf("laying out the page for the box of an element took %v", d.Round(time.Millisecond)))
+		}
 	}
 	if wb.Styles.Display == styles.DisplayNone || wb.StateIs(states.Invisible) {
 		return
 	}
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
 	if dp <= 0 {
 		return
 	}
@@ -914,7 +1221,7 @@ func (ps *pageScripts) elementAt(x, y float32) *html.Node {
 	if !ps.shown || pg.scripts != ps || pg.Scene == nil {
 		return nil
 	}
-	dp := pg.Styles.UnitContext.Dots(units.UnitDp)
+	dp := pg.pxDots()
 	if dp <= 0 {
 		return nil
 	}
@@ -957,7 +1264,7 @@ func (ps *pageScripts) computedStyle(n *html.Node, prop string) string {
 	switch {
 	case prop == "font-size":
 		if wb := ps.widgetOf(n); wb != nil {
-			if dp := ps.pg.Styles.UnitContext.Dots(units.UnitDp); dp > 0 && wb.Styles.Font.Size.Dots > 0 {
+			if dp := ps.pg.pxDots(); dp > 0 && wb.Styles.Font.Size.Dots > 0 {
 				return strconv.FormatFloat(float64(wb.Styles.Font.Size.Dots/dp), 'f', -1, 32) + "px"
 			}
 		}
@@ -1024,15 +1331,17 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 // load), and then runs its scripts, after which (and as they change it)
 // it is rendered again, with the given change to the history. It returns
 // false if its scripts cannot be run, for the page to be read without them.
-func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool) bool {
+func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string) bool {
 	ctx.Scripting = true
-	ctx.ImageCache = htmlcore.NewImageCache(64 << 20)
+	// (as the photos of the front page of nytimes.com, which are read
+	// again with the page as its scripts change it)
+	ctx.ImageCache = htmlcore.NewImageCache(256 << 20)
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
 		return false
 	}
-	ps, err := pg.newPageScripts(ctx, doc, final)
+	ps, err := pg.newPageScripts(ctx, doc, final, openedBy)
 	if err != nil {
 		slog.Error("web: running the scripts of the page", "url", final, "err", err)
 		ctx.Scripting = false
@@ -1055,6 +1364,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		core.ErrorSnackbar(pg, err, "Error opening page")
 		pg.opened(pg.currentURL())
 		ps.engine.Close()
+		pg.frameLoaded()
 		return true
 	}
 	// a page that redirects is replaced by the page that it redirects to
@@ -1070,16 +1380,14 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	pg.Title = ps.ctx.Title
 	pg.setMedia(&pageMedia{ctx: ps.ctx, html: page, url: final, cache: cache})
 	pg.showScripts(ps)
-	pg.DeleteChildren()
-	pg.AddChild(content)
-	pg.Update()
+	pg.setContent(content)
 	if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
 		pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
 	} else if mode == historyNew {
 		pg.scrollToTop()
 	}
 	pg.opened(final)
-	ps.engine.Load(nil) // rendered again after the load event
+	ps.engine.Load(pg.frameLoaded) // rendered again after the load event
 	return true
 }
 
@@ -1095,7 +1403,21 @@ func (pg *Page) showScripts(ps *pageScripts) {
 		return
 	}
 	ps.shown = true
-	ps.engine.SetLock(pg.AsyncLockIfShown, pg.AsyncUnlock)
+	// (the tasks that hold the page for long, which it is not responsive
+	// for, are in a verbose console)
+	var locked time.Time
+	ps.engine.SetLock(func() bool {
+		ok := pg.AsyncLockIfShown()
+		if ok {
+			locked = time.Now()
+		}
+		return ok
+	}, func() {
+		if d := time.Since(locked); Settings.VerboseConsole && d >= longTask {
+			ps.log(slog.LevelDebug, fmt.Sprintf("a task of the scripts held the page for %v", d.Round(time.Millisecond)))
+		}
+		pg.AsyncUnlock()
+	})
 	if ps.pending {
 		ps.pending = false
 		ps.engine.Changed()
@@ -1103,15 +1425,26 @@ func (pg *Page) showScripts(ps *pageScripts) {
 }
 
 // ScriptConsole returns the console messages of the scripts of the page
-// that is shown (and their errors), oldest first.
+// that is shown (and their errors), oldest first, followed by those of the
+// pages in its frames, each marked with the URL of its frame (as the
+// captchas of bot checks, whose errors were not shown).
 func (pg *Page) ScriptConsole() []string {
-	ps := pg.scripts
-	if ps == nil {
-		return nil
+	var msgs []string
+	if ps := pg.scripts; ps != nil {
+		ps.consoleMu.Lock()
+		msgs = append(msgs, ps.console...)
+		ps.consoleMu.Unlock()
 	}
-	ps.consoleMu.Lock()
-	defer ps.consoleMu.Unlock()
-	return append([]string(nil), ps.console...)
+	for _, fp := range pg.frames {
+		for _, m := range fp.ScriptConsole() {
+			if !strings.HasPrefix(m, "[frame ") {
+				src, _, _ := strings.Cut(fp.frame.src, "?") // (without its long query)
+				m = "[frame " + src + "] " + m
+			}
+			msgs = append(msgs, m)
+		}
+	}
+	return msgs
 }
 
 // showConsole shows the console messages of the scripts of the page.
@@ -1157,4 +1490,149 @@ func isSubmitter(n *html.Node) bool {
 		return typ == "submit" || typ == "image"
 	}
 	return false
+}
+
+// saveDOM saves the document of the page as its scripts have made it (its
+// DOM, as document.documentElement.outerHTML) to an HTML file in the
+// Downloads directory, named for the host of the page and the time, and
+// those of the pages of its frames (as the challenge of reCAPTCHA) to files
+// named for it and their hosts, and shows where in a snackbar (not with
+// the lock of the page held: the DOMs are gotten in tasks of the scripts,
+// which lock the page).
+func (pg *Page) saveDOM() {
+	snack := func(msg string) {
+		if pg.AsyncLockIfShown() {
+			core.MessageSnackbar(pg, msg)
+			pg.AsyncUnlock()
+		}
+	}
+	if pg.scripts == nil {
+		snack("Only pages with JavaScript on can be saved")
+		return
+	}
+	home, _ := os.UserHomeDir()
+	base := filepath.Join(home, "Downloads", hostOf(pg.scripts.engine.PageURL())+"-"+time.Now().Format("20060102-150405"))
+	n := 0
+	var save func(p *Page, file string) error
+	save = func(p *Page, file string) error {
+		ps := p.scripts
+		if ps == nil {
+			return nil
+		}
+		v, err := ps.engine.RunString(`"<!DOCTYPE html>\n" + document.documentElement.outerHTML`)
+		if err != nil {
+			if !ps.engine.Closed() {
+				return err
+			}
+			// the scripts were stopped (as they ran too long), and the
+			// document is as they left it, rendered without them
+			var b bytes.Buffer
+			if err := html.Render(&b, ps.doc); err != nil {
+				return err
+			}
+			v = b.String()
+		}
+		if err := os.WriteFile(file, []byte(fmt.Sprint(v)), 0o644); err != nil {
+			return err
+		}
+		n++
+		var frames []*Page
+		if p.AsyncLockIfShown() {
+			for _, fp := range p.frames {
+				frames = append(frames, fp)
+			}
+			p.AsyncUnlock()
+		}
+		for i, fp := range frames {
+			if fp.scripts == nil {
+				continue
+			}
+			ff := strings.TrimSuffix(file, ".html") + fmt.Sprintf("-frame%d-%s.html", i+1, hostOf(fp.scripts.engine.PageURL()))
+			if err := save(fp, ff); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := save(pg, base+".html"); err != nil {
+		snack("Error saving the page: " + err.Error())
+		return
+	}
+	msg := "Saved the page to " + base + ".html"
+	if n > 1 {
+		msg += fmt.Sprintf(" (and %d frames)", n-1)
+	}
+	// the resources of the page (style sheets, fonts, images), for it to
+	// be read again offline, as for its layout and speed
+	var cache *resourceCache
+	if pg.AsyncLockIfShown() {
+		if pg.media != nil {
+			cache = pg.media.cache
+		}
+		pg.AsyncUnlock()
+	}
+	if cache != nil {
+		if nr, err := cache.save(base+"-resources", 200<<20); err != nil {
+			snack("Error saving the resources: " + err.Error())
+			return
+		} else if nr > 0 {
+			msg += fmt.Sprintf(", %d resources", nr)
+		}
+	}
+	// the console messages (of the page and its frames) are saved with it,
+	// for finding why it does not work
+	var console []string
+	if pg.AsyncLockIfShown() {
+		console = pg.ScriptConsole()
+		pg.AsyncUnlock()
+	}
+	if len(console) > 0 {
+		if err := os.WriteFile(base+"-console.txt", []byte(strings.Join(console, "\n")+"\n"), 0o644); err != nil {
+			snack("Error saving the console: " + err.Error())
+			return
+		}
+		msg += ", with its console"
+	}
+	snack(msg)
+}
+
+// hostOf returns the host of the given URL, or "page".
+func hostOf(u string) string {
+	if pu, err := url.Parse(u); err == nil && pu.Host != "" {
+		return pu.Host
+	}
+	return "page"
+}
+
+// transitions dispatches the events of the given transitions of the
+// properties of elements (which are not rendered: the elements have their
+// new styles at once): transitionrun and transitionstart now, and
+// transitionend when they would end, as pages wait for it (as Google
+// sign-in, to show its next step).
+func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
+	e := ps.engine
+	for _, t := range ts {
+		props := map[string]any{"propertyName": t.Property, "elapsedTime": 0.0}
+		e.Dispatch(t.Node, "transitionrun", props, nil)
+		e.Dispatch(t.Node, "transitionstart", props, nil)
+		end := map[string]any{"propertyName": t.Property, "elapsedTime": t.Duration.Seconds()}
+		// (a closed engine, of a page that is gone, runs no tasks)
+		time.AfterFunc(t.Delay+t.Duration, func() { e.Dispatch(t.Node, "transitionend", end, nil) })
+	}
+}
+
+// logFallback logs to the verbose console why the given kind of update of
+// the page (a restyle or reread) could not be made, as recorded by the
+// context ([htmlcore.Context.Fallback]), and what is done instead, as
+// pages read whole often (as nytimes.com, about 20 times as it loads,
+// whose elements were resized each time) are slow and jumpy.
+func (ps *pageScripts) logFallback(kind, instead string) {
+	if !Settings.VerboseConsole {
+		return
+	}
+	why := ps.ctx.Fallback()
+	if why == "" {
+		why = "unknown"
+	}
+	ps.log(slog.LevelDebug, fmt.Sprintf("%s of the page not possible (%s): %s", kind, why, instead))
 }

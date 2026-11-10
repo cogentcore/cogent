@@ -6,6 +6,9 @@ package script
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -143,6 +146,7 @@ func (e *Engine) defineNet() {
 		if err != nil || pu.Scheme == "" {
 			return goja.Null()
 		}
+		normalizeURL(pu)
 		if (pu.Scheme == "http" || pu.Scheme == "https") && pu.Path == "" {
 			pu.Path = "/"
 		}
@@ -173,6 +177,7 @@ func (e *Engine) defineNet() {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Navigate != nil {
 			replace := call.Argument(1).ToBoolean()
+			e.navStack.Store(e.Stack(8))   // (before the goroutine, for it)
 			go e.opts.Navigate(u, replace) // after the task, which holds the lock
 		}
 		return goja.Undefined()
@@ -198,7 +203,18 @@ func (e *Engine) defineNet() {
 	})
 	set("submit", func(call goja.FunctionCall) goja.Value {
 		u, err := resolveURL(str(call, 0), e.baseURL())
-		if err == nil && e.opts.Submit != nil {
+		if err != nil {
+			return goja.Undefined()
+		}
+		// in the frame of an iframe that the form targets, if any
+		if id := call.Argument(3); !goja.IsUndefined(id) && !goja.IsNull(id) && e.opts.SubmitFrame != nil {
+			if n := e.nodes.node(int(id.ToInteger())); n != nil {
+				post := call.Argument(4).ToBoolean()
+				go e.opts.SubmitFrame(n, u, str(call, 1), []byte(str(call, 2)), post) // after the task
+				return goja.Undefined()
+			}
+		}
+		if e.opts.Submit != nil {
 			go e.opts.Submit(u, str(call, 1), []byte(str(call, 2))) // after the task
 		}
 		return goja.Undefined()
@@ -210,7 +226,9 @@ func (e *Engine) defineNet() {
 		}
 		e.opts.PageURL = u
 		if e.opts.PushState != nil {
-			e.opts.PushState(u, call.Argument(1).ToBoolean())
+			if e.lockTask() {
+				e.opts.PushState(u, call.Argument(1).ToBoolean())
+			}
 		}
 		return vm.ToValue(u)
 	})
@@ -293,21 +311,42 @@ func (e *Engine) defineNet() {
 				body = []byte(b.String())
 			}
 		}
+		credentials := call.Argument(5).ToBoolean()
 		if err != nil {
 			e.callBack(cb, 0, "", nil, nil, "", err.Error())
 			return goja.Undefined()
 		}
 		go func() {
-			resp, err := e.request(u, method, headers, body, hasBody)
+			start := time.Now()
+			resp, err := e.request(u, method, headers, body, hasBody, credentials)
+			// failed requests are in the console, as in browsers (as those
+			// that a captcha makes, which says only that something went
+			// wrong)
+			m := method
+			if m == "" {
+				m = "GET"
+			}
 			if err != nil {
+				e.logf(slog.LevelWarn, "%s %s: %v", m, logURL(u), err)
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
 			}
 			defer resp.Body.Close()
+			if resp.StatusCode >= 400 {
+				e.logf(slog.LevelWarn, "%s %s: %s", m, logURL(u), resp.Status)
+			}
 			data, err := io.ReadAll(resp.Body)
 			if err != nil {
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
+			}
+			if e.tracing() {
+				typ := ""
+				if ct := resp.Header.Get("Content-Type"); ct != "" {
+					typ = ", " + ct
+				}
+				e.tracef("%s %s (%d bytes): %d, %d bytes%s, %v", m, logURL(u), len(body), resp.StatusCode, len(data),
+					typ, time.Since(start).Round(time.Millisecond))
 			}
 			var hs []any
 			for k, vs := range resp.Header {
@@ -336,6 +375,30 @@ func (e *Engine) defineNet() {
 	set("encodeUTF8", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(vm.NewArrayBuffer([]byte(str(call, 0))))
 	})
+	// digest returns the digest of the given data with the given algorithm
+	// (as SHA-256) for crypto.subtle.digest, or null for an unknown one
+	// (Google signs the requests of its APIs with SHA-1 digests).
+	set("digest", func(call goja.FunctionCall) goja.Value {
+		b := bytesOf(call.Argument(1))
+		var sum []byte
+		switch strings.ToUpper(str(call, 0)) {
+		case "SHA-1":
+			s := sha1.Sum(b)
+			sum = s[:]
+		case "SHA-256":
+			s := sha256.Sum256(b)
+			sum = s[:]
+		case "SHA-384":
+			s := sha512.Sum384(b)
+			sum = s[:]
+		case "SHA-512":
+			s := sha512.Sum512(b)
+			sum = s[:]
+		default:
+			return goja.Null()
+		}
+		return vm.ToValue(vm.NewArrayBuffer(sum))
+	})
 }
 
 // bytesOf returns the bytes of the given ArrayBuffer or typed array value.
@@ -359,13 +422,56 @@ func bytesOf(v goja.Value) []byte {
 	return []byte(v.String())
 }
 
-// request makes the given request: a GET without a body with GetURL, as
-// for the resources of the page, and others with the default client.
-func (e *Engine) request(u, method string, headers []string, body []byte, hasBody bool) (*http.Response, error) {
+// logURL returns the given URL for the console: without the data of a
+// data: URL, and at most 200 characters.
+// defaultPorts are the default ports of the schemes of URLs, which are not
+// in their hosts and origins, as browsers serialize them.
+var defaultPorts = map[string]string{"http": "80", "https": "443", "ws": "80", "wss": "443", "ftp": "21"}
+
+// normalizeURL makes the scheme and host of the given URL lower case and
+// drops the default port of its scheme from its host, as browsers parse
+// URLs (as https://www.google.com:443, which reCAPTCHA posts messages to).
+func normalizeURL(pu *neturl.URL) {
+	pu.Scheme = strings.ToLower(pu.Scheme)
+	if pu.Host == "" {
+		return
+	}
+	host, port := strings.ToLower(pu.Hostname()), pu.Port()
+	if strings.Contains(host, ":") {
+		host = "[" + host + "]" // (IPv6)
+	}
+	if port != "" && port != defaultPorts[pu.Scheme] {
+		host += ":" + port
+	}
+	pu.Host = host
+}
+
+// logURL returns the given URL shortened for logs: data URLs without
+// their data, and long URLs without their middle.
+func logURL(u string) string {
+	if strings.HasPrefix(u, "data:") {
+		u, _, _ = strings.Cut(u, ",")
+		return u + ",…"
+	}
+	if len(u) > 240 {
+		// the ends of long URLs differ (as the module lists of the
+		// scripts of Google, m=ZwDk9d,RMhBfe, after 1500 bytes)
+		return strings.ToValidUTF8(u[:120], "") + "…" + strings.ToValidUTF8(u[len(u)-120:], "")
+	}
+	return u
+}
+
+// request makes the given request: a GET without a body or headers with
+// GetURL, as for the resources of the page, and others with the default
+// client. A GET with headers is a request of data (as the JSON of the
+// page_data of github.com, with Accept: application/json, which GetURL,
+// without them, got as 406 Not Acceptable, and which its cache kept). The
+// cookies of other origins are sent if credentials.
+func (e *Engine) request(u, method string, headers []string, body []byte, hasBody, credentials bool) (*http.Response, error) {
 	if strings.HasPrefix(u, "blob:") {
 		return e.blobResponse(u)
 	}
-	if (method == "" || method == "GET") && !hasBody && e.opts.GetURL != nil {
+	if (method == "" || method == "GET") && !hasBody && len(headers) == 0 && e.opts.GetURL != nil {
 		return e.opts.GetURL(u)
 	}
 	req, err := http.NewRequest(method, u, bytes.NewReader(body))
@@ -377,19 +483,55 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	req.Header.Set("Accept", "*/*")
 	set := map[string]bool{}
 	for i := 0; i+1 < len(headers); i += 2 {
-		if k := http.CanonicalHeaderKey(headers[i]); !set[k] {
+		k := http.CanonicalHeaderKey(headers[i])
+		if forbiddenHeaders[k] {
+			continue // (which scripts can not set)
+		}
+		if !set[k] {
 			set[k] = true
 			req.Header.Del(k)
 		}
 		req.Header.Add(headers[i], headers[i+1])
 	}
+	setOriginHeaders(req, e.opts.PageURL, method)
 	// The cookies are only sent to the origin of the page, as browsers do
-	// by default (not with the requests of a page to other sites).
+	// by default (not with the requests of a page to other sites), unless
+	// the request is with credentials (as the APIs of Google, of other
+	// hosts, which were 401 Unauthorized without its cookies).
 	client := &http.Client{Timeout: 30 * time.Second}
-	if origin(u) == origin(e.opts.PageURL) {
+	if credentials || origin(u) == origin(e.opts.PageURL) {
 		client.Jar = e.opts.Cookies
 	}
 	return client.Do(req)
+}
+
+// forbiddenHeaders are the headers of requests that scripts can not set,
+// as in browsers.
+var forbiddenHeaders = map[string]bool{"Origin": true, "Referer": true, "Cookie": true, "Host": true,
+	"Content-Length": true, "Connection": true}
+
+// setOriginHeaders sets the Origin and Referer headers of the given request
+// of a script of the page of the given URL, as browsers do: the origin of
+// the page for requests to other origins and those that are not GET or
+// HEAD, and the referrer of the page (only its origin for other origins).
+// The APIs of Google check that the origin in the hash of their
+// authorization (SAPISIDHASH) is that of the request, which were 401
+// Unauthorized without it.
+func setOriginHeaders(req *http.Request, page, method string) {
+	po := origin(page)
+	if po == "null" {
+		return
+	}
+	cross := origin(req.URL.String()) != po
+	if cross || (method != "" && method != "GET" && method != "HEAD") {
+		req.Header.Set("Origin", po)
+	}
+	if cross {
+		req.Header.Set("Referer", po+"/")
+	} else {
+		ref, _, _ := strings.Cut(page, "#")
+		req.Header.Set("Referer", ref)
+	}
 }
 
 // isScript returns whether the given node is a script element of
@@ -411,6 +553,21 @@ func isScript(n *html.Node) bool {
 	return false
 }
 
+// isDeferred returns whether the given script element of the document
+// runs after it is parsed: a classic script with a src and the defer
+// attribute, or a module, unless it is async.
+func isDeferred(n *html.Node) bool {
+	if _, async := attr(n, "async"); async {
+		return false
+	}
+	if typ, _ := attr(n, "type"); strings.EqualFold(strings.TrimSpace(typ), "module") {
+		return true
+	}
+	_, src := attr(n, "src")
+	_, def := attr(n, "defer")
+	return src && def
+}
+
 // attr returns the value of the given attribute of the given node.
 func attr(n *html.Node, key string) (string, bool) {
 	for _, a := range n.Attr {
@@ -428,12 +585,16 @@ func attr(n *html.Node, key string) (string, bool) {
 // scripts have changed it (at the end of its task).
 func (e *Engine) Load(done func()) {
 	var scripts []*html.Node
+	var links []*html.Node
 	walk(e.doc, func(n *html.Node) bool {
 		if n.Type == html.ElementNode && (n.Data == "template" || n.Data == "noscript") {
 			return true // their content is not scripts (it is text with scripting)
 		}
 		if isScript(n) {
 			scripts = append(scripts, n)
+		}
+		if isStyleLink(n) {
+			links = append(links, n)
 		}
 		return true
 	})
@@ -446,8 +607,25 @@ func (e *Engine) Load(done func()) {
 		for _, s := range scripts {
 			e.ran[s] = true // run here, not when inserted
 		}
+		// the load events of the links of style sheets (and preloads) of
+		// the document, once they are gotten
+		for _, l := range links {
+			e.ran[l] = true
+			e.loadStyleLink(l)
+		}
 	})
+	// the deferred scripts (with defer, and modules) run after the others,
+	// in order, before DOMContentLoaded, as in browsers (a deferred script
+	// in the head uses the variables of inline scripts in the body)
+	var deferred []*html.Node
 	for _, s := range scripts {
+		if isDeferred(s) {
+			deferred = append(deferred, s)
+			continue
+		}
+		e.Post(func() { e.runScript(s, true) })
+	}
+	for _, s := range deferred {
 		e.Post(func() { e.runScript(s, true) })
 	}
 	e.Post(func() {
@@ -530,9 +708,10 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 		e.defineModules(defs)
 		code = "__requireModule(" + quoteJS(entry) + ");"
 	}
+	prev := e.current // (of a script that inserted this one, run in it)
 	e.current = s
 	e.run(name, code)
-	e.current = nil
+	e.current = prev
 	if hasSrc {
 		e.callPrelude("fireEvent", e.nodes.id(s), "load")
 	}
@@ -563,17 +742,30 @@ func (e *Engine) getScript(u string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	e.tracef("script %s: %d bytes", logURL(u), len(b))
 	return string(b), nil
 }
 
 // runInserted runs the scripts that the given node (that was inserted in
 // the document) is or has, which have not run yet: the external ones once
-// they are gotten (in another goroutine), and the others in a new task.
-func (e *Engine) runInserted(n *html.Node) {
+// they are gotten (in another goroutine), and the others in a new task, or
+// now if sync (inline classic scripts inserted by a script, as browsers
+// run them in appendChild: Google inserts the code of its bot check and
+// removes it right after, and then uses what it defines).
+func (e *Engine) runInserted(n *html.Node, sync bool) {
 	if !connected(n, e.doc) {
 		return
 	}
 	walk(n, func(c *html.Node) bool {
+		if c.Type == html.ElementNode && c.Data == "iframe" && e.tracing() && !e.ran[c] {
+			// (once, as its parents are inserted again)
+			if e.ran == nil {
+				e.ran = map[*html.Node]bool{}
+			}
+			e.ran[c] = true
+			src, _ := attr(c, "src")
+			e.tracef("iframe %q inserted: %s", nameAttr(c), logURL(src))
+		}
 		if e.ran[c] {
 			return true
 		}
@@ -594,6 +786,10 @@ func (e *Engine) runInserted(n *html.Node) {
 		e.ran[c] = true
 		_, hasSrc := attr(c, "src")
 		if !hasSrc && strings.TrimSpace(textContent(c)) == "" {
+			return true
+		}
+		if typ, _ := attr(c, "type"); sync && !hasSrc && !strings.EqualFold(strings.TrimSpace(typ), "module") {
+			e.runScript(c, false)
 			return true
 		}
 		pending := e.loading // which the load event is after (see Load)
@@ -617,7 +813,11 @@ func isStyleLink(n *html.Node) bool {
 	}
 	rel, _ := attr(n, "rel")
 	for _, r := range strings.Fields(strings.ToLower(rel)) {
-		if r == "stylesheet" {
+		// (and the links that preload resources, whose load events pages
+		// use to make them style sheets, as the preloaded style sheets of
+		// trekbikes.com, with onload="this.rel='stylesheet'", which were
+		// not applied)
+		if r == "stylesheet" || r == "preload" || r == "modulepreload" {
 			return true
 		}
 	}
@@ -672,7 +872,7 @@ func (e *Engine) write(s string) {
 	}
 	for _, k := range e.parseFragment(s, parent) {
 		parent.InsertBefore(k, before)
-		e.runInserted(k)
+		e.runInserted(k, false)
 	}
 	e.changed(parent)
 }
