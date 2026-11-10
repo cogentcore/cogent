@@ -200,3 +200,29 @@ func pageTextsLocked(pg *Page) string {
 	})
 	return strings.Join(ts, "|")
 }
+
+// TestScriptsTransitionEnd tests that a change of a class of an element by
+// a script that changes a property with a transition dispatches the
+// transitionend event when the transition would end (Google sign-in waits
+// for it to show its next step, which was never shown).
+func TestScriptsTransitionEnd(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>
+			.view { transform: translateX(0); transition: transform 50ms ease-out }
+			.view.away { transform: translateX(-100px) }
+			</style></head><body><div id="v" class="view">view</div></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		_, err := ps.engine.RunString(`window.ended = "";
+			const v = document.getElementById("v");
+			v.addEventListener("transitionend", e => { window.ended += e.propertyName + ":" + (e instanceof TransitionEvent) + ":" + e.elapsedTime; });
+			v.classList.add("away"); v.getBoundingClientRect();`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`window.ended`)
+			return v == "transform:true:0.05"
+		}), "transitionend")
+	})
+}

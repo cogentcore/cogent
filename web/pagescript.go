@@ -217,6 +217,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		return true
 	}
 	ctx.WidgetHandlers = append(append([]func(core.Widget){}, ps.base.WidgetHandlers...), ps.handleWidget)
+	ctx.OnTransition = ps.transitions
 	// the containers start with the sizes that they have now, for the
 	// elements in them, as of font-size: 1cqw, not to be shown at the
 	// size of the viewport until the new widgets are laid out
@@ -1514,4 +1515,21 @@ func hostOf(u string) string {
 		return pu.Host
 	}
 	return "page"
+}
+
+// transitions dispatches the events of the given transitions of the
+// properties of elements (which are not rendered: the elements have their
+// new styles at once): transitionrun and transitionstart now, and
+// transitionend when they would end, as pages wait for it (as Google
+// sign-in, to show its next step).
+func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
+	e := ps.engine
+	for _, t := range ts {
+		props := map[string]any{"propertyName": t.Property, "elapsedTime": 0.0}
+		e.Dispatch(t.Node, "transitionrun", props, nil)
+		e.Dispatch(t.Node, "transitionstart", props, nil)
+		end := map[string]any{"propertyName": t.Property, "elapsedTime": t.Duration.Seconds()}
+		// (a closed engine, of a page that is gone, runs no tasks)
+		time.AfterFunc(t.Delay+t.Duration, func() { e.Dispatch(t.Node, "transitionend", end, nil) })
+	}
 }

@@ -368,8 +368,12 @@
 	}
 	class HashChangeEvent extends Event { constructor(type, init) { super(type, init); this.oldURL = (init && init.oldURL) || ""; this.newURL = (init && init.newURL) || ""; } }
 	class SubmitEvent extends Event { constructor(type, init) { super(type, init); this.submitter = (init && init.submitter) || null; } }
-	class AnimationEvent extends Event {}
-	class TransitionEvent extends Event {}
+	class AnimationEvent extends Event {
+		constructor(type, init) { super(type, init); init = init || {}; this.animationName = init.animationName || ""; this.elapsedTime = init.elapsedTime || 0; this.pseudoElement = init.pseudoElement || ""; }
+	}
+	class TransitionEvent extends Event {
+		constructor(type, init) { super(type, init); init = init || {}; this.propertyName = init.propertyName || ""; this.elapsedTime = init.elapsedTime || 0; this.pseudoElement = init.pseudoElement || ""; }
+	}
 	class TouchEvent extends UIEvent {}
 
 	class EventTarget {
@@ -3400,6 +3404,8 @@
 		else if (/^key/.test(type)) ev = new KeyboardEvent(type, opts);
 		else if (/^(focus|blur)/.test(type)) ev = new FocusEvent(type, Object.assign(opts, { bubbles: type === "focusin" || type === "focusout" }));
 		else if (type === "input") ev = new InputEvent(type, opts);
+		else if (/^transition/.test(type)) ev = new TransitionEvent(type, Object.assign(opts, { cancelable: false }));
+		else if (/^animation/.test(type)) ev = new AnimationEvent(type, Object.assign(opts, { cancelable: false }));
 		else ev = new Event(type, opts);
 		ev.isTrusted = true;
 		if (type === "focus" || type === "focusin") focused = t;
