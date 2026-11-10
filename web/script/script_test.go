@@ -1302,3 +1302,27 @@ func TestWindowClass(t *testing.T) {
 	e, _ := testEngine(t, `<html><body></body></html>`, nil)
 	assert.Equal(t, "true|false|false|true", run(t, e, `[window instanceof Window, document.body instanceof Window, ({}) instanceof Window, typeof Window === "function"].join("|")`))
 }
+
+// TestModuleOwnRequire tests that a call of require in a module itself is
+// not an import of it, but throws when it runs, as in browsers (as the
+// optional dependency of framer-motion in a chunk of GitHub, in a try,
+// which failed the import of the chunk as it was not found), and that a
+// module that also imports it gets it.
+func TestModuleOwnRequire(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{
+		"/chunk.js": `let h = null; try { h = require("@emotion/is-prop-valid").default; } catch {} export const ids = ["t1r"], optional = h === null;`,
+		"/both.js":  `import x from "./dep.js"; export const v = x + require("./dep.js").default;`,
+		"/dep.js":   `export default 2;`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.res = "";
+		__dynamicImport("https://example.com/page.html", "./chunk.js").then(m => { res += "ok " + m.ids + " " + m.optional + ";"; }, err => { res += "err " + err + ";"; });
+		__dynamicImport("https://example.com/page.html", "./both.js").then(m => { res += "both " + m.v + ";"; }, err => { res += "err " + err + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "ok t1r true;") && strings.Contains(s, "both 4;")
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+}
