@@ -2166,6 +2166,22 @@
 		permissions: { query() { return Promise.resolve({ state: "denied", addEventListener() {} }); } },
 		storage: { estimate() { return Promise.resolve({ quota: 0, usage: 0 }); }, persist() { return Promise.resolve(false); } },
 		userActivation: { hasBeenActive: false, isActive: false },
+		// no cameras or microphones (Google account security pages list
+		// them), and no credentials of the browser (passkeys or saved
+		// passwords): sites fall back to their other ways
+		mediaDevices: Object.assign(new EventTarget(), {
+			enumerateDevices() { return Promise.resolve([]); },
+			getSupportedConstraints() { return {}; },
+			getUserMedia() { return Promise.reject(domException("NotAllowedError", "Permission denied")); },
+			getDisplayMedia() { return Promise.reject(domException("NotAllowedError", "Permission denied")); },
+			ondevicechange: null,
+		}),
+		credentials: {
+			get() { return Promise.reject(domException("NotAllowedError", "The operation is not allowed")); },
+			create() { return Promise.reject(domException("NotAllowedError", "The operation is not allowed")); },
+			store(c) { return Promise.resolve(c); },
+			preventSilentAccess() { return Promise.resolve(); },
+		},
 	};
 
 	// storageKinds are the kinds (local or session) of the Storage objects,

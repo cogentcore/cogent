@@ -205,3 +205,19 @@ func TestFetchGetHeaders(t *testing.T) {
 		return v == "1"
 	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
 }
+
+// TestNavigatorMediaDevicesCredentials tests the media devices (none, as
+// Google account pages list them) and the credentials (which sites fall
+// back from) of navigator.
+func TestNavigatorMediaDevicesCredentials(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.res = "";
+		navigator.mediaDevices.enumerateDevices().then(ds => { res += "devices " + ds.length + ";"; });
+		navigator.mediaDevices.getUserMedia({audio: true}).catch(err => { res += err.name + ";"; });
+		navigator.credentials.get({publicKey: {}}).catch(err => { res += "credentials " + err.name + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "devices 0;") && strings.Contains(s, "NotAllowedError;") && strings.Contains(s, "credentials NotAllowedError;")
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
