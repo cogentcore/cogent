@@ -1245,3 +1245,13 @@ func TestStorageKeys(t *testing.T) {
 	assert.Equal(t, "a,b|1|2", run(t, e, `localStorage.setItem("a", "1"); localStorage.b = "2";
 		Object.keys(localStorage).sort().join(",") + "|" + localStorage.getItem("a") + "|" + localStorage.length`))
 }
+
+// TestIframeSandbox tests the sandbox token list of iframes (which Google
+// adds restrictions to, and which was undefined).
+func TestIframeSandbox(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "allow-scripts allow-forms|true", run(t, e, `const f = document.createElement("iframe");
+		f.setAttribute("sandbox", "");
+		for (const t of ["allow-scripts", "allow-forms"]) f.sandbox.supports && !f.sandbox.supports(t) || f.sandbox.add(t);
+		f.getAttribute("sandbox") + "|" + f.sandbox.contains("allow-forms")`))
+}

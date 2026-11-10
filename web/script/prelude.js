@@ -1286,7 +1286,9 @@
 	const HTMLMetaElement = elementClass(["meta"], HTMLElement, cls => reflect(cls, ["name", "content", "httpEquiv", "charset"]));
 	const HTMLBaseElement = elementClass(["base"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["target"]); });
 	const HTMLIFrameElement = elementClass(["iframe"], HTMLElement, cls => {
-		reflectURL(cls, ["src"]); reflect(cls, ["name", "width", "height", "allow", "loading"]);
+		reflectURL(cls, ["src"]); reflect(cls, ["name", "width", "height", "allow", "loading", "srcdoc", "referrerPolicy"]);
+		// the restrictions of its page, as a token list (Google adds them)
+		Object.defineProperty(cls.prototype, "sandbox", { get() { return new DOMTokenList(this, "sandbox"); }, set(v) { this.setAttribute("sandbox", String(v)); } });
 		// the window of the page in its frame, a proxy that can only post
 		// messages to it (see frames.go), as for one of another origin
 		Object.defineProperty(cls.prototype, "contentWindow", { get() { return windowProxy(D.frameWindow(this[ID])); } });
