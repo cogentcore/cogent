@@ -988,7 +988,28 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 			ps.engine.Eval(strings.TrimSpace(url)[len("javascript:"):])
 			return
 		}
-		pg.openedBy = "a link of " + pg.currentURL() + " (" + htmlcore.GetAttr(link, "href") + ")"
+		by := "a link of " + pg.currentURL() + " (" + htmlcore.GetAttr(link, "href") + ")"
+		// in the page of its target (as _top, of the links of the account
+		// menu of Google in a frame)
+		if t := htmlcore.GetAttr(link, "target"); t != "" {
+			if u, err := htmlcore.ParseRelativeURL(url, pg.currentURL()); err == nil {
+				url = u.String()
+			}
+			tp := pg.targetPage(t)
+			if tp == nil {
+				if top := pg.topPage(); top.OpenNewTab != nil {
+					top.OpenNewTab(url)
+					return
+				}
+				tp = pg.topPage()
+			}
+			if tp != pg {
+				tp.openedBy = by
+				tp.OpenURL(url, nil)
+				return
+			}
+		}
+		pg.openedBy = by
 		pg.OpenURL(url, ev)
 	})
 }

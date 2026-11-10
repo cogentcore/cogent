@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/html"
 )
 
 // TestFrameCaptcha tests a page that a site blocks with a captcha in a
@@ -331,6 +332,64 @@ func TestFrameFormTarget(t *testing.T) {
 		assert.Contains(t, pageTexts(b, pg), "the page", "the page itself stays")
 		b.AsyncLock()
 		assert.Equal(t, site.URL+"/", pg.currentURL())
+		b.AsyncUnlock()
+	})
+}
+
+// TestFrameLinkTarget tests that a link of a page in a frame with the
+// target _top opens its page in the top page, not in the frame (as the
+// links of the account menu of Google), and one of _blank in a new tab.
+func TestFrameLinkTarget(t *testing.T) {
+	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/menu":
+			io.WriteString(w, `<html><body><a id="top" href="/account" target="_top">account</a><a id="new" href="/other" target="_blank">other</a><script>1</script></body></html>`)
+		case "/account":
+			io.WriteString(w, `<html><body><p>my account</p></body></html>`)
+		default:
+			io.WriteString(w, `<html><body><p>the page</p><iframe name="menu" src="/menu" width="300" height="100"></iframe></body></html>`)
+		}
+	}))
+	defer site.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	var tabs []string
+	pg.OpenNewTab = func(u string) { tabs = append(tabs, u) }
+	pg.OpenURL(site.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		var fp *Page
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			for _, f := range pg.frames {
+				fp = f
+			}
+			return fp != nil && fp.scripts != nil
+		}))
+		link := func(id string) *html.Node {
+			var found *html.Node
+			var walk func(n *html.Node)
+			walk = func(n *html.Node) {
+				if htmlcore.GetAttr(n, "id") == id {
+					found = n
+				}
+				for k := n.FirstChild; k != nil; k = k.NextSibling {
+					walk(k)
+				}
+			}
+			walk(fp.scripts.doc)
+			return found
+		}
+		b.AsyncLock()
+		fp.scripts.openLink(link("new"), "/other", nil)
+		fp.scripts.openLink(link("top"), "/account", nil)
+		b.AsyncUnlock()
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "my account") }), pageTexts(b, pg))
+		b.AsyncLock()
+		assert.Equal(t, site.URL+"/account", pg.currentURL(), "in the top page")
+		assert.Equal(t, []string{site.URL + "/other"}, tabs)
 		b.AsyncUnlock()
 	})
 }

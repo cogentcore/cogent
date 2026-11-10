@@ -232,3 +232,49 @@ func (pg *Page) AsyncLockIfShown() bool {
 func (pg *Page) AsyncUnlock() {
 	pg.topPage().Frame.AsyncUnlock()
 }
+
+// targetPage returns the page that a link (or form) of this page with the
+// given target opens its page in, as in browsers: the page itself for none
+// (or _self), the page that it is in a frame of for _parent, the top page
+// for _top, and the page of the frame of the iframe of that name (in the
+// pages of the top page) for a name, or nil for _blank (a new tab). A
+// name of no frame is the page itself. (The links of the account menu of
+// Google, in a frame, are of _top, which opened them in the frame.)
+func (pg *Page) targetPage(target string) *Page {
+	switch strings.ToLower(strings.TrimSpace(target)) {
+	case "", "_self":
+		return pg
+	case "_blank":
+		return nil
+	case "_parent":
+		if pg.frame != nil {
+			return pg.frame.parent
+		}
+		return pg
+	case "_top":
+		return pg.topPage()
+	}
+	if fp := pg.topPage().namedFrame(target); fp != nil {
+		return fp
+	}
+	return pg
+}
+
+// namedFrame returns the page of the frame of the iframe with the given
+// name in this page or the pages of its frames, or nil.
+func (pg *Page) namedFrame(name string) *Page {
+	for n, fp := range pg.frames {
+		if nameAttr(n) == name {
+			return fp
+		}
+		if f := fp.namedFrame(name); f != nil {
+			return f
+		}
+	}
+	return nil
+}
+
+// nameAttr returns the name attribute of the given element.
+func nameAttr(n *html.Node) string {
+	return htmlcore.GetAttr(n, "name")
+}

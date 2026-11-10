@@ -137,8 +137,8 @@ type Page struct {
 	// openedBy is how the page that is being opened was opened (by a
 	// link, a script or a form of the page before it), for the verbose
 	// console (see [SettingsData.VerboseConsole]).
-	openedBy string
-	onShowConsole        func()
+	openedBy      string
+	onShowConsole func()
 }
 
 // pageMedia is what is needed to read a page that is shown again for
