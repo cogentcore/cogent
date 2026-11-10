@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -1164,4 +1166,26 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 			assert.Less(t, slices.Max(holds), slices.Min(reads), "the task holds the page only to show the new widgets: "+all)
 		}
 	})
+}
+
+// TestSaveDOM tests that the document of a page, as its scripts have made
+// it, is saved to an HTML file in the Downloads directory.
+func TestSaveDOM(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	require.NoError(t, os.MkdirAll(filepath.Join(home, "Downloads"), 0o755))
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>static</p><script>document.body.append("made by script")</script></body></html>`,
+	})
+	b.RenderImage(func() {
+		settle(pg)
+		pg.saveDOM()
+	})
+	files, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*.html"))
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "made by script")
+	assert.True(t, strings.HasPrefix(string(data), "<!DOCTYPE html>"))
 }

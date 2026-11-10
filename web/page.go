@@ -936,6 +936,9 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 				}
 				pg.showConsole()
 			})
+			core.NewButton(m).SetText("Save page").SetIcon(icons.Download).SetTooltip("Save the document of the page as its scripts have made it (its DOM) to an HTML file in Downloads").OnClick(func(e events.Event) {
+				go pg.saveDOM()
+			})
 			core.NewButton(m).SetText("Clear cookies").SetIcon(icons.Delete).SetTooltip("Remove the cookies of all sites, including those saved").OnClick(func(e events.Event) {
 				ClearCookies()
 			})

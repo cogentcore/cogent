@@ -11,7 +11,10 @@ import (
 	"log/slog"
 	"maps"
 	"math"
+	"net/url"
 	neturl "net/url"
+	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -1403,4 +1406,39 @@ func isSubmitter(n *html.Node) bool {
 		return typ == "submit" || typ == "image"
 	}
 	return false
+}
+
+// saveDOM saves the document of the page as its scripts have made it (its
+// DOM, as document.documentElement.outerHTML) to an HTML file in the
+// Downloads directory, named for the host of the page and the time, and
+// shows where in a snackbar (not with the lock of the page held: the DOM is
+// gotten in a task of the scripts, which locks the page).
+func (pg *Page) saveDOM() {
+	ps := pg.scripts
+	snack := func(msg string) {
+		if pg.AsyncLockIfShown() {
+			core.MessageSnackbar(pg, msg)
+			pg.AsyncUnlock()
+		}
+	}
+	if ps == nil {
+		snack("Only pages with JavaScript on can be saved")
+		return
+	}
+	v, err := ps.engine.RunString(`"<!DOCTYPE html>\n" + document.documentElement.outerHTML`)
+	if err != nil {
+		snack("Error saving the page: " + err.Error())
+		return
+	}
+	host := "page"
+	if u, err := url.Parse(ps.engine.PageURL()); err == nil && u.Host != "" {
+		host = u.Host
+	}
+	home, _ := os.UserHomeDir()
+	file := filepath.Join(home, "Downloads", host+"-"+time.Now().Format("20060102-150405")+".html")
+	if err := os.WriteFile(file, []byte(fmt.Sprint(v)), 0o644); err != nil {
+		snack("Error saving the page: " + err.Error())
+		return
+	}
+	snack("Saved the page to " + file)
 }
