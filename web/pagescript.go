@@ -1444,7 +1444,16 @@ func (pg *Page) saveDOM() {
 		}
 		v, err := ps.engine.RunString(`"<!DOCTYPE html>\n" + document.documentElement.outerHTML`)
 		if err != nil {
-			return err
+			if !ps.engine.Closed() {
+				return err
+			}
+			// the scripts were stopped (as they ran too long), and the
+			// document is as they left it, rendered without them
+			var b bytes.Buffer
+			if err := html.Render(&b, ps.doc); err != nil {
+				return err
+			}
+			v = b.String()
 		}
 		if err := os.WriteFile(file, []byte(fmt.Sprint(v)), 0o644); err != nil {
 			return err

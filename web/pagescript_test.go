@@ -1199,6 +1199,29 @@ func TestSaveDOM(t *testing.T) {
 	assert.True(t, strings.HasPrefix(string(data), "<!DOCTYPE html>"))
 }
 
+// TestSaveDOMStopped tests that the document of a page whose scripts were
+// stopped (as those of nytimes.com, which ran too long) is saved, as they
+// left it, which failed as the page was closed.
+func TestSaveDOMStopped(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	require.NoError(t, os.MkdirAll(filepath.Join(home, "Downloads"), 0o755))
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p>static</p><script>document.body.append("made by script")</script></body></html>`,
+	})
+	b.RenderImage(func() {
+		settle(pg)
+		pg.scripts.engine.Close() // (as when they are stopped)
+		pg.saveDOM()
+	})
+	files, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*.html"))
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "made by script")
+}
+
 // TestPreLayoutContent tests that new content of a page is laid out before
 // it is shown, without the lock of the page (see Page.preLayoutContent),
 // as it is once the page has been laid out, and that it is in no scene.
