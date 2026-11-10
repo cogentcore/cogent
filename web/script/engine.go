@@ -258,8 +258,8 @@ type Engine struct {
 
 	// navStack is the call stack of the script that last navigated the
 	// page (see [Engine.NavigateStack]).
-	navStack atomic.Value
-	frameNodes           []*html.Node
+	navStack   atomic.Value
+	frameNodes []*html.Node
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
 	changedNodes []*html.Node

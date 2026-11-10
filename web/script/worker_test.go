@@ -109,3 +109,31 @@ func TestWindowPostMessageArray(t *testing.T) {
 	e.Wait()
 	assert.Empty(t, *logs)
 }
+
+// TestPortsThroughPorts tests that the ports of the transfer lists of
+// messages posted on message ports move with them, to a worker and in the
+// same window, as the reply ports of the messages of the account menu of
+// Google (whose replies to them failed without them).
+func TestPortsThroughPorts(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{
+		"/w.js": `onmessage = e => { e.ports[0].onmessage = m => m.ports[0].postMessage("reply to " + m.data); };`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		window.got = [];
+		const c = new MessageChannel();
+		new Worker("/w.js").postMessage("port", [c.port2]);
+		const r = new MessageChannel();
+		r.port1.onmessage = m => got.push(m.data);
+		c.port1.postMessage("ask", [r.port2]);
+		const local = new MessageChannel(), lr = new MessageChannel();
+		local.port2.onmessage = m => m.ports[0].postMessage("local reply to " + m.data);
+		lr.port1.onmessage = m => got.push(m.data);
+		local.port1.postMessage("local", {transfer: [lr.port2]});`)
+	assert.Eventually(t, func() bool {
+		s, _ := run(t, e, `got.sort().join("|")`).(string)
+		return s == "local reply to local|reply to ask"
+	}, 3*time.Second, 10*time.Millisecond, "%v %v", run(t, e, `got.join("|")`), *logs)
+}

@@ -5,8 +5,11 @@
 package script
 
 import (
+	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
+	neturl "net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -220,4 +223,53 @@ func TestNavigatorMediaDevicesCredentials(t *testing.T) {
 		s, _ := v.(string)
 		return strings.Contains(s, "devices 0;") && strings.Contains(s, "NotAllowedError;") && strings.Contains(s, "credentials NotAllowedError;")
 	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestSubtleDigest tests crypto.subtle.digest (Google signs the requests
+// of its APIs with SHA-1 digests, which threw).
+func TestSubtleDigest(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.res = "";
+		const hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join("");
+		crypto.subtle.digest("SHA-1", new TextEncoder().encode("abc")).then(b => { res += hex(b) + ";"; });
+		crypto.subtle.digest({name: "SHA-256"}, new TextEncoder().encode("abc")).then(b => { res += hex(b).slice(0, 8) + ";"; });
+		crypto.subtle.digest("MD5", new Uint8Array(1)).catch(err => { res += err.name + ";"; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res`)
+		s, _ := v.(string)
+		return strings.Contains(s, "a9993e364706816aba3e25717850c26c9cd0d89d;") && strings.Contains(s, "ba7816bf;") && strings.Contains(s, "NotSupportedError;")
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestFetchCredentials tests that the requests of scripts to other origins
+// have the cookies of those origins only with credentials (fetch with
+// credentials: "include", or XMLHttpRequest withCredentials), as the APIs
+// of Google, which were 401 Unauthorized without them.
+func TestFetchCredentials(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := r.Cookie("SID")
+		if err != nil {
+			io.WriteString(w, "none")
+			return
+		}
+		io.WriteString(w, c.Value)
+	}))
+	defer srv.Close()
+	jar, _ := cookiejar.New(nil)
+	su, _ := neturl.Parse(srv.URL)
+	jar.SetCookies(su, []*http.Cookie{{Name: "SID", Value: "secret"}})
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	e, err := New(doc, Options{PageURL: "https://example.com/", Cookies: jar})
+	require.NoError(t, err)
+	defer e.Close()
+	run(t, e, `window.res = [];
+		fetch("`+srv.URL+`/a").then(r => r.text()).then(t => res.push("plain " + t));
+		fetch("`+srv.URL+`/b", {credentials: "include"}).then(r => r.text()).then(t => res.push("fetch " + t));
+		const x = new XMLHttpRequest(); x.open("POST", "`+srv.URL+`/c"); x.withCredentials = true;
+		x.onload = () => res.push("xhr " + x.responseText); x.send("y"); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`res.sort().join("|")`)
+		return v == "fetch secret|plain none|xhr secret"
+	}, 3*time.Second, 20*time.Millisecond)
 }

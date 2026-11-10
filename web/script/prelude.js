@@ -2537,8 +2537,11 @@
 		static redirect(u, s) { return new Response(null, { status: s || 302, headers: { location: u } }); }
 	}
 
-	function goFetch(url, method, headers, body, cb) {
-		D.fetch(newCallback(cb), url, method, headers, body);
+	// goFetch makes the given request, with the cookies of other origins if
+	// credentials (as fetch with credentials: "include", and XMLHttpRequest
+	// withCredentials, as the APIs of Google on clients6.google.com).
+	function goFetch(url, method, headers, body, cb, credentials) {
+		D.fetch(newCallback(cb), url, method, headers, body, !!credentials);
 	}
 
 	function fetch(input, init) {
@@ -2558,7 +2561,7 @@
 				r.url = final;
 				r.redirected = final !== req.url;
 				resolve(r);
-			});
+			}, req.credentials === "include");
 		});
 	}
 
@@ -2608,7 +2611,7 @@
 				this._setState(4);
 				this.dispatchEvent(new ProgressEvent("load", { loaded: text.length, total: text.length, lengthComputable: true }));
 				this.dispatchEvent(new ProgressEvent("loadend"));
-			});
+			}, this.withCredentials);
 		}
 		abort() { this._aborted = true; this.readyState = 0; this.dispatchEvent(new ProgressEvent("abort")); }
 	}
@@ -3024,25 +3027,30 @@
 	// partner then posts to the end of the port there (_remote).
 	class MessagePort extends EventTarget {
 		constructor() { super(); this._other = null; this._remote = 0; this._closed = false; this.onmessage = null; }
-		postMessage(data) {
+		// postMessage posts the given message to the entangled port, with
+		// the ports of the given transfer list (an array, or the transfer
+		// of options), which move with it (as Google replies to the
+		// messages of its account menu through the port of each message)
+		postMessage(data, transfer) {
 			if (this._closed) return;
+			const ports = (Array.isArray(transfer) ? transfer : (transfer && transfer.transfer) || []).filter(p => p instanceof MessagePort);
 			if (this._remote) {
-				D.portPost(this._remote, cloneJSON(data));
+				D.portPost(this._remote, cloneJSON(data), transferIDs(ports));
 				return;
 			}
 			const to = this._other;
 			if (!to) return;
-			setTimer(() => to._deliver(data), 0, [], false);
+			setTimer(() => to._deliver(data, ports), 0, [], false);
 		}
-		_deliver(data) {
+		_deliver(data, ports) {
 			if (this._closed) {
 				// a message that was on its way to a port that has moved to
 				// another engine follows it there, as in browsers
 				const via = this._movedVia;
-				if (via && via._remote) D.portPost(via._remote, cloneJSON(data));
+				if (via && via._remote) D.portPost(via._remote, cloneJSON(data), transferIDs(ports));
 				return;
 			}
-			const ev = new MessageEvent("message", { data });
+			const ev = new MessageEvent("message", { data, ports: ports || [] });
 			if (typeof this.onmessage === "function") {
 				try { this.onmessage(ev); } catch (e) { reportError(e); }
 			}
@@ -3079,12 +3087,12 @@
 		return p;
 	});
 	D.linkPort = function (id, end) { const q = localPorts.get(id); if (q) q._remote = end; };
-	D.portMessage = function (id, data) {
+	D.portMessage = function (id, data, pairs) {
 		const p = localPorts.get(id);
 		if (!p) return;
 		let v = null;
 		try { v = cloneDecode(JSON.parse(data)); } catch (e) { }
-		p._deliver(v);
+		p._deliver(v, receivedPorts(pairs));
 	};
 	class MessageChannel {
 		constructor() {
@@ -3131,7 +3139,20 @@
 		navigation: { type: 0 },
 	};
 
+	// subtle has the digests of data (as Google signs the requests of its
+	// APIs with), but no keys, encryption or signatures
+	const subtle = {
+		digest(alg, data) {
+			const name = typeof alg === "string" ? alg : alg && alg.name;
+			const d = D.digest(String(name || ""), data);
+			return d ? Promise.resolve(d) : Promise.reject(domException("NotSupportedError", "Unrecognized algorithm name"));
+		},
+	};
+	for (const m of ["encrypt", "decrypt", "sign", "verify", "generateKey", "deriveKey", "deriveBits", "importKey", "exportKey", "wrapKey", "unwrapKey"]) {
+		subtle[m] = () => Promise.reject(domException("NotSupportedError", "The operation is not supported"));
+	}
 	const crypto = {
+		subtle,
 		getRandomValues(a) { for (let i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256); return a; },
 		randomUUID() {
 			const h = "0123456789abcdef";

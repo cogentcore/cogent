@@ -24,8 +24,15 @@ import (
 // portEnd is an end of a pair of entangled ports in different engines.
 type portEnd struct {
 	e       *Engine
-	id      int      // the number of the port in e (0 until it is made)
-	pending []string // messages (as JSON) that wait for id
+	id      int           // the number of the port in e (0 until it is made)
+	pending []portMessage // messages that wait for id
+}
+
+// portMessage is a message to a port: its data (as JSON), and the pairs
+// of the ends of the ports that move with it (see [Engine.transferPorts]).
+type portMessage struct {
+	data  string
+	pairs [][2]int64
 }
 
 // portEnds are the ends of the ports of other engines, by their numbers.
@@ -45,9 +52,9 @@ func newPortEnd(e *Engine, id int) int64 {
 	return portEnds.last
 }
 
-// postToPortEnd posts the given message (as JSON) to the port of the end
-// of the given number, or keeps it until the port is made.
-func postToPortEnd(end int64, data string) {
+// postToPortEnd posts the given message to the port of the end of the
+// given number, or keeps it until the port is made.
+func postToPortEnd(end int64, m portMessage) {
 	portEnds.Lock()
 	pe := portEnds.ends[end]
 	if pe == nil {
@@ -55,13 +62,24 @@ func postToPortEnd(end int64, data string) {
 		return
 	}
 	if pe.id == 0 {
-		pe.pending = append(pe.pending, data)
+		pe.pending = append(pe.pending, m)
 		portEnds.Unlock()
 		return
 	}
 	e, id := pe.e, pe.id
 	portEnds.Unlock()
-	e.Post(func() { e.callPrelude("portMessage", id, data) })
+	e.Post(func() { e.callPrelude("portMessage", id, m.data, m.pairs) })
+}
+
+// portEngine returns the engine of the port of the end of the given
+// number, or nil.
+func portEngine(end int64) *Engine {
+	portEnds.Lock()
+	defer portEnds.Unlock()
+	if pe := portEnds.ends[end]; pe != nil {
+		return pe.e
+	}
+	return nil
 }
 
 // bindPortEnd sets the number of the port of the given end, which has been
@@ -77,8 +95,8 @@ func bindPortEnd(end int64, id int) {
 	pending := pe.pending
 	pe.pending = nil
 	portEnds.Unlock()
-	for _, data := range pending {
-		postToPortEnd(end, data)
+	for _, m := range pending {
+		postToPortEnd(end, m)
 	}
 }
 
@@ -118,7 +136,15 @@ func portIDs(v goja.Value) []int {
 func (e *Engine) definePorts() {
 	d := e.jsDOM
 	d.Set("portPost", func(call goja.FunctionCall) goja.Value {
-		postToPortEnd(call.Argument(0).ToInteger(), call.Argument(1).String())
+		end := call.Argument(0).ToInteger()
+		m := portMessage{data: call.Argument(1).String()}
+		// the ports of its transfer list move to the engine of the port
+		if ids := portIDs(call.Argument(2)); len(ids) > 0 {
+			if to := portEngine(end); to != nil {
+				m.pairs = e.transferPorts(to, ids)
+			}
+		}
+		postToPortEnd(end, m)
 		return goja.Undefined()
 	})
 	d.Set("portBind", func(call goja.FunctionCall) goja.Value {

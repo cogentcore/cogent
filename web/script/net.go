@@ -6,6 +6,9 @@ package script
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -174,7 +177,7 @@ func (e *Engine) defineNet() {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Navigate != nil {
 			replace := call.Argument(1).ToBoolean()
-			e.navStack.Store(e.Stack(8)) // (before the goroutine, for it)
+			e.navStack.Store(e.Stack(8))   // (before the goroutine, for it)
 			go e.opts.Navigate(u, replace) // after the task, which holds the lock
 		}
 		return goja.Undefined()
@@ -308,13 +311,14 @@ func (e *Engine) defineNet() {
 				body = []byte(b.String())
 			}
 		}
+		credentials := call.Argument(5).ToBoolean()
 		if err != nil {
 			e.callBack(cb, 0, "", nil, nil, "", err.Error())
 			return goja.Undefined()
 		}
 		go func() {
 			start := time.Now()
-			resp, err := e.request(u, method, headers, body, hasBody)
+			resp, err := e.request(u, method, headers, body, hasBody, credentials)
 			// failed requests are in the console, as in browsers (as those
 			// that a captcha makes, which says only that something went
 			// wrong)
@@ -370,6 +374,30 @@ func (e *Engine) defineNet() {
 	})
 	set("encodeUTF8", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(vm.NewArrayBuffer([]byte(str(call, 0))))
+	})
+	// digest returns the digest of the given data with the given algorithm
+	// (as SHA-256) for crypto.subtle.digest, or null for an unknown one
+	// (Google signs the requests of its APIs with SHA-1 digests).
+	set("digest", func(call goja.FunctionCall) goja.Value {
+		b := bytesOf(call.Argument(1))
+		var sum []byte
+		switch strings.ToUpper(str(call, 0)) {
+		case "SHA-1":
+			s := sha1.Sum(b)
+			sum = s[:]
+		case "SHA-256":
+			s := sha256.Sum256(b)
+			sum = s[:]
+		case "SHA-384":
+			s := sha512.Sum384(b)
+			sum = s[:]
+		case "SHA-512":
+			s := sha512.Sum512(b)
+			sum = s[:]
+		default:
+			return goja.Null()
+		}
+		return vm.ToValue(vm.NewArrayBuffer(sum))
 	})
 }
 
@@ -437,8 +465,9 @@ func logURL(u string) string {
 // GetURL, as for the resources of the page, and others with the default
 // client. A GET with headers is a request of data (as the JSON of the
 // page_data of github.com, with Accept: application/json, which GetURL,
-// without them, got as 406 Not Acceptable, and which its cache kept).
-func (e *Engine) request(u, method string, headers []string, body []byte, hasBody bool) (*http.Response, error) {
+// without them, got as 406 Not Acceptable, and which its cache kept). The
+// cookies of other origins are sent if credentials.
+func (e *Engine) request(u, method string, headers []string, body []byte, hasBody, credentials bool) (*http.Response, error) {
 	if strings.HasPrefix(u, "blob:") {
 		return e.blobResponse(u)
 	}
@@ -461,9 +490,11 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 		req.Header.Add(headers[i], headers[i+1])
 	}
 	// The cookies are only sent to the origin of the page, as browsers do
-	// by default (not with the requests of a page to other sites).
+	// by default (not with the requests of a page to other sites), unless
+	// the request is with credentials (as the APIs of Google, of other
+	// hosts, which were 401 Unauthorized without its cookies).
 	client := &http.Client{Timeout: 30 * time.Second}
-	if origin(u) == origin(e.opts.PageURL) {
+	if credentials || origin(u) == origin(e.opts.PageURL) {
 		client.Jar = e.opts.Cookies
 	}
 	return client.Do(req)
