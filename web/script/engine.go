@@ -248,6 +248,10 @@ type Engine struct {
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
 	domChanges, framesAt int
+
+	// navStack is the call stack of the script that last navigated the
+	// page (see [Engine.NavigateStack]).
+	navStack atomic.Value
 	frameNodes           []*html.Node
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
@@ -636,6 +640,26 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	e.lastRender = time.Now()
 	e.renderCost = e.lastRender.Sub(start)
 	e.traceSlow("render", e.renderCost, lock == nil)
+}
+
+// NavigateStack returns the call stack of the script that last navigated
+// the page (see [Options.Navigate]), as [Engine.Stack] returns it.
+func (e *Engine) NavigateStack() string {
+	s, _ := e.navStack.Load().(string)
+	return s
+}
+
+// Stack returns the call stack of the scripts that are running, at most
+// the given number of frames, each on a line of its own starting with a
+// tab, or "" when no script is running (as for the script that navigates
+// the page, for the console).
+func (e *Engine) Stack(n int) string {
+	var b bytes.Buffer
+	for _, f := range e.vm.CaptureCallStack(n, nil) {
+		b.WriteString("\n\tat ")
+		f.Write(&b)
+	}
+	return b.String()
 }
 
 // slowRender is how long a render (or restyle or reread) of the page takes

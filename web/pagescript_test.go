@@ -1239,3 +1239,23 @@ func TestPreLayoutContent(t *testing.T) {
 		assert.InDelta(t, pg.Geom.Size.Alloc.Content.X, content.Geom.Size.Actual.Total.X, 1, "as wide as the page")
 	})
 }
+
+// TestConsoleOpenedBy tests that the verbose console of a page that a
+// script of another page opened says so, with where in the script (as for
+// finding why a page was replaced by the widget of the account of Google,
+// whose console started with that of the widget).
+func TestConsoleOpenedBy(t *testing.T) {
+	Settings.VerboseConsole = true
+	defer func() { Settings.VerboseConsole = false }()
+	b, pg := newScriptPage(t, map[string]string{
+		"/":    `<html><body><script>setTimeout(function go() { location.href = "/two"; }, 10)</script></body></html>`,
+		"/two": `<html><body><p>two</p><script>1</script></body></html>`,
+	})
+	b.RenderImage(func() {
+		settle(pg)
+		require.True(t, eventually(func() bool { return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "opened by") }), strings.Join(pg.ScriptConsole(), "\n"))
+		all := strings.Join(pg.ScriptConsole(), "\n")
+		assert.Contains(t, all, "opened by a script of https://example.com/")
+		assert.Contains(t, all, "at go (")
+	})
+}

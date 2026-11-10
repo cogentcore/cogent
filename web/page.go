@@ -128,6 +128,11 @@ type Page struct {
 	// of the page, as of its last layout, with which new content is laid
 	// out before it is shown (see [Page.preLayoutContent]).
 	preLayout atomic.Pointer[func(core.Widget)]
+
+	// openedBy is how the page that is being opened was opened (by a
+	// link, a script or a form of the page before it), for the verbose
+	// console (see [SettingsData.VerboseConsole]).
+	openedBy string
 	onShowConsole        func()
 }
 
@@ -418,6 +423,8 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	}
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
+	openedBy := pg.openedBy // (for its console)
+	pg.openedBy = ""
 	pg.loading = url
 	pg.failed = ""
 	pg.opened(url)
@@ -460,7 +467,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			resp.Body.Close()
 			if err == nil && scripts {
 				// the page is shown by its scripts once they have run
-				if pg.openScripts(ctx, page, final, mode, index, cache, canceled) {
+				if pg.openScripts(ctx, page, final, mode, index, cache, canceled, openedBy) {
 					return
 				}
 			}

@@ -174,6 +174,7 @@ func (e *Engine) defineNet() {
 		u, err := resolveURL(str(call, 0), e.baseURL())
 		if err == nil && e.opts.Navigate != nil {
 			replace := call.Argument(1).ToBoolean()
+			e.navStack.Store(e.Stack(8)) // (before the goroutine, for it)
 			go e.opts.Navigate(u, replace) // after the task, which holds the lock
 		}
 		return goja.Undefined()

@@ -117,7 +117,7 @@ type pageScripts struct {
 
 // newPageScripts returns the scripts of the given parsed document of the
 // page, which was gotten with the given context, for the given final URL.
-func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final string) (*pageScripts, error) {
+func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, openedBy string) (*pageScripts, error) {
 	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight}
 	e, err := script.New(doc, script.Options{
 		PageURL:       final,
@@ -154,6 +154,9 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 			}
 		}
 		ps.log(slog.LevelDebug, fmt.Sprintf("page %s: %d scripts", final, n))
+		if openedBy != "" {
+			ps.log(slog.LevelDebug, "opened by "+openedBy)
+		}
 	}
 	return ps, nil
 }
@@ -983,6 +986,7 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 			ps.engine.Eval(strings.TrimSpace(url)[len("javascript:"):])
 			return
 		}
+		pg.openedBy = "a link of " + pg.currentURL() + " (" + htmlcore.GetAttr(link, "href") + ")"
 		pg.OpenURL(url, ev)
 	})
 }
@@ -1031,6 +1035,7 @@ func (ps *pageScripts) navigate(url string, replace bool) {
 	if pg.scripts != ps {
 		return
 	}
+	pg.openedBy = "a script of " + pg.currentURL() + ps.engine.NavigateStack()
 	if replace && pg.Current < len(pg.History) {
 		pg.open(url, historyAt, pg.Current, 0)
 		return
@@ -1049,6 +1054,7 @@ func (ps *pageScripts) submit(url, contentType string, body []byte) {
 	if pg.scripts != ps {
 		return
 	}
+	pg.openedBy = "a form of " + pg.currentURL()
 	pg.openPost(url, &postRequest{contentType: contentType, body: body}, historyNew, 0, 0)
 }
 
@@ -1256,7 +1262,7 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 // load), and then runs its scripts, after which (and as they change it)
 // it is rendered again, with the given change to the history. It returns
 // false if its scripts cannot be run, for the page to be read without them.
-func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool) bool {
+func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string) bool {
 	ctx.Scripting = true
 	ctx.ImageCache = htmlcore.NewImageCache(64 << 20)
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
@@ -1264,7 +1270,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		ctx.Scripting = false
 		return false
 	}
-	ps, err := pg.newPageScripts(ctx, doc, final)
+	ps, err := pg.newPageScripts(ctx, doc, final, openedBy)
 	if err != nil {
 		slog.Error("web: running the scripts of the page", "url", final, "err", err)
 		ctx.Scripting = false
