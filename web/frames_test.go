@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
@@ -191,5 +192,61 @@ func TestFrameNotNested(t *testing.T) {
 		for _, fp := range pg.frames {
 			assert.Empty(t, fp.frames, "the page of the frame has no frames")
 		}
+	})
+}
+
+// TestFrameViewportScrollbar tests that the viewport of the page of a frame
+// whose content is higher than it (which has a scrollbar) is as wide as the
+// frame, as in browsers (whose innerWidth includes the scrollbar), so that
+// scrolling it fires no resize event (on which reCAPTCHA served the images
+// of its challenge again, each time that its frame was scrolled).
+func TestFrameViewportScrollbar(t *testing.T) {
+	inner := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `<html><body style="margin: 0"><div style="height: 2000px">tall</div><script>
+			window.resizes = 0;
+			window.addEventListener("resize", () => resizes++);
+			window.widths = [innerWidth];
+			</script></body></html>`)
+	}))
+	defer inner.Close()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.Scripts = true
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: errors.Log1(url.Parse(u))},
+			Body: io.NopCloser(strings.NewReader(`<html><body><iframe src="` + inner.URL + `/f" width="300" height="100" frameborder="0"></iframe></body></html>`))}, nil
+	}
+	pg.OpenURL("https://example.com/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "tall") }), pageTexts(b, pg))
+		time.Sleep(300 * time.Millisecond)
+		var fp *Page
+		b.AsyncLock()
+		for _, f := range pg.frames {
+			fp = f
+		}
+		b.AsyncUnlock()
+		require.NotNil(t, fp)
+		require.True(t, eventually(func() bool { b.AsyncLock(); defer b.AsyncUnlock(); return fp.scripts != nil }))
+		b.AsyncLock()
+		assert.InDelta(t, 300, fp.viewportWidth(), 1, "the width of the frame, with its scrollbar")
+		// scrolling the frame
+		fp.Geom.Scroll.Y = -500
+		fp.ScrollUpdateFromGeom(math32.Y)
+		fp.NeedsLayout()
+		b.AsyncUnlock()
+	}, func() {
+		time.Sleep(300 * time.Millisecond)
+		var fp *Page
+		b.AsyncLock()
+		for _, f := range pg.frames {
+			fp = f
+		}
+		b.AsyncUnlock()
+		fp.scripts.engine.Wait()
+		v, err := fp.scripts.engine.RunString(`resizes + " " + innerWidth`)
+		require.NoError(t, err)
+		assert.Equal(t, "0 300", v, "no resize events, and innerWidth is that of the frame")
 	})
 }

@@ -17,6 +17,7 @@ import (
 	neturl "net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -824,6 +825,9 @@ func makeToolbar(p *tree.Plan, page func() *Page) {
 	tree.AddAt(p, "url", func(w *core.TextField) {
 		w.SetPlaceholder("Address or search")
 		w.Styler(func(s *styles.Style) {
+			// one line, which scrolls (a long URL, as of a search with all
+			// of its parameters, made it many lines high)
+			s.SetTextWrap(false)
 			s.Grow.Set(1, 0)
 			s.Min.X.Em(30)
 			s.Max.X.Ch(80)
@@ -1005,6 +1009,22 @@ func (pg *Page) viewportHeight() float32 {
 
 func (pg *Page) viewportWidth() float32 {
 	dp := pg.pxDots()
+	if pg.frame != nil {
+		// the page of a frame: the width of its iframe (which it scrolls
+		// in, with its scrollbar, as innerWidth in browsers), or that of
+		// the iframe element before it is laid out (the page of the frame
+		// of the challenge of reCAPTCHA was read, and its scripts run, for
+		// the width of the window, so that it overflowed its frame)
+		if fr := core.AsFrame(pg.Parent); fr != nil && dp > 0 {
+			if w := fr.Geom.Size.Alloc.Content.X; w > 0 {
+				return w / dp
+			}
+		}
+		if w, err := strconv.Atoi(strings.TrimSpace(htmlcore.GetAttr(pg.frame.node, "width"))); err == nil && w > 0 {
+			return float32(w)
+		}
+		return htmlcore.IframeDefaultWidth
+	}
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {
 			w += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)

@@ -141,6 +141,17 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		return nil, err
 	}
 	ps.engine = e
+	if Settings.VerboseConsole {
+		// the page itself, as the first message (a page without scripts
+		// has no others)
+		n := 0
+		for k := range doc.Descendants() {
+			if k.Type == html.ElementNode && k.Data == "script" {
+				n++
+			}
+		}
+		ps.log(slog.LevelDebug, fmt.Sprintf("page %s: %d scripts", final, n))
+	}
 	return ps, nil
 }
 
@@ -1052,6 +1063,14 @@ func (ps *pageScripts) viewport() (float32, float32) {
 func (ps *pageScripts) viewportSize() (float32, float32) {
 	pg := ps.pg
 	w := ps.width
+	if pg.frame != nil {
+		// that of the frame as it is now (as for the scripts of the page
+		// of a frame that was read for its width before it was laid out,
+		// which get a resize event for it; see render)
+		if fw := pg.viewportWidth(); fw > 0 {
+			w = fw
+		}
+	}
 	h := float32(768)
 	if dp := pg.pxDots(); dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.Geom.Size.Alloc.Content.Y > 0 {

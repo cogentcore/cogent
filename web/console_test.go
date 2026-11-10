@@ -109,6 +109,7 @@ func TestConsoleVerbose(t *testing.T) {
 				return
 			}
 			assert.True(t, ok, all)
+			assert.Contains(t, all, "DEBUG: page https://example.com/: 1 scripts", "the page, as the first message")
 			assert.Contains(t, all, "GET https://example.com/data.json (0 bytes): 200, 8 bytes")
 			assert.Contains(t, all, "missing: navigator.notInBrowsers")
 			assert.Contains(t, all, "missing: window.notDefinedAnywhere")

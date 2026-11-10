@@ -162,3 +162,36 @@ func TestFragment(t *testing.T) {
 		assert.Equal(t, 1, gets, "the page is not gotten again")
 	})
 }
+
+// TestToolbarLongURL tests that the address field is one line for a long
+// URL (as of a search with all of its parameters, which made it many
+// lines high).
+func TestToolbarLongURL(t *testing.T) {
+	b := core.NewBody()
+	pg := NewPage(b)
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		pu, _ := url.Parse(u)
+		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(strings.NewReader(`<p>A page</p>`))}, nil
+	}
+	b.AddTopBar(func(bar *core.Frame) {
+		tb := core.NewToolbar(bar)
+		tb.Maker(pg.MakeToolbar)
+		pg.OnOpen = func(url string) { tb.Update() }
+	})
+	long := "https://www.google.com/search?hl=nl&source=hp&biw=&bih=&q=ebikes&iflsig=" + strings.Repeat("AHSINFcAAAAAavL9Etj4wy55EX7LBKYo1QOS3rvbcsNP", 4) + "&gbv=2&btnG=Google+Zoeken"
+	pg.OpenURL(long, nil)
+	var addr *core.TextField
+	b.RenderImage(pg.wait, func() {
+		b.Scene.WalkDown(func(n tree.Node) bool {
+			if w, ok := n.(*core.TextField); ok && w.Name == "url" {
+				addr = w
+			}
+			return tree.Continue
+		})
+		if assert.NotNil(t, addr) {
+			assert.Equal(t, long, addr.Text())
+			lh := addr.Styles.LineHeightDots()
+			assert.Less(t, addr.Geom.Size.Actual.Content.Y, 1.6*lh, "one line")
+		}
+	})
+}
