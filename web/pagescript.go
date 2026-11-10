@@ -1323,7 +1323,9 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 // false if its scripts cannot be run, for the page to be read without them.
 func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string) bool {
 	ctx.Scripting = true
-	ctx.ImageCache = htmlcore.NewImageCache(64 << 20)
+	// (as the photos of the front page of nytimes.com, which are read
+	// again with the page as its scripts change it)
+	ctx.ImageCache = htmlcore.NewImageCache(256 << 20)
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
