@@ -1334,3 +1334,13 @@ func TestNumberToLocaleString(t *testing.T) {
 	e, _ := testEngine(t, `<html><body></body></html>`, nil)
 	assert.Equal(t, "1,234.5|1,234|12M|0.5", run(t, e, `[(1234.5).toLocaleString("en-US"), (1234).toLocaleString(), (12345678).toLocaleString("en-US", {notation: "compact"}), (0.5).toLocaleString(undefined, {maximumFractionDigits: 1})].join("|")`))
 }
+
+// TestSelectorIsWhere tests :is() and :where() in the selectors of
+// scripts (as the focusable elements of the menus of GitHub, which were
+// not a valid selector, and failed the pull request list).
+func TestSelectorIsWhere(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><button id="b">b</button><button id="d" disabled>d</button><a id="a" href="#" data-overflowing>a</a><p id="p">p</p></body></html>`, nil)
+	assert.Equal(t, "true|false|false|false|b,a", run(t, e, `const sel = ":is(button, a, input, [tabindex]):not(:disabled):not([data-overflowing])";
+		[document.getElementById("b").matches(sel), document.getElementById("d").matches(sel), document.getElementById("a").matches(sel), document.getElementById("p").matches(sel),
+		[...document.querySelectorAll(":where(button, a):not([disabled])")].map(x => x.id).join(",")].join("|")`))
+}

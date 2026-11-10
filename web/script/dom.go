@@ -226,6 +226,11 @@ func (e *Engine) defineDOM() {
 	}
 	compile := func(sel string) cascadia.Matcher {
 		g, err := cascadia.ParseGroup(sel)
+		if err != nil && (strings.Contains(sel, ":is(") || strings.Contains(sel, ":where(")) {
+			if rg, rerr := cascadia.ParseGroup(rewriteIsWhere(sel)); rerr == nil {
+				g, err = rg, nil
+			}
+		}
 		if err != nil {
 			// the brackets and parentheses that are open at the end are
 			// closed, as in CSS (as for '[class^="x"')
@@ -885,6 +890,42 @@ func scoped(n *html.Node) func() {
 			}
 		}
 	}
+}
+
+// rewriteIsWhere rewrites the :is(X) and :where(X) of the given selector,
+// which the selector library does not support, as :not(:not(X)), as the
+// cascade of htmlcore does (as the focusable elements of the menus of
+// GitHub, :is(button, a, input, [tabindex]):not(:disabled), which were not
+// a valid selector, and failed the pull request list).
+func rewriteIsWhere(sel string) string {
+	var sb strings.Builder
+	var closes []bool // for each open parenthesis, whether its close is doubled
+	for i := 0; i < len(sel); i++ {
+		switch {
+		case strings.HasPrefix(sel[i:], ":is("):
+			sb.WriteString(":not(:not(")
+			closes = append(closes, true)
+			i += len(":is(") - 1
+		case strings.HasPrefix(sel[i:], ":where("):
+			sb.WriteString(":not(:not(")
+			closes = append(closes, true)
+			i += len(":where(") - 1
+		case sel[i] == '(':
+			sb.WriteByte('(')
+			closes = append(closes, false)
+		case sel[i] == ')':
+			sb.WriteByte(')')
+			if n := len(closes); n > 0 {
+				if closes[n-1] {
+					sb.WriteByte(')')
+				}
+				closes = closes[:n-1]
+			}
+		default:
+			sb.WriteByte(sel[i])
+		}
+	}
+	return sb.String()
 }
 
 // closeSelector returns the given selector with the brackets, parentheses
