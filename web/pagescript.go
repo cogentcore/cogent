@@ -355,6 +355,7 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 		}
 		start := time.Now()
 		if !ps.ctx.Restyle(nodes) {
+			ps.logFallback("restyle", "reading the changed elements again")
 			return false
 		}
 		ps.restyles++
@@ -393,6 +394,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		if len(styled) > 0 && !ps.ctx.Restyle(styled) {
 			// (as for a change of their display, for which they are read
 			// again as elements that have changed themselves)
+			ps.logFallback("restyle", "reading the changed elements again")
 			self = append(slices.Clip(self), styled...)
 		}
 		// the element that has the focus, and the scroll positions, for
@@ -427,6 +429,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			fp.setShown()
 		}
 		if !ok {
+			ps.logFallback("reread", "reading the page whole")
 			return false
 		}
 		for _, open := range opens {
@@ -1609,4 +1612,20 @@ func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
 		// (a closed engine, of a page that is gone, runs no tasks)
 		time.AfterFunc(t.Delay+t.Duration, func() { e.Dispatch(t.Node, "transitionend", end, nil) })
 	}
+}
+
+// logFallback logs to the verbose console why the given kind of update of
+// the page (a restyle or reread) could not be made, as recorded by the
+// context ([htmlcore.Context.Fallback]), and what is done instead, as
+// pages read whole often (as nytimes.com, about 20 times as it loads,
+// whose elements were resized each time) are slow and jumpy.
+func (ps *pageScripts) logFallback(kind, instead string) {
+	if !Settings.VerboseConsole {
+		return
+	}
+	why := ps.ctx.Fallback()
+	if why == "" {
+		why = "unknown"
+	}
+	ps.log(slog.LevelDebug, fmt.Sprintf("%s of the page not possible (%s): %s", kind, why, instead))
 }

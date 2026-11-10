@@ -7,6 +7,7 @@ package script
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -92,6 +93,11 @@ func (e *Engine) recordChange(n *html.Node, self bool) {
 		}
 		if n == nil || len(*list) >= maxChangedNodes {
 			e.whole = true
+			if n == nil {
+				e.wholeWhy = "a change of the document"
+			} else {
+				e.wholeWhy = fmt.Sprintf("more than %d changed elements", maxChangedNodes)
+			}
 		} else if !slices.Contains(*list, n) {
 			*list = append(*list, n)
 		}

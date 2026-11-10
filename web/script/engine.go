@@ -243,6 +243,8 @@ type Engine struct {
 	// of it is rendered again.
 	selfNodes, childNodes []*html.Node
 	whole                 bool
+	// wholeWhy is why whole is set, for the verbose console.
+	wholeWhy string
 	// taskLock and taskUnlock are the functions that lock and unlock the
 	// page for the task that is running (see [Engine.lockTask]),
 	// taskLocked is whether it is locked, and lockLost is whether it could
@@ -595,8 +597,8 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 			e.taskTimer.Reset(max(e.taskLeft, 0))
 		}()
 	}
-	styled, self, children, whole := e.styled, e.selfNodes, e.childNodes, e.whole
-	e.styled, e.selfNodes, e.childNodes, e.whole = nil, nil, nil, false
+	styled, self, children, whole, wholeWhy := e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy
+	e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy = nil, nil, nil, false, ""
 	e.changedNodes = e.changedNodes[:0]
 	if !e.dirty && e.restyle(styled, lock, unlock) {
 		e.lastRender = time.Now()
@@ -612,6 +614,9 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		e.rereadCost = e.lastRender.Sub(start)
 		e.traceSlow("reread", e.rereadCost, lock == nil)
 		return
+	}
+	if whole {
+		e.tracef("reading the page whole: %s", wholeWhy)
 	}
 	e.dirty = false
 	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && e.taskLocked {
@@ -712,7 +717,11 @@ func (e *Engine) restyle(nodes []*html.Node, lock func() bool, unlock func()) bo
 // with the given lock held, if not nil (otherwise it is held), returning
 // whether they were.
 func (e *Engine) reread(self, children, styled []*html.Node, lock func() bool, unlock func()) bool {
-	if e.opts.Reread == nil || e.focusRequest != nil {
+	if e.opts.Reread == nil {
+		return false
+	}
+	if e.focusRequest != nil {
+		e.tracef("reading the page whole: an element is to get the focus")
 		return false // (the focus is given to the widget of the element as the page is rendered)
 	}
 	commit := e.opts.Reread(self, children, styled)
@@ -955,7 +964,7 @@ func (e *Engine) RunString(src string) (any, error) {
 // Rerender renders the page again in a task, as when it is read again
 // for another width of its viewport.
 func (e *Engine) Rerender() {
-	e.Post(func() { e.dirty, e.whole = true, true })
+	e.Post(func() { e.dirty, e.whole, e.wholeWhy = true, true, "the viewport changed" })
 }
 
 // Resized fires the resize event of the window in a task, as when the
@@ -973,7 +982,7 @@ func (e *Engine) Eval(src string) {
 // page is rendered again at the end of the task, as for the value of a
 // form control that is changed by the user.
 func (e *Engine) Changed() {
-	e.dirty, e.whole = true, true
+	e.dirty, e.whole, e.wholeWhy = true, true, "a control was changed"
 }
 
 // StateChanged records that the states of the given elements that select
