@@ -28,8 +28,10 @@ type moduleDef struct {
 	url, script string
 }
 
-// requireCall matches the imports of a module transformed by esbuild.
-var requireCall = regexp.MustCompile(`\brequire\(("(?:[^"\\]|\\.)*")\)`)
+// requireCall matches the imports of a module transformed by esbuild:
+// calls of require, not of methods named require (as a.require("util")
+// of lodash in a chunk of GitHub, which was fetched as a module).
+var requireCall = regexp.MustCompile(`(?:^|[^.\w$])require\(("(?:[^"\\]|\\.)*")\)`)
 
 // moduleGraph returns the definitions of the module at the given URL
 // (with the given code, if not nil, as for a module script in the page,

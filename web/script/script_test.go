@@ -1172,3 +1172,56 @@ func TestAttributeNodes(t *testing.T) {
 		out.join(" ")`))
 	assert.Empty(t, *logs)
 }
+
+// TestModuleMethodRequire tests that a method named require in a module
+// (as a.require("util") of lodash in the chunks of GitHub) is not an
+// import of it, which failed the import of the module.
+func TestModuleMethodRequire(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{
+		"/chunk.js": `export const ids = ["d"]; export const util = function () { var a = { require: null }; try { return a && a.require && a.require("util").types; } catch (e) {} }();`,
+	})
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `window.res = ""; __dynamicImport("https://example.com/page.html", "./chunk.js").then(m => { window.res = "ok " + m.ids; }, err => { window.res = "err " + err; }); 0`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`window.res`)
+		return v == "ok d"
+	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
+}
+
+// TestRange tests the contents of ranges: the children of an element
+// replaced by those of another (as the frames of Turbo on GitHub do), and
+// the characters of text.
+func TestRange(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="a"><b>1</b><i>2</i></div><div id="b"><u>3</u><s>4</s></div><p id="t">hello world</p></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "<u>3</u><s>4</s>|", run(t, e, `
+		const a = document.getElementById("a"), b = document.getElementById("b");
+		const r = document.createRange();
+		r.selectNodeContents(a);
+		r.deleteContents();
+		const s = b.ownerDocument.createRange();
+		s.selectNodeContents(b);
+		a.appendChild(s.extractContents());
+		a.innerHTML + "|" + b.innerHTML`))
+	assert.Equal(t, "world|hello x|true", run(t, e, `
+		const tx = document.getElementById("t").firstChild;
+		const q = new Range();
+		q.setStart(tx, 6); q.setEnd(tx, 11);
+		const w = q.toString();
+		q.deleteContents();
+		q.insertNode(document.createTextNode("x"));
+		w + "|" + document.getElementById("t").textContent + "|" + q.collapsed`))
+	assert.Empty(t, *logs)
+}
+
+// TestPerformanceResourceTimings tests the resource timing methods of
+// performance (clearResourceTimings, called on a soft navigation of
+// GitHub, which threw on a click of a link).
+func TestPerformanceResourceTimings(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "ok", run(t, e, `performance.clearResourceTimings(); performance.setResourceTimingBufferSize(250); "ok"`))
+}

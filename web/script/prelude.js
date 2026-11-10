@@ -1808,7 +1808,7 @@
 			e.initMouseEvent = e.initEvent;
 			return e;
 		}
-		createRange() { return { setStart() {}, setEnd() {}, selectNodeContents() {}, collapse() {}, getBoundingClientRect() { return new DOMRect(); }, getClientRects() { return []; }, createContextualFragment: html => wrap(D.parse(String(html), 0)) }; }
+		createRange() { return new Range(); }
 		createTreeWalker(root, what, filter) { return treeWalker(root, what, filter); }
 		createNodeIterator(root, what, filter) { const w = treeWalker(root, what, filter); return { nextNode: () => w.nextNode() }; }
 		importNode(n, deep) { return n.cloneNode(deep); }
@@ -1845,6 +1845,110 @@
 	// ShadowRoot is the shadow root of an element, a fragment whose content
 	// is not rendered (only the children of the element are), but which
 	// scripts use (as web components render into them).
+	// Range is a range of the DOM between two boundary points (nodes and
+	// offsets in them: of characters in character data, of children in the
+	// others). Its contents can be deleted, extracted and cloned when its
+	// points are in the same node (as the frames of Turbo on GitHub, which
+	// replace the children of an element with those of another).
+	class Range {
+		constructor() {
+			this.startContainer = this.endContainer = document;
+			this.startOffset = this.endOffset = 0;
+		}
+		get collapsed() { return this.startContainer === this.endContainer && this.startOffset === this.endOffset; }
+		get commonAncestorContainer() {
+			for (let a = this.startContainer; a; a = a.parentNode) {
+				if (a === this.endContainer || a.contains(this.endContainer)) return a;
+			}
+			return this.startContainer;
+		}
+		setStart(n, o) { this.startContainer = n; this.startOffset = o | 0; if (this.collapsedAfterEnd()) this.collapse(true); }
+		setEnd(n, o) { this.endContainer = n; this.endOffset = o | 0; if (this.collapsedAfterEnd()) this.collapse(false); }
+		// collapsedAfterEnd returns whether the start is after the end in
+		// the same node (then the range collapses to the point set).
+		collapsedAfterEnd() { return this.startContainer === this.endContainer && this.startOffset > this.endOffset; }
+		setStartBefore(n) { this.setStart(n.parentNode, rangeIndex(n)); }
+		setStartAfter(n) { this.setStart(n.parentNode, rangeIndex(n) + 1); }
+		setEndBefore(n) { this.setEnd(n.parentNode, rangeIndex(n)); }
+		setEndAfter(n) { this.setEnd(n.parentNode, rangeIndex(n) + 1); }
+		selectNode(n) { const p = n.parentNode, i = rangeIndex(n); this.startContainer = this.endContainer = p; this.startOffset = i; this.endOffset = i + 1; }
+		selectNodeContents(n) { this.startContainer = this.endContainer = n; this.startOffset = 0; this.endOffset = rangeLength(n); }
+		collapse(toStart) {
+			if (toStart) { this.endContainer = this.startContainer; this.endOffset = this.startOffset; }
+			else { this.startContainer = this.endContainer; this.startOffset = this.endOffset; }
+		}
+		cloneRange() { const r = new Range(); Object.assign(r, { startContainer: this.startContainer, startOffset: this.startOffset, endContainer: this.endContainer, endOffset: this.endOffset }); return r; }
+		detach() {}
+		// rangeNodes returns the container of the range and the children of
+		// it in the range, or null if its points are in different nodes.
+		rangeNodes() {
+			const c = this.startContainer;
+			if (c !== this.endContainer) { D.log("debug", "missing: contents of a Range in different nodes"); return null; }
+			return Array.from(c.childNodes).slice(this.startOffset, this.endOffset);
+		}
+		isText() { const t = this.startContainer.nodeType; return t === 3 || t === 4 || t === 8; }
+		deleteContents() {
+			if (this.isText() && this.startContainer === this.endContainer) {
+				const c = this.startContainer, d = c.data;
+				c.data = d.slice(0, this.startOffset) + d.slice(this.endOffset);
+			} else {
+				const ns = this.rangeNodes();
+				if (ns) for (const n of ns) n.remove();
+			}
+			this.collapse(true);
+		}
+		cloneContents() {
+			const f = document.createDocumentFragment();
+			if (this.isText() && this.startContainer === this.endContainer) {
+				f.appendChild(document.createTextNode(this.startContainer.data.slice(this.startOffset, this.endOffset)));
+			} else {
+				const ns = this.rangeNodes();
+				if (ns) for (const n of ns) f.appendChild(n.cloneNode(true));
+			}
+			return f;
+		}
+		extractContents() {
+			if (this.isText() && this.startContainer === this.endContainer) {
+				const f = this.cloneContents();
+				this.deleteContents();
+				return f;
+			}
+			const f = document.createDocumentFragment();
+			const ns = this.rangeNodes();
+			if (ns) for (const n of ns) f.appendChild(n);
+			this.collapse(true);
+			return f;
+		}
+		insertNode(n) {
+			const c = this.startContainer;
+			if (this.isText()) {
+				const after = c.splitText(this.startOffset);
+				c.parentNode.insertBefore(n, after);
+			} else {
+				c.insertBefore(n, c.childNodes[this.startOffset] || null);
+			}
+			if (this.startContainer === this.endContainer && !this.isText()) this.endOffset += n.nodeType === 11 ? 0 : 1;
+		}
+		surroundContents(n) { n.appendChild(this.extractContents()); this.insertNode(n); this.selectNode(n); }
+		toString() {
+			if (this.isText() && this.startContainer === this.endContainer) return this.startContainer.data.slice(this.startOffset, this.endOffset);
+			const ns = this.startContainer === this.endContainer ? Array.from(this.startContainer.childNodes || []).slice(this.startOffset, this.endOffset) : [];
+			return ns.map(n => n.textContent || "").join("");
+		}
+		compareBoundaryPoints() { return 0; }
+		isPointInRange(n, o) { return this.startContainer === n ? o >= this.startOffset && o <= this.endOffset : this.commonAncestorContainer.contains(n); }
+		intersectsNode(n) { return this.commonAncestorContainer.contains(n); }
+		getBoundingClientRect() { return new DOMRect(); }
+		getClientRects() { return []; }
+		createContextualFragment(html) { return wrap(D.parse(String(html), 0)); }
+	}
+	Object.assign(Range, { START_TO_START: 0, START_TO_END: 1, END_TO_END: 2, END_TO_START: 3 });
+	// rangeIndex returns the index of the given node in its parent.
+	function rangeIndex(n) { return n.parentNode ? Array.prototype.indexOf.call(n.parentNode.childNodes, n) : 0; }
+	// rangeLength returns the length of a node as a boundary point: its
+	// characters for character data, else its children.
+	function rangeLength(n) { const t = n.nodeType; return t === 3 || t === 4 || t === 8 ? n.data.length : n.childNodes.length; }
+
 	class ShadowRoot extends DocumentFragment {
 		get host() { return wrap(shadowHosts.get(this[ID])); }
 		get mode() { const s = shadows.get(this.host); return s ? s.mode : "open"; }
@@ -2969,7 +3073,7 @@
 	const performance = {
 		now() { return Date.now() - t0; },
 		timeOrigin: t0,
-		mark() {}, measure() {}, clearMarks() {}, clearMeasures() {},
+		mark() {}, measure() {}, clearMarks() {}, clearMeasures() {}, clearResourceTimings() {}, setResourceTimingBufferSize() {},
 		getEntries() { return []; }, getEntriesByType() { return []; }, getEntriesByName() { return []; },
 		timing: { navigationStart: t0 },
 		navigation: { type: 0 },
@@ -3167,7 +3271,7 @@
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
 		devicePixelRatio: 1, status: "", isSecureContext: true,
-		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType,
+		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
 		HTMLOptionElement, HTMLButtonElement, HTMLFormElement, HTMLTemplateElement, HTMLCanvasElement, HTMLMediaElement,
