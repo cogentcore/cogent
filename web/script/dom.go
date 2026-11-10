@@ -477,7 +477,7 @@ func (e *Engine) defineDOM() {
 			e.changed(parent)
 		}
 		for _, k := range kids {
-			e.runInserted(k)
+			e.runInserted(k, true)
 		}
 		return goja.Undefined()
 	})

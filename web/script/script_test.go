@@ -1271,3 +1271,27 @@ func TestOffsetParentEnds(t *testing.T) {
 		for (let t = document.querySelector("textarea"); t && n < 10; t = t.offsetParent instanceof HTMLElement ? t.offsetParent : null) n++;
 		String(document.body.offsetParent) + "|" + String(document.documentElement.offsetParent) + "|" + (n < 10)`))
 }
+
+// TestInsertedScriptSync tests that an inline script inserted by a script
+// runs in appendChild, as in browsers (Google inserts the code of its bot
+// check, removes it right after, and uses what it defined), with it as
+// the current script, and that modules and scripts set by innerHTML do not.
+func TestInsertedScriptSync(t *testing.T) {
+	e, logs := testEngine(t, `<html><head></head><body></body></html>`, nil)
+	assert.Equal(t, "1|true|undefined|outer", run(t, e, `
+		window.outer = "outer";
+		const s = document.createElement("script");
+		s.id = "bg";
+		s.textContent = "window.bgDefined = 1; window.cur = document.currentScript && document.currentScript.id === 'bg';";
+		document.head.appendChild(s);
+		s.remove();
+		const d = document.createElement("div");
+		d.innerHTML = "<script>window.inner = 1<\/script>";
+		document.body.appendChild(d);
+		const m = document.createElement("script");
+		m.type = "module";
+		m.textContent = "window.mod = 1";
+		document.body.appendChild(m);
+		[window.bgDefined, window.cur, String(window.mod), window.outer].join("|")`))
+	assert.Empty(t, *logs)
+}

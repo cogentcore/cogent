@@ -606,9 +606,10 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 		e.defineModules(defs)
 		code = "__requireModule(" + quoteJS(entry) + ");"
 	}
+	prev := e.current // (of a script that inserted this one, run in it)
 	e.current = s
 	e.run(name, code)
-	e.current = nil
+	e.current = prev
 	if hasSrc {
 		e.callPrelude("fireEvent", e.nodes.id(s), "load")
 	}
@@ -645,8 +646,11 @@ func (e *Engine) getScript(u string) (string, error) {
 
 // runInserted runs the scripts that the given node (that was inserted in
 // the document) is or has, which have not run yet: the external ones once
-// they are gotten (in another goroutine), and the others in a new task.
-func (e *Engine) runInserted(n *html.Node) {
+// they are gotten (in another goroutine), and the others in a new task, or
+// now if sync (inline classic scripts inserted by a script, as browsers
+// run them in appendChild: Google inserts the code of its bot check and
+// removes it right after, and then uses what it defines).
+func (e *Engine) runInserted(n *html.Node, sync bool) {
 	if !connected(n, e.doc) {
 		return
 	}
@@ -680,6 +684,10 @@ func (e *Engine) runInserted(n *html.Node) {
 		e.ran[c] = true
 		_, hasSrc := attr(c, "src")
 		if !hasSrc && strings.TrimSpace(textContent(c)) == "" {
+			return true
+		}
+		if typ, _ := attr(c, "type"); sync && !hasSrc && !strings.EqualFold(strings.TrimSpace(typ), "module") {
+			e.runScript(c, false)
 			return true
 		}
 		pending := e.loading // which the load event is after (see Load)
@@ -762,7 +770,7 @@ func (e *Engine) write(s string) {
 	}
 	for _, k := range e.parseFragment(s, parent) {
 		parent.InsertBefore(k, before)
-		e.runInserted(k)
+		e.runInserted(k, false)
 	}
 	e.changed(parent)
 }
