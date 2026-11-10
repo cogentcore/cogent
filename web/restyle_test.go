@@ -6,6 +6,9 @@ package web
 
 import (
 	"image/color"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -39,7 +42,8 @@ func widgetWithID(pg *Page, id string) *core.WidgetBase {
 // scripts (of their style and class attributes) are made by styling their
 // widgets again, without reading the page into new widgets, and that the
 // boxes that the scripts get then are of the new styles; and that a change
-// that needs it (of a display) reads the page again.
+// that needs it (of a display) reads the changed elements again (see
+// [TestScriptsReread]).
 func TestScriptsRestyle(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><head><style>
@@ -56,7 +60,7 @@ func TestScriptsRestyle(t *testing.T) {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		b.AsyncLock()
-		renders, restyles := ps.renders, ps.restyles
+		renders, restyles, rereads := ps.renders, ps.restyles, ps.rereads
 		b.AsyncUnlock()
 
 		v, err := ps.engine.RunString(`const box = document.getElementById("box");
@@ -80,7 +84,7 @@ func TestScriptsRestyle(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "sub item") }), "the item is shown")
 		b.AsyncLock()
-		assert.Greater(t, ps.renders, renders, "the page is read again")
+		assert.Greater(t, ps.rereads, rereads, "the changed elements are read again")
 		b.AsyncUnlock()
 	})
 }
@@ -116,7 +120,9 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 	b.RenderImage(func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
-		_, err := ps.engine.RunString(`document.getElementById("other").textContent = "changed"`)
+		// (a change of the html element itself, for which all of it is read again)
+		_, err := ps.engine.RunString(`document.documentElement.setAttribute("lang", "fr");
+			document.getElementById("other").textContent = "changed"`)
 		require.NoError(t, err)
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "changed") }), "the page is read again")
 		mu.Lock()
@@ -124,4 +130,73 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 		require.GreaterOrEqual(t, len(sizes), 2)
 		assert.InDelta(t, 20, sizes[len(sizes)-1], 0.5, "10%% of the width of its container from the start: %v", sizes)
 	})
+}
+
+// TestScriptsReread tests that changes of the document by scripts (of the
+// text of an element, of the children of another, and of an attribute of
+// another) are made by reading only the changed elements again, keeping
+// the widgets of the others (see [htmlcore.Context.Reread]), without
+// reading the page again, and that the page of a frame whose box is made
+// new is kept, in its new box.
+func TestScriptsReread(t *testing.T) {
+	frame := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `<html><body><p>in the frame</p></body></html>`)
+	}))
+	defer frame.Close()
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="wrap"><p id="out">before</p><ul id="list"><li id="a">a</li></ul>
+			<div id="box"><iframe src="` + frame.URL + `/frame" width="300" height="100"></iframe></div></div>
+			<p id="other">other</p></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "in the frame") }), pageTexts(b, pg))
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		b.AsyncLock()
+		renders, rereads := ps.renders, ps.rereads
+		other, a := widgetWithID(pg, "other"), widgetWithID(pg, "a")
+		require.Len(t, pg.frames, 1)
+		var fp *Page
+		for _, f := range pg.frames {
+			fp = f
+		}
+		b.AsyncUnlock()
+		require.NotNil(t, other)
+		require.NotNil(t, a)
+
+		_, err := ps.engine.RunString(`document.getElementById("out").textContent = "after";
+			const li = document.createElement("li");
+			li.textContent = "b";
+			document.getElementById("list").appendChild(li);
+			document.getElementById("box").setAttribute("title", "a new box")`)
+		require.NoError(t, err)
+		require.True(t, eventually(func() bool {
+			txt := pageTexts(b, pg)
+			return strings.Contains(txt, "after") && strings.Contains(txt, "b")
+		}), pageTexts(b, pg))
+		ps.engine.Wait()
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, renders, ps.renders, "the page is not read again")
+		assert.Greater(t, ps.rereads, rereads, "the changed elements are read again")
+		assert.Same(t, other, widgetWithID(pg, "other"), "the widget of an element that has not changed is kept")
+		assert.Same(t, a, widgetWithID(pg, "a"), "the widget of an item of the list that has not changed is kept")
+		assert.Len(t, pg.frames, 1)
+		assert.Same(t, fp, pg.frames[htmlcore.NodeOf(fp.Parent.(core.Widget))], "the page of the frame is kept")
+		assert.Equal(t, "a new box", widgetWithID(pg, "box").Property("title"), "the box is made new")
+		assert.Contains(t, pageTextsLocked(pg), "in the frame")
+	})
+}
+
+// pageTextsLocked returns the texts of the widgets of the page, with the
+// lock held.
+func pageTextsLocked(pg *Page) string {
+	var ts []string
+	pg.WalkDown(func(n tree.Node) bool {
+		if tx, ok := n.(*core.Text); ok {
+			ts = append(ts, tx.Text)
+		}
+		return tree.Continue
+	})
+	return strings.Join(ts, "|")
 }

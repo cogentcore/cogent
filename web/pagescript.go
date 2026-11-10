@@ -12,6 +12,7 @@ import (
 	"maps"
 	"math"
 	neturl "net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -99,10 +100,12 @@ type pageScripts struct {
 	laidOut bool
 
 	// renders is the number of times that the page has been rendered
-	// again after it was shown, and restyles the number of times that
-	// its widgets were styled again instead (for tests).
+	// again after it was shown, restyles the number of times that its
+	// widgets were styled again instead, and rereads the number of times
+	// that only the elements that changed were read again (for tests).
 	renders    int
 	restyles   int
+	rereads    int
 	renderTime time.Duration
 
 	consoleMu sync.Mutex
@@ -118,6 +121,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		GetURL:        ctx.GetURL,
 		Render:        ps.render,
 		Restyle:       ps.restyle,
+		Reread:        ps.reread,
 		Layout:        ps.layout,
 		ElementAt:     ps.elementAt,
 		ComputedStyle: ps.computedStyle,
@@ -216,21 +220,7 @@ func (ps *pageScripts) render() func() {
 		ps.pending = true
 		return nil
 	}
-	// the scripts get a resize event if the viewport has another size
-	// than they got (as it may not have its size while the page loads)
-	if ps.seen != (math32.Vector2{}) {
-		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
-			ps.engine.Resized()
-		}
-	}
-	if ps.layoutMissed {
-		// the scripts got the boxes of elements before the page had a
-		// layout (as the slider of the photos of the postings of
-		// craigslist.org, which was as wide as nothing), and they get a
-		// resize event to get them again, now that it has one
-		ps.layoutMissed = false
-		ps.engine.Resized()
-	}
+	ps.resizeIfNeeded()
 	start := time.Now()
 	content, err := ps.read()
 	if err != nil {
@@ -303,6 +293,26 @@ func (ps *pageScripts) render() func() {
 	}
 }
 
+// resizeIfNeeded fires a resize event for the scripts as the page is
+// rendered, if they need one.
+func (ps *pageScripts) resizeIfNeeded() {
+	// the scripts get a resize event if the viewport has another size
+	// than they got (as it may not have its size while the page loads)
+	if ps.seen != (math32.Vector2{}) {
+		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
+			ps.engine.Resized()
+		}
+	}
+	if ps.layoutMissed {
+		// the scripts got the boxes of elements before the page had a
+		// layout (as the slider of the photos of the postings of
+		// craigslist.org, which was as wide as nothing), and they get a
+		// resize event to get them again, now that it has one
+		ps.layoutMissed = false
+		ps.engine.Resized()
+	}
+}
+
 // restyle styles the widgets of the given elements again for the changes
 // of their styles (see [script.Options.Restyle]), returning the function
 // that does it with the lock held, which returns false if it can not (for
@@ -323,6 +333,85 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 		ps.restyles++
 		ps.renderTime += time.Since(start)
 		ps.laidOut = false // (laid out again for the boxes of the scripts)
+		return true
+	}
+}
+
+// reread reads the given elements of the page again for the changes of
+// the document (see [script.Options.Reread]), returning the function that
+// does it with the lock held, which returns false if it can not (for the
+// page to be rendered instead).
+func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
+	if !ps.shown {
+		return nil // (rendered once it is shown)
+	}
+	ps.resizeIfNeeded()
+	return func() bool {
+		pg := ps.pg
+		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil || pg.NumChildren() != 1 {
+			return false
+		}
+		content, ok := pg.Child(0).(*core.Frame)
+		if !ok {
+			return false
+		}
+		start := time.Now()
+		if len(styled) > 0 && !ps.ctx.Restyle(styled) {
+			// (as for a change of their display, for which they are read
+			// again as elements that have changed themselves)
+			self = append(slices.Clip(self), styled...)
+		}
+		// the element that has the focus, and the scroll positions, for
+		// the widgets that are made new; the pages of the frames are kept
+		// out of their boxes, which may be made new, and put back in them
+		var focused *html.Node
+		var focusedWidget core.Widget
+		scrolls := map[*html.Node]math32.Vector2{}
+		content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if cwb.StateIs(states.Focused) {
+				focused, focusedWidget = htmlcore.NodeOf(cw), cw
+			}
+			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
+				if n := htmlcore.NodeOf(cw); n != nil {
+					scrolls[n] = fr.Geom.Scroll
+				}
+			}
+			if _, isFrame := cw.(*Page); isFrame {
+				return tree.Break
+			}
+			return tree.Continue
+		})
+		hold := core.NewFrame()
+		for _, fp := range pg.frames {
+			if fp.Parent != nil {
+				tree.MoveToParent(fp, hold)
+			}
+		}
+		ok = ps.ctx.Reread(self, children)
+		opens := pg.attachFrames(content)
+		for _, fp := range pg.frames {
+			fp.setShown()
+		}
+		if !ok {
+			return false
+		}
+		for _, open := range opens {
+			open()
+		}
+		restoreScrolls(content, scrolls)
+		if focused != nil && focusedWidget.AsTree().This == nil { // (made new)
+			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if htmlcore.NodeOf(cw) == focused {
+					cwb.SetFocus()
+					return tree.Break
+				}
+				return tree.Continue
+			})
+		}
+		ps.rereads++
+		ps.renderTime += time.Since(start)
+		ps.widgets = nil
+		ps.laidOut = false
 		return true
 	}
 }

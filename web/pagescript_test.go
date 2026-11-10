@@ -313,7 +313,7 @@ func TestScriptsTyping(t *testing.T) {
 		defer b.AsyncUnlock()
 		tf := field()
 		if assert.NotNil(t, tf) {
-			assert.NotSame(t, first, tf, "the page was rendered again")
+			assert.Same(t, first, tf, "the field is kept, as only the output is read again")
 			assert.Equal(t, "abc", tf.Text(), "the field keeps what was typed")
 			assert.True(t, tf.StateIs(states.Focused), "the field keeps the focus")
 		}

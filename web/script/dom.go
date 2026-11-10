@@ -55,9 +55,24 @@ func (ni *nodeIDs) node(id int) *html.Node {
 // fragments (as made by createDocumentFragment).
 const fragmentData = "#document-fragment"
 
-// changed records that the document has changed, so that the page is
-// rendered again at the end of the task.
+// changed records that the children of the given node have changed (as
+// nodes added to it, or its text), so that the page is rendered again at
+// the end of the task (see [Options.Reread]); all of it if n is nil.
 func (e *Engine) changed(n *html.Node) {
+	e.recordChange(n, false)
+}
+
+// selfChanged records that the given element has changed itself (as its
+// attributes that do not only select it in style rules, or the listeners
+// of its events), so that the page is rendered again at the end of the
+// task (see [Options.Reread]).
+func (e *Engine) selfChanged(n *html.Node) {
+	e.recordChange(n, true)
+}
+
+// recordChange records a change of the given node, of itself if self is
+// set, or of its children (see [Engine.changed]).
+func (e *Engine) recordChange(n *html.Node, self bool) {
 	// a change in a shadow root (which is not rendered itself) is one of
 	// its host, as it can change which children of the host are rendered
 	// (as the slots of the menus of MDN, which open them)
@@ -66,10 +81,19 @@ func (e *Engine) changed(n *html.Node) {
 		if host == nil {
 			break
 		}
-		n = host
+		n, self = host, false
 	}
 	if n == nil || connected(n, e.doc) {
 		e.dirty = true
+		list := &e.childNodes
+		if self {
+			list = &e.selfNodes
+		}
+		if n == nil || len(*list) >= maxChangedNodes {
+			e.whole = true
+		} else if !slices.Contains(*list, n) {
+			*list = append(*list, n)
+		}
 		if n != nil && len(e.changedNodes) < maxChangedNodes {
 			e.changedNodes = append(e.changedNodes, n)
 		} else {
@@ -112,8 +136,28 @@ func (e *Engine) attrChanged(n *html.Node, name string) {
 	if restyledAttr(name) {
 		e.styleChanged(n)
 	} else {
-		e.changed(n)
+		e.selfChanged(n)
 	}
+}
+
+// rendered returns whether the given node may be rendered, so that adding
+// or removing it changes the page: not a comment, nor a script or another
+// element that is never shown (as those that scripts add to the head to
+// load more scripts).
+func rendered(n *html.Node) bool {
+	switch n.Type {
+	case html.CommentNode, html.DoctypeNode:
+		return false
+	case html.ElementNode:
+		switch n.Data {
+		case "script", "meta", "template", "noscript":
+			return false
+		case "link":
+			rel, _ := attr(n, "rel")
+			return strings.Contains(strings.ToLower(rel), "stylesheet")
+		}
+	}
+	return true
 }
 
 // maxChangedNodes is the number of changed nodes that are recorded (see
@@ -408,17 +452,23 @@ func (e *Engine) defineDOM() {
 		} else {
 			kids = []*html.Node{child}
 		}
+		shown := false
 		for _, k := range kids {
 			if k == before {
 				continue
 			}
+			shown = shown || rendered(k)
 			if k.Parent != nil {
-				e.changed(k.Parent)
+				if rendered(k) {
+					e.changed(k.Parent)
+				}
 				k.Parent.RemoveChild(k)
 			}
 			parent.InsertBefore(k, before)
 		}
-		e.changed(parent)
+		if shown {
+			e.changed(parent)
+		}
 		for _, k := range kids {
 			e.runInserted(k)
 		}
@@ -427,7 +477,9 @@ func (e *Engine) defineDOM() {
 	set("remove", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n != nil && n.Parent != nil {
-			e.changed(n.Parent)
+			if rendered(n) {
+				e.changed(n.Parent)
+			}
 			n.Parent.RemoveChild(n)
 		}
 		return goja.Undefined()
@@ -702,7 +754,7 @@ func (e *Engine) defineDOM() {
 	// widgets are set up (as clicks) was added to the given node, so that
 	// the page is rendered again.
 	set("listenerAdded", func(call goja.FunctionCall) goja.Value {
-		e.changed(node(arg(call, 0)))
+		e.selfChanged(node(arg(call, 0)))
 		return goja.Undefined()
 	})
 	set("currentScript", func(call goja.FunctionCall) goja.Value { return id(e.current) })

@@ -82,6 +82,16 @@ type Options struct {
 	// change of their display), for the page to be rendered instead.
 	Restyle func(nodes []*html.Node) (commit func() bool)
 
+	// Reread, if set, updates the widgets of the page after a task has
+	// changed the given elements themselves (as their attributes), the
+	// children of the given elements (as nodes added to them, or their
+	// text), and the given elements as Restyle does, by reading only the
+	// elements that have changed again, keeping the widgets of the others.
+	// It is called as Render is, and its commit returns false if the
+	// changes can not be made so (as for a new style sheet), for the page
+	// to be rendered instead.
+	Reread func(self, children, styled []*html.Node) (commit func() bool)
+
 	// Layout, if set, returns the position and size of the box of the
 	// given node in CSS px, relative to the top left of the page, after
 	// the page is laid out (rendering it first if it has changed), and
@@ -204,11 +214,18 @@ type Engine struct {
 	lastRender time.Time
 	imports    *importMap    // the import map of the page, if any
 	renderCost time.Duration // how long the last render took
-	// restyleCost is how long the last restyle took (see Options.Restyle)
-	restyleCost time.Duration
+	// restyleCost is how long the last restyle took (see Options.Restyle),
+	// and rereadCost the last reread (see Options.Reread)
+	restyleCost, rereadCost time.Duration
 	// styled are the elements to restyle (see Options.Restyle), whose
 	// changes need no render of the page, as dirty is for the others.
 	styled []*html.Node
+	// selfNodes are the elements that have changed themselves, and
+	// childNodes those whose children have, since the page was last
+	// rendered (see Options.Reread), unless whole is set, for which all
+	// of it is rendered again.
+	selfNodes, childNodes []*html.Node
+	whole                 bool
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
 	changedNodes []*html.Node
@@ -517,12 +534,20 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 			e.taskTimer.Reset(max(e.taskLeft, 0))
 		}()
 	}
-	styled := e.styled
-	e.styled = nil
+	styled, self, children, whole := e.styled, e.selfNodes, e.childNodes, e.whole
+	e.styled, e.selfNodes, e.childNodes, e.whole = nil, nil, nil, false
 	e.changedNodes = e.changedNodes[:0]
 	if !e.dirty && e.restyle(styled, lock, unlock) {
 		e.lastRender = time.Now()
 		e.restyleCost = e.lastRender.Sub(start)
+		return
+	}
+	// (the elements whose restyle failed, as for a change of their
+	// display, are read again)
+	if !whole && e.reread(self, children, styled, lock, unlock) {
+		e.dirty = false
+		e.lastRender = time.Now()
+		e.rereadCost = e.lastRender.Sub(start)
 		return
 	}
 	e.dirty = false
@@ -560,6 +585,27 @@ func (e *Engine) restyle(nodes []*html.Node, lock func() bool, unlock func()) bo
 	return commit()
 }
 
+// reread reads the given changed elements again (see [Options.Reread]),
+// with the given lock held, if not nil (otherwise it is held), returning
+// whether they were.
+func (e *Engine) reread(self, children, styled []*html.Node, lock func() bool, unlock func()) bool {
+	if e.opts.Reread == nil || e.focusRequest != nil {
+		return false // (the focus is given to the widget of the element as the page is rendered)
+	}
+	commit := e.opts.Reread(self, children, styled)
+	if commit == nil {
+		return false
+	}
+	if lock == nil {
+		return commit()
+	}
+	if !lock() {
+		return false
+	}
+	defer unlock()
+	return commit()
+}
+
 // needsRender returns whether the page needs to be rendered or restyled
 // for the changes of the document.
 func (e *Engine) needsRender() bool {
@@ -569,8 +615,11 @@ func (e *Engine) needsRender() bool {
 // pendingCost returns how long the render that the changes of the
 // document need (a restyle, or a render) took the last time.
 func (e *Engine) pendingCost() time.Duration {
-	if !e.dirty && e.opts.Restyle != nil {
+	switch {
+	case !e.dirty && e.opts.Restyle != nil:
 		return e.restyleCost
+	case !e.whole && e.opts.Reread != nil:
+		return e.rereadCost
 	}
 	return e.renderCost
 }
@@ -632,7 +681,7 @@ func (e *Engine) renderSoon(lock func() bool, unlock func()) {
 		return
 	}
 	interval := renderInterval
-	if !e.dirty && e.opts.Restyle != nil {
+	if !e.dirty && e.opts.Restyle != nil || !e.whole && e.opts.Reread != nil {
 		interval = restyleInterval
 	}
 	wait := max(interval, 2*e.pendingCost()) - time.Since(e.lastRender)
@@ -769,7 +818,7 @@ func (e *Engine) RunString(src string) (any, error) {
 // Rerender renders the page again in a task, as when it is read again
 // for another width of its viewport.
 func (e *Engine) Rerender() {
-	e.Post(func() { e.dirty = true })
+	e.Post(func() { e.dirty, e.whole = true, true })
 }
 
 // Resized fires the resize event of the window in a task, as when the
@@ -787,7 +836,7 @@ func (e *Engine) Eval(src string) {
 // page is rendered again at the end of the task, as for the value of a
 // form control that is changed by the user.
 func (e *Engine) Changed() {
-	e.dirty = true
+	e.dirty, e.whole = true, true
 }
 
 // StateChanged records that the states of the given elements that select
