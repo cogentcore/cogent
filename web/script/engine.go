@@ -236,6 +236,12 @@ type Engine struct {
 	// of it is rendered again.
 	selfNodes, childNodes []*html.Node
 	whole                 bool
+	// taskLock and taskUnlock are the functions that lock and unlock the
+	// page for the task that is running (see [Engine.renderIfDirty]), and
+	// lockLost is whether it could not be locked again (the page is gone).
+	taskLock   func() bool
+	taskUnlock func()
+	lockLost   bool
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
@@ -469,7 +475,9 @@ func (e *Engine) loop() {
 				go e.Close() // the page is gone
 				continue
 			}
+			e.taskLock, e.taskUnlock = lock, unlock
 			e.runTask(task, unlock)
+			e.taskLock, e.taskUnlock = nil, nil
 			e.renderSoon(lock, unlock)
 			e.done()
 		}
@@ -480,7 +488,12 @@ func (e *Engine) loop() {
 // unlock unlocks if not nil, at the end), within the time limit of a task.
 func (e *Engine) runTask(task func(), unlock func()) {
 	if unlock != nil {
-		defer unlock()
+		defer func() {
+			if !e.lockLost { // (not if it was not locked again; see renderIfDirty)
+				unlock()
+			}
+			e.lockLost = false
+		}()
 	}
 	e.taskLeft = e.opts.TaskTimeout
 	e.taskStart = time.Now()
@@ -555,6 +568,7 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	if !e.dirty && e.restyle(styled, lock, unlock) {
 		e.lastRender = time.Now()
 		e.restyleCost = e.lastRender.Sub(start)
+		e.traceSlow("restyle", e.restyleCost, lock == nil)
 		return
 	}
 	// (the elements whose restyle failed, as for a change of their
@@ -563,9 +577,31 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		e.dirty = false
 		e.lastRender = time.Now()
 		e.rereadCost = e.lastRender.Sub(start)
+		e.traceSlow("reread", e.rereadCost, lock == nil)
 		return
 	}
 	e.dirty = false
+	if lock == nil && e.taskLock != nil && e.taskUnlock != nil {
+		// A render forced by a script (for the box of an element), in its
+		// task, with the lock held: the page is read without it (as for
+		// the renders after tasks), as no script runs meanwhile, so that it
+		// is responsive (it was not for seconds on theguardian.com), and
+		// it is locked again to show the new widgets (to the end of the
+		// task), unless the page is gone.
+		e.taskUnlock()
+		commit := e.opts.Render()
+		if !e.taskLock() {
+			e.lockLost = true
+			return
+		}
+		if commit != nil {
+			commit()
+		}
+		e.lastRender = time.Now()
+		e.renderCost = e.lastRender.Sub(start)
+		e.traceSlow("render", e.renderCost, true)
+		return
+	}
 	commit := e.opts.Render()
 	if commit != nil {
 		if lock == nil {
@@ -577,6 +613,25 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	}
 	e.lastRender = time.Now()
 	e.renderCost = e.lastRender.Sub(start)
+	e.traceSlow("render", e.renderCost, lock == nil)
+}
+
+// slowRender is how long a render (or restyle or reread) of the page takes
+// for it to be traced (see [Options.Trace]).
+const slowRender = 50 * time.Millisecond
+
+// traceSlow traces the given kind of render of the page that took the
+// given time, if it is slow, and whether a script forced it (to get the
+// box of an element, with the lock of the page held, in its task).
+func (e *Engine) traceSlow(kind string, d time.Duration, forced bool) {
+	if d < slowRender {
+		return
+	}
+	how := "after a task"
+	if forced {
+		how = "forced by a script, in its task"
+	}
+	e.tracef("%s of the page took %v (%s)", kind, d.Round(time.Millisecond), how)
 }
 
 // restyle restyles the given elements (see [Options.Restyle]), with the

@@ -239,6 +239,9 @@ func (ps *pageScripts) render() func() {
 		ps.log(slog.LevelError, "reading the page: "+err.Error())
 		return nil
 	}
+	if d := time.Since(start); Settings.VerboseConsole && d >= 50*time.Millisecond {
+		ps.log(slog.LevelDebug, fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond)))
+	}
 	ps.renders++
 	ps.renderTime += time.Since(start)
 	ctx := ps.ctx
@@ -1105,8 +1108,12 @@ func (ps *pageScripts) layout(n *html.Node) (x, y, w, h float32, ok bool) {
 		return
 	}
 	if !ps.laidOut {
+		lt := time.Now()
 		pg.Scene.LayoutScene()
 		ps.laidOut = true
+		if d := time.Since(lt); Settings.VerboseConsole && d >= 50*time.Millisecond {
+			ps.log(slog.LevelDebug, fmt.Sprintf("laying out the page for the box of an element took %v", d.Round(time.Millisecond)))
+		}
 	}
 	if wb.Styles.Display == styles.DisplayNone || wb.StateIs(states.Invisible) {
 		return
