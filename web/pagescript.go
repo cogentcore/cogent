@@ -1552,6 +1552,23 @@ func (pg *Page) saveDOM() {
 	if n > 1 {
 		msg += fmt.Sprintf(" (and %d frames)", n-1)
 	}
+	// the resources of the page (style sheets, fonts, images), for it to
+	// be read again offline, as for its layout and speed
+	var cache *resourceCache
+	if pg.AsyncLockIfShown() {
+		if pg.media != nil {
+			cache = pg.media.cache
+		}
+		pg.AsyncUnlock()
+	}
+	if cache != nil {
+		if nr, err := cache.save(base+"-resources", 200<<20); err != nil {
+			snack("Error saving the resources: " + err.Error())
+			return
+		} else if nr > 0 {
+			msg += fmt.Sprintf(", %d resources", nr)
+		}
+	}
 	// the console messages (of the page and its frames) are saved with it,
 	// for finding why it does not work
 	var console []string
