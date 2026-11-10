@@ -1225,3 +1225,14 @@ func TestPerformanceResourceTimings(t *testing.T) {
 	e, _ := testEngine(t, `<html><body></body></html>`, nil)
 	assert.Equal(t, "ok", run(t, e, `performance.clearResourceTimings(); performance.setResourceTimingBufferSize(250); "ok"`))
 }
+
+// TestLogURL tests that long URLs in logs keep both of their ends (the
+// module lists at the ends of the URLs of the scripts of Google).
+func TestLogURL(t *testing.T) {
+	u := "https://www.gstatic.com/_/js/k=x/" + strings.Repeat("a", 1500) + "/m=ZwDk9d,RMhBfe"
+	l := logURL(u)
+	assert.True(t, strings.HasPrefix(l, "https://www.gstatic.com/_/js/k=x/"))
+	assert.True(t, strings.HasSuffix(l, "/m=ZwDk9d,RMhBfe"))
+	assert.Less(t, len(l), 260)
+	assert.Equal(t, "data:text/plain,…", logURL("data:text/plain,hello"))
+}

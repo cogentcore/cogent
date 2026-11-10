@@ -407,13 +407,17 @@ func normalizeURL(pu *neturl.URL) {
 	pu.Host = host
 }
 
+// logURL returns the given URL shortened for logs: data URLs without
+// their data, and long URLs without their middle.
 func logURL(u string) string {
 	if strings.HasPrefix(u, "data:") {
 		u, _, _ = strings.Cut(u, ",")
 		return u + ",…"
 	}
-	if len(u) > 200 {
-		return u[:200] + "…"
+	if len(u) > 240 {
+		// the ends of long URLs differ (as the module lists of the
+		// scripts of Google, m=ZwDk9d,RMhBfe, after 1500 bytes)
+		return strings.ToValidUTF8(u[:120], "") + "…" + strings.ToValidUTF8(u[len(u)-120:], "")
 	}
 	return u
 }
