@@ -1052,11 +1052,25 @@
 	const sheetOwners = new WeakMap(); // style sheet -> style element
 	class CSSStyleSheet {
 		constructor(opts) { this._rules = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
-		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map((t, i) => makeRule(this, i, t)); }
+		get cssRules() {
+			// the rules are parsed from the text of the style element again
+			// only when the document has changed (nytimes.com read them in
+			// loops of its scripts, which ran too long, as they were parsed
+			// on each read)
+			const o = sheetOwners.get(this);
+			if (o && this._at !== D.domChanges()) {
+				const text = o.textContent;
+				if (text !== this._text) { this._text = text; this._rules = cssBlocks(text); this._list = null; }
+				this._at = D.domChanges();
+			}
+			if (!this._list) this._list = this._rules.map((t, i) => makeRule(this, i, t));
+			return this._list;
+		}
 		get rules() { return this.cssRules; }
 		get ownerNode() { return sheetOwners.get(this) || null; }
 		_set(rules) {
 			this._rules = rules;
+			this._list = null;
 			const o = sheetOwners.get(this);
 			if (o) o.textContent = rules.join("\n");
 			if (this._adopters) for (const owner of this._adopters) syncAdopted(owner);

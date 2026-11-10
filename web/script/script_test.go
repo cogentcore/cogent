@@ -1032,3 +1032,27 @@ func TestLoadEventNotInWindow(t *testing.T) {
 		[loads, errors, docLoads].join(" ")`))
 	assert.Empty(t, *logs)
 }
+
+// TestCSSRulesCached tests that the rules of a style sheet are not parsed
+// again on each read while the document does not change (nytimes.com read
+// them in loops, which ran for more than 10s), and that they are when the
+// sheet changes.
+func TestCSSRulesCached(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s"></style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	start := time.Now()
+	assert.Equal(t, "2000 true 2001", run(t, e, `
+		const st = document.getElementById("s");
+		let css = "";
+		for (let i = 0; i < 2000; i++) css += ".c" + i + " { color: red }\n";
+		st.textContent = css;
+		const sheet = st.sheet;
+		let n = 0;
+		for (let i = 0; i < sheet.cssRules.length; i++) if (sheet.cssRules[i].selectorText === ".c" + i) n++;
+		sheet.insertRule(".x { color: blue }", 0);
+		[n, sheet.cssRules[0].selectorText === ".x", sheet.cssRules.length].join(" ")`))
+	assert.Less(t, time.Since(start), 2*time.Second)
+	assert.Empty(t, *logs)
+}

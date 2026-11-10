@@ -385,6 +385,12 @@ func (e *Engine) defineDOM() {
 		}
 		return goja.Undefined()
 	})
+	// domChanges is the number of changes of the document so far, with
+	// which the prelude keeps what it derives from it until it changes
+	// (as the rules of style sheets)
+	set("domChanges", func(call goja.FunctionCall) goja.Value {
+		return vm.ToValue(e.domChanges)
+	})
 	set("text", func(call goja.FunctionCall) goja.Value {
 		return vm.ToValue(textContent(node(arg(call, 0))))
 	})
