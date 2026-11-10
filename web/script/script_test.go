@@ -983,3 +983,52 @@ func TestFailedRequestLogged(t *testing.T) {
 	e.Wait()
 	assert.Equal(t, []string{"WARN: GET https://example.com/missing: 404 Not Found"}, *logs)
 }
+
+// TestEventPrototypeAccessors tests that the target, currentTarget and
+// eventPhase of events are accessors of Event.prototype, as in browsers,
+// with which the delegated events of GitHub define the currentTarget of an
+// event as the element that matches their selector (its "More options"
+// of the sign in with a passkey got undefined).
+func TestEventPrototypeAccessors(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div class="js-details-target" id="d"><span id="s">x</span></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true js-details-target d BODY 0", run(t, e, `
+		const desc = Object.getOwnPropertyDescriptor(Event.prototype, "currentTarget");
+		let got = "";
+		document.addEventListener("click", ev => {
+			const match = ev.target.closest(".js-details-target");
+			Object.defineProperty(ev, "currentTarget", { configurable: true, enumerable: true, get() { return match; } });
+			got = ev.currentTarget.className + " " + ev.currentTarget.id;
+			Object.defineProperty(ev, "currentTarget", { configurable: true, enumerable: true, get: desc.get });
+		});
+		let after = "";
+		document.body.addEventListener("click", ev => { after = ev.currentTarget.tagName; });
+		const ev = new MouseEvent("click", { bubbles: true });
+		document.getElementById("s").dispatchEvent(ev);
+		[typeof desc.get === "function", got, after, ev.eventPhase].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestLoadEventNotInWindow tests that the load event of an element does not
+// reach a capturing listener of the window, as in browsers, while other
+// events do: whenReady of web-vitals (on nytimes.com) added another
+// listener for each load until the page was complete, which doubled them
+// until its scripts were stopped.
+func TestLoadEventNotInWindow(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><img id="i"></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "0 1 1", run(t, e, `
+		let loads = 0, errors = 0, docLoads = 0;
+		window.addEventListener("load", () => loads++, true);
+		window.addEventListener("error", () => errors++, true);
+		document.addEventListener("load", () => docLoads++, true);
+		const img = document.getElementById("i");
+		img.dispatchEvent(new Event("load"));
+		img.dispatchEvent(new Event("error"));
+		[loads, errors, docLoads].join(" ")`))
+	assert.Empty(t, *logs)
+}

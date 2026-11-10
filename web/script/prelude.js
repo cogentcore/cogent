@@ -227,9 +227,9 @@
 			this.cancelable = !!init.cancelable;
 			this.composed = !!init.composed;
 			this.defaultPrevented = false;
-			this.target = null;
-			this.currentTarget = null;
-			this.eventPhase = 0;
+			this._target = null;
+			this._currentTarget = null;
+			this._phase = 0;
 			this.timeStamp = performance.now();
 			this.isTrusted = false;
 			this._stop = false;
@@ -239,6 +239,12 @@
 		stopPropagation() { this._stop = true; }
 		stopImmediatePropagation() { this._stop = true; this._stopNow = true; }
 		composedPath() { return this._path ? this._path.slice() : []; }
+		// (accessors of the prototype, as in browsers, whose getters
+		// libraries use, as the delegated events of GitHub, which define
+		// the currentTarget of an event with that of Event.prototype)
+		get target() { return this._target; }
+		get currentTarget() { return this._currentTarget; }
+		get eventPhase() { return this._phase; }
 		get srcElement() { return this.target; }
 		get returnValue() { return !this.defaultPrevented; }
 		set returnValue(v) { if (!v) this.preventDefault(); }
@@ -319,13 +325,13 @@
 		}
 		dispatchEvent(ev) {
 			if (this === undefined || this === null) return g.dispatchEvent(ev);
-			ev.target = this;
+			ev._target = this;
 			const path = [];
-			for (let t = this; t; t = parentTarget(t)) path.push(t);
+			for (let t = this; t; t = parentTarget(t, ev.type)) path.push(t);
 			ev._path = path;
 			const invoke = (t, phase) => {
-				ev.currentTarget = t;
-				ev.eventPhase = phase;
+				ev._currentTarget = t;
+				ev._phase = phase;
 				const m = listeners.get(t);
 				const ls = m && m[ev.type] ? m[ev.type].slice() : [];
 				for (const x of ls) {
@@ -346,8 +352,8 @@
 			for (let i = path.length - 1; i > 0 && !ev._stop; i--) invoke(path[i], 1);
 			if (!ev._stop) invoke(this, 2);
 			if (ev.bubbles) for (let i = 1; i < path.length && !ev._stop; i++) invoke(path[i], 3);
-			ev.currentTarget = null;
-			ev.eventPhase = 0;
+			ev._currentTarget = null;
+			ev._phase = 0;
 			return !ev.defaultPrevented;
 		}
 	}
@@ -386,8 +392,14 @@
 	// shadow root, or the host of a shadow root, as events propagate in the
 	// composed tree in browsers (the menus of MDN open on clicks on their
 	// buttons, which their shadow roots listen to on their slots).
-	function parentTarget(t) {
+	function parentTarget(t, type) {
 		if (t === g) return null;
+		// a load event of an element (as a script or an image) does not
+		// reach the window, as in browsers: whenReady of web-vitals (on
+		// nytimes.com) listens for the load of the window with a capturing
+		// listener, which adds another for each load until the page is
+		// complete, so that they doubled with each script that loaded
+		if (type === "load" && t instanceof Document) return null;
 		if (t instanceof Node) {
 			const p = t.parentNode;
 			if (p) {
