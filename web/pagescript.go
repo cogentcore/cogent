@@ -432,6 +432,13 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			ps.logFallback("reread", "reading the page whole")
 			return false
 		}
+		if pg.media != nil && pg.media.ctx == ps.ctx {
+			// the width is checked again for the media queries of the
+			// rules that the changes may have added to the style sheets of
+			// the page (as when it is read whole, see render)
+			pg.checkedWidth = ps.ctx.MediaWidth
+			pg.checkedHeight = ps.ctx.MediaHeight
+		}
 		for _, open := range opens {
 			open()
 		}

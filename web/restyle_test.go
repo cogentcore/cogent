@@ -226,3 +226,40 @@ func TestScriptsTransitionEnd(t *testing.T) {
 		}), "transitionend")
 	})
 }
+
+// TestScriptsStyleRulesAdded tests that the rules that scripts add to the
+// style sheets of a page (as CSS-in-JS libraries add them with insertRule,
+// as emotion on nytimes.com) restyle its elements, without reading the
+// page again whole (which nytimes.com was, about 10 times as it loaded,
+// resizing its elements each time).
+func TestScriptsStyleRulesAdded(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style id="css">.box { width: 100px; height: 20px; background: blue }</style></head><body>
+			<div id="box" class="box">box</div></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		b.AsyncLock()
+		renders := ps.renders
+		b.AsyncUnlock()
+		_, err := ps.engine.RunString(`const sheet = document.getElementById("css").sheet;
+			sheet.insertRule(".box2 { width: 250px }", sheet.cssRules.length);
+			document.getElementById("box").classList.add("box2");`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			wb := widgetWithID(pg, "box")
+			if wb == nil {
+				return false
+			}
+			d := wb.Geom.Size.Actual.Total.X - 250*pg.pxDots()
+			return d > -2 && d < 2
+		}), "the added rule applies")
+		ps.engine.Wait()
+		b.AsyncLock()
+		assert.Equal(t, renders, ps.renders, "the page is not read again whole")
+		b.AsyncUnlock()
+	})
+}
