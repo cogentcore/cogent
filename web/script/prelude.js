@@ -271,10 +271,20 @@
 		return a;
 	}
 
+	// DOMException is the error of the DOM, whose name is its kind (as
+	// NotSupportedError), as scripts check it (as the custom elements of
+	// GitHub, which ignore a NotSupportedError DOMException of a name that
+	// is already defined, and got an Error).
+	const domExceptionCodes = { IndexSizeError: 1, HierarchyRequestError: 3, WrongDocumentError: 4, InvalidCharacterError: 5, NoModificationAllowedError: 7, NotFoundError: 8, NotSupportedError: 9, InvalidStateError: 11, SyntaxError: 12, InvalidModificationError: 13, NamespaceError: 14, InvalidAccessError: 15, TypeMismatchError: 17, SecurityError: 18, NetworkError: 19, AbortError: 20, URLMismatchError: 21, QuotaExceededError: 22, TimeoutError: 23, InvalidNodeTypeError: 24, DataCloneError: 25 };
+	class DOMException extends Error {
+		constructor(msg, name) { super(msg === undefined ? "" : String(msg)); this.name = name === undefined ? "Error" : String(name); }
+		get code() { return domExceptionCodes[this.name] || 0; }
+	}
+	for (const [k, v] of Object.entries(domExceptionCodes)) {
+		DOMException[k.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase().replace(/_ERROR$/, "_ERR")] = v;
+	}
 	function domException(name, msg) {
-		const e = new Error(msg);
-		e.name = name;
-		return e;
+		return new DOMException(msg, name);
 	}
 
 	// ---- events ----
@@ -1317,6 +1327,52 @@
 		cls.prototype.select = function () {};
 		cls.prototype.setSelectionRange = function () {};
 	});
+	// the classes of the other elements, which scripts use (as the select
+	// panel of the pull requests of GitHub, which checks for
+	// HTMLOptGroupElement), with their attributes
+	const HTMLOptGroupElement = elementClass(["optgroup"], HTMLElement, cls => { reflect(cls, ["label"], ["disabled"]); });
+	const HTMLLegendElement = elementClass(["legend"], HTMLElement);
+	const HTMLProgressElement = elementClass(["progress"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "value", { get() { return parseFloat(this.getAttribute("value")) || 0; }, set(v) { this.setAttribute("value", String(v)); } });
+		Object.defineProperty(cls.prototype, "max", { get() { return parseFloat(this.getAttribute("max")) || 1; }, set(v) { this.setAttribute("max", String(v)); } });
+	});
+	const HTMLMeterElement = elementClass(["meter"], HTMLElement, cls => {
+		for (const k of ["value", "min", "max", "low", "high", "optimum"]) {
+			Object.defineProperty(cls.prototype, k, { get() { return parseFloat(this.getAttribute(k)) || 0; }, set(v) { this.setAttribute(k, String(v)); } });
+		}
+	});
+	const HTMLOutputElement = elementClass(["output"], HTMLElement, cls => {
+		reflect(cls, ["name"]);
+		Object.defineProperty(cls.prototype, "value", { get() { return this.textContent; }, set(v) { this.textContent = v; } });
+	});
+	const HTMLSourceElement = elementClass(["source"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["srcset", "sizes", "media", "type"]); });
+	const HTMLPictureElement = elementClass(["picture"], HTMLElement);
+	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["kind", "srclang", "label"], ["default"]); });
+	const HTMLTimeElement = elementClass(["time"], HTMLElement, cls => { reflect(cls, ["dateTime"]); });
+	const HTMLDataElement = elementClass(["data"], HTMLElement, cls => { reflect(cls, ["value"]); });
+	const HTMLDataListElement = elementClass(["datalist"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "options", { get() { return this.querySelectorAll("option"); } });
+	});
+	const HTMLMapElement = elementClass(["map"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	const HTMLQuoteElement = elementClass(["q", "blockquote"], HTMLElement, cls => { reflectURL(cls, ["cite"]); });
+	const HTMLModElement = elementClass(["ins", "del"], HTMLElement, cls => { reflectURL(cls, ["cite"]); reflect(cls, ["dateTime"]); });
+	const HTMLTableSectionElement = elementClass(["thead", "tbody", "tfoot"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "rows", { get() { return Array.from(this.children).filter(c => c.localName === "tr"); } });
+	});
+	const HTMLTableCaptionElement = elementClass(["caption"], HTMLElement);
+	const HTMLTableColElement = elementClass(["col", "colgroup"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "span", { get() { return parseInt(this.getAttribute("span"), 10) || 1; }, set(v) { this.setAttribute("span", String(v)); } });
+	});
+	const HTMLTitleElement = elementClass(["title"], HTMLElement, cls => {
+		Object.defineProperty(cls.prototype, "text", { get() { return this.textContent; }, set(v) { this.textContent = v; } });
+	});
+	const HTMLMenuElement = elementClass(["menu"], HTMLElement);
+	const HTMLDListElement = elementClass(["dl"], HTMLElement);
+	const HTMLEmbedElement = elementClass(["embed"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["type", "width", "height"]); });
+	const HTMLObjectElement = elementClass(["object"], HTMLElement, cls => { reflectURL(cls, ["data"]); reflect(cls, ["type", "name", "width", "height"]); });
+	const HTMLParamElement = elementClass(["param"], HTMLElement, cls => { reflect(cls, ["name", "value"]); });
+	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	const HTMLFontElement = elementClass(["font"], HTMLElement, cls => { reflect(cls, ["color", "face", "size"]); });
 	const HTMLOptionElement = elementClass(["option"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "value", { get() { const v = this.getAttribute("value"); return v === null ? this.textContent.trim() : v; }, set(v) { this.setAttribute("value", v); } });
 		Object.defineProperty(cls.prototype, "text", { get() { return this.textContent.trim(); }, set(v) { this.textContent = v; } });
@@ -1381,7 +1437,7 @@
 		cls.prototype.checkValidity = function () { return true; };
 		cls.prototype.reportValidity = function () { return true; };
 	});
-	elementClass(["label"], HTMLElement, cls => {
+	const HTMLLabelElement = elementClass(["label"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "htmlFor", { get() { return this.getAttribute("for") || ""; }, set(v) { this.setAttribute("for", v); } });
 		Object.defineProperty(cls.prototype, "control", { get() { const f = this.htmlFor; return f ? document.getElementById(f) : this.querySelector("input, select, textarea, button"); } });
 	});
@@ -3077,7 +3133,12 @@
 		HTMLVideoElement: HTMLMediaElement, HTMLAudioElement: HTMLMediaElement, HTMLDetailsElement, HTMLDialogElement,
 		HTMLDivElement, HTMLSpanElement, HTMLParagraphElement, HTMLHeadingElement, HTMLUListElement, HTMLOListElement,
 		HTMLLIElement, HTMLTableElement, HTMLTableRowElement, HTMLTableCellElement, HTMLHtmlElement, HTMLHeadElement,
-		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement, SVGElement, SVGSVGElement,
+		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement,
+		HTMLOptGroupElement, HTMLLabelElement, HTMLLegendElement, HTMLProgressElement, HTMLMeterElement, HTMLOutputElement,
+		HTMLSourceElement, HTMLPictureElement, HTMLTrackElement, HTMLTimeElement, HTMLDataElement, HTMLDataListElement,
+		HTMLMapElement, HTMLQuoteElement, HTMLModElement, HTMLTableSectionElement, HTMLTableCaptionElement, HTMLTableColElement,
+		HTMLTitleElement, HTMLMenuElement, HTMLDListElement, HTMLEmbedElement, HTMLObjectElement, HTMLParamElement,
+		HTMLSlotElement, HTMLFontElement, SVGElement, SVGSVGElement,
 		EventTarget, Event, CustomEvent, UIEvent, MouseEvent, PointerEvent, KeyboardEvent, FocusEvent, InputEvent,
 		WheelEvent, ErrorEvent, MessageEvent, ProgressEvent, PopStateEvent, HashChangeEvent, SubmitEvent, History,
 		AnimationEvent, TransitionEvent, TouchEvent,
@@ -3091,7 +3152,7 @@
 		__defineModule: defineModule,
 		__requireModule: requireModule,
 		NodeFilter: { SHOW_ALL: 0xFFFFFFFF, SHOW_ELEMENT: 1, SHOW_TEXT: 4, SHOW_COMMENT: 128, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 },
-		DOMException: class DOMException extends Error { constructor(msg, name) { super(msg); this.name = name || "Error"; } },
+		DOMException,
 		CSS: { supports() { return false; }, escape: cssEscape },
 		Image: function Image(w, h) { const i = document.createElement("img"); if (w !== undefined) i.width = w; if (h !== undefined) i.height = h; return i; },
 		Option: function Option(text, value, def, sel) { const o = document.createElement("option"); if (text !== undefined) o.text = text; if (value !== undefined) o.value = value; if (sel) o.selected = true; return o; },

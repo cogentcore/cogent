@@ -1109,3 +1109,43 @@ func TestMutationObserver(t *testing.T) {
 	assert.Equal(t, "twiddle:1 childList:::1/0:DIV attributes:class::0/0:SPAN attributes:class:a:0/0:SPAN characterData::text:0/0:#text childList:::0/1:DIV", run(t, e, `__out.join(" ")`))
 	assert.Empty(t, *logs)
 }
+
+// TestElementClasses tests the classes of more elements, which scripts use
+// (as the select panel of the pull requests of GitHub, which checks for
+// HTMLOptGroupElement, which was not defined).
+func TestElementClasses(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><select><optgroup id="g" label="Group"><option>a</option></optgroup></select><table><tbody id="tb"><tr><td>x</td></tr></tbody></table><time id="t" datetime="2026-11-10">today</time></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true Group true 1 true 2026-11-10 true true", run(t, e, `
+		const g = document.getElementById("g");
+		[g instanceof HTMLOptGroupElement, g.label, document.getElementById("tb") instanceof HTMLTableSectionElement,
+			document.getElementById("tb").rows.length, document.getElementById("t") instanceof HTMLTimeElement,
+			document.getElementById("t").dateTime, document.createElement("picture") instanceof HTMLPictureElement,
+			typeof HTMLProgressElement === "function"].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
+// TestDOMExceptionErrors tests that the errors of the DOM are
+// DOMExceptions, with their names and codes, which the scripts of GitHub
+// check for, to ignore defining a custom element again (as the toggle
+// switch, which threw).
+func TestDOMExceptionErrors(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "ignored true NotSupportedError 9 9", run(t, e, `
+		class A extends HTMLElement {}
+		customElements.define("my-a", A);
+		let out = "";
+		try {
+			customElements.define("my-a", class extends HTMLElement {});
+		} catch (e) {
+			if (!(e instanceof DOMException && e.name === "NotSupportedError")) throw e;
+			out = ["ignored", e instanceof Error, e.name, e.code, DOMException.NOT_SUPPORTED_ERR].join(" ");
+		}
+		out`))
+	assert.Empty(t, *logs)
+}
