@@ -80,10 +80,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2/v2 v2.11.0 h1:z5uRPHav+eTVpoffDSuUP2KPS4f1ONZaPDK73S8HA0w=
 github.com/dlclark/regexp2/v2 v2.11.0/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
-github.com/dop251/goja v0.0.0-20261108153707-d8dfb4d8b999 h1:M9U1LFccmqWhv0x3Jljot63MmkusG6xm3tf4YqHhg+c=
-github.com/dop251/goja v0.0.0-20261108153707-d8dfb4d8b999/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
-github.com/dop251/goja v0.0.0-20261110143652-a4433846ae5b h1:6u3HyzQ0oW1bkbHqw/StXINeO7pT/KH546myiEd0xaM=
-github.com/dop251/goja v0.0.0-20261110143652-a4433846ae5b/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
+github.com/dop251/goja v0.0.0-20261110190325-844f1a0e4767 h1:E9jpU7+Mr30FvV+bI9cpdxCRVsS6A8by89amN3IUmMY=
+github.com/dop251/goja v0.0.0-20261110190325-844f1a0e4767/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
 github.com/emersion/go-imap/v2 v2.0.0-beta.3 h1:z0TLMfYnDsFupXLhzRXgOzXenD3uPvNniQSu5fN1teg=
 github.com/emersion/go-imap/v2 v2.0.0-beta.3/go.mod h1:BZTFHsS1hmgBkFlHqbxGLXk2hnRqTItUgwjSSCsYNAk=
 github.com/emersion/go-message v0.18.1 h1:tfTxIoXFSFRwWaZsgnqS1DSZuGpYGzSmCZD8SK3QA2E=
