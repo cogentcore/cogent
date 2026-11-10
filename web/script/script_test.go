@@ -492,6 +492,26 @@ func TestStyleSheets(t *testing.T) {
 	assert.Empty(t, *logs)
 }
 
+// TestCSSRules tests the CSSOM rule classes (CSSStyleRule etc), whose
+// prototypes the scripts of Google extend, and the rules of style sheets
+// as their instances, with the style of a style rule setting its text.
+func TestCSSRules(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s">a { color: red }
+@media (max-width: 500px) { b { color: blue } }
+@keyframes spin { from { opacity: 0 } to { opacity: 1 } }</style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "true function true a 1 4 7 (max-width: 500px) b spin to green", run(t, e, `
+		const rs = document.getElementById("s").sheet.cssRules;
+		const st = rs[0];
+		st.style.color = "green";
+		[st instanceof CSSStyleRule, typeof CSSStyleRule.prototype.constructor, st instanceof CSSRule, st.selectorText,
+			st.type, rs[1].type, rs[2].type, rs[1].conditionText, rs[1].cssRules[0].selectorText, rs[2].name,
+			rs[2].cssRules[1].keyText, document.getElementById("s").sheet.cssRules[0].style.color].join(" ")`))
+	assert.Empty(t, *logs)
+}
+
 // TestSharedModules tests that a module that the module scripts of a page
 // share (as on GitHub, which defines custom elements in one) is evaluated
 // once, with modules that import each other, and that the error of a

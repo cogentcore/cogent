@@ -952,10 +952,95 @@
 		}
 		return out;
 	}
+	// CSSRule and its subclasses are the rules of style sheets (cssRules),
+	// made from the text of each rule, as libraries (and the page scripts of
+	// Google) read and extend their prototypes. The style of a style rule
+	// sets the text of the rule in its sheet.
+	class CSSRule {
+		constructor(sheet, index, text) { this._sheet = sheet; this._index = index; this._text = text; }
+		get cssText() { return this._text; }
+		get parentStyleSheet() { return this._sheet || null; }
+		get parentRule() { return null; }
+		get type() { return 0; }
+	}
+	Object.assign(CSSRule, { STYLE_RULE: 1, CHARSET_RULE: 2, IMPORT_RULE: 3, MEDIA_RULE: 4, FONT_FACE_RULE: 5, PAGE_RULE: 6, KEYFRAMES_RULE: 7, KEYFRAME_RULE: 8, NAMESPACE_RULE: 10, SUPPORTS_RULE: 12 });
+	// ruleBody returns the text of the block of the given rule, without its braces.
+	function ruleBody(text) { const i = text.indexOf("{"); return i < 0 ? "" : text.slice(i + 1, text.lastIndexOf("}")).trim(); }
+	// rulePrelude returns the text of the given rule before its block.
+	function rulePrelude(text) { const i = text.indexOf("{"); return (i < 0 ? text.replace(/;$/, "") : text.slice(0, i)).trim(); }
+	class CSSStyleRule extends CSSRule {
+		get type() { return 1; }
+		get selectorText() { return rulePrelude(this._text); }
+		set selectorText(v) { this._update(String(v) + " { " + ruleBody(this._text) + " }"); }
+		get style() {
+			if (!this._style) {
+				const rule = this;
+				const decl = {
+					getAttribute() { return ruleBody(rule._text) || null; },
+					setAttribute(_, v) { rule._update(rule.selectorText + " { " + v + " }"); },
+					removeAttribute() { rule._update(rule.selectorText + " { }"); },
+				};
+				this._style = new Proxy(new CSSStyleDeclaration(decl), styleHandler);
+			}
+			return this._style;
+		}
+		_update(text) {
+			this._text = text;
+			const sh = this._sheet;
+			if (!sh) return;
+			const rules = sh.cssRules.map(r => r.cssText);
+			if (this._index < rules.length) { rules[this._index] = text; sh._set(rules); }
+		}
+	}
+	class CSSGroupingRule extends CSSRule {
+		get cssRules() { return cssBlocks(ruleBody(this._text)).map((t, i) => makeRule(null, i, t)); }
+		insertRule() { throw domException("NotSupportedError", "rules cannot be inserted into grouping rules"); }
+		deleteRule() { throw domException("NotSupportedError", "rules cannot be deleted from grouping rules"); }
+	}
+	class CSSConditionRule extends CSSGroupingRule {
+		get conditionText() { return rulePrelude(this._text).replace(/^@[\w-]+\s*/, ""); }
+	}
+	class CSSMediaRule extends CSSConditionRule {
+		get type() { return 4; }
+		get media() { return { mediaText: this.conditionText, length: 1 }; }
+	}
+	class CSSSupportsRule extends CSSConditionRule { get type() { return 12; } }
+	class CSSContainerRule extends CSSConditionRule { get containerName() { return ""; } }
+	class CSSLayerBlockRule extends CSSGroupingRule { get name() { return rulePrelude(this._text).replace(/^@layer\s*/, ""); } }
+	class CSSImportRule extends CSSRule {
+		get type() { return 3; }
+		get href() { const m = /url\(\s*["']?([^"')]*)|["']([^"']*)/.exec(rulePrelude(this._text).slice(7)); return m ? (m[1] || m[2] || "") : ""; }
+		get media() { return { mediaText: "" }; }
+		get styleSheet() { return null; }
+	}
+	class CSSFontFaceRule extends CSSRule { get type() { return 5; } }
+	class CSSPageRule extends CSSRule { get type() { return 6; } }
+	class CSSKeyframesRule extends CSSRule {
+		get type() { return 7; }
+		get name() { return rulePrelude(this._text).replace(/^@[\w-]*keyframes\s*/, ""); }
+		get cssRules() { return cssBlocks(ruleBody(this._text)).map((t, i) => new CSSKeyframeRule(null, i, t)); }
+	}
+	class CSSKeyframeRule extends CSSRule {
+		get type() { return 8; }
+		get keyText() { return rulePrelude(this._text); }
+	}
+	class CSSNamespaceRule extends CSSRule { get type() { return 10; } }
+	class CSSCharsetRule extends CSSRule { get type() { return 2; } }
+	// makeRule returns the rule of the given text, at the given index of the given sheet.
+	function makeRule(sheet, index, text) {
+		const at = /^@(-[a-z]+-)?([a-z-]+)/i.exec(text);
+		const kind = at ? at[2].toLowerCase() : "";
+		const cls = !at ? CSSStyleRule : {
+			media: CSSMediaRule, supports: CSSSupportsRule, container: CSSContainerRule, layer: text.includes("{") ? CSSLayerBlockRule : CSSRule,
+			import: CSSImportRule, "font-face": CSSFontFaceRule, page: CSSPageRule, keyframes: CSSKeyframesRule,
+			namespace: CSSNamespaceRule, charset: CSSCharsetRule,
+		}[kind] || CSSRule;
+		return new cls(sheet, index, text);
+	}
 	const sheetOwners = new WeakMap(); // style sheet -> style element
 	class CSSStyleSheet {
 		constructor(opts) { this._rules = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
-		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map(t => ({ cssText: t, type: 1 })); }
+		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map((t, i) => makeRule(this, i, t)); }
 		get rules() { return this.cssRules; }
 		get ownerNode() { return sheetOwners.get(this) || null; }
 		_set(rules) {
@@ -2802,7 +2887,9 @@
 
 	const props = {
 		window: g, self: g, frames: g, opener: null, frameElement: null, closed: false,
-		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl, MessageChannel, MessagePort, MediaError, Worker,
+		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
+		CSSRule, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
+		CSSImportRule, CSSFontFaceRule, CSSPageRule, CSSKeyframesRule, CSSKeyframeRule, CSSNamespaceRule, CSSCharsetRule, MessageChannel, MessagePort, MediaError, Worker,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
