@@ -1326,3 +1326,11 @@ func TestModuleOwnRequire(t *testing.T) {
 		return strings.Contains(s, "ok t1r true;") && strings.Contains(s, "both 4;")
 	}, 5*time.Second, 20*time.Millisecond, "%v", *logs)
 }
+
+// TestNumberToLocaleString tests the locale strings of numbers, with a
+// locale and options (goja took the locale as a radix, and threw a
+// RangeError, which broke the pull request list of GitHub).
+func TestNumberToLocaleString(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "1,234.5|1,234|12M|0.5", run(t, e, `[(1234.5).toLocaleString("en-US"), (1234).toLocaleString(), (12345678).toLocaleString("en-US", {notation: "compact"}), (0.5).toLocaleString(undefined, {maximumFractionDigits: 1})].join("|")`))
+}

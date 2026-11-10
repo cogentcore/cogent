@@ -3018,6 +3018,13 @@
 			supportedValuesOf: () => [],
 		};
 	})();
+	// the locale strings of numbers are of Intl.NumberFormat, as in
+	// browsers: goja took the locale as a radix ((1234).toLocaleString("en-US")
+	// threw a RangeError, which broke the pull request list of GitHub)
+	Object.defineProperty(Number.prototype, "toLocaleString", {
+		value: function toLocaleString(locales, options) { return new Intl.NumberFormat(locales, options).format(Number(this)); },
+		writable: true, configurable: true,
+	});
 
 	// ---- MessageChannel ----
 
