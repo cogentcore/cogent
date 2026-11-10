@@ -185,6 +185,68 @@
 		D.removeAttr = (id, n) => attrChanged(id, n, () => removeAttr(id, n));
 	}
 
+	// the records of the changes of the DOM for the mutation observers (see
+	// MutationObserver), made as the DOM is changed while any observe
+	const mutationObservers = new Set();
+	{
+		const insert = D.insert, remove = D.remove, setInner = D.setInner, setText = D.setText;
+		const setAttr = D.setAttr, removeAttr = D.removeAttr, setData = D.setData;
+		const record = (type, target, init) => {
+			for (const mo of mutationObservers) mo._record(type, target, init);
+		};
+		const nodes = ids => ids.map(wrap);
+		const childList = (p, added, removed, prev, next) => record("childList", p, {
+			addedNodes: nodes(added), removedNodes: nodes(removed),
+			previousSibling: wrap(prev), nextSibling: wrap(next),
+		});
+		D.insert = function (p, c, ref) {
+			if (!mutationObservers.size) return insert(p, c, ref);
+			const added = D.type(c) === 11 ? D.children(c) : [c];
+			const old = D.type(c) === 11 ? 0 : D.parent(c);
+			if (old) childList(old, [], [c], D.prev(c), D.next(c));
+			const prev = ref ? D.prev(ref) : D.last(p);
+			insert(p, c, ref);
+			if (added.length) childList(p, added, [], prev, ref || 0);
+		};
+		D.remove = function (id) {
+			const p = mutationObservers.size ? D.parent(id) : 0;
+			if (!p) return remove(id);
+			const prev = D.prev(id), next = D.next(id);
+			remove(id);
+			childList(p, [], [id], prev, next);
+		};
+		const replacing = f => function (id, v) {
+			if (!mutationObservers.size) return f(id, v);
+			if (D.type(id) === 3 || D.type(id) === 8) {
+				const old = D.data(id);
+				f(id, v);
+				record("characterData", id, { oldValue: old });
+				return;
+			}
+			const removed = D.children(id);
+			f(id, v);
+			const added = D.children(id);
+			if (removed.length || added.length) childList(id, added, removed, 0, 0);
+		};
+		D.setInner = replacing(setInner);
+		D.setText = replacing(setText);
+		D.setData = function (id, v) {
+			if (!mutationObservers.size) return setData(id, v);
+			const old = D.data(id);
+			setData(id, v);
+			record("characterData", id, { oldValue: old });
+		};
+		const attr = (f, removing) => function (id, n, v) {
+			if (!mutationObservers.size) return f(id, n, v);
+			const old = D.attr(id, n);
+			if (removing && old === undefined) return f(id, n, v);
+			f(id, n, v);
+			record("attributes", id, { attributeName: String(n).toLowerCase(), oldValue: old === undefined ? null : old });
+		};
+		D.setAttr = attr(setAttr, false);
+		D.removeAttr = attr(removeAttr, true);
+	}
+
 	function idOf(n) {
 		if (n === null || n === undefined || n[ID] === undefined) {
 			throw new TypeError("the value is not a node");
@@ -2391,11 +2453,52 @@
 
 	// observers: mutations are not reported (MutationObserver), and every
 	// observed element is taken to be visible, of its laid out size
+	// MutationObserver reports the changes of the DOM in the nodes that it
+	// observes (and in their subtrees, with subtree), in records that are
+	// delivered together after the task that made them (as the selector
+	// observer of GitHub, which schedules its work with the change of an
+	// attribute of a detached element, and polls for the sign in with
+	// GitHub Mobile when its element is added: it never did).
+	class MutationRecord {
+		constructor(type, target, init) {
+			Object.assign(this, { type, target, addedNodes: [], removedNodes: [], previousSibling: null, nextSibling: null, attributeName: null, attributeNamespace: null, oldValue: null }, init);
+		}
+	}
 	class MutationObserver {
-		constructor(cb) { this._cb = cb; }
-		observe() {}
-		disconnect() {}
-		takeRecords() { return []; }
+		constructor(cb) { this._cb = cb; this._targets = new Map(); this._records = []; }
+		observe(target, opts) {
+			opts = Object.assign({}, opts);
+			if (opts.attributeOldValue || opts.attributeFilter) opts.attributes = opts.attributes !== false;
+			if (opts.characterDataOldValue) opts.characterData = opts.characterData !== false;
+			if (!opts.childList && !opts.attributes && !opts.characterData) throw new TypeError("the options observe nothing");
+			this._targets.set(idOf(target), opts);
+			mutationObservers.add(this);
+		}
+		disconnect() { this._targets.clear(); this._records = []; mutationObservers.delete(this); }
+		takeRecords() { const r = this._records; this._records = []; return r; }
+		// _record records the change of the given type of the node of the
+		// given id, if it observes it.
+		_record(type, id, init) {
+			for (let n = id, own = true; n; n = D.parent(n) || shadowHosts.get(n), own = false) {
+				const o = this._targets.get(n);
+				if (!o || (!own && !o.subtree)) continue;
+				if (type === "attributes" && (!o.attributes || (o.attributeFilter && !o.attributeFilter.includes(init.attributeName)))) continue;
+				if (type === "childList" && !o.childList) continue;
+				if (type === "characterData" && !o.characterData) continue;
+				const rec = new MutationRecord(type, wrap(id), init);
+				if (!(type === "attributes" ? o.attributeOldValue : type === "characterData" ? o.characterDataOldValue : false)) rec.oldValue = null;
+				this._records.push(rec);
+				if (!this._pending) {
+					this._pending = true;
+					queueMicrotask(() => {
+						this._pending = false;
+						const records = this.takeRecords();
+						if (records.length) this._cb(records, this);
+					});
+				}
+				return;
+			}
+		}
 	}
 	class IntersectionObserver {
 		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; }
@@ -2981,7 +3084,7 @@
 		DOMTokenList, CSSStyleDeclaration, DOMRect, DOMRectReadOnly: DOMRect, Location, MediaQueryList,
 		URL, URLSearchParams, Headers, Request, Response, XMLHttpRequest, Blob, File, FileReader, FormData,
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
-		MutationObserver, IntersectionObserver, ResizeObserver, PerformanceObserver,
+		MutationObserver, MutationRecord, IntersectionObserver, ResizeObserver, PerformanceObserver,
 		fetch,
 		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,

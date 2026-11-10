@@ -1076,3 +1076,36 @@ func TestInsertRuleSpeedy(t *testing.T) {
 	assert.Less(t, time.Since(start), 3*time.Second)
 	assert.Empty(t, *logs)
 }
+
+// TestMutationObserver tests the records of the changes of the DOM that
+// mutation observers get: of the attributes of a detached element (with
+// which the selector observer of GitHub schedules its work, so that it
+// never polled for the sign in with GitHub Mobile), of the children added
+// to and removed from a subtree, with an attribute filter and old values,
+// and of text.
+func TestMutationObserver(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="root"><p id="p">text</p></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	run(t, e, `
+		window.__out = [];
+		const d = document.createElement("div");
+		new MutationObserver(rs => __out.push("twiddle:" + rs.length)).observe(d, {attributes: true});
+		d.setAttribute("data-twiddle", "1");
+		const root = document.getElementById("root");
+		new MutationObserver(rs => {
+			for (const r of rs) __out.push(r.type + ":" + (r.attributeName || "") + ":" + (r.oldValue || "") + ":" + r.addedNodes.length + "/" + r.removedNodes.length + ":" + r.target.nodeName);
+		}).observe(root, {subtree: true, childList: true, attributeFilter: ["class"], attributeOldValue: true, characterDataOldValue: true});
+		const s = document.createElement("span");
+		root.appendChild(s);
+		s.className = "a";
+		s.className = "b";
+		s.id = "ignored";
+		document.getElementById("p").firstChild.data = "new";
+		s.remove();
+		0`)
+	time.Sleep(200 * time.Millisecond)
+	assert.Equal(t, "twiddle:1 childList:::1/0:DIV attributes:class::0/0:SPAN attributes:class:a:0/0:SPAN characterData::text:0/0:#text childList:::0/1:DIV", run(t, e, `__out.join(" ")`))
+	assert.Empty(t, *logs)
+}
