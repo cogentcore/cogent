@@ -20,7 +20,6 @@ import (
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -253,14 +252,11 @@ func TestFrameViewportScrollbar(t *testing.T) {
 	})
 }
 
-// TestFrameOverlayScrollbar tests that the content of a frame that
-// overflows it a little in height (as the reCAPTCHA challenge) scrolls with
-// a scrollbar over it, which does not narrow it (it then overflowed in
-// width too, with both scrollbars), and that a frame with scrolling="no"
-// does not scroll.
-func TestFrameOverlayScrollbar(t *testing.T) {
+// TestFrameScrollingNo tests that a frame with scrolling="no" does not
+// scroll, and that another does.
+func TestFrameScrollingNo(t *testing.T) {
 	inner := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, `<html><body style="margin: 0"><div id="d" style="height: 104px">tall</div></body></html>`)
+		io.WriteString(w, `<html><body style="margin: 0"><div style="height: 200px">tall</div></body></html>`)
 	}))
 	defer inner.Close()
 	b := core.NewBody()
@@ -279,20 +275,10 @@ func TestFrameOverlayScrollbar(t *testing.T) {
 	}, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
-		dp := b.Styles.UnitContext.Dots(units.UnitDp)
+		require.Len(t, pg.frames, 2)
 		for n, fp := range pg.frames {
-			var div *core.WidgetBase
-			fp.WalkDown(func(k tree.Node) bool {
-				if wb := core.AsWidget(k); wb != nil && wb.Property("id") == "d" {
-					div = wb
-				}
-				return tree.Continue
-			})
-			require.NotNil(t, div)
 			if htmlcore.GetAttr(n, "id") == "a" {
 				assert.True(t, fp.HasScroll[math32.Y], "the frame scrolls")
-				assert.False(t, fp.HasScroll[math32.X], "only in height")
-				assert.InDelta(t, 300*dp, div.Geom.Size.Actual.Total.X, 2, "the content is as wide as the frame")
 			} else {
 				assert.False(t, fp.HasScroll[math32.Y], "scrolling=no")
 			}

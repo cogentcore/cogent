@@ -131,10 +131,6 @@ func (pg *Page) newFrame(n *html.Node) *Page {
 	fp.frame = &frame{parent: pg, node: n}
 	fp.Styler(func(s *styles.Style) {
 		s.Overflow.Set(styles.OverflowAuto) // it scrolls in its frame
-		// with scrollbars over its content, as those of browsers on macOS:
-		// the content of frames often overflows them a little (as the
-		// reCAPTCHA challenge), which would then be narrowed by them
-		s.ScrollbarOverlay = true
 		if strings.EqualFold(strings.TrimSpace(htmlcore.GetAttr(n, "scrolling")), "no") {
 			s.Overflow.Set(styles.OverflowHidden)
 		}
