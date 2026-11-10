@@ -773,6 +773,26 @@
 		});
 	}
 
+	// Attr is an attribute of an element as a node, whose value is that
+	// of the attribute of its element (or its own when it has none).
+	class Attr {
+		constructor(name, owner) { this._name = String(name); this._owner = owner || null; this._value = ""; }
+		get name() { return this._name; }
+		get localName() { return this._name; }
+		get nodeName() { return this._name; }
+		get nodeType() { return 2; }
+		get namespaceURI() { return null; }
+		get prefix() { return null; }
+		get specified() { return true; }
+		get ownerElement() { return this._owner; }
+		get value() { return this._owner ? (this._owner.getAttribute(this._name) ?? "") : this._value; }
+		set value(v) { if (this._owner) this._owner.setAttribute(this._name, v); else this._value = String(v); }
+		get nodeValue() { return this.value; }
+		set nodeValue(v) { this.value = v; }
+		get textContent() { return this.value; }
+		set textContent(v) { this.value = v; }
+	}
+
 	class Element extends Node {
 		get tagName() { const n = D.name(this[ID]); return D.ns(this[ID]) ? n : n.toUpperCase(); }
 		get localName() { return D.name(this[ID]); }
@@ -804,10 +824,30 @@
 		get attributes() {
 			const kv = D.attrs(this[ID]);
 			const a = [];
-			for (let i = 0; i < kv.length; i += 2) a.push({ name: kv[i], localName: kv[i], value: kv[i + 1], nodeValue: kv[i + 1], specified: true });
+			for (let i = 0; i < kv.length; i += 2) a.push(new Attr(kv[i], this));
 			a.getNamedItem = n => a.find(x => x.name === String(n).toLowerCase()) || null;
 			a.item = i => a[i] || null;
+			a.setNamedItem = at => this.setAttributeNode(at);
+			a.removeNamedItem = n => { const at = this.getAttributeNode(n); if (!at) throw domException("NotFoundError", "no such attribute"); this.removeAttribute(n); return at; };
 			return a;
+		}
+		// the attributes as nodes (as the key handler of the sign in of
+		// Google, which gets the tabindex with getAttributeNode, which
+		// was not defined, so that it stopped at its email)
+		getAttributeNode(n) { n = String(n).toLowerCase(); return this.hasAttribute(n) ? new Attr(n, this) : null; }
+		setAttributeNode(at) {
+			const old = this.getAttributeNode(at.name);
+			this.setAttribute(at.name, at.value);
+			at._owner = this;
+			return old;
+		}
+		removeAttributeNode(at) {
+			if (!this.hasAttribute(at.name)) throw domException("NotFoundError", "no such attribute");
+			const v = this.getAttribute(at.name);
+			this.removeAttribute(at.name);
+			const r = new Attr(at.name, null);
+			r._value = v;
+			return r;
 		}
 		get style() { return styleOf(this); }
 		set style(v) { this.setAttribute("style", v); }
@@ -1752,6 +1792,7 @@
 		get fonts() { return { ready: Promise.resolve(), check() { return true; }, load() { return Promise.resolve([]); }, addEventListener() {}, add() {}, forEach() {} }; }
 		get implementation() { return { createHTMLDocument(title) { return wrap(D.parseDocument("<!DOCTYPE html><title>" + (title || "") + "</title>")); }, hasFeature() { return true; } }; }
 		createElement(tag) { return wrap(D.create(String(tag))); }
+		createAttribute(name) { return new Attr(String(name).toLowerCase(), null); }
 		createElementNS(ns, tag) {
 			let n = String(tag);
 			if (n.indexOf(":") >= 0) n = n.split(":")[1];
@@ -3134,7 +3175,7 @@
 		HTMLDivElement, HTMLSpanElement, HTMLParagraphElement, HTMLHeadingElement, HTMLUListElement, HTMLOListElement,
 		HTMLLIElement, HTMLTableElement, HTMLTableRowElement, HTMLTableCellElement, HTMLHtmlElement, HTMLHeadElement,
 		HTMLBodyElement, HTMLPreElement, HTMLBRElement, HTMLHRElement, HTMLFieldSetElement, HTMLUnknownElement,
-		HTMLOptGroupElement, HTMLLabelElement, HTMLLegendElement, HTMLProgressElement, HTMLMeterElement, HTMLOutputElement,
+		Attr, HTMLOptGroupElement, HTMLLabelElement, HTMLLegendElement, HTMLProgressElement, HTMLMeterElement, HTMLOutputElement,
 		HTMLSourceElement, HTMLPictureElement, HTMLTrackElement, HTMLTimeElement, HTMLDataElement, HTMLDataListElement,
 		HTMLMapElement, HTMLQuoteElement, HTMLModElement, HTMLTableSectionElement, HTMLTableCaptionElement, HTMLTableColElement,
 		HTMLTitleElement, HTMLMenuElement, HTMLDListElement, HTMLEmbedElement, HTMLObjectElement, HTMLParamElement,

@@ -1149,3 +1149,26 @@ func TestDOMExceptionErrors(t *testing.T) {
 		out`))
 	assert.Empty(t, *logs)
 }
+
+// TestAttributeNodes tests the attributes of elements as nodes (Attr), as
+// getAttributeNode, which the key handler of the sign in of Google uses
+// for the tabindex (it was not defined, so that the sign in stopped).
+func TestAttributeNodes(t *testing.T) {
+	e, logs := testEngine(t, `<html><body><div id="d" tabindex="0" class="a"></div></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	assert.Equal(t, "tabindex 0 true  b 3 x y", run(t, e, `
+		const d = document.getElementById("d");
+		const at = d.getAttributeNode("tabindex");
+		const out = [at.name, at.value, at.ownerElement === d, d.getAttributeNode("nope")];
+		d.attributes.getNamedItem("class").value = "b";
+		out.push(d.className, d.attributes.length);
+		const n = document.createAttribute("data-x");
+		n.value = "x";
+		d.setAttributeNode(n);
+		n.value = "y";
+		out.push(d.removeAttributeNode(d.getAttributeNode("data-x")).value === "y" ? "x" : "?", "y");
+		out.join(" ")`))
+	assert.Empty(t, *logs)
+}
