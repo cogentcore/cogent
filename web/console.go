@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"cogentcore.org/core/base/fileinfo/mimedata"
+
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -72,6 +74,9 @@ func (cp *ConsolePanel) Init() {
 	verbose.OnChange(func(e events.Event) {
 		Settings.VerboseConsole = verbose.IsChecked()
 		core.ErrorSnackbar(verbose, core.SaveSettings(Settings), "Error saving settings")
+	})
+	core.NewButton(bar).SetIcon(icons.ContentCopy).SetType(core.ButtonAction).SetTooltip("Copy all of the messages").OnClick(func(e events.Event) {
+		cp.Clipboard().Write(mimedata.NewText(cp.allText()))
 	})
 	core.NewButton(bar).SetIcon(icons.Delete).SetType(core.ButtonAction).SetTooltip("Clear the console").OnClick(func(e events.Event) {
 		if pg := cp.browser.CurrentPage(); pg != nil {
@@ -141,6 +146,15 @@ func (cp *ConsolePanel) SizeFinal() {
 	if cp.browser != nil && cp.browser.consoleShown.Swap(shown) != shown && shown {
 		cp.Defer(cp.refresh)
 	}
+}
+
+// allText returns the text of all of the messages of the page of the
+// current tab, one per line, as for copying them.
+func (cp *ConsolePanel) allText() string {
+	if pg := cp.browser.CurrentPage(); pg != nil {
+		return strings.Join(pg.ScriptConsole(), "\n")
+	}
+	return ""
 }
 
 // consoleLevel returns the level of the given console message (as ERROR),

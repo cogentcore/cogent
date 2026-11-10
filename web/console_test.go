@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
@@ -150,6 +151,41 @@ func TestConsolePanelVerbose(t *testing.T) {
 		br.ShowConsole(true)
 		b.AsyncUnlock()
 		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "DEBUG: GET https://example.com/data.txt") }), consoleTexts(b, br))
+	})
+}
+
+// TestConsoleCopyAll tests that the Copy all button of the console panel
+// copies all of its messages, one per line, (of the page and its frames) to the clipboard.
+func TestConsoleCopyAll(t *testing.T) {
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	br := NewBrowser(b)
+	br.PageFunc = func(pg *Page) {
+		pg.Context.GetURL = func(u string) (*http.Response, error) {
+			pu, _ := url.Parse(u)
+			r := strings.NewReader(`<html><body><script>console.log("one"); console.error("two")</script></body></html>`)
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
+		}
+	}
+	br.NewTab("https://example.com/one")
+	b.RenderImage(func() {
+		for _, pg := range br.Pages() {
+			settle(pg)
+		}
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		br.ShowConsole(true)
+		var copyAll *core.Button
+		br.Console.WalkDown(func(n tree.Node) bool {
+			if bt, ok := n.(*core.Button); ok && bt.Icon == icons.ContentCopy {
+				copyAll = bt
+			}
+			return true
+		})
+		require.NotNil(t, copyAll)
+		// (the clipboard of tests is not kept, so this tests what it copies)
+		assert.True(t, eventually(func() bool { return strings.Count(br.Console.allText(), "\n") == 1 }), br.Console.allText())
+		assert.Regexp(t, `(?s)one.*\nERROR: two`, br.Console.allText())
 	})
 }
 

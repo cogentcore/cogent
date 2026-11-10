@@ -1171,18 +1171,25 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 }
 
 // TestSaveDOM tests that the document of a page, as its scripts have made
-// it, is saved to an HTML file in the Downloads directory.
+// it, is saved to an HTML file in the Downloads directory, with its
+// console messages in a text file.
 func TestSaveDOM(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	require.NoError(t, os.MkdirAll(filepath.Join(home, "Downloads"), 0o755))
 	b, pg := newScriptPage(t, map[string]string{
-		"/": `<html><body><p>static</p><script>document.body.append("made by script")</script></body></html>`,
+		"/": `<html><body><p>static</p><script>document.body.append("made by script"); console.log("logged")</script></body></html>`,
 	})
 	b.RenderImage(func() {
 		settle(pg)
 		pg.saveDOM()
 	})
+	logs, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*-console.txt"))
+	require.NoError(t, err)
+	require.Len(t, logs, 1)
+	log, err := os.ReadFile(logs[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(log), "logged")
 	files, err := filepath.Glob(filepath.Join(home, "Downloads", "example.com-*.html"))
 	require.NoError(t, err)
 	require.Len(t, files, 1)

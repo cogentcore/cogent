@@ -1475,6 +1475,20 @@ func (pg *Page) saveDOM() {
 	if n > 1 {
 		msg += fmt.Sprintf(" (and %d frames)", n-1)
 	}
+	// the console messages (of the page and its frames) are saved with it,
+	// for finding why it does not work
+	var console []string
+	if pg.AsyncLockIfShown() {
+		console = pg.ScriptConsole()
+		pg.AsyncUnlock()
+	}
+	if len(console) > 0 {
+		if err := os.WriteFile(base+"-console.txt", []byte(strings.Join(console, "\n")+"\n"), 0o644); err != nil {
+			snack("Error saving the console: " + err.Error())
+			return
+		}
+		msg += ", with its console"
+	}
 	snack(msg)
 }
 
