@@ -2156,14 +2156,19 @@
 		userActivation: { hasBeenActive: false, isActive: false },
 	};
 
+	// storageKinds are the kinds (local or session) of the Storage objects,
+	// not in properties of them: the keys of their proxies are only their
+	// items, and a proxy cannot hide a non-configurable property of its
+	// target (Object.keys(localStorage) threw on GitHub).
+	const storageKinds = new WeakMap();
 	class Storage {
-		constructor(kind) { Object.defineProperty(this, "_kind", { value: kind }); }
-		getItem(k) { return D.storage("get", this._kind, String(k)); }
-		setItem(k, v) { D.storage("set", this._kind, String(k), String(v)); }
-		removeItem(k) { D.storage("remove", this._kind, String(k)); }
-		clear() { D.storage("clear", this._kind); }
-		key(i) { const ks = D.storage("keys", this._kind); return i < ks.length ? ks[i] : null; }
-		get length() { return D.storage("keys", this._kind).length; }
+		constructor(kind) { storageKinds.set(this, kind); }
+		getItem(k) { return D.storage("get", storageKinds.get(this), String(k)); }
+		setItem(k, v) { D.storage("set", storageKinds.get(this), String(k), String(v)); }
+		removeItem(k) { D.storage("remove", storageKinds.get(this), String(k)); }
+		clear() { D.storage("clear", storageKinds.get(this)); }
+		key(i) { const ks = D.storage("keys", storageKinds.get(this)); return i < ks.length ? ks[i] : null; }
+		get length() { return D.storage("keys", storageKinds.get(this)).length; }
 	}
 	function storageProxy(kind) {
 		return new Proxy(new Storage(kind), {
@@ -2171,7 +2176,7 @@
 			set(t, p, v) { if (typeof p !== "string" || p in t) return Reflect.set(t, p, v, t); t.setItem(p, v); return true; },
 			deleteProperty(t, p) { t.removeItem(p); return true; },
 			has(t, p) { return p in t || t.getItem(p) !== null; },
-			ownKeys(t) { return D.storage("keys", t._kind); },
+			ownKeys(t) { return D.storage("keys", storageKinds.get(t)); },
 			getOwnPropertyDescriptor(t, p) { const v = t.getItem(p); return v === null ? undefined : { value: v, enumerable: true, configurable: true, writable: true }; },
 		});
 	}

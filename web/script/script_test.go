@@ -1236,3 +1236,12 @@ func TestLogURL(t *testing.T) {
 	assert.Less(t, len(l), 260)
 	assert.Equal(t, "data:text/plain,…", logURL("data:text/plain,hello"))
 }
+
+// TestStorageKeys tests the keys of localStorage (Object.keys, as GitHub
+// gets them, which threw for a hidden property of its proxy) and that its
+// methods work on it.
+func TestStorageKeys(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "a,b|1|2", run(t, e, `localStorage.setItem("a", "1"); localStorage.b = "2";
+		Object.keys(localStorage).sort().join(",") + "|" + localStorage.getItem("a") + "|" + localStorage.length`))
+}

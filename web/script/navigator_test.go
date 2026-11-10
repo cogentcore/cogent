@@ -185,3 +185,23 @@ func TestResizeObserverChanges(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "10,40", v)
 }
+
+// TestFetchGetHeaders tests that a GET of a script with headers is sent
+// with them (not with GetURL, which has none: the page_data of github.com,
+// with Accept: application/json, was 406 Not Acceptable).
+func TestFetchGetHeaders(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Accept") != "application/json" {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+		w.Write([]byte(`{"ok": 1}`))
+	}))
+	defer srv.Close()
+	run(t, e, `window.got = ""; fetch("`+srv.URL+`/page_data", {headers: {"Accept": "application/json"}}).then(r => r.status === 200 ? r.json() : {ok: r.status}).then(j => { got = String(j.ok); })`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return v == "1"
+	}, 3*time.Second, 20*time.Millisecond, "%v", *logs)
+}

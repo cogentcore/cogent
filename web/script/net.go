@@ -422,13 +422,16 @@ func logURL(u string) string {
 	return u
 }
 
-// request makes the given request: a GET without a body with GetURL, as
-// for the resources of the page, and others with the default client.
+// request makes the given request: a GET without a body or headers with
+// GetURL, as for the resources of the page, and others with the default
+// client. A GET with headers is a request of data (as the JSON of the
+// page_data of github.com, with Accept: application/json, which GetURL,
+// without them, got as 406 Not Acceptable, and which its cache kept).
 func (e *Engine) request(u, method string, headers []string, body []byte, hasBody bool) (*http.Response, error) {
 	if strings.HasPrefix(u, "blob:") {
 		return e.blobResponse(u)
 	}
-	if (method == "" || method == "GET") && !hasBody && e.opts.GetURL != nil {
+	if (method == "" || method == "GET") && !hasBody && len(headers) == 0 && e.opts.GetURL != nil {
 		return e.opts.GetURL(u)
 	}
 	req, err := http.NewRequest(method, u, bytes.NewReader(body))
