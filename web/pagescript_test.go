@@ -1077,3 +1077,40 @@ func TestScriptsComputedDisplayRoot(t *testing.T) {
 		assert.Equal(t, "none", v)
 	})
 }
+
+// TestScriptsPreloadStyleSheet tests a style sheet that is preloaded and
+// made a style sheet by the load event of its link (as those of
+// trekbikes.com, rel="preload" as="style" with
+// onload="this.rel='stylesheet'"), which was not applied, as the links of
+// the document, and those that preload, had no load events.
+func TestScriptsPreloadStyleSheet(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><link href="/style.css" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"></head>` +
+			`<body><p class="hidden">not shown</p><p>shown</p></body></html>`,
+		"/style.css": `.hidden { display: none }`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
+		assert.Contains(t, pageTexts(b, pg), "shown")
+	})
+}
+
+// TestScriptsAdoptedStyleSheets tests that the constructed style sheets
+// that the document adopts (document.adoptedStyleSheets, as the dialog of
+// Cookiebot is styled by, where it is supported) are applied, also as
+// they change, which they were not (the dialog was not styled).
+func TestScriptsAdoptedStyleSheets(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p class="hidden">not shown</p><p>shown</p><script>
+			window.sheet = new CSSStyleSheet();
+			sheet.replaceSync(".hidden { display: none }");
+			document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
+		_, err := pg.scripts.engine.RunString(`sheet.replaceSync("p { color: red }")`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "not shown") }), "shown again: "+pageTexts(b, pg))
+	})
+}

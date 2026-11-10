@@ -800,7 +800,6 @@
 			shadowHosts.set(id, this[ID]);
 			D.setShadow(this[ID], id);
 			shadows.set(this, { root: sr, mode: init && init.mode === "closed" ? "closed" : "open" });
-			sr.adoptedStyleSheets = [];
 			return sr;
 		}
 		get shadowRoot() { const s = shadows.get(this); return s && s.mode === "open" ? s.root : null; }
@@ -935,8 +934,10 @@
 	const HTMLLinkElement = elementClass(["link"], HTMLElement, cls => { reflectURL(cls, ["href"]); reflect(cls, ["rel", "type", "media", "as", "crossOrigin", "integrity"]); Object.defineProperty(cls.prototype, "relList", { get() { return new DOMTokenList(this, "rel"); } }); });
 	// CSSStyleSheet has the rules of a style sheet as text. That of a style
 	// element changes its text (as CSS-in-JS inserts rules), so that the
-	// page is styled by them; constructed ones (adoptedStyleSheets, as of
-	// Lit) are not applied.
+	// page is styled by them; constructed ones that a document or shadow
+	// root adopts (adoptedStyleSheets, as of Lit, and the dialog of
+	// Cookiebot, which was not styled) are applied by a style element of
+	// it that has their rules (see syncAdopted).
 	function cssBlocks(text) {
 		const out = [];
 		let depth = 0, start = 0, quote = "";
@@ -957,7 +958,12 @@
 		get cssRules() { const o = sheetOwners.get(this); if (o) this._rules = cssBlocks(o.textContent); return this._rules.map(t => ({ cssText: t, type: 1 })); }
 		get rules() { return this.cssRules; }
 		get ownerNode() { return sheetOwners.get(this) || null; }
-		_set(rules) { this._rules = rules; const o = sheetOwners.get(this); if (o) o.textContent = rules.join("\n"); }
+		_set(rules) {
+			this._rules = rules;
+			const o = sheetOwners.get(this);
+			if (o) o.textContent = rules.join("\n");
+			if (this._adopters) for (const owner of this._adopters) syncAdopted(owner);
+		}
 		insertRule(rule, index) {
 			const rules = this.cssRules.map(r => r.cssText);
 			index = index === undefined ? 0 : index >>> 0;
@@ -971,6 +977,30 @@
 		removeRule(index) { this.deleteRule(index || 0); }
 		replaceSync(text) { this._set(cssBlocks(String(text))); }
 		replace(text) { this.replaceSync(text); return Promise.resolve(this); }
+	}
+	// setAdopted sets the style sheets that the given document or shadow
+	// root adopts (adoptedStyleSheets), which are applied (see syncAdopted).
+	function setAdopted(owner, v) {
+		for (const sh of owner._adopted || []) if (sh._adopters) sh._adopters.delete(owner);
+		owner._adopted = Array.from(v);
+		for (const sh of owner._adopted) (sh._adopters || (sh._adopters = new Set())).add(owner);
+		syncAdopted(owner);
+	}
+	// syncAdopted applies the style sheets that the given document or shadow
+	// root has adopted, by the text of a style element of it that has their
+	// rules (after the others of a document, in its head).
+	function syncAdopted(owner) {
+		const text = (owner._adopted || []).map(sh => sh._rules.join("\n")).join("\n");
+		let el = owner._adoptedStyle;
+		if (!el) {
+			if (!text) return;
+			el = document.createElement("style");
+			el.setAttribute("data-adopted-style-sheets", "");
+			owner._adoptedStyle = el;
+		}
+		const parent = owner === document ? (document.head || document.documentElement) : owner;
+		if (el.parentNode !== parent && parent) parent.appendChild(el);
+		if (el.textContent !== text) el.textContent = text;
 	}
 	const styleSheets = new WeakMap(); // style element -> its sheet
 	const HTMLStyleElement = elementClass(["style"], HTMLElement, cls => {
@@ -1443,7 +1473,7 @@
 		get scripts() { return this.querySelectorAll("script"); }
 		get styleSheets() { return this.querySelectorAll("style").map(st => st.sheet); }
 		get adoptedStyleSheets() { return this._adopted || (this._adopted = []); }
-		set adoptedStyleSheets(v) { this._adopted = Array.from(v); }
+		set adoptedStyleSheets(v) { setAdopted(this, v); }
 		get fonts() { return { ready: Promise.resolve(), check() { return true; }, load() { return Promise.resolve([]); }, addEventListener() {}, add() {}, forEach() {} }; }
 		get implementation() { return { createHTMLDocument(title) { return wrap(D.parseDocument("<!DOCTYPE html><title>" + (title || "") + "</title>")); }, hasFeature() { return true; } }; }
 		createElement(tag) { return wrap(D.create(String(tag))); }
@@ -1503,6 +1533,8 @@
 		get host() { return wrap(shadowHosts.get(this[ID])); }
 		get mode() { const s = shadows.get(this.host); return s ? s.mode : "open"; }
 		get activeElement() { return null; }
+		get adoptedStyleSheets() { return this._adopted || (this._adopted = []); }
+		set adoptedStyleSheets(v) { setAdopted(this, v); }
 	}
 
 	// treeWalker returns a TreeWalker, which walks the live tree from its

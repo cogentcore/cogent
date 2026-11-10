@@ -484,12 +484,16 @@ func attr(n *html.Node, key string) (string, bool) {
 // scripts have changed it (at the end of its task).
 func (e *Engine) Load(done func()) {
 	var scripts []*html.Node
+	var links []*html.Node
 	walk(e.doc, func(n *html.Node) bool {
 		if n.Type == html.ElementNode && (n.Data == "template" || n.Data == "noscript") {
 			return true // their content is not scripts (it is text with scripting)
 		}
 		if isScript(n) {
 			scripts = append(scripts, n)
+		}
+		if isStyleLink(n) {
+			links = append(links, n)
 		}
 		return true
 	})
@@ -501,6 +505,12 @@ func (e *Engine) Load(done func()) {
 		}
 		for _, s := range scripts {
 			e.ran[s] = true // run here, not when inserted
+		}
+		// the load events of the links of style sheets (and preloads) of
+		// the document, once they are gotten
+		for _, l := range links {
+			e.ran[l] = true
+			e.loadStyleLink(l)
 		}
 	})
 	for _, s := range scripts {
@@ -683,7 +693,11 @@ func isStyleLink(n *html.Node) bool {
 	}
 	rel, _ := attr(n, "rel")
 	for _, r := range strings.Fields(strings.ToLower(rel)) {
-		if r == "stylesheet" {
+		// (and the links that preload resources, whose load events pages
+		// use to make them style sheets, as the preloaded style sheets of
+		// trekbikes.com, with onload="this.rel='stylesheet'", which were
+		// not applied)
+		if r == "stylesheet" || r == "preload" || r == "modulepreload" {
 			return true
 		}
 	}
