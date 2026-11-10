@@ -9,10 +9,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
@@ -158,5 +160,36 @@ func TestFrameMouseEvents(t *testing.T) {
 		}), pageTexts(b, pg))
 		assert.Contains(t, pageTexts(b, pg), "parent over:iframe")
 		assert.NotContains(t, pageTexts(b, pg), "over:box")
+	})
+}
+
+// TestFrameNotNested tests that the page of a frame does not open the
+// iframe of the page that it is in again, in a frame of its own: the
+// element of the content of the page of a frame (of NodeOf) is that iframe,
+// which was opened again in it, in frames in frames (as the challenge of
+// reCAPTCHA, which then failed, as it had no name).
+func TestFrameNotNested(t *testing.T) {
+	inner := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `<html><body><p>in the</p><script>setTimeout(() => document.body.append("frame"), 50)</script></body></html>`)
+	}))
+	defer inner.Close()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.Scripts = true
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: errors.Log1(url.Parse(u))},
+			Body: io.NopCloser(strings.NewReader(`<html><body><iframe name="f" src="` + inner.URL + `/f"></iframe></body></html>`))}, nil
+	}
+	pg.OpenURL("https://example.com/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "frame") }), pageTexts(b, pg))
+		time.Sleep(300 * time.Millisecond) // (for a frame in the frame, if any)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.Len(t, pg.frames, 1)
+		for _, fp := range pg.frames {
+			assert.Empty(t, fp.frames, "the page of the frame has no frames")
+		}
 	})
 }

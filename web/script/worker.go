@@ -39,6 +39,7 @@ func (e *Engine) newWorker(id int, src string) {
 		Storage:     e.opts.Storage,
 		Cookies:     e.opts.Cookies,
 		TaskTimeout: e.opts.TaskTimeout,
+		Trace:       e.opts.Trace,
 		Log: func(level slog.Level, msg string) {
 			e.logf(level, "[worker %s] %s", workerName(u), msg)
 		},

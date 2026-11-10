@@ -133,6 +133,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final stri
 		Storage:       localStorage,
 		Cookies:       cookies,
 		Log:           ps.log,
+		Trace:         func() bool { return Settings.VerboseConsole },
 		Parent:        pg.parentEngine,
 		FrameOf:       pg.frameEngine,
 	})

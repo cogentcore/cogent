@@ -73,6 +73,7 @@ func (e *Engine) selfChanged(n *html.Node) {
 // recordChange records a change of the given node, of itself if self is
 // set, or of its children (see [Engine.changed]).
 func (e *Engine) recordChange(n *html.Node, self bool) {
+	e.domChanges++
 	// a change in a shadow root (which is not rendered itself) is one of
 	// its host, as it can change which children of the host are rendered
 	// (as the slots of the menus of MDN, which open them)
@@ -656,6 +657,9 @@ func (e *Engine) defineDOM() {
 			return vm.ToValue(false)
 		}
 		return vm.ToValue(e.opts.MediaMatches(str(call, 0)))
+	})
+	set("tracing", func(call goja.FunctionCall) goja.Value {
+		return vm.ToValue(e.tracing())
 	})
 	set("log", func(call goja.FunctionCall) goja.Value {
 		level := slog.LevelInfo

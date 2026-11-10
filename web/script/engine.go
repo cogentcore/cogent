@@ -151,6 +151,16 @@ type Options struct {
 	// page (and the errors of its scripts), with their level.
 	Log func(level slog.Level, msg string)
 
+	// Trace, if set and returning true, makes the engine log what the
+	// scripts do (with Log, at the debug level), for finding why a page
+	// does not work (as a captcha that only says that something went
+	// wrong): the requests that they make and the scripts that they load,
+	// with their statuses and sizes, the messages that they post to other
+	// windows (and those that are not delivered for their target origin),
+	// and the properties that they get that the objects of the browser
+	// (the global object, the DOM, navigator, ...) do not have, once each.
+	Trace func() bool
+
 	// TaskTimeout is the longest time that a task can run before it is
 	// interrupted (as a script that does not end); 0 is 10 seconds.
 	TaskTimeout time.Duration
@@ -226,6 +236,11 @@ type Engine struct {
 	// of it is rendered again.
 	selfNodes, childNodes []*html.Node
 	whole                 bool
+	// domChanges is the number of changes of the document, by which the
+	// iframe elements of it, frameNodes, are found again when it has
+	// changed since framesAt (minus one; see [Engine.forFrames]).
+	domChanges, framesAt int
+	frameNodes           []*html.Node
 	// changedNodes are the nodes that have changed since the page was
 	// last rendered (see [Engine.changedAround]).
 	changedNodes []*html.Node
@@ -720,6 +735,20 @@ func (e *Engine) reportRejections() {
 }
 
 // logf logs the given message to the console of the page.
+// tracing returns whether the engine logs what the scripts do (see
+// [Options.Trace]).
+func (e *Engine) tracing() bool {
+	return e.opts.Trace != nil && e.opts.Trace()
+}
+
+// tracef logs the given message at the debug level if the engine traces
+// (see [Options.Trace]).
+func (e *Engine) tracef(format string, args ...any) {
+	if e.tracing() {
+		e.logf(slog.LevelDebug, format, args...)
+	}
+}
+
 func (e *Engine) logf(level slog.Level, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	if e.opts.Log != nil {

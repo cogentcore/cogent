@@ -6,6 +6,8 @@ package script
 
 import (
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/dop251/goja"
 	"golang.org/x/net/html"
@@ -85,7 +87,15 @@ func (e *Engine) Origin() string {
 // urlOrigin returns the origin of the given URL, or "null".
 func urlOrigin(u string) string {
 	pu, err := url.Parse(u)
-	if err != nil || pu.Host == "" || (pu.Scheme != "http" && pu.Scheme != "https") {
+	if err != nil || pu.Host == "" {
+		return "null"
+	}
+	// the default port of the scheme is not in an origin, as browsers
+	// serialize it (as the target origin https://www.google.com:443 of the
+	// messages of the frame of reCAPTCHA to its page, which were not
+	// delivered, so that it said that something went wrong)
+	normalizeURL(pu)
+	if pu.Scheme != "http" && pu.Scheme != "https" {
 		return "null"
 	}
 	return pu.Scheme + "://" + pu.Host
@@ -105,17 +115,71 @@ func (e *Engine) postMessage(to *Engine, data, targetOrigin string, ports []int)
 	case "*":
 	case "/":
 		if to.Origin() != origin {
+			e.tracef("postMessage to %s not delivered: its origin is not that of the sender (/)", to.Origin())
 			return
 		}
 	default:
 		if to.Origin() != urlOrigin(targetOrigin) {
+			e.tracef("postMessage to %s not delivered: target origin %s", to.Origin(), targetOrigin)
 			return // as browsers, which do not send it (or report an error)
 		}
 	}
+	e.tracef("postMessage to %s: %s", to.Origin(), traceData(data))
 	pairs := e.transferPorts(to, ports)
 	to.Post(func() {
 		to.callPrelude("message", data, origin, to.windowID(e), pairs)
 	})
+}
+
+// nameAttr returns the name attribute of the given element.
+func nameAttr(n *html.Node) string {
+	v, _ := attr(n, "name")
+	return v
+}
+
+// forFrames calls the given function for the iframe elements of the
+// document of the engine, in order, until it returns false. It is called
+// in the tasks of engines of the same page (or its frames), with the lock
+// of the page held, as the documents are only changed in their tasks.
+//
+// The elements are found again only after the document has changed (see
+// [Engine.domChanges]), as this is called for each property of the window
+// that it does not have (as for the features that scripts check for).
+func (e *Engine) forFrames(f func(n *html.Node) bool) {
+	if e.framesAt != e.domChanges+1 {
+		e.frameNodes = e.frameNodes[:0]
+		var walk func(n *html.Node)
+		walk = func(n *html.Node) {
+			for k := n.FirstChild; k != nil; k = k.NextSibling {
+				if k.Type != html.ElementNode || k.Data == "template" {
+					continue
+				}
+				if k.Data == "iframe" || k.Data == "frame" {
+					e.frameNodes = append(e.frameNodes, k)
+					continue
+				}
+				walk(k)
+			}
+		}
+		if e.doc != nil {
+			walk(e.doc)
+		}
+		e.framesAt = e.domChanges + 1
+	}
+	for _, n := range e.frameNodes {
+		if !f(n) {
+			return
+		}
+	}
+}
+
+// traceData returns the given data of a message (JSON) for the console,
+// shortened.
+func traceData(data string) string {
+	if len(data) > 300 {
+		return data[:300] + "…"
+	}
+	return data
 }
 
 // FrameLoaded dispatches the load event to the given iframe element, after
@@ -153,6 +217,82 @@ func (e *Engine) defineFrames() {
 			return vm.ToValue(-1)
 		}
 		return vm.ToValue(e.windowID(e.opts.FrameOf(n)))
+	})
+	// windowFrame returns the number of the window of the frame of the
+	// given window of the given name (of the name attribute of its
+	// iframe) or index, as window[name] and window.frames[name] (as
+	// reCAPTCHA gets the window of its checkbox from that of its
+	// challenge, by parent.frames[name]), or -1 for none.
+	d.Set("windowFrame", func(call goja.FunctionCall) goja.Value {
+		w := e.windowOf(int(call.Argument(0).ToInteger()))
+		if w == nil || w.opts.FrameOf == nil {
+			return vm.ToValue(-1)
+		}
+		key := call.Argument(1).String()
+		index, err := strconv.Atoi(key)
+		if err != nil || index < 0 || strconv.Itoa(index) != key {
+			index = -1
+		}
+		i := 0
+		var found *html.Node
+		w.forFrames(func(n *html.Node) bool {
+			if i == index || index < 0 && key != "" && nameAttr(n) == key {
+				found = n
+				return false
+			}
+			i++
+			return true
+		})
+		if found == nil {
+			return vm.ToValue(-1)
+		}
+		fe := w.opts.FrameOf(found)
+		if fe == nil {
+			e.tracef("frame %q of %s has no window (its page has no scripts yet)", key, w.Origin())
+		}
+		return vm.ToValue(e.windowID(fe))
+	})
+	// frameName returns the name of the iframe of the frame of this
+	// window, which is its window.name (as reCAPTCHA gets the name of the
+	// frame of its checkbox from that of its challenge), or "".
+	d.Set("frameName", func(call goja.FunctionCall) goja.Value {
+		p := e.parent()
+		if p == nil || p.opts.FrameOf == nil {
+			return vm.ToValue("")
+		}
+		name := ""
+		p.forFrames(func(n *html.Node) bool {
+			if p.opts.FrameOf(n) == e {
+				name = nameAttr(n)
+				return false
+			}
+			return true
+		})
+		return vm.ToValue(name)
+	})
+	// windowFrameNames returns the names of the frames of the given
+	// window, for the console.
+	d.Set("windowFrameNames", func(call goja.FunctionCall) goja.Value {
+		w := e.windowOf(int(call.Argument(0).ToInteger()))
+		var names []string
+		if w != nil {
+			w.forFrames(func(n *html.Node) bool { names = append(names, strconv.Quote(nameAttr(n))); return true })
+		}
+		url := ""
+		if w != nil {
+			url = w.opts.PageURL
+		}
+		return vm.ToValue(strings.Join(names, ", ") + " in " + url)
+	})
+	// windowLength returns the number of frames of the given window, as
+	// window.length.
+	d.Set("windowLength", func(call goja.FunctionCall) goja.Value {
+		w := e.windowOf(int(call.Argument(0).ToInteger()))
+		n := 0
+		if w != nil {
+			w.forFrames(func(*html.Node) bool { n++; return true })
+		}
+		return vm.ToValue(n)
 	})
 	d.Set("windowClosed", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))

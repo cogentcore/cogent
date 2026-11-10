@@ -143,6 +143,7 @@ func (e *Engine) defineNet() {
 		if err != nil || pu.Scheme == "" {
 			return goja.Null()
 		}
+		normalizeURL(pu)
 		if (pu.Scheme == "http" || pu.Scheme == "https") && pu.Path == "" {
 			pu.Path = "/"
 		}
@@ -298,6 +299,7 @@ func (e *Engine) defineNet() {
 			return goja.Undefined()
 		}
 		go func() {
+			start := time.Now()
 			resp, err := e.request(u, method, headers, body, hasBody)
 			// failed requests are in the console, as in browsers (as those
 			// that a captcha makes, which says only that something went
@@ -319,6 +321,14 @@ func (e *Engine) defineNet() {
 			if err != nil {
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
+			}
+			if e.tracing() {
+				typ := ""
+				if ct := resp.Header.Get("Content-Type"); ct != "" {
+					typ = ", " + ct
+				}
+				e.tracef("%s %s (%d bytes): %d, %d bytes%s, %v", m, logURL(u), len(body), resp.StatusCode, len(data),
+					typ, time.Since(start).Round(time.Millisecond))
 			}
 			var hs []any
 			for k, vs := range resp.Header {
@@ -372,6 +382,28 @@ func bytesOf(v goja.Value) []byte {
 
 // logURL returns the given URL for the console: without the data of a
 // data: URL, and at most 200 characters.
+// defaultPorts are the default ports of the schemes of URLs, which are not
+// in their hosts and origins, as browsers serialize them.
+var defaultPorts = map[string]string{"http": "80", "https": "443", "ws": "80", "wss": "443", "ftp": "21"}
+
+// normalizeURL makes the scheme and host of the given URL lower case and
+// drops the default port of its scheme from its host, as browsers parse
+// URLs (as https://www.google.com:443, which reCAPTCHA posts messages to).
+func normalizeURL(pu *neturl.URL) {
+	pu.Scheme = strings.ToLower(pu.Scheme)
+	if pu.Host == "" {
+		return
+	}
+	host, port := strings.ToLower(pu.Hostname()), pu.Port()
+	if strings.Contains(host, ":") {
+		host = "[" + host + "]" // (IPv6)
+	}
+	if port != "" && port != defaultPorts[pu.Scheme] {
+		host += ":" + port
+	}
+	pu.Host = host
+}
+
 func logURL(u string) string {
 	if strings.HasPrefix(u, "data:") {
 		u, _, _ = strings.Cut(u, ",")
@@ -587,6 +619,7 @@ func (e *Engine) getScript(u string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	e.tracef("script %s: %d bytes", logURL(u), len(b))
 	return string(b), nil
 }
 
@@ -598,6 +631,10 @@ func (e *Engine) runInserted(n *html.Node) {
 		return
 	}
 	walk(n, func(c *html.Node) bool {
+		if c.Type == html.ElementNode && c.Data == "iframe" && e.tracing() {
+			src, _ := attr(c, "src")
+			e.tracef("iframe %q inserted: %s", nameAttr(c), logURL(src))
+		}
 		if e.ran[c] {
 			return true
 		}

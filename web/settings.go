@@ -27,6 +27,15 @@ type SettingsData struct { //types:add
 	// requests made after it is changed send it, and the scripts of the
 	// pages opened after then get it. Clear it for the default one.
 	UserAgent string
+
+	// VerboseConsole makes the console show what the scripts of pages do,
+	// for finding why a page does not work (as a captcha that only says
+	// that something went wrong): the requests that they make and the
+	// scripts that they load, with their statuses and sizes, the messages
+	// that they post to other windows (and those that are not delivered),
+	// and the properties that they get that the browser does not have,
+	// once each. It applies to pages opened (or reloaded) after it is set.
+	VerboseConsole bool
 }
 
 // defaultUserAgent is the default User-Agent of the requests of pages.

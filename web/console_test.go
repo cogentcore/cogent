@@ -79,3 +79,42 @@ func TestConsolePanel(t *testing.T) {
 		b.AsyncUnlock()
 	})
 }
+
+// TestConsoleVerbose tests that the console shows what the scripts of a
+// page do when it is verbose (see [SettingsData.VerboseConsole]): their
+// requests, the properties of the browser that they get that it does not
+// have, and the messages that they post, and none of that when it is not.
+func TestConsoleVerbose(t *testing.T) {
+	for _, verbose := range []bool{true, false} {
+		Settings.VerboseConsole = verbose
+		b, pg := newScriptPage(t, map[string]string{
+			"/": `<html><body><script>
+				fetch("/data.json").then(r => r.text()).then(() => { document.body.dataset.done = "1"; });
+				const a = navigator.notInBrowsers;
+				const b = typeof notDefinedAnywhere;
+				const c = document.body.notAProperty;
+				window.postMessage({ hello: "there" }, "*");
+				</script></body></html>`,
+			"/data.json": `{"a": 1}`,
+		})
+		b.RenderImage(func() { settle(pg) }, func() {
+			var all string
+			ok := eventually(func() bool {
+				all = strings.Join(pg.ScriptConsole(), "\n")
+				return !verbose || strings.Contains(all, "data.json")
+			})
+			if !verbose {
+				assert.NotContains(t, all, "missing:")
+				assert.NotContains(t, all, "data.json")
+				return
+			}
+			assert.True(t, ok, all)
+			assert.Contains(t, all, "GET https://example.com/data.json (0 bytes): 200, 8 bytes")
+			assert.Contains(t, all, "missing: navigator.notInBrowsers")
+			assert.Contains(t, all, "missing: window.notDefinedAnywhere")
+			assert.Contains(t, all, "missing: <body>.notAProperty")
+			assert.Contains(t, all, `postMessage to https://example.com: {"hello":"there"}`)
+		})
+	}
+	Settings.VerboseConsole = false
+}

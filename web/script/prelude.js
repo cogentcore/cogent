@@ -2726,15 +2726,25 @@
 		if (id === 0) return g;
 		let p = proxies.get(id);
 		if (p) return p;
-		p = {
+		const base = {
 			postMessage(data, opts, transfer) { D.postTo(id, cloneJSON(data), targetOrigin(opts), transferIDs(transferOf(opts, transfer))); },
 			get closed() { return D.windowClosed(id); },
 			get parent() { return windowProxy(D.windowRel(id, "parent")); },
 			get top() { return windowProxy(D.windowRel(id, "top")); },
 			get window() { return p; }, get self() { return p; }, get frames() { return p; },
-			length: 0,
+			get length() { return D.windowLength(id); },
 			focus() {}, blur() {}, close() {},
 		};
+		// the windows of its frames by their names and indexes (as
+		// reCAPTCHA gets the window of its checkbox by parent.frames[name])
+		p = new Proxy(base, {
+			get(t, k, r) {
+				if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
+				const w = windowProxy(D.windowFrame(id, k));
+				if (!w && traceGlobal) D.log("debug", "missing: frame " + JSON.stringify(k) + " of another window (frames: " + D.windowFrameNames(id) + ")");
+				return w || undefined;
+			},
+		});
 		proxies.set(id, p);
 		return p;
 	}
@@ -2765,7 +2775,7 @@
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
-		devicePixelRatio: 1, name: "", status: "", length: 0, isSecureContext: true,
+		devicePixelRatio: 1, status: "", isSecureContext: true,
 		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
@@ -3107,4 +3117,92 @@
 			Object.defineProperty(g, name, { value: scope, writable: true, configurable: true });
 		}
 	}
+
+	// the properties that scripts get that the objects of the browser do
+	// not have, in the console (once each), when the engine traces (see
+	// Options.Trace): the root of the prototypes of the global object, of
+	// the DOM (EventTarget), and of the other objects of the browser, is a
+	// proxy of Object.prototype that reports them (as for the functions
+	// of browsers that a captcha uses, whose errors it catches)
+	let traceGlobal = null;
+	if (D.tracing()) {
+		const seen = new Set();
+		let reporting = false;
+		const ignored = new Set(["then", "toJSON", "constructor", "prototype", "length", "name", "inspect", "nodeType", "$$typeof", "asymmetricMatch"]);
+		const objectName = (o) => {
+			if (o === g) return "window";
+			for (const k of ["navigator", "screen", "location", "history", "performance", "crypto", "document"]) {
+				try { if (o === g[k]) return k; } catch (e) { }
+			}
+			if (o && o.nodeType === 1) return "<" + o.localName + ">";
+			if (o && o.nodeType === 3) return "#text";
+			const c = o && o.constructor;
+			return (c && c.name) || "Object";
+		};
+		const report = (o, k, kind) => {
+			if (typeof k !== "string" || k.startsWith("_") || ignored.has(k) || reporting) return;
+			reporting = true;
+			try {
+				const key = kind + objectName(o) + "." + k;
+				if (!seen.has(key)) {
+					seen.add(key);
+					D.log("debug", key);
+				}
+			} catch (e) { } finally { reporting = false; }
+		};
+		const proxy = new Proxy(Object.prototype, {
+			get(t, k, r) {
+				if (!(k in t)) report(r, k, "missing: ");
+				return Reflect.get(t, k, r);
+			},
+		});
+		traceGlobal = (k) => report(g, k, "missing: ");
+		const rootOf = (o) => {
+			for (let p = o; p; p = Object.getPrototypeOf(p)) {
+				if (Object.getPrototypeOf(p) === Object.prototype) return p;
+			}
+			return null;
+		};
+		const roots = new Set();
+		for (const o of [g.EventTarget && g.EventTarget.prototype, g.navigator, g.screen, g.location, g.history, g.performance, g.crypto]) {
+			const r = o && rootOf(o);
+			if (r && r !== g) roots.add(r);
+		}
+		for (const r of roots) {
+			try { Object.setPrototypeOf(r, proxy); } catch (e) { }
+		}
+	}
+
+	// the windows of the frames of this window by their names and indexes
+	// (as window[name] and frames[name]), from the root of the prototypes
+	// of the global object, a proxy of Object.prototype, which also reports
+	// the global names that are not defined when the engine traces
+	// the name of the window: that of its iframe, for a frame, until it is
+	// set (as reCAPTCHA gets the name of the frame of its checkbox, by
+	// parent.frames[name], from that of its challenge)
+	let windowName = null;
+	Object.defineProperty(g, "name", {
+		get() { return windowName !== null ? windowName : D.isWorker() ? "" : D.frameName(); },
+		set(v) { windowName = String(v); },
+		configurable: true, enumerable: true,
+	});
+	try {
+		Object.defineProperty(g, "length", { get() { return D.windowLength(0); }, configurable: true });
+		if (Object.getPrototypeOf(g) === Object.prototype) {
+			Object.setPrototypeOf(g, new Proxy(Object.prototype, {
+				get(t, k, r) {
+					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
+					const f = D.windowFrame(0, k);
+					if (f >= 0) return windowProxy(f);
+					if (traceGlobal) traceGlobal(k);
+					return undefined;
+				},
+				has(t, k) {
+					const has = k in t;
+					if (!has && traceGlobal) traceGlobal(k);
+					return has;
+				},
+			}));
+		}
+	} catch (e) { }
 })(globalThis, __dom);

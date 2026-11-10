@@ -67,7 +67,11 @@ func (pg *Page) setContent(content *core.Frame) {
 func (pg *Page) attachFrames(content *core.Frame) (opens []func()) {
 	seen := map[*html.Node]bool{}
 	content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-		n := htmlcore.NodeOf(cw)
+		// (the element of the widget itself: NodeOf of the content of the
+		// page of a frame is the iframe of the page that it is in, which
+		// was opened again in it, in frames in frames, as the challenge of
+		// reCAPTCHA, which then had no name, nor its checkbox in its parent)
+		n, _ := cwb.Property("node").(*html.Node)
 		if n == nil || n.Data != "iframe" {
 			return tree.Continue
 		}

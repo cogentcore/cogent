@@ -66,6 +66,13 @@ func (cp *ConsolePanel) Init() {
 	})
 	core.NewText(bar).SetText("Console").SetType(core.TextTitleSmall)
 	core.NewStretch(bar)
+	verbose := core.NewSwitch(bar).SetText("Verbose")
+	verbose.SetTooltip("Show what the scripts of pages do: their requests, messages, and the properties that they get that the browser does not have (for the pages opened or reloaded after this is set)")
+	verbose.SetChecked(Settings.VerboseConsole)
+	verbose.OnChange(func(e events.Event) {
+		Settings.VerboseConsole = verbose.IsChecked()
+		core.ErrorSnackbar(verbose, core.SaveSettings(Settings), "Error saving settings")
+	})
 	core.NewButton(bar).SetIcon(icons.Delete).SetType(core.ButtonAction).SetTooltip("Clear the console").OnClick(func(e events.Event) {
 		if pg := cp.browser.CurrentPage(); pg != nil {
 			pg.clearConsole()
