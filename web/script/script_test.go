@@ -1056,3 +1056,23 @@ func TestCSSRulesCached(t *testing.T) {
 	assert.Less(t, time.Since(start), 2*time.Second)
 	assert.Empty(t, *logs)
 }
+
+// TestInsertRuleSpeedy tests that the rules inserted one by one at the end
+// of the sheet of a style element (as emotion does, reading the length of
+// its rules for each) are quick to insert, and are in its text: on
+// nytimes.com this took more than 10s, as each insertion wrote the text of
+// all of the rules, and each read parsed them.
+func TestInsertRuleSpeedy(t *testing.T) {
+	e, logs := testEngine(t, `<html><head><style id="s"></style></head><body></body></html>`, nil)
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	start := time.Now()
+	assert.Equal(t, "5000 .c0 .c4999 true", run(t, e, `
+		const st = document.getElementById("s");
+		const sheet = st.sheet;
+		for (let i = 0; i < 5000; i++) sheet.insertRule(".c" + i + " { color: red; margin: 1px 2px 3px 4px }", sheet.cssRules.length);
+		[sheet.cssRules.length, sheet.cssRules[0].selectorText, sheet.cssRules[4999].selectorText, st.textContent.includes(".c2500 {")].join(" ")`))
+	assert.Less(t, time.Since(start), 3*time.Second)
+	assert.Empty(t, *logs)
+}

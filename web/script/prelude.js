@@ -1000,7 +1000,7 @@
 			this._text = text;
 			const sh = this._sheet;
 			if (!sh) return;
-			const rules = sh.cssRules.map(r => r.cssText);
+			const rules = sh._current().slice();
 			if (this._index < rules.length) { rules[this._index] = text; sh._set(rules); }
 		}
 	}
@@ -1050,41 +1050,87 @@
 		return new cls(sheet, index, text);
 	}
 	const sheetOwners = new WeakMap(); // style sheet -> style element
+	// CSSRuleList is the list of the rules of a style sheet (cssRules),
+	// whose rules are made as they are gotten, by index (and its length is
+	// that of the rules of the sheet, without making them).
+	class CSSRuleList {
+		constructor(sheet) { this._sheet = sheet; }
+		get length() { return this._sheet._current().length; }
+		item(i) { return this._sheet._rule(i >>> 0); }
+		*[Symbol.iterator]() { const n = this.length; for (let i = 0; i < n; i++) yield this.item(i); }
+	}
+	const ruleListHandler = {
+		get(t, p, r) {
+			if (typeof p === "string" && /^\d+$/.test(p)) return t.item(Number(p)) || undefined;
+			return Reflect.get(t, p, t);
+		},
+		has(t, p) { return typeof p === "string" && /^\d+$/.test(p) ? Number(p) < t.length : p in t; },
+	};
 	class CSSStyleSheet {
-		constructor(opts) { this._rules = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
-		get cssRules() {
-			// the rules are parsed from the text of the style element again
-			// only when the document has changed (nytimes.com read them in
-			// loops of its scripts, which ran too long, as they were parsed
-			// on each read)
+		constructor(opts) { this._rules = []; this._objs = []; this.disabled = false; this.media = { mediaText: (opts && opts.media) || "" }; }
+		// _current returns the texts of the rules of the sheet, parsed from
+		// the text of its style element again only when the document has
+		// changed (nytimes.com read them in loops of its scripts, which ran
+		// too long, as they were parsed on each read).
+		_current() {
 			const o = sheetOwners.get(this);
 			if (o && this._at !== D.domChanges()) {
 				const text = o.textContent;
-				if (text !== this._text) { this._text = text; this._rules = cssBlocks(text); this._list = null; }
+				if (text !== this._text) { this._text = text; this._rules = cssBlocks(text); this._objs = []; }
 				this._at = D.domChanges();
 			}
-			if (!this._list) this._list = this._rules.map((t, i) => makeRule(this, i, t));
-			return this._list;
+			return this._rules;
 		}
+		// _rule returns the rule at the given index, made once.
+		_rule(i) {
+			const rules = this._current();
+			if (i >= rules.length) return null;
+			return this._objs[i] || (this._objs[i] = makeRule(this, i, rules[i]));
+		}
+		get cssRules() { return this._list || (this._list = new Proxy(new CSSRuleList(this), ruleListHandler)); }
 		get rules() { return this.cssRules; }
 		get ownerNode() { return sheetOwners.get(this) || null; }
 		_set(rules) {
 			this._rules = rules;
-			this._list = null;
+			this._objs = [];
 			const o = sheetOwners.get(this);
-			if (o) o.textContent = rules.join("\n");
+			if (o) {
+				o.textContent = rules.join("\n");
+				this._text = undefined; // (the rules are current)
+				this._at = D.domChanges();
+			}
 			if (this._adopters) for (const owner of this._adopters) syncAdopted(owner);
 		}
 		insertRule(rule, index) {
-			const rules = this.cssRules.map(r => r.cssText);
+			const rules = this._current();
 			index = index === undefined ? 0 : index >>> 0;
 			if (index > rules.length) throw domException("IndexSizeError", "the index is beyond the rules");
-			rules.splice(index, 0, String(rule));
-			this._set(rules);
+			rule = String(rule);
+			const o = sheetOwners.get(this);
+			if (o && (index === rules.length || index === 0)) {
+				// a rule at the end (or the start) is a text of its own in the
+				// element, not all of its text again (as the rules that
+				// emotion inserts one by one, which took too long as each
+				// wrote the text of all of them)
+				if (index === rules.length) {
+					o.appendChild(document.createTextNode("\n" + rule));
+					rules.push(rule);
+				} else {
+					o.insertBefore(document.createTextNode(rule + "\n"), o.firstChild);
+					rules.unshift(rule);
+				}
+				this._objs = [];
+				this._text = undefined;
+				this._at = D.domChanges();
+				return index;
+			}
+			const all = rules.slice();
+			all.splice(index, 0, rule);
+			this._set(all);
 			return index;
 		}
-		deleteRule(index) { const rules = this.cssRules.map(r => r.cssText); rules.splice(index >>> 0, 1); this._set(rules); }
-		addRule(sel, style, index) { return this.insertRule(sel + "{" + style + "}", index === undefined ? this.cssRules.length : index); }
+		deleteRule(index) { const rules = this._current().slice(); rules.splice(index >>> 0, 1); this._set(rules); }
+		addRule(sel, style, index) { return this.insertRule(sel + "{" + style + "}", index === undefined ? this._current().length : index); }
 		removeRule(index) { this.deleteRule(index || 0); }
 		replaceSync(text) { this._set(cssBlocks(String(text))); }
 		replace(text) { this.replaceSync(text); return Promise.resolve(this); }
@@ -2914,7 +2960,7 @@
 	const props = {
 		window: g, self: g, frames: g, opener: null, frameElement: null, closed: false,
 		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
-		CSSRule, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
+		CSSRule, CSSRuleList, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
 		CSSImportRule, CSSFontFaceRule, CSSPageRule, CSSKeyframesRule, CSSKeyframeRule, CSSNamespaceRule, CSSCharsetRule, MessageChannel, MessagePort, MediaError, Worker,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
