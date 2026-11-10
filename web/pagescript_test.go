@@ -1251,10 +1251,15 @@ func TestConsoleOpenedBy(t *testing.T) {
 		"/":    `<html><body><script>setTimeout(function go() { location.href = "/two"; }, 10)</script></body></html>`,
 		"/two": `<html><body><p>two</p><script>1</script></body></html>`,
 	})
+	console := func() string { // (with the lock, as the page changes)
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		return strings.Join(pg.ScriptConsole(), "\n")
+	}
 	b.RenderImage(func() {
 		settle(pg)
-		require.True(t, eventually(func() bool { return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "opened by") }), strings.Join(pg.ScriptConsole(), "\n"))
-		all := strings.Join(pg.ScriptConsole(), "\n")
+		require.True(t, eventually(func() bool { return strings.Contains(console(), "opened by") }), console())
+		all := console()
 		assert.Contains(t, all, "opened by a script of https://example.com/")
 		assert.Contains(t, all, "at go (")
 	})
