@@ -1255,3 +1255,19 @@ func TestIframeSandbox(t *testing.T) {
 		for (const t of ["allow-scripts", "allow-forms"]) f.sandbox.supports && !f.sandbox.supports(t) || f.sandbox.add(t);
 		f.getAttribute("sandbox") + "|" + f.sandbox.contains("allow-forms")`))
 }
+
+// TestOffsetParentEnds tests that walking up the offset parents ends (the
+// body has none, as in browsers: the files of GitHub pull requests walked
+// up them to null, which hung the page at the body).
+func TestOffsetParentEnds(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><div><textarea></textarea></div></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	e, err := New(doc, Options{PageURL: "https://example.com/",
+		Layout: func(n *html.Node) (x, y, w, h float32, ok bool) { return 0, 0, 10, 10, true }})
+	require.NoError(t, err)
+	defer e.Close()
+	assert.Equal(t, "null|null|true", run(t, e, `
+		let n = 0;
+		for (let t = document.querySelector("textarea"); t && n < 10; t = t.offsetParent instanceof HTMLElement ? t.offsetParent : null) n++;
+		String(document.body.offsetParent) + "|" + String(document.documentElement.offsetParent) + "|" + (n < 10)`))
+}

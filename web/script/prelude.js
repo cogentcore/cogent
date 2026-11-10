@@ -894,7 +894,13 @@
 		get offsetHeight() { const r = D.rect(this[ID]); return r ? Math.round(r[3]) : 0; }
 		get offsetLeft() { const r = D.rect(this[ID]); return r ? Math.round(r[0]) : 0; }
 		get offsetTop() { const r = D.rect(this[ID]); return r ? Math.round(r[1]) : 0; }
-		get offsetParent() { return D.rect(this[ID]) ? document.body : null; }
+		// the body, as offsetLeft and offsetTop are of the page, but none for
+		// the body and the root element, as in browsers (GitHub walks up
+		// the offset parents to null, which never ended at the body)
+		get offsetParent() {
+			if (this === document.body || this === document.documentElement) return null;
+			return D.rect(this[ID]) ? document.body : null;
+		}
 		// the client size of the root element is that of the viewport, as
 		// pages read for their layout (craigslist shows its mobile layout
 		// for a width of 0)
