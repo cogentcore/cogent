@@ -118,3 +118,31 @@ func TestConsoleVerbose(t *testing.T) {
 	}
 	Settings.VerboseConsole = false
 }
+
+// TestConsolePanelVerbose tests that the console panel shows the messages
+// of a verbose console (see [SettingsData.VerboseConsole]) of a page that
+// is opened after it is set.
+func TestConsolePanelVerbose(t *testing.T) {
+	Settings.VerboseConsole = true
+	defer func() { Settings.VerboseConsole = false }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	br := NewBrowser(b)
+	br.PageFunc = func(pg *Page) {
+		pg.Context.GetURL = func(u string) (*http.Response, error) {
+			pu, _ := url.Parse(u)
+			r := strings.NewReader(`<html><body><p>page</p><script>fetch("/data.txt")</script></body></html>`)
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
+		}
+	}
+	br.NewTab("https://example.com/one")
+	b.RenderImage(func() {
+		for _, pg := range br.Pages() {
+			settle(pg)
+		}
+		b.AsyncLock()
+		br.ShowConsole(true)
+		b.AsyncUnlock()
+		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "DEBUG: GET https://example.com/data.txt") }), consoleTexts(b, br))
+	})
+}

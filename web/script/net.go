@@ -631,7 +631,12 @@ func (e *Engine) runInserted(n *html.Node) {
 		return
 	}
 	walk(n, func(c *html.Node) bool {
-		if c.Type == html.ElementNode && c.Data == "iframe" && e.tracing() {
+		if c.Type == html.ElementNode && c.Data == "iframe" && e.tracing() && !e.ran[c] {
+			// (once, as its parents are inserted again)
+			if e.ran == nil {
+				e.ran = map[*html.Node]bool{}
+			}
+			e.ran[c] = true
 			src, _ := attr(c, "src")
 			e.tracef("iframe %q inserted: %s", nameAttr(c), logURL(src))
 		}
