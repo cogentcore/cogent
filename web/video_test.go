@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/video"
@@ -309,5 +310,56 @@ func TestPageVideoMSE(t *testing.T) {
 		// a seek plays it from the time, of its fragments
 		eval("v.currentTime = 0.5; v.play()")
 		require.True(t, eventually(func() bool { return eval("v.currentTime").(float64) > 0.55 }), "plays from the seek")
+	})
+}
+
+// TestPageVideoCovered tests that the frames of a playing video are not
+// rendered while a dialog of the page covers it (as the dialog of a video
+// of pexels.com over the playing videos of its search page), which they
+// would paint over, while it plays, and that they are once it is gone.
+func TestPageVideoCovered(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/short.mp4":
+			http.ServeFile(w, r, "testdata/short.mp4")
+		default:
+			io.WriteString(w, `<html><body><video id="v" autoplay muted loop width="320" src="/short.mp4"></video>
+				<div id="dialog" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5)"><p>dialog</p></div></body></html>`)
+		}
+	}))
+	defer srv.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(srv.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		var pv *pageVideo
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			if box := videoBoxes(pg)["v"]; box != nil {
+				pv = pg.videos[htmlcore.NodeOf(box)]
+			}
+			return pv != nil && pv.playback != nil && pv.playback.IsPlaying()
+		}), "playing")
+		isCovered := func() bool {
+			pv.mu.Lock()
+			defer pv.mu.Unlock()
+			return pv.covered
+		}
+		assert.True(t, eventually(isCovered), "covered by the dialog")
+
+		// once the dialog is gone, its frames are rendered again
+		b.AsyncLock()
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if htmlcore.NodeOf(cw) != nil && htmlcore.GetAttr(htmlcore.NodeOf(cw), "id") == "dialog" {
+				cwb.SetState(true, states.Invisible)
+				cwb.NeedsRender()
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		assert.True(t, eventually(func() bool { return !isCovered() }), "not covered once the dialog is gone")
 	})
 }

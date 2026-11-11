@@ -77,6 +77,13 @@ type pageVideo struct {
 	// scripts of the page (see [pageVideo.notify]).
 	lastTimeUpdate time.Time
 
+	// covered is whether the box of the video was covered by a widget
+	// rendered over it (as a dialog of the page) when it was last checked
+	// (at coveredChecked), in which case its frames are not rendered (see
+	// [pageVideo.show]).
+	covered        bool
+	coveredChecked time.Time
+
 	// openError is the error of opening the media, if any.
 	openError string
 
@@ -298,8 +305,21 @@ func (pv *pageVideo) show(frame *image.RGBA, t time.Duration) {
 	if box.This == nil { // (deleted, as the page closed)
 		return
 	}
+	// the frame is shown when the box is rendered, but the box is not
+	// rendered for it while it is covered (as by a dialog of the page),
+	// which it would paint over (it is rendered as a whole, not the page
+	// over it), checked four times a second
 	box.Image.SetImage(frame)
-	box.Image.NeedsRender()
+	pv.mu.Lock()
+	if time.Since(pv.coveredChecked) >= 250*time.Millisecond {
+		pv.coveredChecked = time.Now()
+		pv.covered = box.IsInvisible()
+	}
+	covered := pv.covered
+	pv.mu.Unlock()
+	if !covered {
+		box.Image.NeedsRender()
+	}
 	if c != nil {
 		c.SetTime(t)
 	}
