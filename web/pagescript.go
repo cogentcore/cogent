@@ -44,8 +44,11 @@ import (
 // pages (by origin).
 var localStorage = script.NewStorage()
 
-// maxConsole is the number of console messages that a page keeps.
-const maxConsole = 500
+// maxConsole is the number of console messages that a page keeps (the
+// last ones), enough for those of the whole load of a page, which are
+// saved with it (see [Page.saveDOM]): with 500, those of the start of the
+// load of a watch page of youtube.com were gone a minute later.
+const maxConsole = 10000
 
 // pageScripts is the state of the scripts of a page (see [Page.Scripts]).
 // Its fields other than the console are used in the tasks of its engine
