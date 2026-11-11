@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/video"
 	"golang.org/x/net/html"
 )
