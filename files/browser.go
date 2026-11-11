@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/text/terminal"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -284,6 +285,10 @@ func (fl *Files) dirTabTerminal(fr *core.Frame) {
 	if tab == nil || dt == nil {
 		return
 	}
+	tab.Styler(func(s *styles.Style) {
+		// (a tab does not get double clicks otherwise)
+		s.SetAbilities(true, abilities.DoubleClickable)
+	})
 	tab.OnDoubleClick(func(e events.Event) {
 		fl.NewTerminal(dt.Dir)
 	})
