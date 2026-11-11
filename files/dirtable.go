@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/core/base/dirsort"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
@@ -91,6 +92,19 @@ func (dt *DirTable) Init() {
 		// delete or duplicate them together
 		w.ReadOnlyMultiSelect = true
 		w.SetSlice(&dt.files)
+		// sorted in the sort order of the directory, with the directories
+		// first, which the user sets for it, for all apps, by sorting by a
+		// column (see [dirsort.For])
+		w.SortFunc = dt.sortFiles
+		w.OnSort = func(field string, down bool) {
+			if s, ok := dirsort.Parse(field); ok {
+				s.Down = down
+				errors.Log(dirsort.Set(dt.Dir, s))
+			}
+		}
+		w.Updater(func() {
+			w.SetSortFieldName(dirsort.For(dt.Dir).String())
+		})
 		w.Styler(func(s *styles.Style) {
 			s.Cursor = cursors.Pointer
 			s.Grow.Set(1, 1)
@@ -204,7 +218,7 @@ func (dt *DirTable) openSelected() {
 	openFile(fi.Path)
 }
 
-// readFiles reads the files in the directory, with the directories first.
+// readFiles reads the files in the directory (which the table sorts).
 func (dt *DirTable) readFiles() {
 	dt.files = dt.files[:0]
 	ents, err := os.ReadDir(dt.Dir)
@@ -221,6 +235,18 @@ func (dt *DirTable) readFiles() {
 			dt.files = append(dt.files, fi)
 		}
 	}
+}
+
+// sortFiles sorts the files by the field of the given name, up or down, in
+// the order of [dirsort.Sort], with the directories first, and returns
+// whether it is a field of it.
+func (dt *DirTable) sortFiles(field string, down bool) bool {
+	s, ok := dirsort.Parse(field)
+	if !ok {
+		return false
+	}
+	s.Down = down
+	s.SortFiles(dt.files)
 	slices.SortStableFunc(dt.files, func(a, b *fileinfo.FileInfo) int {
 		if a.IsDir() == b.IsDir() {
 			return 0
@@ -230,6 +256,7 @@ func (dt *DirTable) readFiles() {
 		}
 		return 1
 	})
+	return true
 }
 
 // watchDir watches the directory for changes, updating the files.
