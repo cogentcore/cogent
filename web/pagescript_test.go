@@ -855,6 +855,43 @@ func TestScriptsFocusAndKeys(t *testing.T) {
 	})
 }
 
+// TestScriptsTypeWithSuggestions tests typing in a text input whose script
+// adds suggestions beside it as it is typed in (as the search box of
+// google.com), so that it is read again with its container at each key:
+// its new text field keeps the place of the cursor, which was at the start
+// of the text, so that the text was typed backwards.
+func TestScriptsTypeWithSuggestions(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="box"><input id="in" type="text"></div><script>
+			const i = document.getElementById("in");
+			i.addEventListener("input", () => {
+				const box = document.getElementById("box");
+				let s = document.getElementById("sugs");
+				if (s) s.remove();
+				s = document.createElement("ul");
+				s.id = "sugs";
+				for (const x of ["one", "two"]) { const li = document.createElement("li"); li.textContent = i.value + x; s.appendChild(li); }
+				box.appendChild(s);
+			});
+			setTimeout(() => i.focus(), 0);</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		for _, r := range "abc" {
+			ev.KeyChord(r, 0, 0)
+			time.Sleep(200 * time.Millisecond) // as typed by a person
+			settle(pg)
+		}
+	}, func() {
+		var got any
+		assert.Eventually(t, func() bool {
+			got, _ = pg.scripts.engine.RunString(`document.getElementById("in").value`)
+			return got == "abc"
+		}, 3*time.Second, 20*time.Millisecond, "the text typed")
+		t.Logf("got %v", got)
+	})
+}
+
 // TestScriptsLinkOwnClick tests a click on a link to the same URL as an
 // earlier link (as an item of the jump dialog of pkg.go.dev, and the link
 // of the same identifier in the documentation): the click goes to the link
