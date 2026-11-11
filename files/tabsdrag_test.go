@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/dirsort"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/text/terminal"
@@ -199,5 +200,27 @@ func TestDirTableMultiSelect(t *testing.T) {
 			got = append(got, fi.Name)
 		}
 		assert.Equal(t, []string{dt.files[0].Name, dt.files[2].Name}, got)
+	})
+}
+
+// TestDirTableSort tests that the files of a directory table are in the
+// sort order of the directory (see [dirsort.For]), with the directories
+// first, and that sorting them by a column sets it.
+func TestDirTableSort(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	require.NoError(t, dirsort.Set(root, dirsort.Sort{Down: true}))
+	b := core.NewBody()
+	dt := NewDirTable(b).SetDir(root)
+	b.RenderImage(func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, "Name:down", dt.table.SortFieldName())
+		assert.Equal(t, []string{"src", "docs", "b.txt", "a.go"}, names(dt))
+		dt.table.SortColumn(1) // (Name, after Ic: up, as by clicking on its header)
+		assert.Equal(t, []string{"docs", "src", "a.go", "b.txt"}, names(dt))
+		s, ok := dirsort.Saved(root)
+		assert.True(t, ok)
+		assert.Equal(t, dirsort.Sort{}, s, "set for the directory")
 	})
 }
