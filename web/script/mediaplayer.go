@@ -34,6 +34,12 @@ type MediaPlayer interface {
 	// time in seconds.
 	MediaSeek(n *html.Node, t float64)
 
+	// MediaTime returns the current time in seconds of the media of the
+	// given video element, as it plays (for its currentTime between its
+	// timeupdate events, which players check often, as for stalls), or -1
+	// if it is not known.
+	MediaTime(n *html.Node) float64
+
 	// MediaVolume sets the volume (0 to 1) of the media of the given video
 	// element, and whether it is muted.
 	MediaVolume(n *html.Node, volume float64, muted bool)
@@ -108,6 +114,12 @@ func (e *Engine) setMediaPlayerFuncs(set func(name string, f func(call goja.Func
 			mp.MediaPause(n)
 		}
 		return goja.Undefined()
+	})
+	set("mediaTime", func(call goja.FunctionCall) goja.Value {
+		if n := node(call); n != nil {
+			return vm.ToValue(mp.MediaTime(n))
+		}
+		return vm.ToValue(-1)
 	})
 	set("mediaSeek", func(call goja.FunctionCall) goja.Value {
 		if n := node(call); n != nil {

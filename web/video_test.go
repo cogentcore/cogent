@@ -175,7 +175,7 @@ func TestPageVideoHLS(t *testing.T) {
 							document.getElementById("log").textContent = log.join(",");
 						});
 					}
-					if (v.canPlayType("application/vnd.apple.mpegurl") && !window.MediaSource) {
+					if (v.canPlayType("application/vnd.apple.mpegurl")) {
 						v.src = "/hls/short.m3u8";
 						v.play();
 					} else {
@@ -238,5 +238,76 @@ func TestPageVideoHLS(t *testing.T) {
 		eval("v.play()")
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "ended") }), pageTexts(b, pg))
 		assert.Equal(t, true, eval("v.ended"))
+	})
+}
+
+// TestPageVideoMSE tests that a script of a page plays a video with Media
+// Source Extensions, as the players of web pages (as hls.js) do: it
+// appends fragmented MP4 (of the video and of the audio, in pieces, as it
+// fetches them) to the SourceBuffers of a MediaSource whose object URL is
+// the source of the video, which the player of the page plays.
+func TestPageVideoMSE(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			io.WriteString(w, `<html><body><video id="v" muted style="width: 320px"></video><p id="log">none</p>
+				<script>
+					const v = document.getElementById("v");
+					const log = [];
+					const add = t => { if (!log.includes(t)) log.push(t); document.getElementById("log").textContent = log.join(","); };
+					for (const t of ["loadedmetadata", "play", "playing", "ended"]) v.addEventListener(t, () => add(t));
+					const ms = new MediaSource();
+					v.src = URL.createObjectURL(ms);
+					ms.addEventListener("sourceopen", async () => {
+						add("sourceopen");
+						URL.revokeObjectURL(v.src);
+						ms.duration = 1;
+						const vb = ms.addSourceBuffer('video/mp4; codecs="avc1.64000a"');
+						const ab = ms.addSourceBuffer('audio/mp4; codecs="mp4a.40.2"');
+						const append = (sb, data) => new Promise(r => { sb.addEventListener("updateend", r, { once: true }); sb.appendBuffer(data); });
+						const [vd, ad] = await Promise.all(["/frag-video.mp4", "/frag-audio.mp4"].map(u => fetch(u).then(r => r.arrayBuffer())));
+						for (let i = 0; i < vd.byteLength; i += 1000) await append(vb, vd.slice(i, i + 1000));
+						for (let i = 0; i < ad.byteLength; i += 1000) await append(ab, ad.slice(i, i + 1000));
+						add("buffered " + v.buffered.length + " " + v.buffered.end(0).toFixed(1));
+						ms.endOfStream();
+						v.play();
+					});
+					if (!MediaSource.isTypeSupported('video/mp4; codecs="avc1.64000a"') || MediaSource.isTypeSupported('video/webm; codecs="vp9"')) add("bad types");
+				</script></body></html>`)
+			return
+		}
+		http.ServeFile(w, r, "testdata"+r.URL.Path)
+	}))
+	defer srv.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(srv.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(pageTexts(b, pg), "playing")
+		}), pageTexts(b, pg))
+		txt := pageTexts(b, pg)
+		assert.Contains(t, txt, "sourceopen")
+		assert.Contains(t, txt, "buffered 1 1.0")
+		assert.NotContains(t, txt, "bad types")
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			box := videoBoxes(pg)["v"]
+			return box != nil && colorful(box.Image.Image)
+		}), "frames shown")
+		eval := func(src string) any {
+			v, err := pg.scripts.engine.RunString(src)
+			require.NoError(t, err)
+			return v
+		}
+		assert.Equal(t, int64(64), eval("v.videoWidth"))
+		assert.InDelta(t, 1.0, eval("v.duration"), 0.01)
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "ended") }), pageTexts(b, pg))
+
+		// a seek plays it from the time, of its fragments
+		eval("v.currentTime = 0.5; v.play()")
+		require.True(t, eventually(func() bool { return eval("v.currentTime").(float64) > 0.55 }), "plays from the seek")
 	})
 }

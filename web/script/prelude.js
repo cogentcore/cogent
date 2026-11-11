@@ -1581,6 +1581,34 @@
 		"canplaythrough", "error", "emptied", "progress", "suspend", "abort"]);
 	const mediaStates = { HAVE_NOTHING: 0, HAVE_METADATA: 1, HAVE_CURRENT_DATA: 2, HAVE_FUTURE_DATA: 3, HAVE_ENOUGH_DATA: 4,
 		NETWORK_EMPTY: 0, NETWORK_IDLE: 1, NETWORK_LOADING: 2, NETWORK_NO_SOURCE: 3 };
+	// TrackList is a list of the tracks of a media element (TextTrackList,
+	// AudioTrackList, VideoTrackList).
+	class TrackList extends EventTarget {
+		constructor() { super(); this._list = []; }
+		get length() { return this._list.length; }
+		getTrackById(id) { return this._list.find(t => t.id === id) || null; }
+		_add(t) {
+			this[this._list.length] = t;
+			this._list.push(t);
+			const ev = new Event("addtrack");
+			ev.track = t;
+			this.dispatchEvent(ev);
+		}
+		[Symbol.iterator]() { return this._list[Symbol.iterator](); }
+	}
+	defineSimpleHandlers(TrackList, ["addtrack", "removetrack", "change"]);
+	class TextTrack extends EventTarget {
+		constructor(kind, label, language) {
+			super();
+			Object.assign(this, { kind: String(kind || "subtitles"), label: String(label || ""), language: String(language || ""), id: "", mode: "hidden", inBandMetadataTrackDispatchType: "" });
+			this.cues = [];
+			this.activeCues = [];
+		}
+		addCue(c) { this.cues.push(c); }
+		removeCue(c) { this.cues = this.cues.filter(x => x !== c); }
+	}
+	defineSimpleHandlers(TextTrack, ["cuechange"]);
+
 	const HTMLMediaElement = elementClass(["video", "audio"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]);
 		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "playsInline"]);
@@ -1624,6 +1652,8 @@
 			m.networkState = 2;
 			Promise.resolve().then(() => { if (m.src === src) this.dispatchEvent(new Event("loadstart")); });
 			if (this._played()) { // (its events are sent by the player)
+				const ms = mediaSourcesByURL.get(src);
+				if (ms) ms._attach(this);
 				D.mediaLoad(this[ID]);
 				return;
 			}
@@ -1654,9 +1684,24 @@
 		state("currentSrc", m => m.src || "");
 		const noRange = () => { throw domException("IndexSizeError", "no time range"); };
 		const ranges = { length: 0, start: noRange, end: noRange };
-		for (const p of ["buffered", "played", "seekable"]) Object.defineProperty(cls.prototype, p, { get() { return ranges; } });
+		for (const p of ["played", "seekable"]) Object.defineProperty(cls.prototype, p, { get() { return ranges; } });
+		// the buffered ranges of a MediaSource
+		Object.defineProperty(cls.prototype, "buffered", {
+			get() {
+				const ms = this.__mediaSource;
+				return ms && ms._url === this._media().src ? timeRanges(ms._buffered()) : ranges;
+			},
+		});
 		Object.defineProperty(cls.prototype, "currentTime", {
-			get() { return this._media().currentTime; },
+			get() {
+				// (the time of the player as it plays, between timeupdates)
+				const m = this._media();
+				if (this._played() && !m.paused) {
+					const t = D.mediaTime(this[ID]);
+					if (t >= 0) m.currentTime = t;
+				}
+				return m.currentTime;
+			},
 			set(v) {
 				const m = this._media();
 				m.currentTime = Math.max(0, Number(v) || 0);
@@ -1725,6 +1770,22 @@
 			return /^(video\/(webm|quicktime|ogg)|audio\/(webm|ogg|mpeg|mp3|aac|wav)|application\/(vnd\.apple\.mpegurl|x-mpegurl)|audio\/(x-)?mpegurl)\b/.test(t) ? "maybe" : "";
 		};
 		cls.prototype.fastSeek = function (t) { this.currentTime = t; };
+		// the lists of tracks of the media (text tracks, as of captions, are
+		// not shown; the audio and video tracks are those of the player)
+		for (const p of ["textTracks", "audioTracks", "videoTracks"]) {
+			Object.defineProperty(cls.prototype, p, {
+				get() {
+					const k = "__" + p;
+					if (!this[k]) this[k] = new TrackList();
+					return this[k];
+				},
+			});
+		}
+		cls.prototype.addTextTrack = function (kind, label, language) {
+			const t = new TextTrack(kind, label, language);
+			this.textTracks._add(t);
+			return t;
+		};
 		const addListener = cls.prototype.addEventListener;
 		cls.prototype.addEventListener = function (type, ...rest) {
 			const r = addListener.call(this, type, ...rest);
@@ -1732,6 +1793,153 @@
 			return r;
 		};
 	});
+	// ---- Media Source Extensions (see mse.go) ----
+
+	// timeRanges returns TimeRanges of the given flat array of the starts
+	// and ends of ranges.
+	const timeRanges = flat => {
+		const n = flat.length / 2;
+		const check = i => { if (!(i >= 0 && i < n)) throw domException("IndexSizeError", "no time range " + i); };
+		return { length: n, start(i) { check(i); return flat[2 * i]; }, end(i) { check(i); return flat[2 * i + 1]; } };
+	};
+	// intersectRanges returns the intersection of the given flat arrays of
+	// ranges (the buffered ranges of a media element, of its buffers).
+	const intersectRanges = (a, b) => {
+		const r = [];
+		for (let i = 0; i < a.length; i += 2) {
+			for (let j = 0; j < b.length; j += 2) {
+				const s = Math.max(a[i], b[j]), e = Math.min(a[i + 1], b[j + 1]);
+				if (s < e) r.push(s, e);
+			}
+		}
+		return r;
+	};
+	const mediaSourcesByURL = new Map(); // object URL -> MediaSource
+
+	class SourceBuffer extends EventTarget {
+		constructor(ms, id, type) {
+			super();
+			Object.assign(this, { _ms: ms, _id: id, _type: type, updating: false, mode: "segments", _offset: 0, appendWindowStart: 0, appendWindowEnd: Infinity });
+		}
+		// the timestampOffset, which is added to the times of the media
+		// appended after it is set
+		get timestampOffset() { return this._offset; }
+		set timestampOffset(v) {
+			if (this.updating) throw domException("InvalidStateError", "the SourceBuffer is updating");
+			this._offset = Number(v) || 0;
+			D.mseSetOffset(this._id, this._offset);
+		}
+		get buffered() { return timeRanges(D.mseBuffered(this._id)); }
+		_ranges() { return D.mseBuffered(this._id); }
+		// _op does the given operation of the buffer at once (as an append,
+		// whose data is copied), with its events after (as in browsers).
+		_op(f) {
+			const ms = this._ms;
+			if (ms.readyState === "closed") throw domException("InvalidStateError", "the MediaSource is closed");
+			if (this.updating) throw domException("InvalidStateError", "the SourceBuffer is updating");
+			if (ms.readyState === "ended") {
+				ms.readyState = "open";
+				ms.dispatchEvent(new Event("sourceopen"));
+			}
+			const err = f();
+			this.updating = true;
+			this.dispatchEvent(new Event("updatestart"));
+			setTimeout(() => {
+				if (!this.updating) return; // (aborted)
+				this.updating = false;
+				this.dispatchEvent(new Event(err ? "error" : "update"));
+				this.dispatchEvent(new Event("updateend"));
+			}, 0);
+		}
+		appendBuffer(data) { this._op(() => D.mseAppend(this._id, data)); }
+		remove(start, end) { this._op(() => { D.mseRemove(this._id, Number(start), Number(end)); return ""; }); }
+		abort() {
+			D.mseAbort(this._id);
+			if (this.updating) {
+				this.updating = false;
+				this.dispatchEvent(new Event("abort"));
+				this.dispatchEvent(new Event("updateend"));
+			}
+		}
+		changeType(type) { this._type = String(type); }
+	}
+	defineSimpleHandlers(SourceBuffer, ["updatestart", "update", "updateend", "error", "abort"]);
+
+	class SourceBufferList extends EventTarget {
+		constructor() { super(); this._list = []; }
+		get length() { return this._list.length; }
+		_set(list) {
+			for (let i = 0; i < this._list.length; i++) delete this[i];
+			this._list = list;
+			list.forEach((b, i) => { this[i] = b; });
+		}
+		[Symbol.iterator]() { return this._list[Symbol.iterator](); }
+	}
+	defineSimpleHandlers(SourceBufferList, ["addsourcebuffer", "removesourcebuffer"]);
+
+	class MediaSource extends EventTarget {
+		constructor() {
+			super();
+			const [id, url] = D.mseCreate();
+			Object.assign(this, { _id: id, _url: url, readyState: "closed", _duration: NaN, _el: null });
+			this.sourceBuffers = new SourceBufferList();
+			this.activeSourceBuffers = this.sourceBuffers;
+			mediaSourcesByURL.set(url, this);
+		}
+		static isTypeSupported(t) { return D.mseTypeSupported(String(t)); }
+		static get canConstructInDedicatedWorker() { return false; }
+		get duration() { return this._duration; }
+		set duration(v) {
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			this._duration = Number(v);
+			D.mseSetDuration(this._id, this._duration);
+			const el = this._el;
+			if (el) {
+				el._media().duration = this._duration;
+				el.dispatchEvent(new Event("durationchange"));
+			}
+		}
+		addSourceBuffer(type) {
+			type = String(type);
+			if (!MediaSource.isTypeSupported(type)) throw domException("NotSupportedError", "the type is not supported: " + type);
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			const sb = new SourceBuffer(this, D.mseAddBuffer(this._id, type), type);
+			this.sourceBuffers._set([...this.sourceBuffers._list, sb]);
+			this.sourceBuffers.dispatchEvent(new Event("addsourcebuffer"));
+			return sb;
+		}
+		removeSourceBuffer(sb) {
+			D.mseRemoveBuffer(sb._id);
+			this.sourceBuffers._set(this.sourceBuffers._list.filter(b => b !== sb));
+			this.sourceBuffers.dispatchEvent(new Event("removesourcebuffer"));
+		}
+		endOfStream() {
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			this.readyState = "ended";
+			D.mseEnd(this._id);
+			this.dispatchEvent(new Event("sourceended"));
+		}
+		setLiveSeekableRange() {}
+		clearLiveSeekableRange() {}
+		// _attach attaches the media source to the given media element,
+		// whose source is its object URL, which opens it.
+		_attach(el) {
+			this._el = el;
+			el.__mediaSource = this;
+			if (this.readyState !== "closed") return;
+			this.readyState = "open";
+			Promise.resolve().then(() => this.dispatchEvent(new Event("sourceopen")));
+		}
+		// _buffered returns the buffered ranges of its media (those of all
+		// of its buffers).
+		_buffered() {
+			const list = this.sourceBuffers._list;
+			if (!list.length) return [];
+			return list.slice(1).reduce((r, b) => intersectRanges(r, b._ranges()), list[0]._ranges());
+		}
+	}
+	defineSimpleHandlers(MediaSource, ["sourceopen", "sourceended", "sourceclose"]);
+
 	const HTMLDetailsElement = elementClass(["details"], HTMLElement, cls => reflect(cls, [], ["open"]));
 	const HTMLDialogElement = elementClass(["dialog"], HTMLElement, cls => {
 		reflect(cls, [], ["open"]);
@@ -2476,8 +2684,13 @@
 			this._search = null;
 		}
 		static canParse(u, base) { return !!D.parseURL(String(u), base === undefined ? undefined : String(base)); }
-		static createObjectURL(b) { return b instanceof Blob ? D.createObjectURL(b._data, b.type || "") : "blob:" + D.pageURL() + "#" + (++callbackID); }
-		static revokeObjectURL(u) { D.revokeObjectURL(String(u)); }
+		static createObjectURL(b) {
+			if (b instanceof MediaSource) return b._url;
+			return b instanceof Blob ? D.createObjectURL(b._data, b.type || "") : "blob:" + D.pageURL() + "#" + (++callbackID);
+		}
+		// (the URL of a MediaSource stays usable by the player of the page,
+		// as players revoke it once the source is open)
+		static revokeObjectURL(u) { if (!mediaSourcesByURL.has(String(u))) D.revokeObjectURL(String(u)); }
 		_get(i) { return this._parts[i]; }
 		_set(field, v) {
 			const p = this._parts;
@@ -3414,6 +3627,8 @@
 		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
 		CSSRule, CSSRuleList, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
 		CSSImportRule, CSSFontFaceRule, CSSPageRule, CSSKeyframesRule, CSSKeyframeRule, CSSNamespaceRule, CSSCharsetRule, MessageChannel, MessagePort, MediaError, Worker,
+		MediaSource, SourceBuffer, SourceBufferList,
+		TextTrack, TextTrackList: TrackList, AudioTrackList: TrackList, VideoTrackList: TrackList,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),

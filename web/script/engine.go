@@ -214,7 +214,11 @@ type Engine struct {
 	timers  map[int]*time.Timer
 	timerID int
 	blobs   map[string]blob // the object URLs of blobs (URL.createObjectURL)
-	modules map[string]bool // the URLs of the modules defined (moduleGraph)
+
+	// mediaSources are the MediaSources of the page, by their object URLs
+	// (see mse.go).
+	mediaSources map[string]*MediaSource
+	modules      map[string]bool // the URLs of the modules defined (moduleGraph)
 
 	lock     func() bool
 	unlock   func()
@@ -471,6 +475,7 @@ func (e *Engine) Close() {
 	e.vm.Interrupt(errClosed)
 	close(e.wake)
 	e.closeWorkers()
+	e.closeMediaSources()
 }
 
 var errClosed = errors.New("the page is closed")

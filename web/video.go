@@ -150,7 +150,14 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 	}
 	go func() {
 		defer close(pv.opened)
-		m, err := video.OpenMedia(src, options)
+		// the media of a MediaSource of the page (MSE), or of the URL
+		var m *video.Media
+		var err error
+		if ms := pv.mediaSource(src); ms != nil {
+			m, err = video.OpenSource(ms)
+		} else {
+			m, err = video.OpenMedia(src, options)
+		}
 		if err != nil {
 			slog.Info("error opening a video", "url", src, "err", err)
 			pv.mu.Lock()
@@ -378,6 +385,20 @@ func (pv *pageVideo) pause() {
 	}
 }
 
+// mediaSource returns the MediaSource of the scripts of the page whose
+// object URL is the given source of the video, if any (as a video.Source).
+func (pv *pageVideo) mediaSource(src string) video.Source {
+	if !strings.HasPrefix(src, "blob:") {
+		return nil
+	}
+	if eng := pv.page.mediaEngine.Load(); eng != nil {
+		if ms := eng.MediaSource(src); ms != nil {
+			return ms
+		}
+	}
+	return nil
+}
+
 // notify sends the given events (as "play") to the video element in the
 // scripts of the page, if it has them, with the state of the video.
 func (pv *pageVideo) notify(types ...string) {
@@ -567,6 +588,17 @@ func (pg *Page) MediaSeek(n *html.Node, t float64) {
 	if pv := pg.videos[n]; pv != nil {
 		pv.seek(time.Duration(t*float64(time.Second)), false)
 	}
+}
+
+// MediaTime returns the current time of the media of the given video
+// element, as it plays, or -1 if it is not known.
+func (pg *Page) MediaTime(n *html.Node) float64 {
+	if pv := pg.videos[n]; pv != nil {
+		if pb := pv.pb(); pb != nil {
+			return pb.Position().Seconds()
+		}
+	}
+	return -1
 }
 
 // MediaVolume sets the volume of the media of the given video element.
