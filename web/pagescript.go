@@ -339,6 +339,10 @@ func (ps *pageScripts) resizeIfNeeded() {
 	// than they got (as it may not have its size while the page loads)
 	if ps.seen != (math32.Vector2{}) {
 		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
+			// (seen now, whether or not they read it: the resize handler of
+			// pkg.go.dev, which does not, got a resize event at each render,
+			// which changed the page, which was rendered again, endlessly)
+			ps.seen = math32.Vec2(w, h)
 			ps.engine.Resized()
 		}
 	}

@@ -460,6 +460,33 @@ func TestScriptsResize(t *testing.T) {
 	})
 }
 
+// TestScriptsResizeOnce tests that the scripts get one resize event for a
+// change of the size of the viewport, also when their resize listener does
+// not read it and changes the page (as that of pkg.go.dev), which got a
+// resize event at each render, rendering the page again, endlessly.
+func TestScriptsResizeOnce(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="out">none</p><script>
+			const start = innerWidth;
+			let n = 0;
+			addEventListener("resize", () => { document.getElementById("out").textContent = "resized " + (++n); });
+		</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		ps := pg.scripts
+		b.AsyncUnlock()
+		ps.engine.Post(func() {
+			ps.width = 500 // as for a narrower window (see Page.readMedia)
+			ps.engine.Changed()
+		})
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "resized 1") }), pageTexts(b, pg))
+		time.Sleep(500 * time.Millisecond)
+		settle(pg)
+		assert.Contains(t, pageTexts(b, pg), "resized 1", "one resize event")
+	})
+}
+
 // TestScriptsClickInLink tests that a click on a box in a link (as the
 // results of craigslist), which gets the click as the page has a click
 // listener, opens the link unless a listener prevents its default, and
