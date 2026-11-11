@@ -473,6 +473,9 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	if strings.HasPrefix(u, "blob:") {
 		return e.blobResponse(u)
 	}
+	if strings.HasPrefix(u, "data:") {
+		return dataResponse(u)
+	}
 	if (method == "" || method == "GET") && !hasBody && len(headers) == 0 && e.opts.GetURL != nil {
 		return e.opts.GetURL(u)
 	}
@@ -967,6 +970,26 @@ func (e *Engine) blobResponse(u string) (*http.Response, error) {
 	}
 	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
 		Body: io.NopCloser(strings.NewReader(b.data))}, nil
+}
+
+// dataResponse returns the response of a data: URL, of its data and its
+// type, whatever the method, as in browsers (as a check of youtube.com for
+// blockers of its ads, which fetches a Request of a data: URL).
+func dataResponse(u string) (*http.Response, error) {
+	data, err := dataURL(u)
+	if err != nil {
+		return nil, err
+	}
+	meta, _, _ := strings.Cut(strings.TrimPrefix(u, "data:"), ",")
+	typ := strings.TrimSuffix(meta, ";base64")
+	if typ == "" {
+		typ = "text/plain;charset=US-ASCII"
+	}
+	h := http.Header{}
+	h.Set("Content-Type", typ)
+	pu, _ := neturl.Parse(u)
+	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
+		Body: io.NopCloser(strings.NewReader(data))}, nil
 }
 
 // errorBody returns the text of the body of a failed response, if it is

@@ -1425,3 +1425,24 @@ func TestErrorBodyLogged(t *testing.T) {
 		return strings.Contains(strings.Join(*logs, "\n"), "400 Bad Request: {\"error\": {\"code\": 400, \"message\": \"Request contains an invalid argument.\"}}")
 	}, 3*time.Second, 20*time.Millisecond)
 }
+
+// TestFetchRequestRedefined tests that fetch uses the state of a Request,
+// not its properties, which scripts can redefine: as a check of
+// youtube.com for blockers of its ads, which redefines the url and method
+// of a Request of a data: URL and expects its data, and which posted to
+// the API of its player instead (400 Bad Request).
+func TestFetchRequestRedefined(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `var got = "";
+		var r = new Request("data:application/json;base64," + btoa('{"a":1}'));
+		Object.defineProperty(r, "url", { get() { return "https://example.com/api"; } });
+		Object.defineProperty(r, "method", { get() { return "POST"; } });
+		Object.defineProperty(r, "body", { get() { return new ReadableStream(); } });
+		fetch(r).then(resp => resp.json()).then(j => { got = JSON.stringify(j) + " " + r.url; }, err => { got = "error: " + err; });`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return v == `{"a":1} https://example.com/api`
+	}, 3*time.Second, 20*time.Millisecond)
+	assert.Equal(t, "POST|https://example.com/x|include", run(t, e,
+		`var q = new Request("/x", { method: "post", credentials: "include" }); var c = q.clone(); [c.method, c.url, c.credentials].join("|")`))
+}

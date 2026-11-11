@@ -2780,20 +2780,37 @@
 		formData() { return this.text().then(t => { const f = new FormData(); for (const [k, v] of new URLSearchParams(t)) f.append(k, v); return f; }); }
 		get body() { return null; }
 	}
+	// the state of each Request, which fetch uses, not its properties,
+	// which scripts can redefine (as a check of youtube.com for blockers of
+	// its ads, which redefines the url and method of a Request of a data:
+	// URL, expecting its data from fetch, and which posted to the API of its
+	// player instead)
+	const requestState = new WeakMap();
 	class Request extends Body {
 		constructor(input, init) {
 			super();
 			init = init || {};
-			if (input instanceof Request) { this.url = input.url; this.method = input.method; this.headers = new Headers(input.headers); this._body = input._body; }
-			else { this.url = new URL(String(input), D.baseURL()).href; this.method = "GET"; this.headers = new Headers(); }
-			if (init.method) this.method = String(init.method).toUpperCase();
-			if (init.headers) this.headers = new Headers(init.headers);
-			if (init.body !== undefined) this._body = bodyBytes(init.body);
-			this.signal = init.signal || null;
-			this.credentials = init.credentials || "same-origin";
-			this.mode = init.mode || "cors";
+			const from = input instanceof Request ? requestState.get(input) : null;
+			const st = from ? { url: from.url, method: from.method, headers: new Headers(from.headers), body: from.body, signal: from.signal, credentials: from.credentials, mode: from.mode, cache: from.cache }
+				: { url: new URL(String(input), D.baseURL()).href, method: "GET", headers: new Headers(), body: undefined, signal: null, credentials: "same-origin", mode: "cors", cache: "default" };
+			if (init.method) st.method = String(init.method).toUpperCase();
+			if (init.headers) st.headers = new Headers(init.headers);
+			if (init.body !== undefined) st.body = bodyBytes(init.body);
+			if (init.signal !== undefined) st.signal = init.signal || null;
+			if (init.credentials) st.credentials = init.credentials;
+			if (init.mode) st.mode = init.mode;
+			if (init.cache) st.cache = init.cache;
+			requestState.set(this, st);
+			this._body = st.body;
 			this.bodyUsed = false;
 		}
+		get url() { return requestState.get(this).url; }
+		get method() { return requestState.get(this).method; }
+		get headers() { return requestState.get(this).headers; }
+		get signal() { return requestState.get(this).signal; }
+		get credentials() { return requestState.get(this).credentials; }
+		get mode() { return requestState.get(this).mode; }
+		get cache() { return requestState.get(this).cache; }
 		clone() { return new Request(this); }
 	}
 	class Response extends Body {
@@ -2838,13 +2855,13 @@
 
 	function fetch(input, init) {
 		let req;
-		try { req = new Request(input, init); } catch (e) { return Promise.reject(e); }
+		try { req = requestState.get(new Request(input, init)); } catch (e) { return Promise.reject(e); }
 		return new Promise((resolve, reject) => {
 			if (req.signal && req.signal.aborted) { reject(domException("AbortError", "the request was aborted")); return; }
 			let done = false;
 			if (req.signal) req.signal.addEventListener("abort", () => { if (!done) { done = true; reject(domException("AbortError", "the request was aborted")); } });
-			noteEmptyBody(req.method, req.url, init && init.body !== undefined ? init.body : input instanceof Request ? input._body : undefined, req._body);
-			goFetch(req.url, req.method, req.headers._flat(), req._body, (status, statusText, headers, body, final, err) => {
+			noteEmptyBody(req.method, req.url, init && init.body !== undefined ? init.body : input instanceof Request ? requestState.get(input).body : undefined, req.body);
+			goFetch(req.url, req.method, req.headers._flat(), req.body, (status, statusText, headers, body, final, err) => {
 				if (done) return;
 				done = true;
 				if (err) { reject(new TypeError("Failed to fetch: " + err)); return; }
