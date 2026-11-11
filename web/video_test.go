@@ -103,7 +103,10 @@ func TestPageVideo(t *testing.T) {
 		assert.InDelta(t, 320*dp, boxes["auto"].Geom.Size.Actual.Content.X, 2)
 		assert.InDelta(t, 240*dp, boxes["auto"].Geom.Size.Actual.Content.Y, 2, "of the aspect of the video")
 		assert.InDelta(t, 64*dp, boxes["click"].Geom.Size.Actual.Content.X, 2, "of the size of the video")
-		assert.Equal(t, boxes["auto"].Geom.Size.Actual.Content, boxes["auto"].Image.Geom.Size.Actual.Total, "the image fills the box")
+		// the image fills the box (within the rounding of absolute sizes)
+		bsz, isz := boxes["auto"].Geom.Size.Actual.Content, boxes["auto"].Image.Geom.Size.Actual.Total
+		assert.InDelta(t, bsz.X, isz.X, 0.5, "the image fills the box")
+		assert.InDelta(t, bsz.Y, isz.Y, 0.5, "the image fills the box")
 
 		// the standard controls are over each video
 		for _, id := range []string{"auto", "click"} {

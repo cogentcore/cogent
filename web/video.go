@@ -331,6 +331,16 @@ func (pv *pageVideo) SkipBy(d time.Duration) {
 	pv.Seek(pv.CurrentTime() + d)
 }
 
+// StepFrame pauses the video and shows its next frame, or the one before
+// it for a negative n.
+func (pv *pageVideo) StepFrame(n int) {
+	if pb := pv.pb(); pb != nil {
+		if err := pb.StepFrame(n); err != nil {
+			slog.Info("error stepping a video", "url", pv.src, "err", err)
+		}
+	}
+}
+
 // CurrentTime returns the current time of the video.
 func (pv *pageVideo) CurrentTime() time.Duration {
 	if pb := pv.pb(); pb != nil {
