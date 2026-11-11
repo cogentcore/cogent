@@ -958,9 +958,18 @@
 		animate() { return { finished: Promise.resolve(), cancel() {}, play() {}, pause() {}, onfinish: null, addEventListener() {} }; }
 		getAnimations() { return []; }
 		requestFullscreen() { return Promise.reject(domException("NotSupportedError", "fullscreen is not supported")); }
-		setPointerCapture() {}
-		releasePointerCapture() {}
-		hasPointerCapture() { return false; }
+		// the capture of the pointer, to which its moves and release then go,
+		// wherever it is (as the splitters that scripts drag), until it is
+		// released, or the button is
+		setPointerCapture() {
+			if (pointerCapture === this) return;
+			pointerCapture = this;
+			const e = new PointerEvent("gotpointercapture", { bubbles: true, pointerType: "mouse" });
+			e.isTrusted = true;
+			this.dispatchEvent(e);
+		}
+		releasePointerCapture() { if (pointerCapture === this) releaseCapture(); }
+		hasPointerCapture() { return pointerCapture === this; }
 	}
 	mixin(Element, parentNodeMethods);
 	mixin(Element, childNodeMethods);
@@ -3952,11 +3961,29 @@
 	// (React makes its onPointerEnter of these, as for the repository grid
 	// of github.com).
 	// press dispatches the events of a mouse button pressed (down) or
-	// released on the given element (see Engine.Press).
+	// released on the given element (see Engine.Press), or released on the
+	// element that has the capture of the pointer (see setPointerCapture),
+	// which is then released.
 	let pressCanceled = false;
+	// pointerCapture is the element that has the capture of the pointer,
+	// if any (see Element.setPointerCapture), and releaseCapture releases
+	// it, with its lostpointercapture event.
+	let pointerCapture = null;
+	function releaseCapture() {
+		const c = pointerCapture;
+		if (!c) return;
+		pointerCapture = null;
+		const e = new PointerEvent("lostpointercapture", { bubbles: true, pointerType: "mouse" });
+		e.isTrusted = true;
+		c.dispatchEvent(e);
+	}
 	D.press = function (id, down, init) {
-		const t = wrap(id);
-		if (!t) return;
+		const captured = !down && pointerCapture && pointerCapture.isConnected ? pointerCapture : null;
+		const t = captured || wrap(id);
+		if (!t) {
+			if (!down) releaseCapture();
+			return;
+		}
 		const opts = Object.assign({ bubbles: true, cancelable: true, view: g, pointerType: "mouse" }, init || {}, { buttons: down ? 1 : 0 });
 		const pe = new PointerEvent(down ? "pointerdown" : "pointerup", opts);
 		pe.isTrusted = true;
@@ -3964,6 +3991,26 @@
 		if (down) pressCanceled = pe.defaultPrevented;
 		if (!pressCanceled) {
 			const me = new MouseEvent(down ? "mousedown" : "mouseup", opts);
+			me.isTrusted = true;
+			t.dispatchEvent(me);
+		}
+		if (!down) releaseCapture();
+	};
+
+	// move dispatches the events of the mouse moving over the element of
+	// the given id (0 for none), or to the element that has the capture of
+	// the pointer: pointermove, and mousemove unless the pointerdown of the
+	// press of the button was prevented (see Engine.Move).
+	D.move = function (id, init) {
+		const captured = pointerCapture && pointerCapture.isConnected ? pointerCapture : null;
+		const t = captured || (id ? wrap(id) : null);
+		if (!t) return;
+		const opts = Object.assign({ bubbles: true, cancelable: true, view: g, pointerType: "mouse" }, init || {});
+		const pe = new PointerEvent("pointermove", opts);
+		pe.isTrusted = true;
+		t.dispatchEvent(pe);
+		if (!(opts.buttons && pressCanceled)) {
+			const me = new MouseEvent("mousemove", opts);
 			me.isTrusted = true;
 			t.dispatchEvent(me);
 		}

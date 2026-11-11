@@ -185,6 +185,13 @@ func (pg *Page) Init() {
 	pg.On(events.MouseMove, func(e events.Event) {
 		if ps := pg.scripts; ps != nil {
 			ps.hoverAt(e.WindowPos())
+			ps.moveAt(e, false)
+		}
+	})
+	// and of it moving with a button pressed (as to drag a splitter)
+	pg.On(events.MouseDrag, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.moveAt(e, true)
 		}
 	})
 	// and of its buttons being pressed and released (see pageScripts.pressAt)

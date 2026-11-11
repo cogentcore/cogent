@@ -649,10 +649,33 @@ func (ps *pageScripts) pressAt(ev events.Event, down bool) {
 		return
 	}
 	n, framed := ps.nodeAt(ev.WindowPos())
-	if n == nil || framed {
+	if framed || n == nil && down {
 		return
 	}
+	// (a release on nothing goes to the element that has the capture of
+	// the pointer, if any, which it releases)
 	ps.engine.Press(n, down, ps.pointerProps(ev))
+}
+
+// moveAt dispatches the events of the mouse moving over the element under
+// the position of the given event of the mouse in the window, or to the
+// element that has the capture of the pointer (as the splitter of the
+// sites made with Cogent Core content, which did not move), with its
+// button pressed if down (see [script.Engine.Move]).
+func (ps *pageScripts) moveAt(ev events.Event, down bool) {
+	if ps.engine.Closed() {
+		return
+	}
+	n, framed := ps.nodeAt(ev.WindowPos())
+	if framed {
+		return
+	}
+	props := ps.pointerProps(ev)
+	props["buttons"] = 0
+	if down {
+		props["buttons"] = 1
+	}
+	ps.engine.Move(n, props)
 }
 
 // pointerProps returns the properties of a mouse event for the given event

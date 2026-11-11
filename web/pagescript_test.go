@@ -22,6 +22,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
@@ -890,6 +891,74 @@ func TestScriptsTypeWithSuggestions(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond, "the text typed")
 		t.Logf("got %v", got)
 	})
+}
+
+// TestScriptsPointerCapture tests that a splitter that a script drags with
+// the capture of the pointer (as that of the sites made with Cogent Core
+// content) gets the moves of the mouse, also off of it, and its release,
+// after which the capture is released.
+func TestScriptsPointerCapture(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body style="margin: 0"><div style="display: flex; height: 200px">` +
+			`<nav style="width: 100px">nav</nav><div id="split" style="width: 16px; background: gray"></div><main style="flex: 1">page</main></div><script>
+			window.got = { moves: 0, x: 0, up: false, lost: false };
+			const s = document.getElementById("split");
+			s.addEventListener("pointerdown", e => {
+				e.preventDefault();
+				s.setPointerCapture(e.pointerId);
+				const move = e => { got.moves++; got.x = e.clientX; };
+				s.addEventListener("pointermove", move);
+				s.addEventListener("pointerup", () => { got.up = true; got.captured = s.hasPointerCapture(1); s.removeEventListener("pointermove", move); });
+				s.addEventListener("lostpointercapture", () => { got.lost = true; });
+			});</script></body></html>`,
+	})
+	var split image.Rectangle
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if n := htmlcore.NodeOf(cw); n != nil && htmlcore.GetAttr(n, "id") == "split" {
+				split = cwb.Geom.TotalBBox
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		require.False(t, split.Empty())
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		from := split.Min.Add(split.Size().Div(2))
+		ev.MouseMove(from)
+		time.Sleep(50 * time.Millisecond)
+		ev.MouseButton(events.MouseDown, events.Left, from, 0)
+		time.Sleep(50 * time.Millisecond)
+		for i := 1; i <= 5; i++ {
+			ev.MouseMove(from.Add(image.Pt(30*i, 0))) // (off of the splitter)
+			time.Sleep(30 * time.Millisecond)
+		}
+		ev.MouseButton(events.MouseUp, events.Left, from.Add(image.Pt(150, 0)), 0)
+	}, func() {
+		var got any
+		assert.Eventually(t, func() bool {
+			got, _ = pg.scripts.engine.RunString(`JSON.stringify(got)`)
+			s, _ := got.(string)
+			return strings.Contains(s, `"up":true`)
+		}, 3*time.Second, 20*time.Millisecond)
+		s, _ := got.(string)
+		assert.NotContains(t, s, `"moves":0,`, "it got moves")
+		assert.Contains(t, s, `"lost":true`, "the capture is released")
+		assert.Contains(t, s, `"captured":true`, "captured at the release")
+		x, _ := pg.scripts.engine.RunString(`got.x`)
+		assert.Greater(t, toFloat(x), float64(200), "the moves off of it: %v", s)
+	})
+}
+
+// toFloat returns the given number of a script as a float64.
+func toFloat(v any) float64 {
+	switch n := v.(type) {
+	case int64:
+		return float64(n)
+	case float64:
+		return n
+	}
+	return 0
 }
 
 // TestScriptsLinkOwnClick tests a click on a link to the same URL as an
