@@ -5,6 +5,7 @@
 package web
 
 import (
+	"image"
 	neturl "net/url"
 	"slices"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
@@ -101,9 +103,24 @@ func (br *Browser) Init() {
 func InitBody(b *core.Body) *Browser {
 	br := NewBrowser(b)
 	b.AddTopBar(func(bar *core.Frame) {
-		tb := core.NewToolbar(bar)
+		// the toolbar, with the bookmarks bar below it
+		bars := core.NewFrame(bar)
+		bars.Styler(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Grow.Set(1, 0)
+			s.Padding.Zero()
+			s.Gap.Zero()
+		})
+		tb := core.NewToolbar(bars)
 		tb.Maker(br.MakeToolbar)
+		tb.Maker(func(p *tree.Plan) {
+			tree.AddAt(p, "bookmark", func(w *core.Button) {
+				w.SetIcon(icons.BookmarkAdd).SetTooltip("Bookmark this page, or edit the bookmarks")
+				w.SetMenu(func(m *core.Scene, _ image.Point) { br.bookmarkMenu(m) })
+			})
+		})
 		br.OnOpen = func() { tb.Update() }
+		addBookmarksBar(bars, br)
 	})
 	return br
 }
