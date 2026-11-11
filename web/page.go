@@ -149,6 +149,10 @@ type Page struct {
 	// console (see [SettingsData.VerboseConsole]).
 	openedBy      string
 	onShowConsole func()
+
+	// browser is the browser that the page is in, if any (see
+	// [Browser.adoptPage]).
+	browser *Browser
 }
 
 // pageMedia is what is needed to read a page that is shown again for

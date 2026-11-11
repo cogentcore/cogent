@@ -99,3 +99,28 @@ func TestTabLabelEmptyTitle(t *testing.T) {
 	pg.Title = ""
 	assert.Equal(t, "github.com", tabLabel(pg, "https://github.com/"))
 }
+
+// TestBrowserMoveTab tests that the pages of a browser stay in the order of
+// its tabs when a tab is moved (as by dragging it), and that a page whose
+// tab is moved to another browser (as into a new window) is its page then.
+func TestBrowserMoveTab(t *testing.T) {
+	b := core.NewBody()
+	br := InitBody(b)
+	one, two, three := br.NewTab(""), br.NewTab(""), br.NewTab("")
+	br.Tabs.SelectTabIndex(1)
+	assert.True(t, br.Tabs.MoveTabIndex(0, 2))
+	assert.Equal(t, []*Page{two, three, one}, br.Pages())
+	assert.Equal(t, two, br.CurrentPage(), "the selected tab stays selected")
+
+	b2 := core.NewBody()
+	other := InitBody(b2)
+	four := other.NewTab("")
+	assert.Equal(t, 1, br.Tabs.MoveTabTo(0, other.Tabs, 1))
+	assert.Equal(t, []*Page{three, one}, br.Pages())
+	assert.Equal(t, []*Page{four, two}, other.Pages())
+	assert.Equal(t, two, other.CurrentPage())
+	assert.Same(t, other, two.browser)
+	assert.Same(t, b2.Scene, two.Scene)
+	two.OpenNewTab("")
+	assert.Len(t, other.Pages(), 3, "a new tab of the page is in the other browser")
+}

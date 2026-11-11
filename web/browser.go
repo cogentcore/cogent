@@ -77,6 +77,13 @@ func (br *Browser) Init() {
 	br.Console = tree.New[ConsolePanel](br.Splits)
 	br.Console.browser = br
 	br.Splits.SetSplits(1, 0) // (the console is not shown)
+	// a tab dragged out of the window goes into a new browser window
+	br.Tabs.DragToWindow = func(b *core.Body) *core.Tabs {
+		nb := InitBody(b)
+		nb.PageFunc = br.PageFunc
+		return nb.Tabs
+	}
+	br.Tabs.MoveTabFunc = br.tabMoved
 	br.Tabs.CloseTabFunc = func(index int) {
 		if index < len(br.pages) {
 			br.pages[index].Stop()
@@ -84,6 +91,49 @@ func (br *Browser) Init() {
 		}
 		br.opened()
 	}
+}
+
+// InitBody initializes the given body of a window as a browser window, with
+// a browser and its toolbar in the top bar, and returns the browser, which
+// has no tabs yet. It is used for the main window of the app, and for the
+// new windows that tabs are dragged into (see [core.Tabs.DragToWindow]).
+func InitBody(b *core.Body) *Browser {
+	br := NewBrowser(b)
+	b.AddTopBar(func(bar *core.Frame) {
+		tb := core.NewToolbar(bar)
+		tb.Maker(br.MakeToolbar)
+		br.OnOpen = func() { tb.Update() }
+	})
+	return br
+}
+
+// tabMoved keeps the pages in the order of the tabs when a tab has moved
+// from the given index to the given index in the given tabs (see
+// [core.Tabs.MoveTabFunc]): these, or those of another browser, as in a
+// new window, to which its page then belongs.
+func (br *Browser) tabMoved(from int, to *core.Tabs, at int) {
+	if from < 0 || from >= len(br.pages) {
+		return
+	}
+	pg := br.pages[from]
+	br.pages = slices.Delete(br.pages, from, from+1)
+	if to == br.Tabs {
+		br.pages = slices.Insert(br.pages, min(at, len(br.pages)), pg)
+		br.opened()
+		return
+	}
+	br.opened()
+	ob := tree.ParentByType[*Browser](to)
+	if ob == nil {
+		pg.Stop() // (not in a browser)
+		return
+	}
+	_, tab := to.TabAtIndex(at)
+	if tab == nil {
+		return
+	}
+	ob.adoptPage(pg, tab, at)
+	ob.opened()
 }
 
 // opened calls [Browser.OnOpen], if it is set.
@@ -122,24 +172,41 @@ func (br *Browser) addPage(fr *core.Frame, tab *core.Tab) *Page {
 		s.Gap.Zero()
 	})
 	pg := NewPage(fr)
-	br.pages = append(br.pages, pg)
+	// the toolbar is updated for the page of a tab when it is selected
+	// (of the browser that it is in then)
+	pg.OnShow(func(e events.Event) {
+		if pg.browser != nil {
+			pg.browser.opened()
+		}
+	})
+	br.adoptPage(pg, tab, len(br.pages))
+	if br.PageFunc != nil {
+		br.PageFunc(pg)
+	}
+	return pg
+}
+
+// adoptPage makes the given page, of the given tab, a page of the browser,
+// at the given index in its pages: a new page, or one whose tab was moved
+// from another browser (see [Browser.tabMoved]).
+func (br *Browser) adoptPage(pg *Page, tab *core.Tab, at int) {
+	pg.browser = br
+	br.pages = slices.Insert(br.pages, min(at, len(br.pages)), pg)
 	pg.OpenNewTab = func(url string) { br.NewBackgroundTab(url) }
 	pg.onConsole = br.Console.changed
 	pg.onShowConsole = func() { br.ShowConsole(true) }
 	if br.shown {
 		pg.setShown()
 	}
-	if br.PageFunc != nil {
-		br.PageFunc(pg)
-	}
 	pg.OnOpen = func(url string) {
 		tab.SetText(tabLabel(pg, url)).SetTooltip(url)
 		tab.Update()
 		br.opened()
 	}
-	// the toolbar is updated for the page of a tab when it is selected
-	pg.OnShow(func(e events.Event) { br.opened() })
-	return pg
+	if pg.Current >= 0 && pg.Current < len(pg.History) {
+		url := pg.History[pg.Current]
+		tab.SetText(tabLabel(pg, url)).SetTooltip(url)
+	}
 }
 
 // tabLabel returns the label of the tab of the given page, which is

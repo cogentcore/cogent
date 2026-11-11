@@ -28,12 +28,7 @@ func init() {
 func main() {
 	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Web")
-	br := web.NewBrowser(b)
-	b.AddTopBar(func(bar *core.Frame) {
-		tb := core.NewToolbar(bar)
-		tb.Maker(br.MakeToolbar)
-		br.OnOpen = func() { tb.Update() }
-	})
+	br := web.InitBody(b)
 	// the pages to open are the URLs or local files in the arguments,
 	// each in a tab
 	urls := os.Args[1:]
