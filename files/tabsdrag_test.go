@@ -122,6 +122,41 @@ func TestFilesTabsMove(t *testing.T) {
 	assert.NotContains(t, tabNames(fl1.Tabs()), TerminalTabName)
 }
 
+// TestDirTabTerminal tests that double-clicking on a directory tab opens
+// a new terminal in its directory, also once it has moved into the tabs of
+// another Files, in which the terminal opens.
+func TestDirTabTerminal(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	Settings.Terminal = "/bin/sh"
+	t.Cleanup(func() { Settings.Terminal = "" })
+	b1, b2 := core.NewBody(), core.NewBody()
+	fl1 := InitBody(b1, root)
+	fl2 := InitBody(b2, root)
+	fl1.Update()
+	fl2.Update()
+	fl1.OpenDir(root)
+	fl1.OpenDir(filepath.Join(root, "docs"))
+	n1, n2 := fl1.Tabs().NumTabs(), fl2.Tabs().NumTabs()
+	lastDir := func(fl *Files) string {
+		ts := fl.Tabs()
+		fr, _ := ts.TabAtIndex(ts.NumTabs() - 1)
+		require.NotNil(t, terminalIn(fr))
+		return getTerminalDir(terminalIn(fr)).dir
+	}
+	_, tab := fl1.DirTabs().TabAtIndex(1)
+	tab.Send(events.DoubleClick)
+	require.Equal(t, n1+1, fl1.Tabs().NumTabs(), "a new terminal")
+	assert.Equal(t, cleanDir(filepath.Join(root, "docs")), lastDir(fl1))
+
+	fl1.DirTabs().MoveTabTo(1, fl2.DirTabs(), 0)
+	_, tab = fl2.DirTabs().TabAtIndex(0)
+	tab.Send(events.DoubleClick)
+	assert.Equal(t, n1+1, fl1.Tabs().NumTabs())
+	require.Equal(t, n2+1, fl2.Tabs().NumTabs(), "a new terminal in the Files it moved into")
+	assert.Equal(t, cleanDir(filepath.Join(root, "docs")), lastDir(fl2))
+}
+
 // TestFilesDragToWindow tests that the tabs of Files are dragged into a new
 // Files window with the same root.
 func TestFilesDragToWindow(t *testing.T) {

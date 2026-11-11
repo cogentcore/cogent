@@ -5,6 +5,7 @@
 package main
 
 import (
+	"image"
 	"io/fs"
 	"path/filepath"
 	"slices"
@@ -264,8 +265,29 @@ func (fl *Files) OpenDir(dir string) *DirTable { //types:add
 	dt.OnChange(func(e events.Event) { label() })
 	dt.SetDir(dir)
 	label()
+	fl.dirTabTerminal(fr)
 	ts.SelectTabIndex(ts.NumTabs() - 1)
 	return dt
+}
+
+// dirTabTerminal makes the tab button of the given frame of a directory
+// tab open a new terminal in its directory when it is double-clicked, or
+// from its context menu.
+func (fl *Files) dirTabTerminal(fr *core.Frame) {
+	tab, dt := tabOfFrame(fr), dirTableIn(fr)
+	if tab == nil || dt == nil {
+		return
+	}
+	tab.OnDoubleClick(func(e events.Event) {
+		fl.NewTerminal(dt.Dir)
+	})
+	tab.AddContextMenu(func(m *core.Scene, _ image.Point) {
+		core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+			SetTooltip("Open a new terminal in " + dt.Dir).
+			OnClick(func(e events.Event) {
+				fl.NewTerminal(dt.Dir)
+			})
+	})
 }
 
 // tabOfFrame returns the tab button of the given frame of a tab, in the
@@ -318,6 +340,7 @@ func (fl *Files) dragTabs(ts *core.Tabs, tabsOf func(f *Files) *core.Tabs) {
 			if tab := tabOfFrame(fr); tab != nil {
 				tab.SetText(dirLabel(w.Dir)).SetTooltip(w.Dir)
 			}
+			fl.dirTabTerminal(fr) // (its tab button is new)
 		}
 	}
 }
