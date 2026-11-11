@@ -2823,6 +2823,19 @@
 		D.fetch(newCallback(cb), url, method, headers, body, !!credentials);
 	}
 
+	// noteEmptyBody logs a request of a method with a body (as POST) whose
+	// body is empty, with the type of the body that the script gave and
+	// where, as such a request of youtube.com (to its API of the player)
+	// was rejected, with no body (400 Bad Request).
+	function noteEmptyBody(method, url, given, body) {
+		if (method === "GET" || method === "HEAD") return;
+		if (body !== undefined && (typeof body === "string" ? body.length : body.byteLength) > 0) return;
+		let type = given === undefined ? "undefined" : given === null ? "null" : typeof given;
+		if (given && typeof given === "object") type = (given.constructor && given.constructor.name) || "object";
+		const stack = String(new Error().stack || "").split("\n").slice(2, 8).join("\n");
+		D.log("debug", method + " " + url + " with an empty body (given: " + type + ")\n" + stack);
+	}
+
 	function fetch(input, init) {
 		let req;
 		try { req = new Request(input, init); } catch (e) { return Promise.reject(e); }
@@ -2830,6 +2843,7 @@
 			if (req.signal && req.signal.aborted) { reject(domException("AbortError", "the request was aborted")); return; }
 			let done = false;
 			if (req.signal) req.signal.addEventListener("abort", () => { if (!done) { done = true; reject(domException("AbortError", "the request was aborted")); } });
+			noteEmptyBody(req.method, req.url, init && init.body !== undefined ? init.body : input instanceof Request ? input._body : undefined, req._body);
 			goFetch(req.url, req.method, req.headers._flat(), req._body, (status, statusText, headers, body, final, err) => {
 				if (done) return;
 				done = true;
@@ -2865,7 +2879,9 @@
 		_setState(s) { this.readyState = s; this.dispatchEvent(new Event("readystatechange")); }
 		send(body) {
 			this.dispatchEvent(new ProgressEvent("loadstart"));
-			goFetch(this._url, this._method, this._headers._flat(), bodyBytes(body), (status, statusText, headers, data, final, err) => {
+			const bytes = bodyBytes(body);
+			noteEmptyBody(this._method, this._url, body, bytes);
+			goFetch(this._url, this._method, this._headers._flat(), bytes, (status, statusText, headers, data, final, err) => {
 				if (this._aborted) return;
 				if (err) {
 					this.readyState = 4; this.status = 0;

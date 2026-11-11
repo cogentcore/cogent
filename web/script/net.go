@@ -334,10 +334,10 @@ func (e *Engine) defineNet() {
 				return
 			}
 			defer resp.Body.Close()
-			if resp.StatusCode >= 400 {
-				e.logf(slog.LevelWarn, "%s %s: %s", m, logURL(u), resp.Status)
-			}
 			data, err := io.ReadAll(resp.Body)
+			if resp.StatusCode >= 400 {
+				e.logf(slog.LevelWarn, "%s %s: %s%s", m, logURL(u), resp.Status, errorBody(resp, data))
+			}
 			if err != nil {
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
@@ -967,4 +967,15 @@ func (e *Engine) blobResponse(u string) (*http.Response, error) {
 	}
 	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
 		Body: io.NopCloser(strings.NewReader(b.data))}, nil
+}
+
+// errorBody returns the text of the body of a failed response, if it is
+// short text (as JSON), for the console: with what was wrong (as the 400
+// Bad Request of the API of the player of youtube.com, which said why).
+func errorBody(resp *http.Response, data []byte) string {
+	ct := resp.Header.Get("Content-Type")
+	if len(data) == 0 || len(data) > 2000 || !(strings.HasPrefix(ct, "text/") || strings.Contains(ct, "json")) || !utf8.Valid(data) {
+		return ""
+	}
+	return ": " + strings.Join(strings.Fields(string(data)), " ")
 }

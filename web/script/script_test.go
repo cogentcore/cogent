@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	neturl "net/url"
 	"strings"
 	"sync"
@@ -1386,4 +1387,41 @@ func TestWindowEventTargetPrototype(t *testing.T) {
 		addEventListener("custom", function () { r = "fired"; });
 		window.dispatchEvent(new Event("custom"));
 		r`), "the methods as global functions")
+}
+
+// TestEmptyBodyLogged tests that a POST with an empty body is logged, with
+// the type of the body that the script gave, as such a request of
+// youtube.com was rejected (400 Bad Request), and that one with a body is
+// not.
+func TestEmptyBodyLogged(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{"/api": "ok"})
+	run(t, e, `fetch("/api", { method: "POST", body: "data" }); var x = new XMLHttpRequest(); x.open("POST", "/api"); x.send(); fetch("/api", { method: "POST", body: new Uint8Array(0) });`)
+	assert.Eventually(t, func() bool {
+		n := 0
+		for _, l := range *logs {
+			if strings.Contains(l, "with an empty body") {
+				n++
+			}
+		}
+		return n == 2
+	}, 3*time.Second, 20*time.Millisecond)
+	all := strings.Join(*logs, "\n")
+	assert.Contains(t, all, "(given: undefined)")
+	assert.Contains(t, all, "(given: Uint8Array)")
+}
+
+// TestErrorBodyLogged tests that the short text body of a failed response
+// is in its warning in the console, with what was wrong.
+func TestErrorBodyLogged(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(400)
+		io.WriteString(w, `{"error": {"code": 400, "message": "Request contains an invalid argument."}}`)
+	}))
+	defer srv.Close()
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `fetch("`+srv.URL+`/player", { method: "POST", body: "{}" })`)
+	assert.Eventually(t, func() bool {
+		return strings.Contains(strings.Join(*logs, "\n"), "400 Bad Request: {\"error\": {\"code\": 400, \"message\": \"Request contains an invalid argument.\"}}")
+	}, 3*time.Second, 20*time.Millisecond)
 }
