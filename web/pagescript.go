@@ -542,33 +542,44 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 // in the window (nil if it is not in the page), and whether the position
 // is in the page of a frame of the page, whose iframe element it then
 // returns, as the page in the frame gets the events of the mouse there,
-// as in browsers.
+// as in browsers. It is that of the widget that gets the events of the
+// mouse there (see core.Scene.WidgetAt), in the order of rendering, with
+// the widgets out of flow of their parents: as the dialog of pexels.com,
+// fixed in an empty portal at the end of the body, which a walk of the
+// boxes of the widgets missed, so that the elements under it got the
+// events of the mouse over them.
 func (ps *pageScripts) nodeAt(pos image.Point) (deepest *html.Node, framed bool) {
-	var visit func(wb *core.WidgetBase)
-	visit = func(wb *core.WidgetBase) {
+	pg := ps.pg
+	if pg.Scene == nil || !pos.In(pg.Geom.TotalBBox) {
+		return nil, false
+	}
+	// the widgets from it up to the page, if it is in the page (not a
+	// dialog of the app, over it)
+	var path []*core.WidgetBase
+	in := false
+	for w := pg.Scene.WidgetAt(pos); w != nil; {
+		wb := w.AsWidget()
+		if wb == pg.AsWidget() {
+			in = true
+			break
+		}
+		path = append(path, wb)
+		w, _ = wb.Parent.(core.Widget)
+	}
+	if !in {
+		return nil, false
+	}
+	// the deepest element, down from the page, until a frame
+	for i := len(path) - 1; i >= 0; i-- {
+		wb := path[i]
+		if _, isFrame := wb.This.(*Page); isFrame {
+			return deepest, true // (of the iframe that it is in)
+		}
 		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
 			deepest = n
 		}
-		kids := wb.Children
-		for i := len(kids) - 1; i >= 0; i-- {
-			kw := core.AsWidget(kids[i])
-			if kw == nil || kw.StateIs(states.Invisible) || (kw.Styles.Opacity <= 0 && kw.Styles.Abilities == 0) {
-				continue
-			}
-			if pos.In(kw.Geom.TotalBBox) {
-				if _, isFrame := kw.This.(*Page); isFrame {
-					framed = true // (of the iframe that it is in)
-					return
-				}
-				visit(kw)
-				return
-			}
-		}
 	}
-	if pos.In(ps.pg.Geom.TotalBBox) {
-		visit(ps.pg.AsWidget())
-	}
-	return
+	return deepest, false
 }
 
 // clientPos returns the given position in the window in the CSS px of the
