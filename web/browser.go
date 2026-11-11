@@ -84,6 +84,7 @@ func (br *Browser) Init() {
 		return nb.Tabs
 	}
 	br.Tabs.MoveTabFunc = br.tabMoved
+	br.Tabs.MoveInFunc = br.tabMovedIn
 	br.Tabs.CloseTabFunc = func(index int) {
 		if index < len(br.pages) {
 			br.pages[index].Stop()
@@ -109,8 +110,8 @@ func InitBody(b *core.Body) *Browser {
 
 // tabMoved keeps the pages in the order of the tabs when a tab has moved
 // from the given index to the given index in the given tabs (see
-// [core.Tabs.MoveTabFunc]): these, or those of another browser, as in a
-// new window, to which its page then belongs.
+// [core.Tabs.MoveTabFunc]): these, or those of another browser (as in
+// another window), which then adopts its page (see [Browser.tabMovedIn]).
 func (br *Browser) tabMoved(from int, to *core.Tabs, at int) {
 	if from < 0 || from >= len(br.pages) {
 		return
@@ -119,21 +120,24 @@ func (br *Browser) tabMoved(from int, to *core.Tabs, at int) {
 	br.pages = slices.Delete(br.pages, from, from+1)
 	if to == br.Tabs {
 		br.pages = slices.Insert(br.pages, min(at, len(br.pages)), pg)
-		br.opened()
-		return
 	}
 	br.opened()
-	ob := tree.ParentByType[*Browser](to)
-	if ob == nil {
-		pg.Stop() // (not in a browser)
+}
+
+// tabMovedIn adopts the page of the tab of another browser that has moved
+// into the tabs of the browser at the given index (see
+// [core.Tabs.MoveInFunc]).
+func (br *Browser) tabMovedIn(index int) {
+	fr, tab := br.Tabs.TabAtIndex(index)
+	if fr == nil || !fr.HasChildren() {
 		return
 	}
-	_, tab := to.TabAtIndex(at)
-	if tab == nil {
+	pg, ok := fr.Child(0).(*Page)
+	if !ok {
 		return
 	}
-	ob.adoptPage(pg, tab, at)
-	ob.opened()
+	br.adoptPage(pg, tab, index)
+	br.opened()
 }
 
 // opened calls [Browser.OnOpen], if it is set.
