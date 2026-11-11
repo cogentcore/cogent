@@ -667,6 +667,18 @@ func newPageContent() *core.Frame {
 	return content
 }
 
+// FixedViewport returns the widget that the elements of the page with a
+// fixed position are fixed in (see [core.FixedContainer]): its viewport,
+// the frame of its tab, which it scrolls in, and not the window, which
+// cut off the top of the pages that are all in a fixed element of the
+// size of the viewport (as the sites made with Cogent Core content).
+func (pg *Page) FixedViewport() core.Widget {
+	if fr := core.AsFrame(pg.Parent); fr != nil {
+		return fr
+	}
+	return pg
+}
+
 // SizeFinal sizes the page, and checks whether the page needs to be read
 // again for the width of its viewport, as when its window is resized:
 // when the width crosses a boundary of its media, it is read again (with
