@@ -68,6 +68,11 @@ func (dt *DirTable) Init() {
 		case keymap.Accept, keymap.Open:
 			e.SetHandled()
 			dt.openSelected()
+		case keymap.Delete, keymap.Backspace:
+			if fis := dt.SelectedFiles(); len(fis) > 0 {
+				e.SetHandled()
+				dt.deleteFiles(fis)
+			}
 		}
 	})
 	tree.AddChildAt(dt, "path", func(w *core.Text) {
@@ -82,6 +87,9 @@ func (dt *DirTable) Init() {
 	tree.AddChildAt(dt, "files", func(w *core.Table) {
 		dt.table = w
 		w.SetReadOnly(true)
+		// several files can be selected, with the modifier keys, to drag,
+		// delete or duplicate them together
+		w.ReadOnlyMultiSelect = true
 		w.SetSlice(&dt.files)
 		w.Styler(func(s *styles.Style) {
 			s.Cursor = cursors.Pointer
@@ -132,6 +140,43 @@ func (dt *DirTable) SelectedFile() *fileinfo.FileInfo {
 		return nil
 	}
 	return dt.files[idx]
+}
+
+// SelectedFiles returns the selected files, in the order of the table.
+func (dt *DirTable) SelectedFiles() []*fileinfo.FileInfo {
+	if dt.table == nil {
+		return nil
+	}
+	var fis []*fileinfo.FileInfo
+	for _, idx := range dt.table.SelectedIndexesList(false) {
+		if idx >= 0 && idx < len(dt.files) {
+			fis = append(fis, dt.files[idx])
+		}
+	}
+	return fis
+}
+
+// deleteFiles moves the given files to the trash / recycling bin, after
+// asking whether to.
+func (dt *DirTable) deleteFiles(fis []*fileinfo.FileInfo) {
+	names := make([]string, len(fis))
+	for i, fi := range fis {
+		names[i] = fi.Name
+	}
+	d := core.NewBody("Delete?")
+	core.NewText(d).SetType(core.TextSupporting).SetText("Move to the trash: " + strings.Join(names, ", ") + "?")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Delete").OnClick(func(e events.Event) {
+			var errs []error
+			for _, fi := range fis {
+				errs = append(errs, fi.Delete())
+			}
+			dt.Update()
+			core.ErrorSnackbar(dt, errors.Join(errs...), "Error deleting file")
+		})
+	})
+	d.RunDialog(dt)
 }
 
 // FocusTable moves the keyboard focus to the table of the files, after
@@ -235,27 +280,28 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		core.NewFuncButton(m).SetFunc(dt.NewFolder).SetIcon(icons.CreateNewFolder)
 		return
 	}
+	fis := dt.SelectedFiles()
+	single := len(fis) <= 1
 	core.NewSeparator(m)
 	core.NewButton(m).SetText("Duplicate").SetIcon(icons.FileCopy).
-		SetTooltip("Make a copy of the selected file").
+		SetTooltip("Make a copy of each of the selected files").
 		OnClick(func(e events.Event) {
-			errors.Log1(fi.Duplicate())
+			for _, fi := range fis {
+				errors.Log1(fi.Duplicate())
+			}
 			dt.Update()
 		})
-	tip := "Delete moves the selected file to the trash / recycling bin"
 	core.NewButton(m).SetText("Delete").SetIcon(icons.Delete).
-		SetTooltip(tip).
+		SetTooltip("Delete moves the selected files to the trash / recycling bin").
 		OnClick(func(e events.Event) {
-			fb := core.NewSoloFuncButton(dt).SetFunc(fi.Delete).SetConfirm(true).SetAfterFunc(dt.Update)
-			fb.SetTooltip(tip)
-			fb.CallFunc()
+			dt.deleteFiles(fis)
 		})
-	core.NewButton(m).SetText("Rename").SetIcon(icons.EditNote).
+	core.NewButton(m).SetText("Rename").SetIcon(icons.EditNote).SetEnabled(single).
 		SetTooltip("Rename the selected file").
 		OnClick(func(e events.Event) {
 			core.NewSoloFuncButton(dt).SetFunc(fi.Rename).SetAfterFunc(dt.Update).CallFunc()
 		})
-	core.NewButton(m).SetText("Info").SetIcon(icons.Info).
+	core.NewButton(m).SetText("Info").SetIcon(icons.Info).SetEnabled(single).
 		SetTooltip("View information about the selected file").
 		OnClick(func(e events.Event) {
 			d := core.NewBody("Info: " + fi.Name)

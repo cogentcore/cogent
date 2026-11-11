@@ -61,18 +61,27 @@ func (dt *DirTable) rowAt(pos image.Point) (int, core.Widget) {
 	return -1, nil
 }
 
-// dragStart starts dragging the file under the mouse, selecting it.
+// dragStart starts dragging the selected files, if the file under the
+// mouse is one of them, or else the file under the mouse, selecting it.
 func (dt *DirTable) dragStart(e events.Event) {
 	idx, rw := dt.rowAt(e.Pos())
 	if idx < 0 {
 		return
 	}
-	if dt.table.SelectedIndex != idx {
+	if _, selected := dt.table.SelectedIndexes[idx]; !selected {
 		dt.table.SelectIndexEvent(idx, events.SelectOne)
 	}
-	path := dt.files[idx].Path
-	dt.Scene.Events.DragStart(rw, mimedata.NewText(path), e)
-	dt.Scene.Events.SetDragFiles(path)
+	var paths []string
+	md := mimedata.Mimes{}
+	for _, fi := range dt.SelectedFiles() {
+		paths = append(paths, fi.Path)
+		md = append(md, mimedata.NewTextData(fi.Path))
+	}
+	if len(paths) == 0 {
+		return
+	}
+	dt.Scene.Events.DragStart(rw, md, e)
+	dt.Scene.Events.SetDragFiles(paths...)
 	e.SetHandled()
 }
 

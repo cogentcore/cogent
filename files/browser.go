@@ -36,10 +36,6 @@ type Files struct {
 	// lastTerminal is the last terminal used.
 	lastTerminal *terminal.Terminal
 
-	// terminalDirs are the working directories of the terminals,
-	// for the labels of their tabs.
-	terminalDirs map[*terminal.Terminal]*terminalDir
-
 	// splitsChooser is the chooser of the layout of the panels in the toolbar.
 	splitsChooser *core.Chooser
 
@@ -106,6 +102,7 @@ func (fl *Files) Init() {
 		})
 		tree.AddChildAt(w, "dirtabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
+			fl.dragTabs(w, (*Files).DirTabs)
 			w.Styler(func(s *styles.Style) {
 				s.Overflow.Set(styles.OverflowHidden)
 				s.Grow.Set(1, 1)
@@ -113,6 +110,10 @@ func (fl *Files) Init() {
 		})
 		tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
+			fl.dragTabs(w, (*Files).Tabs)
+			// a new tab is a new terminal
+			w.NewTabButton = true
+			w.NewTabFunc = fl.newTerminalTab
 			w.Styler(func(s *styles.Style) {
 				s.Overflow.Set(styles.OverflowHidden)
 				s.Grow.Set(1, 1)
@@ -248,20 +249,113 @@ func (fl *Files) OpenDir(dir string) *DirTable { //types:add
 			return dt
 		}
 	}
-	fr, tab := ts.NewTab(dir)
+	fr, _ := ts.NewTab(dir)
 	fr.Styler(func(s *styles.Style) {
 		s.Overflow.Set(styles.OverflowHidden) // the table scrolls itself
 	})
 	dt := NewDirTable(fr)
 	label := func() {
-		tab.SetText(dirLabel(dt.Dir)).SetTooltip(dt.Dir)
-		tab.Update()
+		// (the tab of its frame, which it may have been dragged into)
+		if tab := tabOfFrame(fr); tab != nil {
+			tab.SetText(dirLabel(dt.Dir)).SetTooltip(dt.Dir)
+			tab.Update()
+		}
 	}
 	dt.OnChange(func(e events.Event) { label() })
 	dt.SetDir(dir)
 	label()
 	ts.SelectTabIndex(ts.NumTabs() - 1)
 	return dt
+}
+
+// tabOfFrame returns the tab button of the given frame of a tab, in the
+// tabs that it is in, or nil.
+func tabOfFrame(fr *core.Frame) *core.Tab {
+	ts := tree.ParentByType[*core.Tabs](fr)
+	if ts == nil {
+		return nil
+	}
+	idx := fr.IndexInParent()
+	if idx < 0 || idx >= ts.NumTabs() {
+		return nil
+	}
+	_, tab := ts.TabAtIndex(idx)
+	return tab
+}
+
+// dragTabs makes the given tabs of the Files, which the given function
+// returns of a Files, draggable out of the window into a new Files window
+// with the same root (see [core.Tabs.DragToWindow]), and into those of
+// other Files windows, with what goes with them (as the working
+// directories of terminals).
+func (fl *Files) dragTabs(ts *core.Tabs, tabsOf func(f *Files) *core.Tabs) {
+	ts.DragToWindow = func(b *core.Body) *core.Tabs {
+		nf := InitBody(b, fl.Root)
+		nf.Update() // (for its tabs, which the tab is moved into)
+		return tabsOf(nf)
+	}
+	ts.MoveTabFunc = func(from int, to *core.Tabs, at int) {
+		if to == ts {
+			return
+		}
+		// moved out, to the tabs of another Files
+		if fl.lastTerminal != nil && !fl.hasTerminal(fl.lastTerminal) {
+			fl.lastTerminal = nil
+		}
+		fl.updateTerminalLabels()
+	}
+	ts.MoveInFunc = func(index int) {
+		fr, _ := ts.TabAtIndex(index)
+		if fr == nil || !fr.HasChildren() {
+			return
+		}
+		switch w := fr.Child(0).(type) {
+		case *terminal.Terminal:
+			fl.focusOnTab(fr)
+			fl.lastTerminal = w
+			fl.updateTerminalLabels()
+		case *DirTable:
+			if tab := tabOfFrame(fr); tab != nil {
+				tab.SetText(dirLabel(w.Dir)).SetTooltip(w.Dir)
+			}
+		}
+	}
+}
+
+// hasTerminal returns whether the given terminal is in a tab of the
+// command tabs of the Files.
+func (fl *Files) hasTerminal(tm *terminal.Terminal) bool {
+	ts := fl.Tabs()
+	if ts == nil {
+		return false
+	}
+	for i := range ts.NumTabs() {
+		if fr, _ := ts.TabAtIndex(i); fr != nil && fr.HasChildren() && fr.Child(0) == tm.This {
+			return true
+		}
+	}
+	return false
+}
+
+// newTerminalTab makes a new terminal in the new tab of the command tabs at
+// the given index (see [core.Tabs.NewTabFunc]), in the current directory,
+// and moves the keyboard focus to it.
+func (fl *Files) newTerminalTab(index int) {
+	ts := fl.Tabs()
+	fr, tab := ts.TabAtIndex(index)
+	if fr == nil {
+		return
+	}
+	n := 2
+	for ts.TabByName(terminalTabName(n)) != nil {
+		n++
+	}
+	name := terminalTabName(n)
+	fr.SetName(name)
+	tab.SetName(name)
+	tab.SetText(name)
+	tm := fl.initTerminal(fr, name, fl.CurrentDir())
+	tm.Defer(func() { tm.SetFocus() }) // (once it is shown)
 }
 
 // cleanDir returns the absolute path of the given directory, with its
