@@ -138,3 +138,27 @@ func TestEditBookmarks(t *testing.T) {
 		assert.Same(t, &Settings.Bookmarks, tt.Items)
 	})
 }
+
+// TestBookmarksBarMove tests that a bookmark of the bookmarks bar (here a
+// group) moves to another place in the bookmarks when it is dragged there.
+func TestBookmarksBarMove(t *testing.T) {
+	withBookmarks(t, testBookmarks())
+	b := core.NewBody()
+	br := InitBody(b)
+	br.NewTab("")
+	b.RenderImage(func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		_, bar := barButtons(b)
+		require.NotNil(t, bar)
+		require.NotNil(t, bar.MoveFunc)
+		bar.MoveFunc(0, 1) // (as by dragging News onto Three)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, "Three", Settings.Bookmarks[0].Name)
+		assert.Equal(t, "News", Settings.Bookmarks[1].Name)
+		texts, _ := barButtons(b)
+		assert.Equal(t, []string{"Three", "News"}, texts)
+	})
+}

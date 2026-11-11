@@ -90,8 +90,9 @@ func bookmarksChanged() {
 
 // addBookmarksBar adds the bookmarks bar of the given browser to the given
 // parent, below its toolbar: a button for each top-level bookmark, which
-// opens it, or shows the menu of the bookmarks of a group. It is hidden when
-// there are no bookmarks.
+// opens it, or shows the menu of the bookmarks of a group, and which can be
+// dragged to another place in the bar. It is hidden when there are no
+// bookmarks.
 func addBookmarksBar(parent core.Widget, br *Browser) *core.Toolbar {
 	tb := core.NewToolbar(parent)
 	tb.SetName("bookmarks")
@@ -101,6 +102,17 @@ func addBookmarksBar(parent core.Widget, br *Browser) *core.Toolbar {
 			s.Display = styles.DisplayNone
 		}
 	})
+	// the bookmarks (and groups) are reordered by dragging them
+	tb.MoveFunc = func(from, to int) {
+		bms := Settings.Bookmarks
+		if from < 0 || from >= len(bms) || to < 0 || to >= len(bms) {
+			return
+		}
+		bm := bms[from]
+		bms = slices.Delete(bms, from, from+1)
+		Settings.Bookmarks = slices.Insert(bms, to, bm)
+		bookmarksChanged()
+	}
 	tb.Maker(func(p *tree.Plan) {
 		for _, bm := range Settings.Bookmarks {
 			// (a button for each bookmark, whose changes update it)
