@@ -476,7 +476,9 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			resp, err = getPage(ctx, url)
 		}
 		if err == nil {
-			final = resp.Request.URL.String()
+			if resp.Request != nil && resp.Request.URL != nil { // (none for a data: URL)
+				final = resp.Request.URL.String()
+			}
 			ctx.PageURL = final
 			page, err = io.ReadAll(resp.Body)
 			resp.Body.Close()
