@@ -186,6 +186,12 @@ const maxCallStack = 10000
 
 // Engine runs the scripts of a page (see the package documentation).
 type Engine struct {
+	// moveMu guards movePending, the pending move of the mouse, which is
+	// dispatched in a task (see Engine.Move), and replaced by later moves
+	// until then.
+	moveMu      sync.Mutex
+	movePending *pendingMove
+
 	opts Options
 	vm   *goja.Runtime
 	doc  *html.Node

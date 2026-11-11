@@ -1176,6 +1176,37 @@ func (e *Engine) Press(n *html.Node, down bool, props map[string]any) {
 	e.Post(func() { e.callPrelude("press", e.nodes.id(n), down, props) })
 }
 
+// pendingMove is a move of the mouse to be dispatched (see [Engine.Move]).
+type pendingMove struct {
+	n     *html.Node
+	props map[string]any
+}
+
+// Move dispatches the events of the mouse moving over the given element
+// (or nil for none, outside of the page), with the given properties (as
+// clientX and buttons): pointermove and mousemove, to the element that has
+// the capture of the pointer if any (as the splitters that scripts drag),
+// in a task of the engine. The moves are coalesced: a move that is not yet
+// dispatched is replaced by a later one.
+func (e *Engine) Move(n *html.Node, props map[string]any) {
+	e.moveMu.Lock()
+	first := e.movePending == nil
+	e.movePending = &pendingMove{n: n, props: props}
+	e.moveMu.Unlock()
+	if !first {
+		return
+	}
+	e.Post(func() {
+		e.moveMu.Lock()
+		m := e.movePending
+		e.movePending = nil
+		e.moveMu.Unlock()
+		if m != nil {
+			e.callPrelude("move", e.nodes.id(m.n), m.props)
+		}
+	})
+}
+
 // Hover dispatches the events of the mouse moving from the given element
 // to the other at the given position (in CSS px), either of which can be
 // nil (outside of the page), in a task of the engine: pointerout,

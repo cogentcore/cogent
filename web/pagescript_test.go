@@ -22,6 +22,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
@@ -460,6 +461,33 @@ func TestScriptsResize(t *testing.T) {
 	})
 }
 
+// TestScriptsResizeOnce tests that the scripts get one resize event for a
+// change of the size of the viewport, also when their resize listener does
+// not read it and changes the page (as that of pkg.go.dev), which got a
+// resize event at each render, rendering the page again, endlessly.
+func TestScriptsResizeOnce(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="out">none</p><script>
+			const start = innerWidth;
+			let n = 0;
+			addEventListener("resize", () => { document.getElementById("out").textContent = "resized " + (++n); });
+		</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		ps := pg.scripts
+		b.AsyncUnlock()
+		ps.engine.Post(func() {
+			ps.width = 500 // as for a narrower window (see Page.readMedia)
+			ps.engine.Changed()
+		})
+		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "resized 1") }), pageTexts(b, pg))
+		time.Sleep(500 * time.Millisecond)
+		settle(pg)
+		assert.Contains(t, pageTexts(b, pg), "resized 1", "one resize event")
+	})
+}
+
 // TestScriptsClickInLink tests that a click on a box in a link (as the
 // results of craigslist), which gets the click as the page has a click
 // listener, opens the link unless a listener prevents its default, and
@@ -826,6 +854,111 @@ func TestScriptsFocusAndKeys(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond, "the keys")
 		t.Logf("got %v", got)
 	})
+}
+
+// TestScriptsTypeWithSuggestions tests typing in a text input whose script
+// adds suggestions beside it as it is typed in (as the search box of
+// google.com), so that it is read again with its container at each key:
+// its new text field keeps the place of the cursor, which was at the start
+// of the text, so that the text was typed backwards.
+func TestScriptsTypeWithSuggestions(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="box"><input id="in" type="text"></div><script>
+			const i = document.getElementById("in");
+			i.addEventListener("input", () => {
+				const box = document.getElementById("box");
+				let s = document.getElementById("sugs");
+				if (s) s.remove();
+				s = document.createElement("ul");
+				s.id = "sugs";
+				for (const x of ["one", "two"]) { const li = document.createElement("li"); li.textContent = i.value + x; s.appendChild(li); }
+				box.appendChild(s);
+			});
+			setTimeout(() => i.focus(), 0);</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		for _, r := range "abc" {
+			ev.KeyChord(r, 0, 0)
+			time.Sleep(200 * time.Millisecond) // as typed by a person
+			settle(pg)
+		}
+	}, func() {
+		var got any
+		assert.Eventually(t, func() bool {
+			got, _ = pg.scripts.engine.RunString(`document.getElementById("in").value`)
+			return got == "abc"
+		}, 3*time.Second, 20*time.Millisecond, "the text typed")
+		t.Logf("got %v", got)
+	})
+}
+
+// TestScriptsPointerCapture tests that a splitter that a script drags with
+// the capture of the pointer (as that of the sites made with Cogent Core
+// content) gets the moves of the mouse, also off of it, and its release,
+// after which the capture is released.
+func TestScriptsPointerCapture(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body style="margin: 0"><div style="display: flex; height: 200px">` +
+			`<nav style="width: 100px">nav</nav><div id="split" style="width: 16px; background: gray"></div><main style="flex: 1">page</main></div><script>
+			window.got = { moves: 0, x: 0, up: false, lost: false };
+			const s = document.getElementById("split");
+			s.addEventListener("pointerdown", e => {
+				e.preventDefault();
+				s.setPointerCapture(e.pointerId);
+				const move = e => { got.moves++; got.x = e.clientX; };
+				s.addEventListener("pointermove", move);
+				s.addEventListener("pointerup", () => { got.up = true; got.captured = s.hasPointerCapture(1); s.removeEventListener("pointermove", move); });
+				s.addEventListener("lostpointercapture", () => { got.lost = true; });
+			});</script></body></html>`,
+	})
+	var split image.Rectangle
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if n := htmlcore.NodeOf(cw); n != nil && htmlcore.GetAttr(n, "id") == "split" {
+				split = cwb.Geom.TotalBBox
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		require.False(t, split.Empty())
+		ev := b.Scene.RenderWindow().SystemWindow.Events()
+		from := split.Min.Add(split.Size().Div(2))
+		ev.MouseMove(from)
+		time.Sleep(50 * time.Millisecond)
+		ev.MouseButton(events.MouseDown, events.Left, from, 0)
+		time.Sleep(50 * time.Millisecond)
+		for i := 1; i <= 5; i++ {
+			ev.MouseMove(from.Add(image.Pt(30*i, 0))) // (off of the splitter)
+			time.Sleep(30 * time.Millisecond)
+		}
+		ev.MouseButton(events.MouseUp, events.Left, from.Add(image.Pt(150, 0)), 0)
+	}, func() {
+		var got any
+		assert.Eventually(t, func() bool {
+			got, _ = pg.scripts.engine.RunString(`JSON.stringify(got)`)
+			s, _ := got.(string)
+			return strings.Contains(s, `"up":true`)
+		}, 3*time.Second, 20*time.Millisecond)
+		s, _ := got.(string)
+		assert.NotContains(t, s, `"moves":0,`, "it got moves")
+		assert.Contains(t, s, `"lost":true`, "the capture is released")
+		assert.Contains(t, s, `"captured":true`, "captured at the release")
+		x, _ := pg.scripts.engine.RunString(`got.x`)
+		assert.Greater(t, toFloat(x), float64(200), "the moves off of it: %v", s)
+	})
+}
+
+// toFloat returns the given number of a script as a float64.
+func toFloat(v any) float64 {
+	switch n := v.(type) {
+	case int64:
+		return float64(n)
+	case float64:
+		return n
+	}
+	return 0
 }
 
 // TestScriptsLinkOwnClick tests a click on a link to the same URL as an

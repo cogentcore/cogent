@@ -149,6 +149,10 @@ type Page struct {
 	// console (see [SettingsData.VerboseConsole]).
 	openedBy      string
 	onShowConsole func()
+
+	// browser is the browser that the page is in, if any (see
+	// [Browser.adoptPage]).
+	browser *Browser
 }
 
 // pageMedia is what is needed to read a page that is shown again for
@@ -181,6 +185,13 @@ func (pg *Page) Init() {
 	pg.On(events.MouseMove, func(e events.Event) {
 		if ps := pg.scripts; ps != nil {
 			ps.hoverAt(e.WindowPos())
+			ps.moveAt(e, false)
+		}
+	})
+	// and of it moving with a button pressed (as to drag a splitter)
+	pg.On(events.MouseDrag, func(e events.Event) {
+		if ps := pg.scripts; ps != nil {
+			ps.moveAt(e, true)
 		}
 	})
 	// and of its buttons being pressed and released (see pageScripts.pressAt)
@@ -661,6 +672,18 @@ func newPageContent() *core.Frame {
 		s.Gap.Zero()
 	})
 	return content
+}
+
+// FixedViewport returns the widget that the elements of the page with a
+// fixed position are fixed in (see [core.FixedContainer]): its viewport,
+// the frame of its tab, which it scrolls in, and not the window, which
+// cut off the top of the pages that are all in a fixed element of the
+// size of the viewport (as the sites made with Cogent Core content).
+func (pg *Page) FixedViewport() core.Widget {
+	if fr := core.AsFrame(pg.Parent); fr != nil {
+		return fr
+	}
+	return pg
 }
 
 // SizeFinal sizes the page, and checks whether the page needs to be read

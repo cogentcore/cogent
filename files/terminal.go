@@ -10,7 +10,10 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/terminal"
 )
@@ -59,6 +62,13 @@ func (fl *Files) recycleTerminal(name, dir string) *terminal.Terminal {
 			return tm
 		}
 	}
+	return fl.initTerminal(fr, name, dir)
+}
+
+// initTerminal makes a terminal with the given name in the given frame of a
+// tab of the command tabs, running in the given directory.
+func (fl *Files) initTerminal(fr *core.Frame, name, dir string) *terminal.Terminal {
+	ts := fl.Tabs()
 	fr.Styler(func(s *styles.Style) {
 		s.Overflow.Set(styles.OverflowHidden) // the terminal scrolls itself
 	})
@@ -68,20 +78,68 @@ func (fl *Files) recycleTerminal(name, dir string) *terminal.Terminal {
 	if cmd := strings.Fields(Settings.Terminal); len(cmd) > 0 {
 		tm.SetCommand(cmd...)
 	}
-	if fl.terminalDirs == nil {
-		fl.terminalDirs = map[*terminal.Terminal]*terminalDir{}
-	}
 	td := &terminalDir{dir: cleanDir(dir)}
-	fl.terminalDirs[tm] = td
+	setTerminalDir(tm, td)
 	tm.OnUserCommand(func(cmd string) {
+		// (of the Files that it is in then, as it can be dragged to another)
 		if td.cd(cmd) {
-			fl.updateTerminalLabels()
+			if f, ok := ParentFiles(tm); ok {
+				f.updateTerminalLabels()
+			}
 		}
 	})
 	ts.Update()
+	fl.focusOnTab(fr)
 	fl.updateTerminalLabels()
 	fl.lastTerminal = tm
 	return tm
+}
+
+// focusOnTab makes a click on the tab of the given frame of the command
+// tabs move the keyboard focus to the terminal in it, once it is shown.
+func (fl *Files) focusOnTab(fr *core.Frame) {
+	ts := fl.Tabs()
+	if ts == nil {
+		return
+	}
+	_, tab := ts.TabAtIndex(fr.IndexInParent())
+	if tab == nil {
+		return
+	}
+	tab.OnClick(func(e events.Event) {
+		if !fr.HasChildren() {
+			return
+		}
+		if tm, ok := fr.Child(0).(*terminal.Terminal); ok {
+			tm.Defer(func() { tm.SetFocus() }) // (after it is shown)
+			tm.NeedsRender()
+		}
+	})
+}
+
+// terminalDirs are the working directories of the terminals, for the
+// labels of their tabs, of all of the Files windows, as a terminal can be
+// dragged from one to another.
+var terminalDirs struct {
+	sync.Mutex
+	dirs map[*terminal.Terminal]*terminalDir
+}
+
+// setTerminalDir sets the working directory of the given terminal.
+func setTerminalDir(tm *terminal.Terminal, td *terminalDir) {
+	terminalDirs.Lock()
+	defer terminalDirs.Unlock()
+	if terminalDirs.dirs == nil {
+		terminalDirs.dirs = map[*terminal.Terminal]*terminalDir{}
+	}
+	terminalDirs.dirs[tm] = td
+}
+
+// getTerminalDir returns the working directory of the given terminal, or nil.
+func getTerminalDir(tm *terminal.Terminal) *terminalDir {
+	terminalDirs.Lock()
+	defer terminalDirs.Unlock()
+	return terminalDirs.dirs[tm]
 }
 
 // terminalDir is the working directory of a terminal, which follows the
@@ -231,10 +289,11 @@ func (fl *Files) updateTerminalLabels() {
 			continue
 		}
 		tm, ok := fr.Child(0).(*terminal.Terminal)
-		if !ok || fl.terminalDirs[tm] == nil {
+		td := getTerminalDir(tm)
+		if !ok || td == nil {
 			continue
 		}
-		dir := fl.terminalDirs[tm].dir
+		dir := td.dir
 		label := dirLabel(dir)
 		count[label]++
 		if n := count[label]; n > 1 {

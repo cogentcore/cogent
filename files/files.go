@@ -33,9 +33,18 @@ func main() {
 		root = os.Args[1]
 	}
 	b := core.NewBody("Cogent Files")
+	InitBody(b, root)
+	b.RunMainWindow()
+}
+
+// InitBody initializes the given body of a window as a Files window, with
+// the given root directory, and returns its [Files]. It is used for the
+// main window of the app, and for the new windows that tabs are dragged
+// into (see [core.Tabs.DragToWindow]).
+func InitBody(b *core.Body, root string) *Files {
 	fl := NewFiles(b).SetRoot(root)
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(fl.MakeToolbar)
 	})
-	b.RunMainWindow()
+	return fl
 }

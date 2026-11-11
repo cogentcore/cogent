@@ -36,6 +36,11 @@ type SettingsData struct { //types:add
 	// and the properties that they get that the browser does not have,
 	// once each. It applies to pages opened (or reloaded) after it is set.
 	VerboseConsole bool
+
+	// Bookmarks are the bookmarks of pages, which are edited with
+	// [EditBookmarks]: the top-level ones are in the bookmarks bar of the
+	// browser, and groups have bookmarks in them.
+	Bookmarks []*Bookmark `display:"-"`
 }
 
 // defaultUserAgent is the default User-Agent of the requests of pages.

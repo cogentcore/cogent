@@ -290,10 +290,12 @@ func (ps *pageScripts) render() func() {
 		// the elements that scroll keep their scroll positions (as the
 		// sidebar of MDN, which scrolled to its top when an item opened)
 		var focused *html.Node
+		cursor := -1 // (of a text field that has the focus)
 		scrolls := map[*html.Node]math32.Vector2{}
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if cwb.StateIs(states.Focused) {
 				focused = htmlcore.NodeOf(cw)
+				cursor = focusedCursor(cw)
 			}
 			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
 				if n := htmlcore.NodeOf(cw); n != nil {
@@ -302,8 +304,8 @@ func (ps *pageScripts) render() func() {
 			}
 			return tree.Continue
 		})
-		if requested != nil {
-			focused = requested
+		if requested != nil && requested != focused {
+			focused, cursor = requested, -1
 		}
 		pageScroll := pg.Geom.Scroll
 		pg.Title = ctx.Title
@@ -321,9 +323,7 @@ func (ps *pageScripts) render() func() {
 			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 				if n, ok := cwb.Property("node").(*html.Node); ok && n == focused {
 					cwb.SetFocus()
-					if tf, ok := cw.(*core.TextField); ok {
-						tf.SetCursorEnd() // to type on
-					}
+					restoreCursor(cw, cursor)
 					return tree.Break
 				}
 				return tree.Continue
@@ -339,6 +339,10 @@ func (ps *pageScripts) resizeIfNeeded() {
 	// than they got (as it may not have its size while the page loads)
 	if ps.seen != (math32.Vector2{}) {
 		if w, h := ps.viewportSize(); math32.Vec2(w, h) != ps.seen {
+			// (seen now, whether or not they read it: the resize handler of
+			// pkg.go.dev, which does not, got a resize event at each render,
+			// which changed the page, which was rendered again, endlessly)
+			ps.seen = math32.Vec2(w, h)
 			ps.engine.Resized()
 		}
 	}
@@ -375,6 +379,33 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 		ps.laidOut = false // (laid out again for the boxes of the scripts)
 		return true
 	}
+}
+
+// focusedCursor returns the position of the cursor of the given widget that
+// has the focus, if it is a text field, or -1.
+func focusedCursor(w core.Widget) int {
+	if tf, ok := w.(*core.TextField); ok {
+		return tf.CursorPos()
+	}
+	return -1
+}
+
+// restoreCursor puts the cursor of the given new widget of the element that
+// has the focus, if it is a text field, at the given position, that of the
+// text field that it replaces, or else at the end of its text, to type on
+// (the cursor was at its start, so that the text that was typed in the
+// search box of google.com, read again with its suggestions at each key,
+// was backwards).
+func restoreCursor(w core.Widget, cursor int) {
+	tf, ok := w.(*core.TextField)
+	if !ok {
+		return
+	}
+	if cursor < 0 {
+		tf.SetCursorEnd()
+		return
+	}
+	tf.SetCursorPos(cursor)
 }
 
 // testReadHook, if set, is called before a page is read again (for tests).
@@ -414,10 +445,12 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		// out of their boxes, which may be made new, and put back in them
 		var focused *html.Node
 		var focusedWidget core.Widget
+		cursor := -1 // (of a text field that has the focus)
 		scrolls := map[*html.Node]math32.Vector2{}
 		content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if cwb.StateIs(states.Focused) {
 				focused, focusedWidget = htmlcore.NodeOf(cw), cw
+				cursor = focusedCursor(cw)
 			}
 			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
 				if n := htmlcore.NodeOf(cw); n != nil {
@@ -460,6 +493,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 				if htmlcore.NodeOf(cw) == focused {
 					cwb.SetFocus()
+					restoreCursor(cw, cursor)
 					return tree.Break
 				}
 				return tree.Continue
@@ -615,10 +649,33 @@ func (ps *pageScripts) pressAt(ev events.Event, down bool) {
 		return
 	}
 	n, framed := ps.nodeAt(ev.WindowPos())
-	if n == nil || framed {
+	if framed || n == nil && down {
 		return
 	}
+	// (a release on nothing goes to the element that has the capture of
+	// the pointer, if any, which it releases)
 	ps.engine.Press(n, down, ps.pointerProps(ev))
+}
+
+// moveAt dispatches the events of the mouse moving over the element under
+// the position of the given event of the mouse in the window, or to the
+// element that has the capture of the pointer (as the splitter of the
+// sites made with Cogent Core content, which did not move), with its
+// button pressed if down (see [script.Engine.Move]).
+func (ps *pageScripts) moveAt(ev events.Event, down bool) {
+	if ps.engine.Closed() {
+		return
+	}
+	n, framed := ps.nodeAt(ev.WindowPos())
+	if framed {
+		return
+	}
+	props := ps.pointerProps(ev)
+	props["buttons"] = 0
+	if down {
+		props["buttons"] = 1
+	}
+	ps.engine.Move(n, props)
 }
 
 // pointerProps returns the properties of a mouse event for the given event
