@@ -227,6 +227,10 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// elements in them, as of font-size: 1cqw, not to be shown at the
 	// size of the viewport until the new widgets are laid out
 	ctx.KeepContainerSizes(ps.ctx)
+	// the matches of the style rules of the elements that have not changed
+	// are those of the last read (the most of its time, as for the many
+	// times that npr.org was read again as it loaded)
+	ctx.ReuseStyles(ps.ctx)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
 	ps.ctx = ctx
@@ -255,7 +259,11 @@ func (ps *pageScripts) render() func() {
 		return nil
 	}
 	if d := time.Since(start); Settings.VerboseConsole && d >= 50*time.Millisecond {
-		ps.log(slog.LevelDebug, fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond)))
+		msg := fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond))
+		if r := ps.ctx.Reused(); r != "" {
+			msg += " (style rules: " + r + ")"
+		}
+		ps.log(slog.LevelDebug, msg)
 	}
 	ps.pg.preLayoutContent(content)
 	ps.renders++
