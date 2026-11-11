@@ -5,6 +5,7 @@
 package web
 
 import (
+	"errors"
 	"image"
 	"log/slog"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/video"
 	"golang.org/x/net/html"
 )
@@ -66,6 +68,17 @@ type pageVideo struct {
 
 	// opened is closed once the media is opened (or failed to open).
 	opened chan struct{}
+
+	// playWanted is whether the video is to play once it is opened (as
+	// by the play of a script before then).
+	playWanted bool
+
+	// lastTimeUpdate is when the last timeupdate event was sent to the
+	// scripts of the page (see [pageVideo.notify]).
+	lastTimeUpdate time.Time
+
+	// openError is the error of opening the media, if any.
+	openError string
 
 	// closed is whether the video has been closed.
 	closed bool
@@ -129,7 +142,10 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 		Muted:   htmlcore.HasAttr(n, "muted"),
 		Loop:    htmlcore.HasAttr(n, "loop"),
 		OnFrame: func(f video.Frame) { pv.show(f.Image, f.Time) },
-		OnEnd:   pv.refreshControls,
+		OnEnd: func() {
+			pv.refreshControls()
+			pv.notify("timeupdate", "pause", "ended")
+		},
 		OnError: func(err error) { slog.Info("error playing a video", "url", src, "err", err) },
 	}
 	go func() {
@@ -137,6 +153,10 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 		m, err := video.OpenMedia(src, options)
 		if err != nil {
 			slog.Info("error opening a video", "url", src, "err", err)
+			pv.mu.Lock()
+			pv.openError = err.Error()
+			pv.mu.Unlock()
+			pv.notify("error")
 			return
 		}
 		pb.Media = m
@@ -148,13 +168,13 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 			return
 		}
 		pv.playback = pb
+		play := autoplay || pv.playWanted
 		pv.mu.Unlock()
 		pv.refreshControls()
+		pv.notify("durationchange", "loadedmetadata", "loadeddata", "canplay", "canplaythrough")
 		switch {
-		case autoplay:
-			if err := pb.Play(); err != nil {
-				slog.Info("error playing a video", "url", src, "err", err)
-			}
+		case play:
+			pv.play()
 			pv.mu.Lock()
 			if pv.closed { // (while it was starting)
 				pb.Stop()
@@ -237,6 +257,10 @@ func (pv *pageVideo) frameWidth(m *video.Media) int {
 // in its image, if any, with the controls of the video over it.
 func (pv *pageVideo) attach(box *htmlcore.VideoBox) {
 	pv.mu.Lock()
+	if pv.box == box { // (kept by a reading of a part of the page)
+		pv.mu.Unlock()
+		return
+	}
 	pv.box = box
 	frame, size := pv.frame, pv.size
 	pv.mu.Unlock()
@@ -272,6 +296,16 @@ func (pv *pageVideo) show(frame *image.RGBA, t time.Duration) {
 	if c != nil {
 		c.SetTime(t)
 	}
+	// the time for the scripts, four times a second, as browsers do
+	pv.mu.Lock()
+	update := time.Since(pv.lastTimeUpdate) >= 250*time.Millisecond
+	if update {
+		pv.lastTimeUpdate = time.Now()
+	}
+	pv.mu.Unlock()
+	if update {
+		pv.notify("timeupdate")
+	}
 }
 
 // refreshControls updates the controls for the state of the video
@@ -297,18 +331,74 @@ func (pv *pageVideo) pb() *video.Playback {
 // TogglePlay plays the video if it is not playing, and pauses it if it is
 // (part of [video.Player]).
 func (pv *pageVideo) TogglePlay() {
+	if pv.IsPlaying() {
+		pv.pause()
+	} else {
+		pv.play()
+	}
+}
+
+// play plays the video (from where it is paused, or from the start), or
+// once it is opened, sending the play events to the scripts.
+func (pv *pageVideo) play() {
 	pb := pv.pb()
 	switch {
 	case pb == nil: // not opened (yet)
+		pv.mu.Lock()
+		pv.playWanted = true
+		pv.mu.Unlock()
+		return
 	case pb.IsPlaying():
-		pb.Pause()
+		return
 	case pb.IsPaused():
 		pb.Resume()
+		pv.notify("play", "playing")
 	default: // not played yet, or ended
-		if err := pb.Play(); err != nil {
-			slog.Info("error playing a video", "url", pv.src, "err", err)
-		}
+		// (in another goroutine, as it opens the media again, as over the
+		// network, which would hold the page)
+		go func() {
+			if err := pb.Play(); err != nil {
+				slog.Info("error playing a video", "url", pv.src, "err", err)
+				return
+			}
+			pv.notify("play", "playing")
+			pv.refreshControls()
+		}()
 	}
+}
+
+// pause pauses the video, sending the pause event to the scripts.
+func (pv *pageVideo) pause() {
+	pv.mu.Lock()
+	pv.playWanted = false
+	pv.mu.Unlock()
+	if pb := pv.pb(); pb != nil && pb.IsPlaying() {
+		pb.Pause()
+		pv.notify("pause")
+	}
+}
+
+// notify sends the given events (as "play") to the video element in the
+// scripts of the page, if it has them, with the state of the video.
+func (pv *pageVideo) notify(types ...string) {
+	if eng := pv.page.mediaEngine.Load(); eng != nil {
+		eng.MediaEvents(pv.node, pv.state(), types...)
+	}
+}
+
+// state returns the state of the playing of the video for the scripts.
+func (pv *pageVideo) state() script.MediaState {
+	pv.mu.Lock()
+	st := script.MediaState{Paused: !pv.playWanted, Width: pv.size.X, Height: pv.size.Y, Error: pv.openError}
+	pv.mu.Unlock()
+	st.Volume, st.Muted = float64(pv.Volume()), pv.IsMuted()
+	if pb := pv.pb(); pb != nil {
+		st.Paused = !pb.IsPlaying()
+		st.Ended = pb.IsEnded()
+		st.CurrentTime = pb.Position().Seconds()
+		st.Duration = pb.Media.Duration.Seconds()
+	}
+	return st
 }
 
 // IsPlaying returns whether the video is playing.
@@ -319,11 +409,27 @@ func (pv *pageVideo) IsPlaying() bool {
 
 // Seek plays the video from the given time, staying paused if it is.
 func (pv *pageVideo) Seek(t time.Duration) {
-	if pb := pv.pb(); pb != nil {
+	pv.seek(t, true)
+}
+
+// seek seeks the video in another goroutine, as it opens the media again
+// (as over the network), with the events of the scripts if events (not for
+// a seek of the scripts, which have them).
+func (pv *pageVideo) seek(t time.Duration, events bool) {
+	pb := pv.pb()
+	if pb == nil {
+		return
+	}
+	go func() {
 		if err := pb.Seek(t); err != nil {
 			slog.Info("error seeking a video", "url", pv.src, "err", err)
+			return
 		}
-	}
+		if events {
+			pv.notify("seeking", "seeked", "timeupdate")
+		}
+		pv.refreshControls()
+	}()
 }
 
 // SkipBy seeks the video by the given time from its current time.
@@ -335,9 +441,18 @@ func (pv *pageVideo) SkipBy(d time.Duration) {
 // it for a negative n.
 func (pv *pageVideo) StepFrame(n int) {
 	if pb := pv.pb(); pb != nil {
-		if err := pb.StepFrame(n); err != nil {
-			slog.Info("error stepping a video", "url", pv.src, "err", err)
-		}
+		playing := pb.IsPlaying()
+		go func() { // (as for seek)
+			if err := pb.StepFrame(n); err != nil {
+				slog.Info("error stepping a video", "url", pv.src, "err", err)
+				return
+			}
+			if playing {
+				pv.notify("pause")
+			}
+			pv.notify("seeking", "seeked", "timeupdate")
+			pv.refreshControls()
+		}()
 	}
 }
 
@@ -370,6 +485,7 @@ func (pv *pageVideo) IsMuted() bool {
 func (pv *pageVideo) SetMuted(muted bool) {
 	if pb := pv.pb(); pb != nil {
 		pb.SetMuted(muted)
+		pv.notify("volumechange")
 	}
 }
 
@@ -386,6 +502,7 @@ func (pv *pageVideo) Volume() float32 {
 func (pv *pageVideo) SetVolume(volume float32) {
 	if pb := pv.pb(); pb != nil {
 		pb.SetVolume(volume)
+		pv.notify("volumechange")
 	}
 }
 
@@ -396,6 +513,81 @@ func (pv *pageVideo) close() {
 	pv.closed = true
 	if pv.playback != nil {
 		pv.playback.Stop()
+	}
+}
+
+// The page is the player of the video elements for its scripts (see
+// script.MediaPlayer): its methods are called in their tasks, with the
+// lock of the page held, and the videos send their events
+// ([pageVideo.notify]) to the engine of the scripts (Page.mediaEngine).
+
+// videoFor returns the video of the given video element, making it (and
+// opening its media) if it has none yet, as when a script plays it before
+// it is shown, or nil if the element has no source.
+func (pg *Page) videoFor(n *html.Node) *pageVideo {
+	src := pg.Context.VideoSource(n)
+	if src == "" {
+		return nil
+	}
+	if pv := pg.videos[n]; pv != nil {
+		if pv.src == src {
+			return pv
+		}
+		pv.close() // (a script changed its source)
+	}
+	return pg.newVideo(n, src)
+}
+
+// MediaLoad opens the media of the given video element.
+func (pg *Page) MediaLoad(n *html.Node) {
+	pg.videoFor(n)
+}
+
+// MediaPlay plays the media of the given video element.
+func (pg *Page) MediaPlay(n *html.Node) error {
+	pv := pg.videoFor(n)
+	if pv == nil {
+		return errors.New("the video has no source")
+	}
+	pv.play()
+	pv.refreshControlsLocked()
+	return nil
+}
+
+// MediaPause pauses the media of the given video element.
+func (pg *Page) MediaPause(n *html.Node) {
+	if pv := pg.videos[n]; pv != nil {
+		pv.pause()
+		pv.refreshControlsLocked()
+	}
+}
+
+// MediaSeek seeks the media of the given video element.
+func (pg *Page) MediaSeek(n *html.Node, t float64) {
+	if pv := pg.videos[n]; pv != nil {
+		pv.seek(time.Duration(t*float64(time.Second)), false)
+	}
+}
+
+// MediaVolume sets the volume of the media of the given video element.
+func (pg *Page) MediaVolume(n *html.Node, volume float64, muted bool) {
+	if pv := pg.videos[n]; pv != nil {
+		if pb := pv.pb(); pb != nil {
+			pb.SetVolume(float32(volume))
+			pb.SetMuted(muted)
+		}
+		pv.refreshControlsLocked()
+	}
+}
+
+// refreshControlsLocked updates the controls for the state of the video,
+// with the lock of the widgets held.
+func (pv *pageVideo) refreshControlsLocked() {
+	pv.mu.Lock()
+	c := pv.controls
+	pv.mu.Unlock()
+	if c != nil {
+		c.Refresh()
 	}
 }
 

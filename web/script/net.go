@@ -109,6 +109,7 @@ func (e *Engine) defineNet() {
 	}
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
 	e.setMediaFuncs(set)
+	e.setMediaPlayerFuncs(set)
 
 	set("pageURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.opts.PageURL) })
 	set("baseURL", func(call goja.FunctionCall) goja.Value {

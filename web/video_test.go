@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,5 +153,90 @@ func TestPageVideo(t *testing.T) {
 		assert.Empty(t, pg.videos)
 		b.AsyncUnlock()
 		assert.False(t, click.playback.IsPlaying())
+	})
+}
+
+// TestPageVideoHLS tests that a script of a page plays an HLS video as the
+// players of web pages (as video.js) do in Safari: canPlayType says that
+// HLS can be played, so it sets the playlist (.m3u8) as the source of a
+// video element and plays it, which the player of the page (FFmpeg) plays,
+// sending the events of the playing to the element, whose state (paused,
+// currentTime, duration) is that of the playing, and which it pauses.
+func TestPageVideoHLS(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			io.WriteString(w, `<html><body><video id="v" muted style="width: 320px"></video><p id="log">none</p>
+				<script>
+					const v = document.getElementById("v");
+					const log = [];
+					for (const t of ["loadedmetadata", "play", "playing", "timeupdate", "pause", "ended"]) {
+						v.addEventListener(t, () => {
+							if (!log.includes(t)) log.push(t);
+							document.getElementById("log").textContent = log.join(",");
+						});
+					}
+					if (v.canPlayType("application/vnd.apple.mpegurl") && !window.MediaSource) {
+						v.src = "/hls/short.m3u8";
+						v.play();
+					} else {
+						document.getElementById("log").textContent = "no hls";
+					}
+				</script></body></html>`)
+			return
+		}
+		http.ServeFile(w, r, "testdata"+r.URL.Path)
+	}))
+	defer srv.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(srv.URL+"/", nil)
+	b.RenderImage(func() { settle(pg) }, func() {
+		// it plays, shown in the box of the element, with the events
+		require.True(t, eventually(func() bool {
+			return strings.Contains(pageTexts(b, pg), "loadedmetadata,play,playing,timeupdate")
+		}), pageTexts(b, pg))
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			box := videoBoxes(pg)["v"]
+			return box != nil && colorful(box.Image.Image)
+		}), "frames shown")
+
+		// one controls bar, after the parts of the page were read again
+		b.AsyncLock()
+		bars := 0
+		for _, k := range videoBoxes(pg)["v"].Children {
+			if _, ok := k.(*video.Controls); ok {
+				bars++
+			}
+		}
+		b.AsyncUnlock()
+		assert.Equal(t, 1, bars)
+
+		// its state is that of the playing
+		eval := func(src string) any {
+			v, err := pg.scripts.engine.RunString(src)
+			require.NoError(t, err)
+			return v
+		}
+		assert.Equal(t, false, eval("v.paused"))
+		assert.InDelta(t, 1.0, eval("v.duration"), 0.05)
+		assert.Equal(t, int64(64), eval("v.videoWidth"))
+		assert.Greater(t, eval("v.currentTime"), 0.0)
+
+		// a script pauses it
+		eval("v.pause()")
+		assert.Equal(t, true, eval("v.paused"))
+		b.AsyncLock()
+		pv := pg.videos[htmlcore.NodeOf(videoBoxes(pg)["v"])]
+		b.AsyncUnlock()
+		require.True(t, eventually(func() bool { return !pv.IsPlaying() }), "paused")
+
+		// played again to its end
+		eval("v.play()")
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "ended") }), pageTexts(b, pg))
+		assert.Equal(t, true, eval("v.ended"))
 	})
 }

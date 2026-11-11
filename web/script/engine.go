@@ -119,6 +119,10 @@ type Options struct {
 	// the viewport (as for matchMedia).
 	MediaMatches func(query string) bool
 
+	// Media, if set, plays the video elements of the page for its scripts
+	// (see [MediaPlayer]); they are not played otherwise.
+	Media MediaPlayer
+
 	// Navigate, if set, opens the given URL, as for location.href, which
 	// replaces the current page in the history if replace is true.
 	Navigate func(url string, replace bool)

@@ -1567,19 +1567,25 @@
 		cls.prototype.toDataURL = function () { return "data:,"; };
 		reflect(cls, ["width", "height"]);
 	});
-	// Media elements (video and audio) are not played, but the metadata
+	// Media elements (video and audio): the video elements are played by
+	// the player of the app (D.hasMediaPlayer, see MediaPlayer in Go), which
+	// sends the events of their playing (D.mediaEvents) with its state. The
+	// others (and all without a player) are not played, but the metadata
 	// (duration and size) of their source is loaded (D.mediaMetadata) when
 	// a script first uses their state or listens to their events, and when
 	// their source changes, as browsers do for preload="metadata": pages
 	// wait for it (as for the chapters of the video of github.com). Their
 	// play() is rejected as when autoplay is not allowed.
+	const mediaPlayer = D.hasMediaPlayer();
 	const mediaEvents = new Set(["loadstart", "durationchange", "loadedmetadata", "loadeddata", "canplay",
 		"canplaythrough", "error", "emptied", "progress", "suspend", "abort"]);
 	const mediaStates = { HAVE_NOTHING: 0, HAVE_METADATA: 1, HAVE_CURRENT_DATA: 2, HAVE_FUTURE_DATA: 3, HAVE_ENOUGH_DATA: 4,
 		NETWORK_EMPTY: 0, NETWORK_IDLE: 1, NETWORK_LOADING: 2, NETWORK_NO_SOURCE: 3 };
 	const HTMLMediaElement = elementClass(["video", "audio"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]);
-		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "muted", "playsInline"]);
+		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "playsInline"]);
+		// played by the player of the app
+		cls.prototype._played = function () { return mediaPlayer && this.localName === "video"; };
 		Object.assign(cls, mediaStates);
 		Object.assign(cls.prototype, mediaStates);
 		const srcDesc = Object.getOwnPropertyDescriptor(cls.prototype, "src");
@@ -1591,7 +1597,8 @@
 		// the media state of the element
 		cls.prototype._media = function () {
 			if (!this.__media) {
-				this.__media = { src: null, readyState: 0, networkState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0, volume: 1, rate: 1 };
+				this.__media = { src: null, readyState: 0, networkState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0, volume: 1, rate: 1,
+					paused: true, ended: false, muted: this.hasAttribute("muted") };
 			}
 			return this.__media;
 		};
@@ -1616,6 +1623,10 @@
 			}
 			m.networkState = 2;
 			Promise.resolve().then(() => { if (m.src === src) this.dispatchEvent(new Event("loadstart")); });
+			if (this._played()) { // (its events are sent by the player)
+				D.mediaLoad(this[ID]);
+				return;
+			}
 			D.mediaMetadata(newCallback((duration, width, height, err) => {
 				if (m.src !== src) return; // another source since
 				if (err) {
@@ -1650,21 +1661,69 @@
 				const m = this._media();
 				m.currentTime = Math.max(0, Number(v) || 0);
 				if (Number.isFinite(m.duration)) m.currentTime = Math.min(m.currentTime, m.duration);
+				if (this._played()) {
+					D.mediaSeek(this[ID], m.currentTime);
+					m.ended = false;
+					this.dispatchEvent(new Event("seeking"));
+					Promise.resolve().then(() => this.dispatchEvent(new Event("seeked")));
+				}
 				this.dispatchEvent(new Event("timeupdate"));
 			},
 		});
-		Object.defineProperty(cls.prototype, "volume", { get() { return this._media().volume; }, set(v) { this._media().volume = Number(v); this.dispatchEvent(new Event("volumechange")); } });
+		const setVolume = (el, volume, muted) => {
+			const m = el._media();
+			if (m.volume === volume && m.muted === muted) return;
+			Object.assign(m, { volume, muted });
+			if (el._played()) D.mediaVolume(el[ID], volume, muted);
+			el.dispatchEvent(new Event("volumechange"));
+		};
+		Object.defineProperty(cls.prototype, "volume", {
+			get() { return this._media().volume; },
+			set(v) {
+				v = Number(v);
+				if (!(v >= 0 && v <= 1)) throw domException("IndexSizeError", "the volume is not between 0 and 1");
+				setVolume(this, v, this._media().muted);
+			},
+		});
+		Object.defineProperty(cls.prototype, "muted", { get() { return this._media().muted; }, set(v) { setVolume(this, this._media().volume, !!v); } });
+		Object.defineProperty(cls.prototype, "defaultMuted", {
+			get() { return this.hasAttribute("muted"); },
+			set(v) { if (v) this.setAttribute("muted", ""); else this.removeAttribute("muted"); },
+		});
 		Object.defineProperty(cls.prototype, "playbackRate", { get() { return this._media().rate; }, set(v) { this._media().rate = Number(v); this.dispatchEvent(new Event("ratechange")); } });
 		Object.defineProperty(cls.prototype, "defaultPlaybackRate", { get() { return 1; }, set() {} });
-		Object.defineProperty(cls.prototype, "paused", { get() { return true; } });
-		for (const p of ["ended", "seeking"]) Object.defineProperty(cls.prototype, p, { get() { return false; } });
+		Object.defineProperty(cls.prototype, "paused", { get() { return this._media().paused; } });
+		Object.defineProperty(cls.prototype, "ended", { get() { return this._media().ended; } });
+		Object.defineProperty(cls.prototype, "seeking", { get() { return false; } });
 		cls.prototype.play = function () {
 			this._mediaLoad();
-			return Promise.reject(domException("NotAllowedError", "media playback is not supported"));
+			if (!this._played()) return Promise.reject(domException("NotAllowedError", "media playback is not supported"));
+			const err = D.mediaPlay(this[ID]);
+			if (err) return Promise.reject(domException("NotSupportedError", err));
+			const m = this._media();
+			if (m.paused) { // (the player sends play and playing)
+				m.paused = false;
+				m.ended = false;
+			}
+			return Promise.resolve();
 		};
-		cls.prototype.pause = function () {};
+		cls.prototype.pause = function () {
+			if (!this._played()) return;
+			const m = this._media();
+			D.mediaPause(this[ID]);
+			m.paused = true; // (the player sends pause)
+		};
 		cls.prototype.load = function () { this._mediaLoad(true); };
-		cls.prototype.canPlayType = function (t) { return /^(video|audio)\/mp4\b/i.test(String(t)) ? "maybe" : ""; };
+		// the types of media that can be played: with the player (FFmpeg),
+		// also WebM, QuickTime and Ogg, and HLS (as in Safari), which players
+		// of web pages (as video.js) then set as the source (instead of MSE,
+		// MediaSource, which is not supported)
+		cls.prototype.canPlayType = function (t) {
+			t = String(t).toLowerCase();
+			if (/^(video|audio)\/mp4\b/.test(t)) return "maybe";
+			if (!this._played()) return "";
+			return /^(video\/(webm|quicktime|ogg)|audio\/(webm|ogg|mpeg|mp3|aac|wav)|application\/(vnd\.apple\.mpegurl|x-mpegurl)|audio\/(x-)?mpegurl)\b/.test(t) ? "maybe" : "";
+		};
 		cls.prototype.fastSeek = function (t) { this.currentTime = t; };
 		const addListener = cls.prototype.addEventListener;
 		cls.prototype.addEventListener = function (type, ...rest) {
@@ -3665,6 +3724,30 @@
 		const e = new Event("error", { cancelable: true });
 		e.message = msg;
 		w.dispatchEvent(e);
+	};
+
+	// mediaEvents sets the state of the playing of the given video element
+	// (from its player, see MediaPlayer in Go) and dispatches the given
+	// events to it.
+	D.mediaEvents = function (id, st, types) {
+		const el = wrappers.get(id) || wrap(id);
+		if (!(el instanceof HTMLMediaElement)) return;
+		const m = el._media();
+		Object.assign(m, {
+			paused: st.paused, ended: st.ended, currentTime: st.currentTime, volume: st.volume, muted: st.muted,
+			duration: st.duration > 0 ? st.duration : m.duration, width: st.width || m.width, height: st.height || m.height,
+		});
+		for (const t of types) {
+			switch (t) {
+				case "loadedmetadata": m.readyState = Math.max(m.readyState, 1); m.networkState = 1; break;
+				case "loadeddata": case "canplay": case "canplaythrough": case "playing": m.readyState = 4; break;
+				case "error":
+					m.networkState = 3;
+					m.error = new MediaError(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, st.error);
+					break;
+			}
+			el.dispatchEvent(new Event(t));
+		}
 	};
 
 	// frameLoaded fires the load event of the given iframe element, after

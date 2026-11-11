@@ -130,6 +130,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, ope
 		ComputedStyle: ps.computedStyle,
 		Viewport:      ps.viewport,
 		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
+		Media:         pg,
 		Navigate:      ps.navigate,
 		Submit:        ps.submit,
 		SubmitFrame:   ps.submitFrame,
@@ -425,6 +426,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		}
 		ok = ps.ctx.Reread(self, children)
 		opens := pg.attachFrames(content)
+		pg.attachVideos(content) // (as a script sets the source of a video)
 		for _, fp := range pg.frames {
 			fp.setShown()
 		}
@@ -1400,8 +1402,10 @@ func (pg *Page) showScripts(ps *pageScripts) {
 	}
 	pg.scripts = ps
 	if ps == nil {
+		pg.mediaEngine.Store(nil)
 		return
 	}
+	pg.mediaEngine.Store(ps.engine)
 	ps.shown = true
 	// (the tasks that hold the page for long, which it is not responsive
 	// for, are in a verbose console)
