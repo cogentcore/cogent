@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
@@ -136,6 +137,33 @@ func TestEditBookmarks(t *testing.T) {
 		}
 		require.NotNil(t, tt)
 		assert.Same(t, &Settings.Bookmarks, tt.Items)
+		bookmarksEditor.Lock()
+		assert.Same(t, tt, bookmarksEditor.table, "the editor is kept")
+		bookmarksEditor.Unlock()
+		// bookmarks moved elsewhere (as by dragging them in the bookmarks
+		// bar, whose MoveFunc this is) are moved in it
+		Settings.Bookmarks[0], Settings.Bookmarks[1] = Settings.Bookmarks[1], Settings.Bookmarks[0]
+		bookmarksChanged()
+		assert.Eventually(t, func() bool {
+			first := ""
+			tt.AsyncLock()
+			tt.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if tf, ok := cw.(*core.TextField); ok && first == "" {
+					first = tf.Text()
+				}
+				return first == ""
+			})
+			tt.AsyncUnlock()
+			return first == "Three"
+		}, 3*time.Second, 20*time.Millisecond, "updated in the editor")
+		tt.AsyncLock()
+		tt.Scene.Close()
+		tt.AsyncUnlock()
+		assert.Eventually(t, func() bool {
+			bookmarksEditor.Lock()
+			defer bookmarksEditor.Unlock()
+			return bookmarksEditor.table == nil
+		}, 3*time.Second, 20*time.Millisecond, "forgotten when closed")
 	})
 }
 

@@ -64,9 +64,24 @@ var bookmarkBars struct {
 	bars []*core.Toolbar
 }
 
+// bookmarksEditor is the tree table of the editor of the bookmarks, while
+// its window is open (see [EditBookmarks]), which is updated when the
+// bookmarks change elsewhere (see [bookmarksChanged]).
+var bookmarksEditor struct {
+	sync.Mutex
+	table *core.TreeTable
+}
+
 // bookmarksChanged saves the settings, with the bookmarks, and updates the
-// bookmarks bars of all of the browsers, each in its own window.
+// bookmarks bars of all of the browsers, and the editor of the bookmarks,
+// unless the change was made in it, each in its own window.
 func bookmarksChanged() {
+	changed(nil)
+}
+
+// changed is [bookmarksChanged] for a change made in the given editor of
+// the bookmarks (or elsewhere, if it is nil), which is not updated.
+func changed(editor *core.TreeTable) {
 	if Settings.Filename() != "" { // (not in tests)
 		errors.Log(core.SaveSettings(Settings))
 	}
@@ -75,14 +90,24 @@ func bookmarksChanged() {
 	bookmarkBars.bars = bars
 	bars = slices.Clone(bars)
 	bookmarkBars.Unlock()
+	var widgets []core.Widget
 	for _, tb := range bars {
+		widgets = append(widgets, tb)
+	}
+	bookmarksEditor.Lock()
+	if tt := bookmarksEditor.table; tt != nil && tt.This != nil && tt != editor {
+		widgets = append(widgets, tt)
+	}
+	bookmarksEditor.Unlock()
+	for _, w := range widgets {
 		// (not with the lock of this window, which another window may be
 		// waiting on)
 		go func() {
-			tb.AsyncLock()
-			defer tb.AsyncUnlock()
-			if tb.This != nil {
-				tb.Update()
+			wb := w.AsWidget()
+			wb.AsyncLock()
+			defer wb.AsyncUnlock()
+			if wb.This != nil {
+				wb.Update()
 			}
 		}()
 	}
@@ -251,7 +276,17 @@ func EditBookmarks(ctx core.Widget) {
 	tt := core.NewTreeTable(b)
 	tt.SetDragMoves(true)
 	tt.SetItems(&Settings.Bookmarks)
-	tt.OnChange(func(e events.Event) { bookmarksChanged() })
+	tt.OnChange(func(e events.Event) { changed(tt) })
+	bookmarksEditor.Lock()
+	bookmarksEditor.table = tt
+	bookmarksEditor.Unlock()
+	b.OnClose(func(e events.Event) {
+		bookmarksEditor.Lock()
+		if bookmarksEditor.table == tt {
+			bookmarksEditor.table = nil
+		}
+		bookmarksEditor.Unlock()
+	})
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
 		tb.Maker(func(p *tree.Plan) {
@@ -260,7 +295,7 @@ func EditBookmarks(ctx core.Widget) {
 				w.OnClick(func(e events.Event) {
 					Settings.Bookmarks = append(Settings.Bookmarks, &Bookmark{Name: "New group"})
 					tt.Update()
-					bookmarksChanged()
+					changed(tt)
 				})
 			})
 			tree.Add(p, func(w *core.Button) {
@@ -268,7 +303,7 @@ func EditBookmarks(ctx core.Widget) {
 				w.OnClick(func(e events.Event) {
 					Settings.Bookmarks = append(Settings.Bookmarks, &Bookmark{Name: "New bookmark", URL: "https://"})
 					tt.Update()
-					bookmarksChanged()
+					changed(tt)
 				})
 			})
 		})
