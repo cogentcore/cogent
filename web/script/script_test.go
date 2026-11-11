@@ -1468,3 +1468,39 @@ func TestSmallBrowserAPIs(t *testing.T) {
 		return v == "access true,b 1,lock l"
 	}, 3*time.Second, 20*time.Millisecond)
 }
+
+// TestSVGGraphicsGeometry tests that the elements of SVG that are drawn
+// (not only svg elements) have the geometry methods of SVGGraphicsElement,
+// as the text of the labels of pexels.com, whose getBBox was missing.
+func TestSVGGraphicsGeometry(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><svg id="s"><text>hi</text><path d="M0 0L1 1"/></svg></body></html>`, nil)
+	assert.Equal(t, "function|function|function|function", run(t, e,
+		`var s = document.getElementById("s"); [typeof s.querySelector("text").getBBox, typeof s.querySelector("path").getTotalLength, typeof s.getBBox, typeof s.createSVGPoint].join("|")`))
+}
+
+// TestTrackElementTrack tests that a track element has its text track, of
+// its kind and label, whose mode is kept (as the player of pexels.com sets
+// it, on the track elements that it adds).
+func TestTrackElementTrack(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><video id="v"></video></body></html>`, nil)
+	assert.Equal(t, "metadata|cuepoints|hidden|true", run(t, e,
+		`var tr = document.createElement("track"); tr.kind = "metadata"; tr.label = "cuepoints"; tr.track.mode = "hidden"; document.getElementById("v").append(tr);
+		var found = Array.from(document.getElementById("v").querySelectorAll("track")).find(x => x.track.label === "cuepoints");
+		[tr.track.kind, tr.track.label, tr.track.mode, found === tr].join("|")`))
+}
+
+// TestNodeConstructors tests that nodes made with their constructors, and
+// with those of subclasses (as the TemplateInstance of the template parts
+// of the player of pexels.com, a subclass of DocumentFragment), are nodes.
+func TestNodeConstructors(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><div id="d"></div></body></html>`, nil)
+	assert.Equal(t, "ab|x|2|true", run(t, e, `
+		class Instance extends DocumentFragment {
+			constructor(t) { super(); this.appendChild(new Text(t)); this.appendChild(document.createElement("span")).textContent = "b"; }
+		}
+		var d = document.getElementById("d");
+		var inst = new Instance("a");
+		d.appendChild(inst);
+		d.appendChild(new Comment("x"));
+		[d.textContent, d.lastChild.data, d.childNodes.length - 1, inst instanceof DocumentFragment].join("|")`))
+}

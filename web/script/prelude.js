@@ -247,6 +247,14 @@
 		D.removeAttr = attr(removeAttr, true);
 	}
 
+	// bindNode makes the given new object (of a constructor of a node, as
+	// of a subclass of DocumentFragment, as the TemplateInstance of the
+	// player of pexels.com) the wrapper of the given new node.
+	function bindNode(o, id) {
+		Object.defineProperty(o, ID, { value: id });
+		wrappers.set(id, o);
+	}
+
 	function idOf(n) {
 		if (n === null || n === undefined || n[ID] === undefined) {
 			throw new TypeError("the value is not a node");
@@ -652,6 +660,7 @@
 		deleteData(o, n) { this.replaceData(o, n, ""); }
 	}
 	class Text extends CharacterData {
+		constructor(data) { super(); if (this[ID] === undefined) bindNode(this, D.createText(data === undefined ? "" : String(data))); }
 		get wholeText() { return this.data; }
 		splitText(o) {
 			const d = this.data;
@@ -661,7 +670,9 @@
 			return t;
 		}
 	}
-	class Comment extends CharacterData {}
+	class Comment extends CharacterData {
+		constructor(data) { super(); if (this[ID] === undefined) bindNode(this, D.createComment(data === undefined ? "" : String(data))); }
+	}
 	// (never made from HTML, but there for scripts that patch the
 	// prototypes of all node types, as the shady DOM polyfill of
 	// youtube.com, which stopped at them)
@@ -1406,7 +1417,27 @@
 	});
 	const HTMLSourceElement = elementClass(["source"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["srcset", "sizes", "media", "type"]); });
 	const HTMLPictureElement = elementClass(["picture"], HTMLElement);
-	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["kind", "srclang", "label"], ["default"]); });
+	// a track element has its text track (track), of its kind, label and
+	// language (as the player of pexels.com, which sets the mode of the
+	// track of the track elements that it adds, which was missing)
+	const trackOfElement = new WeakMap();
+	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => {
+		reflectURL(cls, ["src"]);
+		reflect(cls, ["kind", "srclang", "label"], ["default"]);
+		Object.defineProperty(cls.prototype, "track", {
+			get() {
+				let t = trackOfElement.get(this);
+				if (!t) {
+					t = new TextTrack(this.kind || "subtitles", this.label, this.srclang);
+					trackOfElement.set(this, t);
+				}
+				t.kind = this.kind || "subtitles"; t.label = this.label; t.language = this.srclang; t.id = this.id;
+				return t;
+			},
+		});
+		Object.defineProperty(cls.prototype, "readyState", { get() { return 0; } });
+		Object.assign(cls, { NONE: 0, LOADING: 1, LOADED: 2, ERROR: 3 });
+	});
 	const HTMLTimeElement = elementClass(["time"], HTMLElement, cls => { reflect(cls, ["dateTime"]); });
 	const HTMLDataElement = elementClass(["data"], HTMLElement, cls => { reflect(cls, ["value"]); });
 	const HTMLDataListElement = elementClass(["datalist"], HTMLElement, cls => {
@@ -2017,7 +2048,17 @@
 	const HTMLHRElement = elementClass(["hr"]);
 	const HTMLFieldSetElement = elementClass(["fieldset"]);
 	const HTMLUnknownElement = class extends HTMLElement {};
-	const SVGElement = class extends Element {};
+	// SVGElement is the class of the elements of SVG, with the geometry of
+	// those that are drawn (SVGGraphicsElement), as the text of the labels
+	// of pexels.com, whose getBBox was missing
+	const SVGElement = class extends Element {
+		getBBox() { const r = this.getBoundingClientRect(); return { x: 0, y: 0, width: r.width, height: r.height }; }
+		getScreenCTM() { return new DOMMatrixStub(); }
+		getCTM() { return new DOMMatrixStub(); }
+		getComputedTextLength() { return this.getBoundingClientRect().width; }
+		getTotalLength() { return 0; }
+		getPointAtLength() { return { x: 0, y: 0 }; }
+	};
 	// SVGSVGElement has the methods of svg elements that scripts check for
 	// (as the support check of the VisualEditor of Wikipedia), which make
 	// geometry objects that are not connected to the rendering.
@@ -2026,9 +2067,6 @@
 		createSVGPoint() { return { x: 0, y: 0, matrixTransform() { return { x: this.x, y: this.y }; } }; }
 		createSVGMatrix() { return new DOMMatrixStub(); }
 		createSVGTransform() { return { type: 1, matrix: new DOMMatrixStub(), setMatrix() {}, setTranslate() {}, setScale() {}, setRotate() {} }; }
-		getScreenCTM() { return new DOMMatrixStub(); }
-		getCTM() { return new DOMMatrixStub(); }
-		getBBox() { const r = this.getBoundingClientRect(); return { x: 0, y: 0, width: r.width, height: r.height }; }
 	};
 	// DOMMatrixStub is an identity matrix, for the geometry of SVG.
 	class DOMMatrixStub {
@@ -2181,6 +2219,7 @@
 	defineHandlers(Document.prototype);
 	class HTMLDocument extends Document {}
 	class DocumentFragment extends Node {
+		constructor() { super(); if (this[ID] === undefined) bindNode(this, D.createFragment()); }
 		getElementById(id) { return wrap(D.byId(this[ID], String(id))); }
 		get innerHTML() { return D.inner(this[ID]); }
 		set innerHTML(v) { D.setInner(this[ID], String(v)); }
