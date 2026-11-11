@@ -1364,3 +1364,26 @@ func TestDeferredScripts(t *testing.T) {
 	assert.Equal(t, "head,async,body,defer 1,module,loaded", run(t, e, `order.join(",")`))
 	assert.Empty(t, *logs)
 }
+
+// TestWindowEventTargetPrototype tests that the window has the methods of
+// listeners of the prototype of EventTarget, of which it is an instance,
+// and that all the node types are defined, as the shady DOM polyfill of
+// youtube.com patches their prototypes (which stopped its app, leaving
+// blank boxes).
+func TestWindowEventTargetPrototype(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true|false|true", run(t, e, `[window instanceof EventTarget, Object.prototype.hasOwnProperty.call(window, "addEventListener"), window.addEventListener === EventTarget.prototype.addEventListener].join("|")`))
+	assert.Equal(t, "function|function|true", run(t, e, `[typeof CDATASection, typeof ProcessingInstruction, CDATASection.prototype instanceof Text].join("|")`))
+	// a patch of the prototype is the method of the window
+	assert.Equal(t, "patched:load", run(t, e, `
+		var native = EventTarget.prototype.addEventListener, got = "";
+		EventTarget.prototype.addEventListener = function (type, fn, opts) { got = "patched:" + type; return native.call(this, type, fn, opts); };
+		window.addEventListener("load", function () {});
+		EventTarget.prototype.addEventListener = native;
+		got`))
+	assert.Equal(t, "fired", run(t, e, `
+		var r = "";
+		addEventListener("custom", function () { r = "fired"; });
+		window.dispatchEvent(new Event("custom"));
+		r`), "the methods as global functions")
+}

@@ -662,6 +662,13 @@
 		}
 	}
 	class Comment extends CharacterData {}
+	// (never made from HTML, but there for scripts that patch the
+	// prototypes of all node types, as the shady DOM polyfill of
+	// youtube.com, which stopped at them)
+	class CDATASection extends Text {}
+	class ProcessingInstruction extends CharacterData {
+		get target() { return ""; }
+	}
 	class DocumentType extends Node {
 		get name() { return D.name(this[ID]); }
 		get publicId() { return ""; }
@@ -3634,7 +3641,7 @@
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
 		devicePixelRatio: 1, status: "", isSecureContext: true,
-		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
+		Node, Element, HTMLElement, Text, Comment, CDATASection, ProcessingInstruction, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
 		HTMLOptionElement, HTMLButtonElement, HTMLFormElement, HTMLTemplateElement, HTMLCanvasElement, HTMLMediaElement,
@@ -4078,7 +4085,10 @@
 	try {
 		Object.defineProperty(g, "length", { get() { return D.windowLength(0); }, configurable: true });
 		if (Object.getPrototypeOf(g) === Object.prototype) {
-			Object.setPrototypeOf(g, new Proxy(Object.prototype, {
+			// the window is a Window, and an EventTarget, of whose prototype
+			// it has its methods (as the shady DOM polyfill of youtube.com
+			// patches them there, for the window too)
+			Object.setPrototypeOf(g, new Proxy(Window.prototype, {
 				get(t, k, r) {
 					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
 					const f = D.windowFrame(0, k);
@@ -4092,6 +4102,7 @@
 					return has;
 				},
 			}));
+			for (const k of ["addEventListener", "removeEventListener", "dispatchEvent"]) delete g[k];
 		}
 	} catch (e) { }
 })(globalThis, __dom);
