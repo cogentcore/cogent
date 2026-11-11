@@ -251,6 +251,13 @@ type Engine struct {
 	// of it is rendered again.
 	selfNodes, childNodes []*html.Node
 	whole                 bool
+	// childEdits has the number of changes of the children of each
+	// element recorded since the page was last rendered, and inserted the
+	// parent of each element inserted alone since then, so that one that
+	// is removed again (as the elements that scripts add to measure text,
+	// or hidden frames) changes nothing (see Engine.cancelInsert).
+	childEdits map[*html.Node]int
+	inserted   map[*html.Node]*html.Node
 	// wholeWhy is why whole is set, for the verbose console.
 	wholeWhy string
 	// taskLock and taskUnlock are the functions that lock and unlock the
@@ -607,7 +614,9 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		}()
 	}
 	styled, self, children, whole, wholeWhy := e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy
+	styled, self, children = e.netChanges(styled), e.netChanges(self), e.netChanges(children)
 	e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy = nil, nil, nil, false, ""
+	e.childEdits, e.inserted = nil, nil
 	e.changedNodes = e.changedNodes[:0]
 	if !e.dirty && e.restyle(styled, lock, unlock) {
 		e.lastRender = time.Now()

@@ -1504,3 +1504,53 @@ func TestNodeConstructors(t *testing.T) {
 		d.appendChild(new Comment("x"));
 		[d.textContent, d.lastChild.data, d.childNodes.length - 1, inst instanceof DocumentFragment].join("|")`))
 }
+
+// TestInsertRemoveNoChange tests that an element that a script inserts and
+// removes again before the page is rendered (as those added to measure
+// text, as on npr.org, each of which read its body again, which was too
+// big to read again alone, so that the page was read whole) changes
+// nothing, and that the changes of an element that is removed are not
+// rendered, while an element that stays is.
+func TestInsertRemoveNoChange(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><p id="p">p</p></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	type reread struct{ self, children []string }
+	rereads := make(chan reread, 10)
+	names := func(ns []*html.Node) []string {
+		var s []string
+		for _, n := range ns {
+			id, _ := attr(n, "id")
+			s = append(s, n.Data+"#"+id)
+		}
+		return s
+	}
+	e, err := New(doc, Options{PageURL: "https://example.com/",
+		Render: func() func() { return nil },
+		Reread: func(self, children, styled []*html.Node) func() bool {
+			rereads <- reread{names(self), names(children)}
+			return func() bool { return true }
+		}})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	next := func() reread {
+		select {
+		case r := <-rereads:
+			return r
+		case <-time.After(5 * time.Second):
+			t.Fatal("no reread")
+			return reread{}
+		}
+	}
+	run(t, e, `const s = document.createElement("span"); s.id = "probe"; document.body.appendChild(s);
+		s.style.fontFamily = "serif"; s.textContent = "measure"; s.remove();
+		document.getElementById("p").className = "x";`)
+	r := next()
+	assert.Equal(t, []string{"p#p"}, append(r.self, r.children...), "only the paragraph changed")
+	run(t, e, `const d = document.createElement("div"); d.id = "stays"; document.body.appendChild(d);
+		const f = document.createElement("iframe"); document.body.appendChild(f); document.body.removeChild(f);`)
+	r = next()
+	assert.Equal(t, []string{"body#"}, r.children, "the body has a new child")
+}
