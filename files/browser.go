@@ -37,6 +37,10 @@ type Files struct {
 	// lastTerminal is the last terminal used.
 	lastTerminal *terminal.Terminal
 
+	// dragWindow is whether the Files is in a new window that a tab is
+	// dragged into, which does not open a default terminal.
+	dragWindow bool
+
 	// splitsChooser is the chooser of the layout of the panels in the toolbar.
 	splitsChooser *core.Chooser
 
@@ -68,7 +72,9 @@ func (fl *Files) Init() {
 		fl.applySplits()
 		fl.Tree.OpenPath(fl.Root)
 		fl.OpenConsoleTab()
-		fl.recycleTerminal(TerminalTabName, fl.Root)
+		if !fl.dragWindow {
+			fl.recycleTerminal(TerminalTabName, fl.Root)
+		}
 		if fl.DirTabs().NumTabs() == 0 {
 			fl.OpenDir(fl.Root)
 		}
@@ -313,6 +319,7 @@ func tabOfFrame(fr *core.Frame) *core.Tab {
 func (fl *Files) dragTabs(ts *core.Tabs, tabsOf func(f *Files) *core.Tabs) {
 	ts.DragToWindow = func(b *core.Body) *core.Tabs {
 		nf := InitBody(b, fl.Root)
+		nf.dragWindow = true
 		nf.Update() // (for its tabs, which the tab is moved into)
 		return tabsOf(nf)
 	}

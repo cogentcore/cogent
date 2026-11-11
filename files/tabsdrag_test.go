@@ -158,7 +158,7 @@ func TestDirTabTerminal(t *testing.T) {
 }
 
 // TestFilesDragToWindow tests that the tabs of Files are dragged into a new
-// Files window with the same root.
+// Files window with the same root, which has no default terminal.
 func TestFilesDragToWindow(t *testing.T) {
 	root := testRoot(t)
 	testSettings(t)
@@ -173,6 +173,11 @@ func TestFilesDragToWindow(t *testing.T) {
 		nf, ok := ParentFiles(nt)
 		require.True(t, ok)
 		assert.Equal(t, fl.Root, nf.Root)
+		nb.RenderImage(func() {}, func() {
+			nb.AsyncLock()
+			defer nb.AsyncUnlock()
+			assert.Nil(t, nf.Tabs().TabByName(TerminalTabName), "no default terminal in a new window that a tab is dragged into")
+		})
 	}
 }
 
