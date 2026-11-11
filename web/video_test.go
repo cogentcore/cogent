@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -18,21 +19,22 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/video"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// videoImages returns the images of the video elements of the page,
+// videoBoxes returns the boxes of the video elements of the page,
 // by the id of their elements.
-func videoImages(pg *Page) map[string]*core.Image {
-	imgs := map[string]*core.Image{}
+func videoBoxes(pg *Page) map[string]*htmlcore.VideoBox {
+	boxes := map[string]*htmlcore.VideoBox{}
 	pg.WalkDown(func(n tree.Node) bool {
-		if img, ok := n.(*core.Image); ok && htmlcore.VideoSourceOf(img) != "" {
-			imgs[htmlcore.GetAttr(htmlcore.NodeOf(img), "id")] = img
+		if box, ok := n.(*htmlcore.VideoBox); ok && htmlcore.VideoSourceOf(box) != "" {
+			boxes[htmlcore.GetAttr(htmlcore.NodeOf(box), "id")] = box
 		}
 		return tree.Continue
 	})
-	return imgs
+	return boxes
 }
 
 // colorful returns whether the given image has more than a few colors
@@ -84,30 +86,53 @@ func TestPageVideo(t *testing.T) {
 	pg.OpenURL(srv.URL+"/", nil)
 	b.RenderImage(func() { settle(pg) }, func() {
 		// the autoplay video shows its frames, at the width of its box
-		var imgs map[string]*core.Image
+		var boxes map[string]*htmlcore.VideoBox
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
-			imgs = videoImages(pg)
-			return len(imgs) == 2 && colorful(imgs["auto"].Image) && colorful(imgs["click"].Image)
+			boxes = videoBoxes(pg)
+			return len(boxes) == 2 && colorful(boxes["auto"].Image.Image) && colorful(boxes["click"].Image.Image)
 		}), "frames shown")
 		b.AsyncLock()
-		auto, click := pg.videos[htmlcore.NodeOf(imgs["auto"])], pg.videos[htmlcore.NodeOf(imgs["click"])]
+		auto, click := pg.videos[htmlcore.NodeOf(boxes["auto"])], pg.videos[htmlcore.NodeOf(boxes["click"])]
 		require.NotNil(t, auto)
 		require.NotNil(t, click)
 		assert.True(t, auto.playback.IsPlaying())
 		assert.False(t, click.playback.IsPlaying(), "only its first frame")
-		dp := imgs["auto"].Styles.UnitContext.Dots(units.UnitDp)
-		assert.InDelta(t, 320*dp, imgs["auto"].Geom.Size.Actual.Content.X, 2)
-		assert.InDelta(t, 240*dp, imgs["auto"].Geom.Size.Actual.Content.Y, 2, "of the aspect of the video")
-		assert.InDelta(t, 64*dp, imgs["click"].Geom.Size.Actual.Content.X, 2, "of the size of the video")
+		dp := boxes["auto"].Styles.UnitContext.Dots(units.UnitDp)
+		assert.InDelta(t, 320*dp, boxes["auto"].Geom.Size.Actual.Content.X, 2)
+		assert.InDelta(t, 240*dp, boxes["auto"].Geom.Size.Actual.Content.Y, 2, "of the aspect of the video")
+		assert.InDelta(t, 64*dp, boxes["click"].Geom.Size.Actual.Content.X, 2, "of the size of the video")
+		assert.Equal(t, boxes["auto"].Geom.Size.Actual.Content, boxes["auto"].Image.Geom.Size.Actual.Total, "the image fills the box")
+
+		// the standard controls are over each video
+		for _, id := range []string{"auto", "click"} {
+			var c *video.Controls
+			for _, k := range boxes[id].Children {
+				if cc, ok := k.(*video.Controls); ok {
+					c = cc
+				}
+			}
+			require.NotNil(t, c, id)
+			assert.True(t, c.IsShown() || id == "auto", id+": shown while it does not play")
+		}
 
 		// a click plays the other one, and pauses the first
-		imgs["click"].Send(events.Click)
-		imgs["auto"].Send(events.Click)
+		boxes["click"].Send(events.Click)
+		boxes["auto"].Send(events.Click)
 		b.AsyncUnlock()
 		require.True(t, eventually(click.playback.IsPlaying), "plays on a click")
 		assert.True(t, auto.playback.IsPaused(), "pauses on a click")
+
+		// a page video is a player of the controls: it seeks and sets its volume
+		click.Seek(500 * time.Millisecond)
+		require.True(t, eventually(func() bool { return click.CurrentTime() >= 500*time.Millisecond }), "seeks")
+		assert.InDelta(t, 1.0, click.Duration().Seconds(), 0.05)
+		click.SetVolume(0.5)
+		assert.Equal(t, float32(0.5), click.Volume())
+		assert.True(t, click.IsMuted())
+		click.SetMuted(false)
+		assert.False(t, click.IsMuted())
 
 		mu.Lock()
 		require.NotEmpty(t, agents)
@@ -116,7 +141,9 @@ func TestPageVideo(t *testing.T) {
 		mu.Unlock()
 
 		// another page stops them
+		b.AsyncLock() // (as the event loop does)
 		pg.OpenURL(srv.URL+"/other", nil)
+		b.AsyncUnlock()
 		settle(pg)
 		b.AsyncLock()
 		assert.Empty(t, pg.videos)

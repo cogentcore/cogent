@@ -10,24 +10,26 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
-	"cogentcore.org/core/math32"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/video"
 	"golang.org/x/net/html"
 )
 
-// The videos of a page: htmlcore makes each video element an image of its
-// poster, with the URL of its video (see htmlcore.VideoSourceOf), and the
-// page plays the video in it with a [video.Playback], which FFmpeg decodes
-// (from its URL, with the cookies and user agent of the page). The video
-// of an element is kept while the element is in the document, as the
-// widgets of the page are read again (as after its scripts change it).
-// A video plays at first if it has autoplay, and otherwise shows its
-// poster, or its first frame; a click on it plays and pauses it.
+// The videos of a page: htmlcore makes each video element a box
+// ([htmlcore.VideoBox]) with an image of its poster, with the URL of its
+// video (see htmlcore.VideoSourceOf), and the page plays the video in the
+// image with a [video.Playback], which FFmpeg decodes (from its URL, with
+// the cookies and user agent of the page), with the standard controls of
+// players over it ([video.Controls], for which a video of a page is a
+// [video.Player]). The video of an element is kept while the element is
+// in the document, as the widgets of the page are read again (as after its
+// scripts change it). A video plays at first if it has autoplay, and
+// otherwise shows its poster, or its first frame; a click on it plays and
+// pauses it.
 
 // maxVideoWidth is the maximum width in pixels to which the frames of a
 // video are decoded before its box is laid out.
@@ -35,7 +37,7 @@ const maxVideoWidth = 1280
 
 // pageVideo is the video of a video element of a page.
 type pageVideo struct {
-	// page is the page of the video, whose lock is that of its images
+	// page is the page of the video, whose lock is that of its widgets
 	// (which are added to the scene of the page after they are made).
 	page *Page
 
@@ -50,17 +52,17 @@ type pageVideo struct {
 
 	mu sync.Mutex
 
-	// img is the current image of the video element, which the frames
-	// are shown in (a new one after each reading of the page).
-	img *core.Image
+	// box is the current box of the video element, in whose image the
+	// frames are shown (a new one after each reading of the page), and
+	// controls are its controls.
+	box      *htmlcore.VideoBox
+	controls *video.Controls
 
-	// frame is the last frame shown, to show in a new image.
+	// frame is the last frame shown, to show in a new box.
 	frame *image.RGBA
 
-	// width is the width of the video, once it is opened, which is the
-	// natural width of its image, whose frames are decoded at the width
-	// of the image in pixels (see [core.Image.Density]).
-	width int
+	// size is the size of the video, once it is opened.
+	size image.Point
 
 	// opened is closed once the media is opened (or failed to open).
 	opened chan struct{}
@@ -70,19 +72,19 @@ type pageVideo struct {
 }
 
 // attachVideos attaches the videos of the video elements of the given
-// content to their images in it, making the videos of new elements, and
+// content to their boxes in it, making the videos of new elements, and
 // closes the videos of the elements that are no longer in it.
 func (pg *Page) attachVideos(content *core.Frame) {
 	seen := map[*html.Node]bool{}
 	content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-		img, ok := cw.(*core.Image)
+		box, ok := cw.(*htmlcore.VideoBox)
 		if !ok {
 			return tree.Continue
 		}
-		src := htmlcore.VideoSourceOf(img)
-		n := htmlcore.NodeOf(img)
+		src := htmlcore.VideoSourceOf(box)
+		n := htmlcore.NodeOf(box)
 		if src == "" || n == nil {
-			return tree.Continue
+			return tree.Break
 		}
 		seen[n] = true
 		pv := pg.videos[n]
@@ -93,8 +95,8 @@ func (pg *Page) attachVideos(content *core.Frame) {
 		if pv == nil {
 			pv = pg.newVideo(n, src)
 		}
-		pv.attach(img)
-		return tree.Continue
+		pv.attach(box)
+		return tree.Break // (its image and controls)
 	})
 	for n, pv := range pg.videos {
 		if !seen[n] {
@@ -126,7 +128,8 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 	pb := &video.Playback{
 		Muted:   htmlcore.HasAttr(n, "muted"),
 		Loop:    htmlcore.HasAttr(n, "loop"),
-		OnFrame: func(f video.Frame) { pv.show(f.Image) },
+		OnFrame: func(f video.Frame) { pv.show(f.Image, f.Time) },
+		OnEnd:   pv.refreshControls,
 		OnError: func(err error) { slog.Info("error playing a video", "url", src, "err", err) },
 	}
 	go func() {
@@ -136,16 +139,17 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 			slog.Info("error opening a video", "url", src, "err", err)
 			return
 		}
-		pb.Width = pv.frameWidth(m)
 		pb.Media = m
+		pv.opening(m)
+		pb.Width = pv.frameWidth(m)
 		pv.mu.Lock()
 		if pv.closed {
 			pv.mu.Unlock()
 			return
 		}
 		pv.playback = pb
-		pv.width = m.Width
 		pv.mu.Unlock()
+		pv.refreshControls()
 		switch {
 		case autoplay:
 			if err := pb.Play(); err != nil {
@@ -156,9 +160,10 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 				pb.Stop()
 			}
 			pv.mu.Unlock()
+			pv.refreshControls()
 		case !poster: // its first frame, until it plays
 			if img, err := m.FirstFrame(pb.Width, 0); err == nil {
-				pv.show(img)
+				pv.show(img, 0)
 			}
 		}
 	}()
@@ -189,16 +194,37 @@ func mediaOptions(src, pageURL string) map[string]string {
 	return opts
 }
 
+// opening sets the size of the box of the video to that of the opened
+// media (in the goroutine that opens it), as the size of a video element
+// is that of its video (unless the CSS of the page sets it).
+func (pv *pageVideo) opening(m *video.Media) {
+	pv.mu.Lock()
+	pv.size = image.Pt(m.Width, m.Height)
+	box := pv.box
+	pv.mu.Unlock()
+	if box == nil || !pv.page.AsyncLockIfShown() {
+		return
+	}
+	defer pv.page.AsyncUnlock()
+	if box.This != nil {
+		box.SetVideoSize(m.Width, m.Height)
+		box.Update()
+	}
+}
+
 // frameWidth returns the width in pixels to decode the frames of the video
-// at: that of its image, or the width of the video up to [maxVideoWidth]
-// before its image is laid out.
+// at: that at which they fit in its box, or the width of the video up to
+// [maxVideoWidth] before its box is laid out.
 func (pv *pageVideo) frameWidth(m *video.Media) int {
 	pv.mu.Lock()
-	img := pv.img
+	box := pv.box
 	pv.mu.Unlock()
 	w := 0
-	if img != nil && pv.page.AsyncLockIfShown() { // (its geometry is of the lock)
-		w = int(math32.Ceil(img.Geom.Size.Actual.Content.X))
+	if box != nil && pv.page.AsyncLockIfShown() { // (its geometry is of the lock)
+		sz := box.Geom.Size.Actual.Content
+		if sz.X > 0 && sz.Y > 0 && m.Width > 0 && m.Height > 0 {
+			w = int(min(sz.X, sz.Y*float32(m.Width)/float32(m.Height)))
+		}
 		pv.page.AsyncUnlock()
 	}
 	if w > 0 {
@@ -207,65 +233,150 @@ func (pv *pageVideo) frameWidth(m *video.Media) int {
 	return min(m.Width, maxVideoWidth)
 }
 
-// attach makes the given image the image of the video, showing the last
-// frame in it, if any, and a click on it plays and pauses the video.
-func (pv *pageVideo) attach(img *core.Image) {
+// attach makes the given box the box of the video, showing the last frame
+// in its image, if any, with the controls of the video over it.
+func (pv *pageVideo) attach(box *htmlcore.VideoBox) {
 	pv.mu.Lock()
-	pv.img = img
-	frame, width := pv.frame, pv.width
+	pv.box = box
+	frame, size := pv.frame, pv.size
 	pv.mu.Unlock()
-	if frame != nil {
-		setFrame(img, frame, width)
+	if size.X > 0 {
+		box.SetVideoSize(size.X, size.Y)
 	}
-	img.OnClick(func(e events.Event) {
-		pv.mu.Lock()
-		pb := pv.playback
-		pv.mu.Unlock()
-		switch {
-		case pb == nil: // not opened (yet)
-		case pb.IsPlaying():
-			pb.Pause()
-		case pb.IsPaused():
-			pb.Resume()
-		default:
-			if err := pb.Play(); err != nil {
-				slog.Info("error playing a video", "url", pv.src, "err", err)
-			}
-		}
-		e.SetHandled()
-	})
+	if frame != nil {
+		box.Image.SetImage(frame)
+	}
+	c := video.NewControls(box)
+	c.SetPlayer(box, pv)
+	pv.mu.Lock()
+	pv.controls = c
+	pv.mu.Unlock()
 }
 
-// show shows the given frame in the image of the video (in the goroutine
-// of the playback), laying the page out again when its size changes
-// (as the size of the video is that of its first frame).
-func (pv *pageVideo) show(frame *image.RGBA) {
+// show shows the given frame, at the given time of the video, in the image
+// of the video (in the goroutine of the playback).
+func (pv *pageVideo) show(frame *image.RGBA, t time.Duration) {
 	pv.mu.Lock()
-	img, prev, closed, width := pv.img, pv.frame, pv.closed, pv.width
+	box, closed, c := pv.box, pv.closed, pv.controls
 	pv.frame = frame
 	pv.mu.Unlock()
-	if closed || img == nil || !pv.page.AsyncLockIfShown() {
+	if closed || box == nil || !pv.page.AsyncLockIfShown() {
 		return
 	}
 	defer pv.page.AsyncUnlock()
-	if img.This == nil { // (deleted, as the page closed)
+	if box.This == nil { // (deleted, as the page closed)
 		return
 	}
-	setFrame(img, frame, width)
-	if prev == nil || prev.Bounds().Size() != frame.Bounds().Size() {
-		img.Update()
-		return
+	box.Image.SetImage(frame)
+	box.Image.NeedsRender()
+	if c != nil {
+		c.SetTime(t)
 	}
-	img.NeedsRender()
 }
 
-// setFrame sets the image of the given image of a video to the given frame,
-// of the video of the given width, which is the natural width of the image.
-func setFrame(img *core.Image, frame *image.RGBA, width int) {
-	if width > 0 {
-		img.Density = float32(frame.Bounds().Dx()) / float32(width)
+// refreshControls updates the controls for the state of the video
+// (in another goroutine than that of the widgets).
+func (pv *pageVideo) refreshControls() {
+	pv.mu.Lock()
+	c := pv.controls
+	pv.mu.Unlock()
+	if c == nil || !pv.page.AsyncLockIfShown() {
+		return
 	}
-	img.SetImage(frame)
+	defer pv.page.AsyncUnlock()
+	c.Refresh()
+}
+
+// pb returns the playback of the video, or nil before it is opened.
+func (pv *pageVideo) pb() *video.Playback {
+	pv.mu.Lock()
+	defer pv.mu.Unlock()
+	return pv.playback
+}
+
+// TogglePlay plays the video if it is not playing, and pauses it if it is
+// (part of [video.Player]).
+func (pv *pageVideo) TogglePlay() {
+	pb := pv.pb()
+	switch {
+	case pb == nil: // not opened (yet)
+	case pb.IsPlaying():
+		pb.Pause()
+	case pb.IsPaused():
+		pb.Resume()
+	default: // not played yet, or ended
+		if err := pb.Play(); err != nil {
+			slog.Info("error playing a video", "url", pv.src, "err", err)
+		}
+	}
+}
+
+// IsPlaying returns whether the video is playing.
+func (pv *pageVideo) IsPlaying() bool {
+	pb := pv.pb()
+	return pb != nil && pb.IsPlaying()
+}
+
+// Seek plays the video from the given time, staying paused if it is.
+func (pv *pageVideo) Seek(t time.Duration) {
+	if pb := pv.pb(); pb != nil {
+		if err := pb.Seek(t); err != nil {
+			slog.Info("error seeking a video", "url", pv.src, "err", err)
+		}
+	}
+}
+
+// SkipBy seeks the video by the given time from its current time.
+func (pv *pageVideo) SkipBy(d time.Duration) {
+	pv.Seek(pv.CurrentTime() + d)
+}
+
+// CurrentTime returns the current time of the video.
+func (pv *pageVideo) CurrentTime() time.Duration {
+	if pb := pv.pb(); pb != nil {
+		return pb.Position()
+	}
+	return 0
+}
+
+// Duration returns the duration of the video, or 0 if it is not known.
+func (pv *pageVideo) Duration() time.Duration {
+	if pb := pv.pb(); pb != nil {
+		return pb.Media.Duration
+	}
+	return 0
+}
+
+// IsMuted returns whether the audio is not heard.
+func (pv *pageVideo) IsMuted() bool {
+	if pb := pv.pb(); pb != nil {
+		_, muted := pb.Audio()
+		return muted
+	}
+	return htmlcore.HasAttr(pv.node, "muted")
+}
+
+// SetMuted sets whether the audio is not heard.
+func (pv *pageVideo) SetMuted(muted bool) {
+	if pb := pv.pb(); pb != nil {
+		pb.SetMuted(muted)
+	}
+}
+
+// Volume returns the volume of the audio, from 0 to 1.
+func (pv *pageVideo) Volume() float32 {
+	if pb := pv.pb(); pb != nil {
+		volume, _ := pb.Audio()
+		return volume
+	}
+	return 1
+}
+
+// SetVolume sets the volume of the audio, from 0 to 1.
+func (pv *pageVideo) SetVolume(volume float32) {
+	if pb := pv.pb(); pb != nil {
+		pb.SetVolume(volume)
+	}
 }
 
 // close stops the video.
