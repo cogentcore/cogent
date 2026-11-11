@@ -1574,6 +1574,38 @@
 		cls.prototype.toDataURL = function () { return "data:,"; };
 		reflect(cls, ["width", "height"]);
 	});
+	// OffscreenCanvas is a canvas that is not in a document, with a 2D
+	// context as that of canvas elements (which draws nothing).
+	class OffscreenCanvas extends EventTarget {
+		constructor(width, height) { super(); this.width = width >>> 0; this.height = height >>> 0; }
+		getContext(type) {
+			if (String(type).toLowerCase() !== "2d") return null;
+			if (!this._ctx) this._ctx = new CanvasRenderingContext2D(this);
+			return this._ctx;
+		}
+		convertToBlob(opts) { return Promise.resolve(new Blob([], { type: (opts && opts.type) || "image/png" })); }
+		transferToImageBitmap() { return { width: this.width, height: this.height, close() {} }; }
+	}
+	// BroadcastChannel sends messages to the other channels of its name in
+	// the page (the only one of its origin here), asynchronously.
+	const broadcastChannels = new Set();
+	class BroadcastChannel extends EventTarget {
+		constructor(name) { super(); this.name = String(name); this._closed = false; this.onmessage = null; this.onmessageerror = null; broadcastChannels.add(this); }
+		postMessage(data) {
+			if (this._closed) throw domException("InvalidStateError", "the channel is closed");
+			const msg = cloneJSON(data);
+			for (const c of broadcastChannels) {
+				if (c === this || c.name !== this.name) continue;
+				setTimeout(() => {
+					if (c._closed) return;
+					const ev = new MessageEvent("message", { data: cloneDecode(JSON.parse(msg)), origin: location.origin });
+					if (typeof c.onmessage === "function") c.onmessage(ev);
+					c.dispatchEvent(ev);
+				}, 0);
+			}
+		}
+		close() { this._closed = true; broadcastChannels.delete(this); }
+	}
 	// Media elements (video and audio): the video elements are played by
 	// the player of the app (D.hasMediaPlayer, see MediaPlayer in Go), which
 	// sends the events of their playing (D.mediaEvents) with its state. The
@@ -2136,6 +2168,14 @@
 		}
 		exitFullscreen() { return Promise.resolve(); }
 		get fullscreenElement() { return null; }
+		// (the prefixed names of Chrome and Safari, and the access of
+		// frames to their storage, which they have)
+		webkitExitFullscreen() { return Promise.resolve(); }
+		get webkitFullscreenElement() { return null; }
+		get webkitIsFullScreen() { return false; }
+		get prerendering() { return false; }
+		hasStorageAccess() { return Promise.resolve(true); }
+		requestStorageAccess() { return Promise.resolve(); }
 	}
 	mixin(Document, parentNodeMethods);
 	defineHandlers(Document.prototype);
@@ -2451,7 +2491,7 @@
 		userAgent: D.userAgent, appVersion: D.userAgent.replace(/^Mozilla\//, ""),
 		appName: "Netscape", appCodeName: "Mozilla", product: "Gecko", vendor: "Cogent Core",
 		platform: D.platform, language: D.languages[0], languages: D.languages, onLine: true, cookieEnabled: true,
-		hardwareConcurrency: 4, maxTouchPoints: 0, doNotTrack: null, webdriver: false, pdfViewerEnabled: false,
+		hardwareConcurrency: 4, deviceMemory: 8, maxTouchPoints: 0, doNotTrack: null, webdriver: false, pdfViewerEnabled: false,
 		plugins: [], mimeTypes: [],
 		sendBeacon() { return true; },
 		javaEnabled() { return false; },
@@ -2459,6 +2499,15 @@
 		permissions: { query() { return Promise.resolve({ state: "denied", addEventListener() {} }); } },
 		storage: { estimate() { return Promise.resolve({ quota: 0, usage: 0 }); }, persist() { return Promise.resolve(false); } },
 		userActivation: { hasBeenActive: false, isActive: false },
+		// the locks of the page (Web Locks), which it alone takes here: a
+		// request gets its lock at once
+		locks: {
+			request(name, opts, cb) {
+				if (typeof opts === "function") cb = opts;
+				return Promise.resolve().then(() => cb({ name: String(name), mode: (opts && opts.mode) || "exclusive" }));
+			},
+			query() { return Promise.resolve({ held: [], pending: [] }); },
+		},
 		// no cameras or microphones (Google account security pages list
 		// them), and no credentials of the browser (passkeys or saved
 		// passwords): sites fall back to their other ways
@@ -3670,10 +3719,11 @@
 		MediaSource, SourceBuffer, SourceBufferList,
 		TextTrack, TextTrackList: TrackList, AudioTrackList: TrackList, VideoTrackList: TrackList,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
-		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
+		screenX: 0, screenY: 0, screenLeft: 0, screenTop: 0,
+		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
-		devicePixelRatio: 1, status: "", isSecureContext: true,
+		devicePixelRatio: 1, status: "", isSecureContext: true, OffscreenCanvas, BroadcastChannel,
 		Node, Element, HTMLElement, Text, Comment, CDATASection, ProcessingInstruction, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,

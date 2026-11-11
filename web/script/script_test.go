@@ -1446,3 +1446,25 @@ func TestFetchRequestRedefined(t *testing.T) {
 	assert.Equal(t, "POST|https://example.com/x|include", run(t, e,
 		`var q = new Request("/x", { method: "post", credentials: "include" }); var c = q.clone(); [c.method, c.url, c.credentials].join("|")`))
 }
+
+// TestSmallBrowserAPIs tests the small APIs of browsers that pages (as
+// youtube.com) look for: the position of the window, the memory of the
+// device, Web Locks, BroadcastChannel, OffscreenCanvas and the state of
+// the document.
+func TestSmallBrowserAPIs(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "0|0|0|0|0|8|false|null|object", run(t, e,
+		`[screenX, screenY, screenLeft, screen.availTop, screen.availLeft, navigator.deviceMemory, document.prerendering, String(document.webkitFullscreenElement), typeof new OffscreenCanvas(10, 10).getContext("2d")].join("|")`))
+	run(t, e, `var got = [];
+		navigator.locks.request("l", lock => { got.push("lock " + lock.name); });
+		document.hasStorageAccess().then(v => got.push("access " + v));
+		var a = new BroadcastChannel("ch"), b = new BroadcastChannel("ch"), c = new BroadcastChannel("other");
+		b.onmessage = e => got.push("b " + e.data.x);
+		c.onmessage = e => got.push("c " + e.data.x);
+		a.onmessage = e => got.push("a " + e.data.x);
+		a.postMessage({ x: 1 });`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got.sort().join(",")`)
+		return v == "access true,b 1,lock l"
+	}, 3*time.Second, 20*time.Millisecond)
+}
