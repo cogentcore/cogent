@@ -44,8 +44,11 @@ import (
 // pages (by origin).
 var localStorage = script.NewStorage()
 
-// maxConsole is the number of console messages that a page keeps.
-const maxConsole = 500
+// maxConsole is the number of console messages that a page keeps (the
+// last ones), enough for those of the whole load of a page, which are
+// saved with it (see [Page.saveDOM]): with 500, those of the start of the
+// load of a watch page of youtube.com were gone a minute later.
+const maxConsole = 10000
 
 // pageScripts is the state of the scripts of a page (see [Page.Scripts]).
 // Its fields other than the console are used in the tasks of its engine
@@ -130,6 +133,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, ope
 		ComputedStyle: ps.computedStyle,
 		Viewport:      ps.viewport,
 		MediaMatches:  func(q string) bool { return ps.context().MediaMatches(q) },
+		Media:         pg,
 		Navigate:      ps.navigate,
 		Submit:        ps.submit,
 		SubmitFrame:   ps.submitFrame,
@@ -223,6 +227,10 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// elements in them, as of font-size: 1cqw, not to be shown at the
 	// size of the viewport until the new widgets are laid out
 	ctx.KeepContainerSizes(ps.ctx)
+	// the matches of the style rules of the elements that have not changed
+	// are those of the last read (the most of its time, as for the many
+	// times that npr.org was read again as it loaded)
+	ctx.ReuseStyles(ps.ctx)
 	content := newPageContent()
 	err := htmlcore.ReadDocument(ctx, content, ps.doc)
 	ps.ctx = ctx
@@ -251,7 +259,11 @@ func (ps *pageScripts) render() func() {
 		return nil
 	}
 	if d := time.Since(start); Settings.VerboseConsole && d >= 50*time.Millisecond {
-		ps.log(slog.LevelDebug, fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond)))
+		msg := fmt.Sprintf("reading the page took %v", d.Round(time.Millisecond))
+		if r := ps.ctx.Reused(); r != "" {
+			msg += " (style rules: " + r + ")"
+		}
+		ps.log(slog.LevelDebug, msg)
 	}
 	ps.pg.preLayoutContent(content)
 	ps.renders++
@@ -425,6 +437,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		}
 		ok = ps.ctx.Reread(self, children)
 		opens := pg.attachFrames(content)
+		pg.attachVideos(content) // (as a script sets the source of a video)
 		for _, fp := range pg.frames {
 			fp.setShown()
 		}
@@ -540,33 +553,44 @@ func (ps *pageScripts) hoverAt(pos image.Point) {
 // in the window (nil if it is not in the page), and whether the position
 // is in the page of a frame of the page, whose iframe element it then
 // returns, as the page in the frame gets the events of the mouse there,
-// as in browsers.
+// as in browsers. It is that of the widget that gets the events of the
+// mouse there (see core.Scene.WidgetAt), in the order of rendering, with
+// the widgets out of flow of their parents: as the dialog of pexels.com,
+// fixed in an empty portal at the end of the body, which a walk of the
+// boxes of the widgets missed, so that the elements under it got the
+// events of the mouse over them.
 func (ps *pageScripts) nodeAt(pos image.Point) (deepest *html.Node, framed bool) {
-	var visit func(wb *core.WidgetBase)
-	visit = func(wb *core.WidgetBase) {
+	pg := ps.pg
+	if pg.Scene == nil || !pos.In(pg.Geom.TotalBBox) {
+		return nil, false
+	}
+	// the widgets from it up to the page, if it is in the page (not a
+	// dialog of the app, over it)
+	var path []*core.WidgetBase
+	in := false
+	for w := pg.Scene.WidgetAt(pos); w != nil; {
+		wb := w.AsWidget()
+		if wb == pg.AsWidget() {
+			in = true
+			break
+		}
+		path = append(path, wb)
+		w, _ = wb.Parent.(core.Widget)
+	}
+	if !in {
+		return nil, false
+	}
+	// the deepest element, down from the page, until a frame
+	for i := len(path) - 1; i >= 0; i-- {
+		wb := path[i]
+		if _, isFrame := wb.This.(*Page); isFrame {
+			return deepest, true // (of the iframe that it is in)
+		}
 		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
 			deepest = n
 		}
-		kids := wb.Children
-		for i := len(kids) - 1; i >= 0; i-- {
-			kw := core.AsWidget(kids[i])
-			if kw == nil || kw.StateIs(states.Invisible) || (kw.Styles.Opacity <= 0 && kw.Styles.Abilities == 0) {
-				continue
-			}
-			if pos.In(kw.Geom.TotalBBox) {
-				if _, isFrame := kw.This.(*Page); isFrame {
-					framed = true // (of the iframe that it is in)
-					return
-				}
-				visit(kw)
-				return
-			}
-		}
 	}
-	if pos.In(ps.pg.Geom.TotalBBox) {
-		visit(ps.pg.AsWidget())
-	}
-	return
+	return deepest, false
 }
 
 // clientPos returns the given position in the window in the CSS px of the
@@ -1400,8 +1424,10 @@ func (pg *Page) showScripts(ps *pageScripts) {
 	}
 	pg.scripts = ps
 	if ps == nil {
+		pg.mediaEngine.Store(nil)
 		return
 	}
+	pg.mediaEngine.Store(ps.engine)
 	ps.shown = true
 	// (the tasks that hold the page for long, which it is not responsive
 	// for, are in a verbose console)

@@ -1264,3 +1264,38 @@ func TestConsoleOpenedBy(t *testing.T) {
 		assert.Contains(t, all, "at go (")
 	})
 }
+
+// TestScriptsHoverFixedInPortal tests that the scripts get the events of
+// the mouse over a fixed dialog in an empty portal at the end of the body
+// (as the dialog of a video of pexels.com, which React renders in a
+// portal), not the elements under it.
+func TestScriptsHoverFixedInPortal(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><div id="grid" style="height: 400px; background: #ccc">grid</div>` +
+			`<div id="portal"><div id="overlay" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5)"></div></div>` +
+			`<p id="log"></p><script>document.addEventListener("mouseover", e => { document.getElementById("log").textContent += " " + e.target.id; });</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		b.AsyncLock()
+		var grid *core.WidgetBase
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "grid" && grid == nil {
+				grid = wb
+			}
+			return tree.Continue
+		})
+		b.AsyncUnlock()
+		require.NotNil(t, grid)
+		bb := grid.Geom.TotalBBox
+		c := bb.Min.Add(bb.Size().Div(2))
+		b.AsyncLock()
+		pg.scripts.hoverAt(c)
+		b.AsyncUnlock()
+	}, func() {
+		settle(pg)
+		assert.Eventually(t, func() bool {
+			v, _ := pg.scripts.engine.RunString(`document.getElementById("log").textContent`)
+			return strings.TrimSpace(fmt.Sprint(v)) == "overlay"
+		}, 3*time.Second, 20*time.Millisecond, "the overlay gets the mouse over it")
+	})
+}

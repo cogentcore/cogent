@@ -109,6 +109,8 @@ func (e *Engine) defineNet() {
 	}
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
 	e.setMediaFuncs(set)
+	e.setMediaPlayerFuncs(set)
+	e.setMSEFuncs(set)
 
 	set("pageURL", func(call goja.FunctionCall) goja.Value { return vm.ToValue(e.opts.PageURL) })
 	set("baseURL", func(call goja.FunctionCall) goja.Value {
@@ -332,10 +334,10 @@ func (e *Engine) defineNet() {
 				return
 			}
 			defer resp.Body.Close()
-			if resp.StatusCode >= 400 {
-				e.logf(slog.LevelWarn, "%s %s: %s", m, logURL(u), resp.Status)
-			}
 			data, err := io.ReadAll(resp.Body)
+			if resp.StatusCode >= 400 {
+				e.logf(slog.LevelWarn, "%s %s: %s%s", m, logURL(u), resp.Status, errorBody(resp, data))
+			}
 			if err != nil {
 				e.callBack(cb, 0, "", nil, nil, "", err.Error())
 				return
@@ -470,6 +472,9 @@ func logURL(u string) string {
 func (e *Engine) request(u, method string, headers []string, body []byte, hasBody, credentials bool) (*http.Response, error) {
 	if strings.HasPrefix(u, "blob:") {
 		return e.blobResponse(u)
+	}
+	if strings.HasPrefix(u, "data:") {
+		return dataResponse(u)
 	}
 	if (method == "" || method == "GET") && !hasBody && len(headers) == 0 && e.opts.GetURL != nil {
 		return e.opts.GetURL(u)
@@ -965,4 +970,35 @@ func (e *Engine) blobResponse(u string) (*http.Response, error) {
 	}
 	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
 		Body: io.NopCloser(strings.NewReader(b.data))}, nil
+}
+
+// dataResponse returns the response of a data: URL, of its data and its
+// type, whatever the method, as in browsers (as a check of youtube.com for
+// blockers of its ads, which fetches a Request of a data: URL).
+func dataResponse(u string) (*http.Response, error) {
+	data, err := dataURL(u)
+	if err != nil {
+		return nil, err
+	}
+	meta, _, _ := strings.Cut(strings.TrimPrefix(u, "data:"), ",")
+	typ := strings.TrimSuffix(meta, ";base64")
+	if typ == "" {
+		typ = "text/plain;charset=US-ASCII"
+	}
+	h := http.Header{}
+	h.Set("Content-Type", typ)
+	pu, _ := neturl.Parse(u)
+	return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Header: h, Request: &http.Request{URL: pu},
+		Body: io.NopCloser(strings.NewReader(data))}, nil
+}
+
+// errorBody returns the text of the body of a failed response, if it is
+// short text (as JSON), for the console: with what was wrong (as the 400
+// Bad Request of the API of the player of youtube.com, which said why).
+func errorBody(resp *http.Response, data []byte) string {
+	ct := resp.Header.Get("Content-Type")
+	if len(data) == 0 || len(data) > 2000 || !(strings.HasPrefix(ct, "text/") || strings.Contains(ct, "json")) || !utf8.Valid(data) {
+		return ""
+	}
+	return ": " + strings.Join(strings.Fields(string(data)), " ")
 }

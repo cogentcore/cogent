@@ -247,6 +247,14 @@
 		D.removeAttr = attr(removeAttr, true);
 	}
 
+	// bindNode makes the given new object (of a constructor of a node, as
+	// of a subclass of DocumentFragment, as the TemplateInstance of the
+	// player of pexels.com) the wrapper of the given new node.
+	function bindNode(o, id) {
+		Object.defineProperty(o, ID, { value: id });
+		wrappers.set(id, o);
+	}
+
 	function idOf(n) {
 		if (n === null || n === undefined || n[ID] === undefined) {
 			throw new TypeError("the value is not a node");
@@ -652,6 +660,7 @@
 		deleteData(o, n) { this.replaceData(o, n, ""); }
 	}
 	class Text extends CharacterData {
+		constructor(data) { super(); if (this[ID] === undefined) bindNode(this, D.createText(data === undefined ? "" : String(data))); }
 		get wholeText() { return this.data; }
 		splitText(o) {
 			const d = this.data;
@@ -661,7 +670,16 @@
 			return t;
 		}
 	}
-	class Comment extends CharacterData {}
+	class Comment extends CharacterData {
+		constructor(data) { super(); if (this[ID] === undefined) bindNode(this, D.createComment(data === undefined ? "" : String(data))); }
+	}
+	// (never made from HTML, but there for scripts that patch the
+	// prototypes of all node types, as the shady DOM polyfill of
+	// youtube.com, which stopped at them)
+	class CDATASection extends Text {}
+	class ProcessingInstruction extends CharacterData {
+		get target() { return ""; }
+	}
 	class DocumentType extends Node {
 		get name() { return D.name(this[ID]); }
 		get publicId() { return ""; }
@@ -1399,7 +1417,27 @@
 	});
 	const HTMLSourceElement = elementClass(["source"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["srcset", "sizes", "media", "type"]); });
 	const HTMLPictureElement = elementClass(["picture"], HTMLElement);
-	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["kind", "srclang", "label"], ["default"]); });
+	// a track element has its text track (track), of its kind, label and
+	// language (as the player of pexels.com, which sets the mode of the
+	// track of the track elements that it adds, which was missing)
+	const trackOfElement = new WeakMap();
+	const HTMLTrackElement = elementClass(["track"], HTMLElement, cls => {
+		reflectURL(cls, ["src"]);
+		reflect(cls, ["kind", "srclang", "label"], ["default"]);
+		Object.defineProperty(cls.prototype, "track", {
+			get() {
+				let t = trackOfElement.get(this);
+				if (!t) {
+					t = new TextTrack(this.kind || "subtitles", this.label, this.srclang);
+					trackOfElement.set(this, t);
+				}
+				t.kind = this.kind || "subtitles"; t.label = this.label; t.language = this.srclang; t.id = this.id;
+				return t;
+			},
+		});
+		Object.defineProperty(cls.prototype, "readyState", { get() { return 0; } });
+		Object.assign(cls, { NONE: 0, LOADING: 1, LOADED: 2, ERROR: 3 });
+	});
 	const HTMLTimeElement = elementClass(["time"], HTMLElement, cls => { reflect(cls, ["dateTime"]); });
 	const HTMLDataElement = elementClass(["data"], HTMLElement, cls => { reflect(cls, ["value"]); });
 	const HTMLDataListElement = elementClass(["datalist"], HTMLElement, cls => {
@@ -1567,19 +1605,85 @@
 		cls.prototype.toDataURL = function () { return "data:,"; };
 		reflect(cls, ["width", "height"]);
 	});
-	// Media elements (video and audio) are not played, but the metadata
+	// OffscreenCanvas is a canvas that is not in a document, with a 2D
+	// context as that of canvas elements (which draws nothing).
+	class OffscreenCanvas extends EventTarget {
+		constructor(width, height) { super(); this.width = width >>> 0; this.height = height >>> 0; }
+		getContext(type) {
+			if (String(type).toLowerCase() !== "2d") return null;
+			if (!this._ctx) this._ctx = new CanvasRenderingContext2D(this);
+			return this._ctx;
+		}
+		convertToBlob(opts) { return Promise.resolve(new Blob([], { type: (opts && opts.type) || "image/png" })); }
+		transferToImageBitmap() { return { width: this.width, height: this.height, close() {} }; }
+	}
+	// BroadcastChannel sends messages to the other channels of its name in
+	// the page (the only one of its origin here), asynchronously.
+	const broadcastChannels = new Set();
+	class BroadcastChannel extends EventTarget {
+		constructor(name) { super(); this.name = String(name); this._closed = false; this.onmessage = null; this.onmessageerror = null; broadcastChannels.add(this); }
+		postMessage(data) {
+			if (this._closed) throw domException("InvalidStateError", "the channel is closed");
+			const msg = cloneJSON(data);
+			for (const c of broadcastChannels) {
+				if (c === this || c.name !== this.name) continue;
+				setTimeout(() => {
+					if (c._closed) return;
+					const ev = new MessageEvent("message", { data: cloneDecode(JSON.parse(msg)), origin: location.origin });
+					if (typeof c.onmessage === "function") c.onmessage(ev);
+					c.dispatchEvent(ev);
+				}, 0);
+			}
+		}
+		close() { this._closed = true; broadcastChannels.delete(this); }
+	}
+	// Media elements (video and audio): the video elements are played by
+	// the player of the app (D.hasMediaPlayer, see MediaPlayer in Go), which
+	// sends the events of their playing (D.mediaEvents) with its state. The
+	// others (and all without a player) are not played, but the metadata
 	// (duration and size) of their source is loaded (D.mediaMetadata) when
 	// a script first uses their state or listens to their events, and when
 	// their source changes, as browsers do for preload="metadata": pages
 	// wait for it (as for the chapters of the video of github.com). Their
 	// play() is rejected as when autoplay is not allowed.
+	const mediaPlayer = D.hasMediaPlayer();
 	const mediaEvents = new Set(["loadstart", "durationchange", "loadedmetadata", "loadeddata", "canplay",
 		"canplaythrough", "error", "emptied", "progress", "suspend", "abort"]);
 	const mediaStates = { HAVE_NOTHING: 0, HAVE_METADATA: 1, HAVE_CURRENT_DATA: 2, HAVE_FUTURE_DATA: 3, HAVE_ENOUGH_DATA: 4,
 		NETWORK_EMPTY: 0, NETWORK_IDLE: 1, NETWORK_LOADING: 2, NETWORK_NO_SOURCE: 3 };
+	// TrackList is a list of the tracks of a media element (TextTrackList,
+	// AudioTrackList, VideoTrackList).
+	class TrackList extends EventTarget {
+		constructor() { super(); this._list = []; }
+		get length() { return this._list.length; }
+		getTrackById(id) { return this._list.find(t => t.id === id) || null; }
+		_add(t) {
+			this[this._list.length] = t;
+			this._list.push(t);
+			const ev = new Event("addtrack");
+			ev.track = t;
+			this.dispatchEvent(ev);
+		}
+		[Symbol.iterator]() { return this._list[Symbol.iterator](); }
+	}
+	defineSimpleHandlers(TrackList, ["addtrack", "removetrack", "change"]);
+	class TextTrack extends EventTarget {
+		constructor(kind, label, language) {
+			super();
+			Object.assign(this, { kind: String(kind || "subtitles"), label: String(label || ""), language: String(language || ""), id: "", mode: "hidden", inBandMetadataTrackDispatchType: "" });
+			this.cues = [];
+			this.activeCues = [];
+		}
+		addCue(c) { this.cues.push(c); }
+		removeCue(c) { this.cues = this.cues.filter(x => x !== c); }
+	}
+	defineSimpleHandlers(TextTrack, ["cuechange"]);
+
 	const HTMLMediaElement = elementClass(["video", "audio"], HTMLElement, cls => {
 		reflectURL(cls, ["src"]);
-		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "muted", "playsInline"]);
+		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "playsInline"]);
+		// played by the player of the app
+		cls.prototype._played = function () { return mediaPlayer && this.localName === "video"; };
 		Object.assign(cls, mediaStates);
 		Object.assign(cls.prototype, mediaStates);
 		const srcDesc = Object.getOwnPropertyDescriptor(cls.prototype, "src");
@@ -1591,7 +1695,8 @@
 		// the media state of the element
 		cls.prototype._media = function () {
 			if (!this.__media) {
-				this.__media = { src: null, readyState: 0, networkState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0, volume: 1, rate: 1 };
+				this.__media = { src: null, readyState: 0, networkState: 0, duration: NaN, width: 0, height: 0, error: null, currentTime: 0, volume: 1, rate: 1,
+					paused: true, ended: false, muted: this.hasAttribute("muted") };
 			}
 			return this.__media;
 		};
@@ -1616,6 +1721,12 @@
 			}
 			m.networkState = 2;
 			Promise.resolve().then(() => { if (m.src === src) this.dispatchEvent(new Event("loadstart")); });
+			if (this._played()) { // (its events are sent by the player)
+				const ms = mediaSourcesByURL.get(src);
+				if (ms) ms._attach(this);
+				D.mediaLoad(this[ID]);
+				return;
+			}
 			D.mediaMetadata(newCallback((duration, width, height, err) => {
 				if (m.src !== src) return; // another source since
 				if (err) {
@@ -1643,29 +1754,108 @@
 		state("currentSrc", m => m.src || "");
 		const noRange = () => { throw domException("IndexSizeError", "no time range"); };
 		const ranges = { length: 0, start: noRange, end: noRange };
-		for (const p of ["buffered", "played", "seekable"]) Object.defineProperty(cls.prototype, p, { get() { return ranges; } });
+		for (const p of ["played", "seekable"]) Object.defineProperty(cls.prototype, p, { get() { return ranges; } });
+		// the buffered ranges of a MediaSource
+		Object.defineProperty(cls.prototype, "buffered", {
+			get() {
+				const ms = this.__mediaSource;
+				return ms && ms._url === this._media().src ? timeRanges(ms._buffered()) : ranges;
+			},
+		});
 		Object.defineProperty(cls.prototype, "currentTime", {
-			get() { return this._media().currentTime; },
+			get() {
+				// (the time of the player as it plays, between timeupdates)
+				const m = this._media();
+				if (this._played() && !m.paused) {
+					const t = D.mediaTime(this[ID]);
+					if (t >= 0) m.currentTime = t;
+				}
+				return m.currentTime;
+			},
 			set(v) {
 				const m = this._media();
 				m.currentTime = Math.max(0, Number(v) || 0);
 				if (Number.isFinite(m.duration)) m.currentTime = Math.min(m.currentTime, m.duration);
+				if (this._played()) {
+					D.mediaSeek(this[ID], m.currentTime);
+					m.ended = false;
+					this.dispatchEvent(new Event("seeking"));
+					Promise.resolve().then(() => this.dispatchEvent(new Event("seeked")));
+				}
 				this.dispatchEvent(new Event("timeupdate"));
 			},
 		});
-		Object.defineProperty(cls.prototype, "volume", { get() { return this._media().volume; }, set(v) { this._media().volume = Number(v); this.dispatchEvent(new Event("volumechange")); } });
+		const setVolume = (el, volume, muted) => {
+			const m = el._media();
+			if (m.volume === volume && m.muted === muted) return;
+			Object.assign(m, { volume, muted });
+			if (el._played()) D.mediaVolume(el[ID], volume, muted);
+			el.dispatchEvent(new Event("volumechange"));
+		};
+		Object.defineProperty(cls.prototype, "volume", {
+			get() { return this._media().volume; },
+			set(v) {
+				v = Number(v);
+				if (!(v >= 0 && v <= 1)) throw domException("IndexSizeError", "the volume is not between 0 and 1");
+				setVolume(this, v, this._media().muted);
+			},
+		});
+		Object.defineProperty(cls.prototype, "muted", { get() { return this._media().muted; }, set(v) { setVolume(this, this._media().volume, !!v); } });
+		Object.defineProperty(cls.prototype, "defaultMuted", {
+			get() { return this.hasAttribute("muted"); },
+			set(v) { if (v) this.setAttribute("muted", ""); else this.removeAttribute("muted"); },
+		});
 		Object.defineProperty(cls.prototype, "playbackRate", { get() { return this._media().rate; }, set(v) { this._media().rate = Number(v); this.dispatchEvent(new Event("ratechange")); } });
 		Object.defineProperty(cls.prototype, "defaultPlaybackRate", { get() { return 1; }, set() {} });
-		Object.defineProperty(cls.prototype, "paused", { get() { return true; } });
-		for (const p of ["ended", "seeking"]) Object.defineProperty(cls.prototype, p, { get() { return false; } });
+		Object.defineProperty(cls.prototype, "paused", { get() { return this._media().paused; } });
+		Object.defineProperty(cls.prototype, "ended", { get() { return this._media().ended; } });
+		Object.defineProperty(cls.prototype, "seeking", { get() { return false; } });
 		cls.prototype.play = function () {
 			this._mediaLoad();
-			return Promise.reject(domException("NotAllowedError", "media playback is not supported"));
+			if (!this._played()) return Promise.reject(domException("NotAllowedError", "media playback is not supported"));
+			const err = D.mediaPlay(this[ID]);
+			if (err) return Promise.reject(domException("NotSupportedError", err));
+			const m = this._media();
+			if (m.paused) { // (the player sends play and playing)
+				m.paused = false;
+				m.ended = false;
+			}
+			return Promise.resolve();
 		};
-		cls.prototype.pause = function () {};
+		cls.prototype.pause = function () {
+			if (!this._played()) return;
+			const m = this._media();
+			D.mediaPause(this[ID]);
+			m.paused = true; // (the player sends pause)
+		};
 		cls.prototype.load = function () { this._mediaLoad(true); };
-		cls.prototype.canPlayType = function (t) { return /^(video|audio)\/mp4\b/i.test(String(t)) ? "maybe" : ""; };
+		// the types of media that can be played: with the player (FFmpeg),
+		// also WebM, QuickTime and Ogg, and HLS (as in Safari), which players
+		// of web pages (as video.js) then set as the source (instead of MSE,
+		// MediaSource, which is not supported)
+		cls.prototype.canPlayType = function (t) {
+			t = String(t).toLowerCase();
+			if (/^(video|audio)\/mp4\b/.test(t)) return "maybe";
+			if (!this._played()) return "";
+			return /^(video\/(webm|quicktime|ogg)|audio\/(webm|ogg|mpeg|mp3|aac|wav)|application\/(vnd\.apple\.mpegurl|x-mpegurl)|audio\/(x-)?mpegurl)\b/.test(t) ? "maybe" : "";
+		};
 		cls.prototype.fastSeek = function (t) { this.currentTime = t; };
+		// the lists of tracks of the media (text tracks, as of captions, are
+		// not shown; the audio and video tracks are those of the player)
+		for (const p of ["textTracks", "audioTracks", "videoTracks"]) {
+			Object.defineProperty(cls.prototype, p, {
+				get() {
+					const k = "__" + p;
+					if (!this[k]) this[k] = new TrackList();
+					return this[k];
+				},
+			});
+		}
+		cls.prototype.addTextTrack = function (kind, label, language) {
+			const t = new TextTrack(kind, label, language);
+			this.textTracks._add(t);
+			return t;
+		};
 		const addListener = cls.prototype.addEventListener;
 		cls.prototype.addEventListener = function (type, ...rest) {
 			const r = addListener.call(this, type, ...rest);
@@ -1673,6 +1863,153 @@
 			return r;
 		};
 	});
+	// ---- Media Source Extensions (see mse.go) ----
+
+	// timeRanges returns TimeRanges of the given flat array of the starts
+	// and ends of ranges.
+	const timeRanges = flat => {
+		const n = flat.length / 2;
+		const check = i => { if (!(i >= 0 && i < n)) throw domException("IndexSizeError", "no time range " + i); };
+		return { length: n, start(i) { check(i); return flat[2 * i]; }, end(i) { check(i); return flat[2 * i + 1]; } };
+	};
+	// intersectRanges returns the intersection of the given flat arrays of
+	// ranges (the buffered ranges of a media element, of its buffers).
+	const intersectRanges = (a, b) => {
+		const r = [];
+		for (let i = 0; i < a.length; i += 2) {
+			for (let j = 0; j < b.length; j += 2) {
+				const s = Math.max(a[i], b[j]), e = Math.min(a[i + 1], b[j + 1]);
+				if (s < e) r.push(s, e);
+			}
+		}
+		return r;
+	};
+	const mediaSourcesByURL = new Map(); // object URL -> MediaSource
+
+	class SourceBuffer extends EventTarget {
+		constructor(ms, id, type) {
+			super();
+			Object.assign(this, { _ms: ms, _id: id, _type: type, updating: false, mode: "segments", _offset: 0, appendWindowStart: 0, appendWindowEnd: Infinity });
+		}
+		// the timestampOffset, which is added to the times of the media
+		// appended after it is set
+		get timestampOffset() { return this._offset; }
+		set timestampOffset(v) {
+			if (this.updating) throw domException("InvalidStateError", "the SourceBuffer is updating");
+			this._offset = Number(v) || 0;
+			D.mseSetOffset(this._id, this._offset);
+		}
+		get buffered() { return timeRanges(D.mseBuffered(this._id)); }
+		_ranges() { return D.mseBuffered(this._id); }
+		// _op does the given operation of the buffer at once (as an append,
+		// whose data is copied), with its events after (as in browsers).
+		_op(f) {
+			const ms = this._ms;
+			if (ms.readyState === "closed") throw domException("InvalidStateError", "the MediaSource is closed");
+			if (this.updating) throw domException("InvalidStateError", "the SourceBuffer is updating");
+			if (ms.readyState === "ended") {
+				ms.readyState = "open";
+				ms.dispatchEvent(new Event("sourceopen"));
+			}
+			const err = f();
+			this.updating = true;
+			this.dispatchEvent(new Event("updatestart"));
+			setTimeout(() => {
+				if (!this.updating) return; // (aborted)
+				this.updating = false;
+				this.dispatchEvent(new Event(err ? "error" : "update"));
+				this.dispatchEvent(new Event("updateend"));
+			}, 0);
+		}
+		appendBuffer(data) { this._op(() => D.mseAppend(this._id, data)); }
+		remove(start, end) { this._op(() => { D.mseRemove(this._id, Number(start), Number(end)); return ""; }); }
+		abort() {
+			D.mseAbort(this._id);
+			if (this.updating) {
+				this.updating = false;
+				this.dispatchEvent(new Event("abort"));
+				this.dispatchEvent(new Event("updateend"));
+			}
+		}
+		changeType(type) { this._type = String(type); }
+	}
+	defineSimpleHandlers(SourceBuffer, ["updatestart", "update", "updateend", "error", "abort"]);
+
+	class SourceBufferList extends EventTarget {
+		constructor() { super(); this._list = []; }
+		get length() { return this._list.length; }
+		_set(list) {
+			for (let i = 0; i < this._list.length; i++) delete this[i];
+			this._list = list;
+			list.forEach((b, i) => { this[i] = b; });
+		}
+		[Symbol.iterator]() { return this._list[Symbol.iterator](); }
+	}
+	defineSimpleHandlers(SourceBufferList, ["addsourcebuffer", "removesourcebuffer"]);
+
+	class MediaSource extends EventTarget {
+		constructor() {
+			super();
+			const [id, url] = D.mseCreate();
+			Object.assign(this, { _id: id, _url: url, readyState: "closed", _duration: NaN, _el: null });
+			this.sourceBuffers = new SourceBufferList();
+			this.activeSourceBuffers = this.sourceBuffers;
+			mediaSourcesByURL.set(url, this);
+		}
+		static isTypeSupported(t) { return D.mseTypeSupported(String(t)); }
+		static get canConstructInDedicatedWorker() { return false; }
+		get duration() { return this._duration; }
+		set duration(v) {
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			this._duration = Number(v);
+			D.mseSetDuration(this._id, this._duration);
+			const el = this._el;
+			if (el) {
+				el._media().duration = this._duration;
+				el.dispatchEvent(new Event("durationchange"));
+			}
+		}
+		addSourceBuffer(type) {
+			type = String(type);
+			if (!MediaSource.isTypeSupported(type)) throw domException("NotSupportedError", "the type is not supported: " + type);
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			const sb = new SourceBuffer(this, D.mseAddBuffer(this._id, type), type);
+			this.sourceBuffers._set([...this.sourceBuffers._list, sb]);
+			this.sourceBuffers.dispatchEvent(new Event("addsourcebuffer"));
+			return sb;
+		}
+		removeSourceBuffer(sb) {
+			D.mseRemoveBuffer(sb._id);
+			this.sourceBuffers._set(this.sourceBuffers._list.filter(b => b !== sb));
+			this.sourceBuffers.dispatchEvent(new Event("removesourcebuffer"));
+		}
+		endOfStream() {
+			if (this.readyState !== "open") throw domException("InvalidStateError", "the MediaSource is not open");
+			this.readyState = "ended";
+			D.mseEnd(this._id);
+			this.dispatchEvent(new Event("sourceended"));
+		}
+		setLiveSeekableRange() {}
+		clearLiveSeekableRange() {}
+		// _attach attaches the media source to the given media element,
+		// whose source is its object URL, which opens it.
+		_attach(el) {
+			this._el = el;
+			el.__mediaSource = this;
+			if (this.readyState !== "closed") return;
+			this.readyState = "open";
+			Promise.resolve().then(() => this.dispatchEvent(new Event("sourceopen")));
+		}
+		// _buffered returns the buffered ranges of its media (those of all
+		// of its buffers).
+		_buffered() {
+			const list = this.sourceBuffers._list;
+			if (!list.length) return [];
+			return list.slice(1).reduce((r, b) => intersectRanges(r, b._ranges()), list[0]._ranges());
+		}
+	}
+	defineSimpleHandlers(MediaSource, ["sourceopen", "sourceended", "sourceclose"]);
+
 	const HTMLDetailsElement = elementClass(["details"], HTMLElement, cls => reflect(cls, [], ["open"]));
 	const HTMLDialogElement = elementClass(["dialog"], HTMLElement, cls => {
 		reflect(cls, [], ["open"]);
@@ -1711,7 +2048,17 @@
 	const HTMLHRElement = elementClass(["hr"]);
 	const HTMLFieldSetElement = elementClass(["fieldset"]);
 	const HTMLUnknownElement = class extends HTMLElement {};
-	const SVGElement = class extends Element {};
+	// SVGElement is the class of the elements of SVG, with the geometry of
+	// those that are drawn (SVGGraphicsElement), as the text of the labels
+	// of pexels.com, whose getBBox was missing
+	const SVGElement = class extends Element {
+		getBBox() { const r = this.getBoundingClientRect(); return { x: 0, y: 0, width: r.width, height: r.height }; }
+		getScreenCTM() { return new DOMMatrixStub(); }
+		getCTM() { return new DOMMatrixStub(); }
+		getComputedTextLength() { return this.getBoundingClientRect().width; }
+		getTotalLength() { return 0; }
+		getPointAtLength() { return { x: 0, y: 0 }; }
+	};
 	// SVGSVGElement has the methods of svg elements that scripts check for
 	// (as the support check of the VisualEditor of Wikipedia), which make
 	// geometry objects that are not connected to the rendering.
@@ -1720,9 +2067,6 @@
 		createSVGPoint() { return { x: 0, y: 0, matrixTransform() { return { x: this.x, y: this.y }; } }; }
 		createSVGMatrix() { return new DOMMatrixStub(); }
 		createSVGTransform() { return { type: 1, matrix: new DOMMatrixStub(), setMatrix() {}, setTranslate() {}, setScale() {}, setRotate() {} }; }
-		getScreenCTM() { return new DOMMatrixStub(); }
-		getCTM() { return new DOMMatrixStub(); }
-		getBBox() { const r = this.getBoundingClientRect(); return { x: 0, y: 0, width: r.width, height: r.height }; }
 	};
 	// DOMMatrixStub is an identity matrix, for the geometry of SVG.
 	class DOMMatrixStub {
@@ -1862,11 +2206,20 @@
 		}
 		exitFullscreen() { return Promise.resolve(); }
 		get fullscreenElement() { return null; }
+		// (the prefixed names of Chrome and Safari, and the access of
+		// frames to their storage, which they have)
+		webkitExitFullscreen() { return Promise.resolve(); }
+		get webkitFullscreenElement() { return null; }
+		get webkitIsFullScreen() { return false; }
+		get prerendering() { return false; }
+		hasStorageAccess() { return Promise.resolve(true); }
+		requestStorageAccess() { return Promise.resolve(); }
 	}
 	mixin(Document, parentNodeMethods);
 	defineHandlers(Document.prototype);
 	class HTMLDocument extends Document {}
 	class DocumentFragment extends Node {
+		constructor() { super(); if (this[ID] === undefined) bindNode(this, D.createFragment()); }
 		getElementById(id) { return wrap(D.byId(this[ID], String(id))); }
 		get innerHTML() { return D.inner(this[ID]); }
 		set innerHTML(v) { D.setInner(this[ID], String(v)); }
@@ -2177,7 +2530,7 @@
 		userAgent: D.userAgent, appVersion: D.userAgent.replace(/^Mozilla\//, ""),
 		appName: "Netscape", appCodeName: "Mozilla", product: "Gecko", vendor: "Cogent Core",
 		platform: D.platform, language: D.languages[0], languages: D.languages, onLine: true, cookieEnabled: true,
-		hardwareConcurrency: 4, maxTouchPoints: 0, doNotTrack: null, webdriver: false, pdfViewerEnabled: false,
+		hardwareConcurrency: 4, deviceMemory: 8, maxTouchPoints: 0, doNotTrack: null, webdriver: false, pdfViewerEnabled: false,
 		plugins: [], mimeTypes: [],
 		sendBeacon() { return true; },
 		javaEnabled() { return false; },
@@ -2185,6 +2538,15 @@
 		permissions: { query() { return Promise.resolve({ state: "denied", addEventListener() {} }); } },
 		storage: { estimate() { return Promise.resolve({ quota: 0, usage: 0 }); }, persist() { return Promise.resolve(false); } },
 		userActivation: { hasBeenActive: false, isActive: false },
+		// the locks of the page (Web Locks), which it alone takes here: a
+		// request gets its lock at once
+		locks: {
+			request(name, opts, cb) {
+				if (typeof opts === "function") cb = opts;
+				return Promise.resolve().then(() => cb({ name: String(name), mode: (opts && opts.mode) || "exclusive" }));
+			},
+			query() { return Promise.resolve({ held: [], pending: [] }); },
+		},
 		// no cameras or microphones (Google account security pages list
 		// them), and no credentials of the browser (passkeys or saved
 		// passwords): sites fall back to their other ways
@@ -2417,8 +2779,13 @@
 			this._search = null;
 		}
 		static canParse(u, base) { return !!D.parseURL(String(u), base === undefined ? undefined : String(base)); }
-		static createObjectURL(b) { return b instanceof Blob ? D.createObjectURL(b._data, b.type || "") : "blob:" + D.pageURL() + "#" + (++callbackID); }
-		static revokeObjectURL(u) { D.revokeObjectURL(String(u)); }
+		static createObjectURL(b) {
+			if (b instanceof MediaSource) return b._url;
+			return b instanceof Blob ? D.createObjectURL(b._data, b.type || "") : "blob:" + D.pageURL() + "#" + (++callbackID);
+		}
+		// (the URL of a MediaSource stays usable by the player of the page,
+		// as players revoke it once the source is open)
+		static revokeObjectURL(u) { if (!mediaSourcesByURL.has(String(u))) D.revokeObjectURL(String(u)); }
 		_get(i) { return this._parts[i]; }
 		_set(field, v) {
 			const p = this._parts;
@@ -2501,20 +2868,37 @@
 		formData() { return this.text().then(t => { const f = new FormData(); for (const [k, v] of new URLSearchParams(t)) f.append(k, v); return f; }); }
 		get body() { return null; }
 	}
+	// the state of each Request, which fetch uses, not its properties,
+	// which scripts can redefine (as a check of youtube.com for blockers of
+	// its ads, which redefines the url and method of a Request of a data:
+	// URL, expecting its data from fetch, and which posted to the API of its
+	// player instead)
+	const requestState = new WeakMap();
 	class Request extends Body {
 		constructor(input, init) {
 			super();
 			init = init || {};
-			if (input instanceof Request) { this.url = input.url; this.method = input.method; this.headers = new Headers(input.headers); this._body = input._body; }
-			else { this.url = new URL(String(input), D.baseURL()).href; this.method = "GET"; this.headers = new Headers(); }
-			if (init.method) this.method = String(init.method).toUpperCase();
-			if (init.headers) this.headers = new Headers(init.headers);
-			if (init.body !== undefined) this._body = bodyBytes(init.body);
-			this.signal = init.signal || null;
-			this.credentials = init.credentials || "same-origin";
-			this.mode = init.mode || "cors";
+			const from = input instanceof Request ? requestState.get(input) : null;
+			const st = from ? { url: from.url, method: from.method, headers: new Headers(from.headers), body: from.body, signal: from.signal, credentials: from.credentials, mode: from.mode, cache: from.cache }
+				: { url: new URL(String(input), D.baseURL()).href, method: "GET", headers: new Headers(), body: undefined, signal: null, credentials: "same-origin", mode: "cors", cache: "default" };
+			if (init.method) st.method = String(init.method).toUpperCase();
+			if (init.headers) st.headers = new Headers(init.headers);
+			if (init.body !== undefined) st.body = bodyBytes(init.body);
+			if (init.signal !== undefined) st.signal = init.signal || null;
+			if (init.credentials) st.credentials = init.credentials;
+			if (init.mode) st.mode = init.mode;
+			if (init.cache) st.cache = init.cache;
+			requestState.set(this, st);
+			this._body = st.body;
 			this.bodyUsed = false;
 		}
+		get url() { return requestState.get(this).url; }
+		get method() { return requestState.get(this).method; }
+		get headers() { return requestState.get(this).headers; }
+		get signal() { return requestState.get(this).signal; }
+		get credentials() { return requestState.get(this).credentials; }
+		get mode() { return requestState.get(this).mode; }
+		get cache() { return requestState.get(this).cache; }
 		clone() { return new Request(this); }
 	}
 	class Response extends Body {
@@ -2544,14 +2928,28 @@
 		D.fetch(newCallback(cb), url, method, headers, body, !!credentials);
 	}
 
+	// noteEmptyBody logs a request of a method with a body (as POST) whose
+	// body is empty, with the type of the body that the script gave and
+	// where, as such a request of youtube.com (to its API of the player)
+	// was rejected, with no body (400 Bad Request).
+	function noteEmptyBody(method, url, given, body) {
+		if (method === "GET" || method === "HEAD") return;
+		if (body !== undefined && (typeof body === "string" ? body.length : body.byteLength) > 0) return;
+		let type = given === undefined ? "undefined" : given === null ? "null" : typeof given;
+		if (given && typeof given === "object") type = (given.constructor && given.constructor.name) || "object";
+		const stack = String(new Error().stack || "").split("\n").slice(2, 8).join("\n");
+		D.log("debug", method + " " + url + " with an empty body (given: " + type + ")\n" + stack);
+	}
+
 	function fetch(input, init) {
 		let req;
-		try { req = new Request(input, init); } catch (e) { return Promise.reject(e); }
+		try { req = requestState.get(new Request(input, init)); } catch (e) { return Promise.reject(e); }
 		return new Promise((resolve, reject) => {
 			if (req.signal && req.signal.aborted) { reject(domException("AbortError", "the request was aborted")); return; }
 			let done = false;
 			if (req.signal) req.signal.addEventListener("abort", () => { if (!done) { done = true; reject(domException("AbortError", "the request was aborted")); } });
-			goFetch(req.url, req.method, req.headers._flat(), req._body, (status, statusText, headers, body, final, err) => {
+			noteEmptyBody(req.method, req.url, init && init.body !== undefined ? init.body : input instanceof Request ? requestState.get(input).body : undefined, req.body);
+			goFetch(req.url, req.method, req.headers._flat(), req.body, (status, statusText, headers, body, final, err) => {
 				if (done) return;
 				done = true;
 				if (err) { reject(new TypeError("Failed to fetch: " + err)); return; }
@@ -2586,7 +2984,9 @@
 		_setState(s) { this.readyState = s; this.dispatchEvent(new Event("readystatechange")); }
 		send(body) {
 			this.dispatchEvent(new ProgressEvent("loadstart"));
-			goFetch(this._url, this._method, this._headers._flat(), bodyBytes(body), (status, statusText, headers, data, final, err) => {
+			const bytes = bodyBytes(body);
+			noteEmptyBody(this._method, this._url, body, bytes);
+			goFetch(this._url, this._method, this._headers._flat(), bytes, (status, statusText, headers, data, final, err) => {
 				if (this._aborted) return;
 				if (err) {
 					this.readyState = 4; this.status = 0;
@@ -3355,12 +3755,15 @@
 		NodeList, HTMLCollection, ShadowRoot, CSSStyleSheet, Intl,
 		CSSRule, CSSRuleList, CSSStyleRule, CSSGroupingRule, CSSConditionRule, CSSMediaRule, CSSSupportsRule, CSSContainerRule, CSSLayerBlockRule,
 		CSSImportRule, CSSFontFaceRule, CSSPageRule, CSSKeyframesRule, CSSKeyframeRule, CSSNamespaceRule, CSSCharsetRule, MessageChannel, MessagePort, MediaError, Worker,
+		MediaSource, SourceBuffer, SourceBufferList,
+		TextTrack, TextTrackList: TrackList, AudioTrackList: TrackList, VideoTrackList: TrackList,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
-		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
+		screenX: 0, screenY: 0, screenLeft: 0, screenTop: 0,
+		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
-		devicePixelRatio: 1, status: "", isSecureContext: true,
-		Node, Element, HTMLElement, Text, Comment, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
+		devicePixelRatio: 1, status: "", isSecureContext: true, OffscreenCanvas, BroadcastChannel,
+		Node, Element, HTMLElement, Text, Comment, CDATASection, ProcessingInstruction, CharacterData, Document, HTMLDocument, DocumentFragment, DocumentType, Range, Window,
 		HTMLAnchorElement, HTMLAreaElement, HTMLImageElement, HTMLScriptElement, HTMLLinkElement, HTMLStyleElement,
 		HTMLMetaElement, HTMLBaseElement, HTMLIFrameElement, HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement,
 		HTMLOptionElement, HTMLButtonElement, HTMLFormElement, HTMLTemplateElement, HTMLCanvasElement, HTMLMediaElement,
@@ -3667,6 +4070,30 @@
 		w.dispatchEvent(e);
 	};
 
+	// mediaEvents sets the state of the playing of the given video element
+	// (from its player, see MediaPlayer in Go) and dispatches the given
+	// events to it.
+	D.mediaEvents = function (id, st, types) {
+		const el = wrappers.get(id) || wrap(id);
+		if (!(el instanceof HTMLMediaElement)) return;
+		const m = el._media();
+		Object.assign(m, {
+			paused: st.paused, ended: st.ended, currentTime: st.currentTime, volume: st.volume, muted: st.muted,
+			duration: st.duration > 0 ? st.duration : m.duration, width: st.width || m.width, height: st.height || m.height,
+		});
+		for (const t of types) {
+			switch (t) {
+				case "loadedmetadata": m.readyState = Math.max(m.readyState, 1); m.networkState = 1; break;
+				case "loadeddata": case "canplay": case "canplaythrough": case "playing": m.readyState = 4; break;
+				case "error":
+					m.networkState = 3;
+					m.error = new MediaError(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, st.error);
+					break;
+			}
+			el.dispatchEvent(new Event(t));
+		}
+	};
+
 	// frameLoaded fires the load event of the given iframe element, after
 	// the page in its frame has loaded.
 	D.frameLoaded = function (id) {
@@ -3780,7 +4207,10 @@
 	try {
 		Object.defineProperty(g, "length", { get() { return D.windowLength(0); }, configurable: true });
 		if (Object.getPrototypeOf(g) === Object.prototype) {
-			Object.setPrototypeOf(g, new Proxy(Object.prototype, {
+			// the window is a Window, and an EventTarget, of whose prototype
+			// it has its methods (as the shady DOM polyfill of youtube.com
+			// patches them there, for the window too)
+			Object.setPrototypeOf(g, new Proxy(Window.prototype, {
 				get(t, k, r) {
 					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
 					const f = D.windowFrame(0, k);
@@ -3794,6 +4224,7 @@
 					return has;
 				},
 			}));
+			for (const k of ["addEventListener", "removeEventListener", "dispatchEvent"]) delete g[k];
 		}
 	} catch (e) { }
 })(globalThis, __dom);

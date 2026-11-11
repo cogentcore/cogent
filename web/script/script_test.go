@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	neturl "net/url"
 	"strings"
 	"sync"
@@ -1363,4 +1364,193 @@ func TestDeferredScripts(t *testing.T) {
 	<-loaded
 	assert.Equal(t, "head,async,body,defer 1,module,loaded", run(t, e, `order.join(",")`))
 	assert.Empty(t, *logs)
+}
+
+// TestWindowEventTargetPrototype tests that the window has the methods of
+// listeners of the prototype of EventTarget, of which it is an instance,
+// and that all the node types are defined, as the shady DOM polyfill of
+// youtube.com patches their prototypes (which stopped its app, leaving
+// blank boxes).
+func TestWindowEventTargetPrototype(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true|false|true", run(t, e, `[window instanceof EventTarget, Object.prototype.hasOwnProperty.call(window, "addEventListener"), window.addEventListener === EventTarget.prototype.addEventListener].join("|")`))
+	assert.Equal(t, "function|function|true", run(t, e, `[typeof CDATASection, typeof ProcessingInstruction, CDATASection.prototype instanceof Text].join("|")`))
+	// a patch of the prototype is the method of the window
+	assert.Equal(t, "patched:load", run(t, e, `
+		var native = EventTarget.prototype.addEventListener, got = "";
+		EventTarget.prototype.addEventListener = function (type, fn, opts) { got = "patched:" + type; return native.call(this, type, fn, opts); };
+		window.addEventListener("load", function () {});
+		EventTarget.prototype.addEventListener = native;
+		got`))
+	assert.Equal(t, "fired", run(t, e, `
+		var r = "";
+		addEventListener("custom", function () { r = "fired"; });
+		window.dispatchEvent(new Event("custom"));
+		r`), "the methods as global functions")
+}
+
+// TestEmptyBodyLogged tests that a POST with an empty body is logged, with
+// the type of the body that the script gave, as such a request of
+// youtube.com was rejected (400 Bad Request), and that one with a body is
+// not.
+func TestEmptyBodyLogged(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{"/api": "ok"})
+	run(t, e, `fetch("/api", { method: "POST", body: "data" }); var x = new XMLHttpRequest(); x.open("POST", "/api"); x.send(); fetch("/api", { method: "POST", body: new Uint8Array(0) });`)
+	assert.Eventually(t, func() bool {
+		n := 0
+		for _, l := range *logs {
+			if strings.Contains(l, "with an empty body") {
+				n++
+			}
+		}
+		return n == 2
+	}, 3*time.Second, 20*time.Millisecond)
+	all := strings.Join(*logs, "\n")
+	assert.Contains(t, all, "(given: undefined)")
+	assert.Contains(t, all, "(given: Uint8Array)")
+}
+
+// TestErrorBodyLogged tests that the short text body of a failed response
+// is in its warning in the console, with what was wrong.
+func TestErrorBodyLogged(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(400)
+		io.WriteString(w, `{"error": {"code": 400, "message": "Request contains an invalid argument."}}`)
+	}))
+	defer srv.Close()
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `fetch("`+srv.URL+`/player", { method: "POST", body: "{}" })`)
+	assert.Eventually(t, func() bool {
+		return strings.Contains(strings.Join(*logs, "\n"), "400 Bad Request: {\"error\": {\"code\": 400, \"message\": \"Request contains an invalid argument.\"}}")
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
+// TestFetchRequestRedefined tests that fetch uses the state of a Request,
+// not its properties, which scripts can redefine: as a check of
+// youtube.com for blockers of its ads, which redefines the url and method
+// of a Request of a data: URL and expects its data, and which posted to
+// the API of its player instead (400 Bad Request).
+func TestFetchRequestRedefined(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `var got = "";
+		var r = new Request("data:application/json;base64," + btoa('{"a":1}'));
+		Object.defineProperty(r, "url", { get() { return "https://example.com/api"; } });
+		Object.defineProperty(r, "method", { get() { return "POST"; } });
+		Object.defineProperty(r, "body", { get() { return new ReadableStream(); } });
+		fetch(r).then(resp => resp.json()).then(j => { got = JSON.stringify(j) + " " + r.url; }, err => { got = "error: " + err; });`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return v == `{"a":1} https://example.com/api`
+	}, 3*time.Second, 20*time.Millisecond)
+	assert.Equal(t, "POST|https://example.com/x|include", run(t, e,
+		`var q = new Request("/x", { method: "post", credentials: "include" }); var c = q.clone(); [c.method, c.url, c.credentials].join("|")`))
+}
+
+// TestSmallBrowserAPIs tests the small APIs of browsers that pages (as
+// youtube.com) look for: the position of the window, the memory of the
+// device, Web Locks, BroadcastChannel, OffscreenCanvas and the state of
+// the document.
+func TestSmallBrowserAPIs(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "0|0|0|0|0|8|false|null|object", run(t, e,
+		`[screenX, screenY, screenLeft, screen.availTop, screen.availLeft, navigator.deviceMemory, document.prerendering, String(document.webkitFullscreenElement), typeof new OffscreenCanvas(10, 10).getContext("2d")].join("|")`))
+	run(t, e, `var got = [];
+		navigator.locks.request("l", lock => { got.push("lock " + lock.name); });
+		document.hasStorageAccess().then(v => got.push("access " + v));
+		var a = new BroadcastChannel("ch"), b = new BroadcastChannel("ch"), c = new BroadcastChannel("other");
+		b.onmessage = e => got.push("b " + e.data.x);
+		c.onmessage = e => got.push("c " + e.data.x);
+		a.onmessage = e => got.push("a " + e.data.x);
+		a.postMessage({ x: 1 });`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got.sort().join(",")`)
+		return v == "access true,b 1,lock l"
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
+// TestSVGGraphicsGeometry tests that the elements of SVG that are drawn
+// (not only svg elements) have the geometry methods of SVGGraphicsElement,
+// as the text of the labels of pexels.com, whose getBBox was missing.
+func TestSVGGraphicsGeometry(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><svg id="s"><text>hi</text><path d="M0 0L1 1"/></svg></body></html>`, nil)
+	assert.Equal(t, "function|function|function|function", run(t, e,
+		`var s = document.getElementById("s"); [typeof s.querySelector("text").getBBox, typeof s.querySelector("path").getTotalLength, typeof s.getBBox, typeof s.createSVGPoint].join("|")`))
+}
+
+// TestTrackElementTrack tests that a track element has its text track, of
+// its kind and label, whose mode is kept (as the player of pexels.com sets
+// it, on the track elements that it adds).
+func TestTrackElementTrack(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><video id="v"></video></body></html>`, nil)
+	assert.Equal(t, "metadata|cuepoints|hidden|true", run(t, e,
+		`var tr = document.createElement("track"); tr.kind = "metadata"; tr.label = "cuepoints"; tr.track.mode = "hidden"; document.getElementById("v").append(tr);
+		var found = Array.from(document.getElementById("v").querySelectorAll("track")).find(x => x.track.label === "cuepoints");
+		[tr.track.kind, tr.track.label, tr.track.mode, found === tr].join("|")`))
+}
+
+// TestNodeConstructors tests that nodes made with their constructors, and
+// with those of subclasses (as the TemplateInstance of the template parts
+// of the player of pexels.com, a subclass of DocumentFragment), are nodes.
+func TestNodeConstructors(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><div id="d"></div></body></html>`, nil)
+	assert.Equal(t, "ab|x|2|true", run(t, e, `
+		class Instance extends DocumentFragment {
+			constructor(t) { super(); this.appendChild(new Text(t)); this.appendChild(document.createElement("span")).textContent = "b"; }
+		}
+		var d = document.getElementById("d");
+		var inst = new Instance("a");
+		d.appendChild(inst);
+		d.appendChild(new Comment("x"));
+		[d.textContent, d.lastChild.data, d.childNodes.length - 1, inst instanceof DocumentFragment].join("|")`))
+}
+
+// TestInsertRemoveNoChange tests that an element that a script inserts and
+// removes again before the page is rendered (as those added to measure
+// text, as on npr.org, each of which read its body again, which was too
+// big to read again alone, so that the page was read whole) changes
+// nothing, and that the changes of an element that is removed are not
+// rendered, while an element that stays is.
+func TestInsertRemoveNoChange(t *testing.T) {
+	doc, err := html.ParseWithOptions(strings.NewReader(`<html><body><p id="p">p</p></body></html>`), html.ParseOptionEnableScripting(true))
+	require.NoError(t, err)
+	type reread struct{ self, children []string }
+	rereads := make(chan reread, 10)
+	names := func(ns []*html.Node) []string {
+		var s []string
+		for _, n := range ns {
+			id, _ := attr(n, "id")
+			s = append(s, n.Data+"#"+id)
+		}
+		return s
+	}
+	e, err := New(doc, Options{PageURL: "https://example.com/",
+		Render: func() func() { return nil },
+		Reread: func(self, children, styled []*html.Node) func() bool {
+			rereads <- reread{names(self), names(children)}
+			return func() bool { return true }
+		}})
+	require.NoError(t, err)
+	defer e.Close()
+	loaded := make(chan bool, 1)
+	e.Load(func() { loaded <- true })
+	<-loaded
+	next := func() reread {
+		select {
+		case r := <-rereads:
+			return r
+		case <-time.After(5 * time.Second):
+			t.Fatal("no reread")
+			return reread{}
+		}
+	}
+	run(t, e, `const s = document.createElement("span"); s.id = "probe"; document.body.appendChild(s);
+		s.style.fontFamily = "serif"; s.textContent = "measure"; s.remove();
+		document.getElementById("p").className = "x";`)
+	r := next()
+	assert.Equal(t, []string{"p#p"}, append(r.self, r.children...), "only the paragraph changed")
+	run(t, e, `const d = document.createElement("div"); d.id = "stays"; document.body.appendChild(d);
+		const f = document.createElement("iframe"); document.body.appendChild(f); document.body.removeChild(f);`)
+	r = next()
+	assert.Equal(t, []string{"body#"}, r.children, "the body has a new child")
 }

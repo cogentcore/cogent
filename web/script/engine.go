@@ -119,6 +119,10 @@ type Options struct {
 	// the viewport (as for matchMedia).
 	MediaMatches func(query string) bool
 
+	// Media, if set, plays the video elements of the page for its scripts
+	// (see [MediaPlayer]); they are not played otherwise.
+	Media MediaPlayer
+
 	// Navigate, if set, opens the given URL, as for location.href, which
 	// replaces the current page in the history if replace is true.
 	Navigate func(url string, replace bool)
@@ -210,7 +214,11 @@ type Engine struct {
 	timers  map[int]*time.Timer
 	timerID int
 	blobs   map[string]blob // the object URLs of blobs (URL.createObjectURL)
-	modules map[string]bool // the URLs of the modules defined (moduleGraph)
+
+	// mediaSources are the MediaSources of the page, by their object URLs
+	// (see mse.go).
+	mediaSources map[string]*MediaSource
+	modules      map[string]bool // the URLs of the modules defined (moduleGraph)
 
 	lock     func() bool
 	unlock   func()
@@ -243,6 +251,13 @@ type Engine struct {
 	// of it is rendered again.
 	selfNodes, childNodes []*html.Node
 	whole                 bool
+	// childEdits has the number of changes of the children of each
+	// element recorded since the page was last rendered, and inserted the
+	// parent of each element inserted alone since then, so that one that
+	// is removed again (as the elements that scripts add to measure text,
+	// or hidden frames) changes nothing (see Engine.cancelInsert).
+	childEdits map[*html.Node]int
+	inserted   map[*html.Node]*html.Node
 	// wholeWhy is why whole is set, for the verbose console.
 	wholeWhy string
 	// taskLock and taskUnlock are the functions that lock and unlock the
@@ -467,6 +482,7 @@ func (e *Engine) Close() {
 	e.vm.Interrupt(errClosed)
 	close(e.wake)
 	e.closeWorkers()
+	e.closeMediaSources()
 }
 
 var errClosed = errors.New("the page is closed")
@@ -598,7 +614,9 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		}()
 	}
 	styled, self, children, whole, wholeWhy := e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy
+	styled, self, children = e.netChanges(styled), e.netChanges(self), e.netChanges(children)
 	e.styled, e.selfNodes, e.childNodes, e.whole, e.wholeWhy = nil, nil, nil, false, ""
+	e.childEdits, e.inserted = nil, nil
 	e.changedNodes = e.changedNodes[:0]
 	if !e.dirty && e.restyle(styled, lock, unlock) {
 		e.lastRender = time.Now()

@@ -47,6 +47,7 @@ type frame struct {
 // frames of the iframes that are still in it (with the lock held).
 func (pg *Page) setContent(content *core.Frame) {
 	opens := pg.attachFrames(content)
+	pg.attachVideos(content)
 	pg.DeleteChildren()
 	pg.AddChild(content)
 	// the pages of the frames are opened in the scene of the page
@@ -164,6 +165,7 @@ func (pg *Page) closeFrame() {
 	pg.loading = ""
 	pg.stopMediaTimer()
 	pg.closeFrames()
+	pg.closeVideos()
 	pg.showScripts(nil)
 	pg.Delete()
 }

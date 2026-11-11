@@ -90,6 +90,11 @@ func (e *Engine) recordChange(n *html.Node, self bool) {
 		list := &e.childNodes
 		if self {
 			list = &e.selfNodes
+		} else if n != nil {
+			if e.childEdits == nil {
+				e.childEdits = map[*html.Node]int{}
+			}
+			e.childEdits[n]++
 		}
 		if n == nil || len(*list) >= maxChangedNodes {
 			e.whole = true
@@ -165,6 +170,43 @@ func rendered(n *html.Node) bool {
 		}
 	}
 	return true
+}
+
+// insertedAlone records that the given element was inserted alone into
+// the given parent (see [Engine.cancelInsert]).
+func (e *Engine) insertedAlone(k, parent *html.Node) {
+	if e.inserted == nil {
+		e.inserted = map[*html.Node]*html.Node{}
+	}
+	e.inserted[k] = parent
+}
+
+// cancelInsert returns whether the given element, which is being removed
+// from its parent, was inserted alone into it since the page was last
+// rendered, so that its removal undoes the change of the children of
+// the parent that its insertion recorded (if nothing else changed them,
+// the parent is not read again; see [Engine.netChanges]).
+func (e *Engine) cancelInsert(k *html.Node) bool {
+	p, ok := e.inserted[k]
+	if !ok || p != k.Parent || e.childEdits == nil {
+		return false
+	}
+	delete(e.inserted, k)
+	e.childEdits[p]--
+	return true
+}
+
+// netChanges returns the given changed nodes without those that are not
+// in the document anymore (whose removal is a change of their parent, if
+// rendered), and those whose children are as they were (see
+// [Engine.cancelInsert]).
+func (e *Engine) netChanges(nodes []*html.Node) []*html.Node {
+	return slices.DeleteFunc(nodes, func(n *html.Node) bool {
+		if c, ok := e.childEdits[n]; ok && c <= 0 {
+			return true
+		}
+		return n != nil && !connected(n, e.doc)
+	})
 }
 
 // maxChangedNodes is the number of changed nodes that are recorded (see
@@ -477,7 +519,7 @@ func (e *Engine) defineDOM() {
 			}
 			shown = shown || rendered(k)
 			if k.Parent != nil {
-				if rendered(k) {
+				if rendered(k) && !e.cancelInsert(k) {
 					e.changed(k.Parent)
 				}
 				k.Parent.RemoveChild(k)
@@ -486,6 +528,9 @@ func (e *Engine) defineDOM() {
 		}
 		if shown {
 			e.changed(parent)
+			if len(kids) == 1 && e.childEdits[parent] > 0 {
+				e.insertedAlone(kids[0], parent)
+			}
 		}
 		for _, k := range kids {
 			e.runInserted(k, true)
@@ -495,7 +540,7 @@ func (e *Engine) defineDOM() {
 	set("remove", func(call goja.FunctionCall) goja.Value {
 		n := node(arg(call, 0))
 		if n != nil && n.Parent != nil {
-			if rendered(n) {
+			if rendered(n) && !e.cancelInsert(n) {
 				e.changed(n.Parent)
 			}
 			n.Parent.RemoveChild(n)

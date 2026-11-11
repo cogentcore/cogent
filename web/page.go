@@ -9,6 +9,7 @@ package web
 
 import (
 	"bytes"
+	"cogentcore.org/cogent/web/script"
 	"context"
 	"fmt"
 	"image"
@@ -109,6 +110,15 @@ type Page struct {
 	// frames are the pages in the frames of the iframes of the page that
 	// is shown, by their elements (see frames.go).
 	frames map[*html.Node]*Page
+
+	// videos are the videos of the video elements of the page that is
+	// shown, by their elements (see video.go).
+	videos map[*html.Node]*pageVideo
+
+	// mediaEngine is the engine of the scripts of the page, if any, which
+	// its videos send the events of their playing to (see video.go), from
+	// the goroutines of their playing.
+	mediaEngine atomic.Pointer[script.Engine]
 
 	// frameOpens are the pages to open in the frames of iframes that do
 	// not have pages yet, by their elements, as for a form submitted to
@@ -466,7 +476,9 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			resp, err = getPage(ctx, url)
 		}
 		if err == nil {
-			final = resp.Request.URL.String()
+			if resp.Request != nil && resp.Request.URL != nil { // (none for a data: URL)
+				final = resp.Request.URL.String()
+			}
 			ctx.PageURL = final
 			page, err = io.ReadAll(resp.Body)
 			resp.Body.Close()
