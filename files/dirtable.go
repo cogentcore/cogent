@@ -61,7 +61,8 @@ func (dt *DirTable) Init() {
 			dt.watchDir()
 		}
 	})
-	dt.OnKeyChord(func(e events.Event) {
+	// (final, for those of the table of the files, which has the focus)
+	dt.OnFinal(events.KeyChord, func(e events.Event) {
 		switch keymap.Of(e.KeyChord()) {
 		case keymap.Jump, keymap.WordLeft:
 			e.SetHandled()
@@ -69,7 +70,8 @@ func (dt *DirTable) Init() {
 		case keymap.Accept, keymap.Open:
 			e.SetHandled()
 			dt.openSelected()
-		case keymap.Delete, keymap.Backspace:
+		case keymap.Delete, keymap.Backspace, keymap.DeleteWord, keymap.BackspaceWord:
+			// (BackspaceWord is Command+Backspace on macOS, as in the Finder)
 			if fis := dt.SelectedFiles(); len(fis) > 0 {
 				e.SetHandled()
 				dt.deleteFiles(fis)
@@ -211,7 +213,7 @@ func (dt *DirTable) openSelected() {
 	if fi == nil {
 		return
 	}
-	if fi.IsDir() {
+	if fi.IsDir() && !opensAsApp(fi.Path, true) {
 		dt.SetDir(fi.Path)
 		return
 	}
@@ -291,7 +293,10 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 			dt.openSelected()
 		})
 	if fi != nil && !fi.IsDir() {
-		openWithMenuItems(m, fi.Path)
+		core.OpenWithMenuItems(m, fi.Path)
+	}
+	if fi != nil && isApp(fi.Path, fi.IsDir()) {
+		openAppMenuItem(m, fi.Path)
 	}
 	if fi == nil || fi.IsDir() { // the selected directory, or this one
 		dir := dt.Dir
@@ -318,7 +323,7 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 			}
 			dt.Update()
 		})
-	core.NewButton(m).SetText("Delete").SetIcon(icons.Delete).
+	core.NewButton(m).SetText("Delete").SetIcon(icons.Delete).SetShortcut(keymap.Delete.Chord()).
 		SetTooltip("Delete moves the selected files to the trash / recycling bin").
 		OnClick(func(e events.Event) {
 			dt.deleteFiles(fis)

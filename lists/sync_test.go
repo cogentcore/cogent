@@ -248,3 +248,29 @@ func TestSyncFirstOldTypes(t *testing.T) {
 		assert.NotEmpty(t, s.Files("me/lists", "main")[typesFile])
 	})
 }
+
+// TestSyncMobileEdit tests that on mobile an edit is synced right away,
+// not after [syncDelay], as the app is often closed soon after an edit.
+func TestSyncMobileEdit(t *testing.T) {
+	testSync(t)
+	b := core.NewBody()
+	ls := testLists(t, b)
+	ls.Mobile = true
+	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
+	b.AssertRender(t, "sync-mobile", func() {
+		require.NoError(t, ls.syncOnce())
+		ls.syncs.mu.Lock()
+		ls.syncs.auto = true
+		first := ls.syncs.lastSync
+		ls.syncs.mu.Unlock()
+		b.AsyncLock()
+		chores := findList(ls, "Chores")
+		setValue(ls, chores, chores.Items[0], "Task", `"Mobile edit"`)
+		b.AsyncUnlock()
+		assert.Eventually(t, func() bool {
+			ls.syncs.mu.Lock()
+			defer ls.syncs.mu.Unlock()
+			return ls.syncs.lastSync.After(first) && !ls.syncs.running
+		}, 5*time.Second, 20*time.Millisecond, "synced right after the edit")
+	})
+}

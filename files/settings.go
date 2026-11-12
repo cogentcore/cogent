@@ -52,6 +52,7 @@ func (se *SettingsData) Apply() {
 	for _, fl := range openFiles {
 		fl.applySplits()
 		if fl.Tree != nil && fl.Root != "" {
+			fl.Tree.AppsAsDirs = se.ShowHidden
 			fl.Tree.OpenPath(fl.Root) // for ShowHidden
 		}
 		for _, dt := range fl.DirTables() {

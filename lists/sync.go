@@ -160,7 +160,11 @@ func (ls *Lists) Sync() { //types:add
 	}
 	sy.running = true
 	sy.mu.Unlock()
+	// the app keeps running in the background until the sync is done, as
+	// when the phone is locked right after an edit (on iOS, for a while)
+	end := core.TheApp.BeginBackgroundTask("Lists sync")
 	go func() {
+		defer end()
 		ls.updateSyncButton()
 		for {
 			err := ls.syncOnce()
@@ -207,7 +211,10 @@ func (ls *Lists) StartSync() {
 	})
 }
 
-// edited schedules a sync after an edit, if the lists sync automatically.
+// edited schedules a sync after an edit, if the lists sync automatically:
+// after a while ([syncDelay]), for the edits that follow, or right away on
+// mobile, where the app is often closed soon after an edit (and the sync
+// can finish in the background: see [Lists.Sync]).
 func (ls *Lists) edited() {
 	sy := &ls.syncs
 	sy.mu.Lock()
@@ -219,7 +226,11 @@ func (ls *Lists) edited() {
 	if sy.timer != nil {
 		sy.timer.Stop()
 	}
-	sy.timer = time.AfterFunc(syncDelay, ls.Sync)
+	delay := syncDelay
+	if ls.Mobile {
+		delay = 0
+	}
+	sy.timer = time.AfterFunc(delay, ls.Sync)
 }
 
 // syncIfIdle syncs the lists if they last synced a while ago, as after

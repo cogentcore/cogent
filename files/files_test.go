@@ -307,11 +307,13 @@ func TestContextMenus(t *testing.T) {
 		assert.Equal(t, root, fl.CurrentDir())
 
 		// Open with, for files, when the system has apps for them
+		// (see core.TestOpenWith for the items themselves)
 		file := filepath.Join(root, "b.txt")
 		as, _ := apps.For(file)
 		openItems := []string{"Open with", "Change default app"}
 		dt.table.SelectedIndex = 3 // b.txt
 		tableMenu := menuItems(dt.contextMenu)
+		nodes["b.txt"].SelectEvent(events.SelectOne) // (as the context menu does)
 		var nodeMenu []string
 		for _, menu := range nodes["b.txt"].ContextMenus {
 			nodeMenu = append(nodeMenu, menuItems(menu)...)
@@ -319,37 +321,6 @@ func TestContextMenus(t *testing.T) {
 		if len(as) > 0 {
 			assert.Subset(t, tableMenu, openItems)
 			assert.Subset(t, nodeMenu, openItems)
-			m := core.NewScene()
-			openWithMenuItems(m, file)
-			var sub []string
-			m.Child(0).(*core.Button).Menu(m, image.Point{}) // adds the apps to m
-			for _, c := range m.Children[2:] {
-				if bt, ok := c.(*core.Button); ok {
-					sub = append(sub, bt.Text)
-				}
-			}
-			first := as[0].Name
-			if as[0].Default { // not on linux without a default app for the type
-				first += " (default)"
-			}
-			assert.Equal(t, first, sub[0])
-			assert.Len(t, sub, len(as)+1)
-			assert.Equal(t, otherApps, sub[len(sub)-1])
-			t.Logf("Open with: %v", sub)
-
-			// the chooser of the apps has all of them for Other...
-			ch := newAppChooser(core.NewBody(), as)
-			assert.Len(t, ch.Items, len(as)+1)
-			app, ok := chosenApp(ch)
-			assert.True(t, ok)
-			assert.Equal(t, as[0], app, "the default")
-			ch.SetCurrentValue(otherApps)
-			ch.SendChange()
-			all, err := apps.All()
-			require.NoError(t, err)
-			assert.Len(t, ch.Items, len(all))
-			assert.Greater(t, len(all), len(as))
-			assert.Len(t, newAppChooser(core.NewBody(), nil).Items, len(all), "all, with no apps for the file")
 		}
 		for _, it := range openItems {
 			assert.NotContains(t, docsMenu, it)
