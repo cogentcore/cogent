@@ -780,16 +780,33 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.FormatIndentIncrease).SetShortcut(key.Chord("Command+]").PlatformChord()).
-			SetTooltip("Indent: move the selected item into the item before it")
+			SetTooltip("Indent: move the selected items into the item before them")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
-			tt.Indent(idx)
+			tt.IndentSelected(idx)
 		}))
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.FormatIndentDecrease).SetShortcut(key.Chord("Command+[").PlatformChord()).
-			SetTooltip("Outdent: move the selected item out of the item it is in")
+			SetTooltip("Outdent: move the selected items out of the item they are in")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
-			tt.Outdent(idx)
+			tt.OutdentSelected(idx)
+		}))
+	})
+	tree.Add(p, func(w *core.Button) {
+		// selecting several items by tapping them, as to move them
+		// together, as Shift and Command clicks do on desktop
+		w.Updater(func() {
+			if tt := ls.table; tt != nil && tt.SelectMode {
+				w.SetText("Done selecting").SetIcon(icons.Check).
+					SetTooltip("End selecting items by tapping (clicking) them")
+			} else {
+				w.SetText("Select items").SetIcon(icons.Checklist).
+					SetTooltip("Select several items by tapping (clicking) them, to move them together; Shift and Command (Control) clicks also do this")
+			}
+		})
+		w.OnClick(table(func(tt *core.TreeTable, idx int) {
+			tt.SetSelectMode(!tt.SelectMode)
+			w.Update()
 		}))
 	})
 	tree.Add(p, func(w *core.Separator) {})
