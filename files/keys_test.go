@@ -5,6 +5,7 @@
 package main
 
 import (
+	"image"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,6 +20,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -141,5 +143,33 @@ func TestDirTableOpenApp(t *testing.T) {
 		dt.openSelected()
 		assert.Len(t, opened, 1)
 		assert.Equal(t, app, dt.Dir)
+	})
+}
+
+// TestDirTableDeleteShortcut tests that the Delete item of the context
+// menu of the table of the files shows the delete shortcut.
+func TestDirTableDeleteShortcut(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	b := core.NewBody()
+	dt := NewDirTable(b).SetDir(root)
+	b.RenderImage(func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		idx := slices.IndexFunc(dt.files, func(fi *fileinfo.FileInfo) bool { return fi.Name == "b.txt" })
+		require.GreaterOrEqual(t, idx, 0)
+		dt.table.SelectIndexEvent(idx, events.SelectOne)
+		m := core.NewScene()
+		dt.contextMenu(m, image.Point{})
+		var del *core.Button
+		m.WalkDown(func(n tree.Node) bool {
+			if bt, ok := n.(*core.Button); ok && bt.Text == "Delete" {
+				del = bt
+			}
+			return tree.Continue
+		})
+		require.NotNil(t, del)
+		assert.NotEmpty(t, del.Shortcut)
+		assert.Equal(t, deleteShortcut(), del.Shortcut)
 	})
 }
