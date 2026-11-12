@@ -46,15 +46,13 @@ func (ft *FileTree) Init() {
 // double-clicking shows the files of a directory in a directory tab, as the
 // right arrow on an open directory does, and opens a file in its default
 // app, as Enter does, and the context menu of a directory has
-// View, which also shows its files, and the [Files.dirMenuItems], and that
-// of a file has the items of [openWithMenuItems]. App bundles (see
+// View, which also shows its files, and the [Files.dirMenuItems] (that of
+// a file has [core.OpenWithMenuItems] from [filetree.Node]). App bundles (see
 // [isApp]) open as apps.
 func initNode(fn *filetree.Node) {
 	fn.AddContextMenu(func(m *core.Scene, pos image.Point) {
 		if !fn.IsDir() {
-			openWithMenuItems(m, string(fn.Filepath))
-			core.NewSeparator(m)
-			return
+			return // (Open with is in the menu of filetree.Node)
 		}
 		if isApp(string(fn.Filepath), true) {
 			openAppMenuItem(m, string(fn.Filepath))

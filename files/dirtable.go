@@ -295,7 +295,7 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 			dt.openSelected()
 		})
 	if fi != nil && !fi.IsDir() {
-		openWithMenuItems(m, fi.Path)
+		core.OpenWithMenuItems(m, fi.Path)
 	}
 	if fi != nil && isApp(fi.Path, fi.IsDir()) {
 		openAppMenuItem(m, fi.Path)
