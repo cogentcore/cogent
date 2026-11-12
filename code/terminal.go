@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
@@ -182,58 +181,55 @@ func (cv *Code) terminalContextMenu(m *core.Scene, pos image.Point) {
 	core.NewFuncButton(m).SetFunc(cv.TerminalCdToProject).SetText("Cd to project").SetIcon(icons.FolderOpen)
 	core.NewSeparator(m)
 	core.NewFuncButton(m).SetFunc(cv.PrevTab).SetText("Previous tab").SetIcon(icons.ArrowBack).
-		SetShortcut(prevTabChord)
+		SetShortcut(keymap.PrevTab.Chord())
 	core.NewFuncButton(m).SetFunc(cv.NextTab).SetText("Next tab").SetIcon(icons.ArrowForward).
-		SetShortcut(nextTabChord)
+		SetShortcut(keymap.NextTab.Chord())
 }
 
-// The keys for moving among the tabs, as in macOS Terminal, which work
-// when the focus is in the tabs panel (see [Code.tabKeysActive]). They
-// are not menu shortcuts, which would apply in the editors.
-const (
-	prevTabChord key.Chord = "Shift+LeftArrow"
-	nextTabChord key.Chord = "Shift+RightArrow"
-)
-
 // NextTab selects the next tab in the tabs panel, after the last one
-// the first, and focuses it. Shift+RightArrow does this when the focus
-// is in the tabs panel.
+// the first, and focuses it, as the [keymap.NextTab] key (Shift+RightArrow)
+// does when the focus is in the tabs panel (see [core.Tabs]).
 func (cv *Code) NextTab() { //types:add
-	cv.selectTabDelta(1)
+	if tv := cv.Tabs(); tv != nil {
+		tv.SelectTabDelta(1)
+	}
 }
 
 // PrevTab selects the previous tab in the tabs panel, before the first
-// one the last, and focuses it. Shift+LeftArrow does this when the focus
-// is in the tabs panel.
+// one the last, and focuses it, as the [keymap.PrevTab] key
+// (Shift+LeftArrow) does when the focus is in the tabs panel.
 func (cv *Code) PrevTab() { //types:add
-	cv.selectTabDelta(-1)
+	if tv := cv.Tabs(); tv != nil {
+		tv.SelectTabDelta(-1)
+	}
 }
 
-// selectTabDelta selects the tab the given number of tabs after the
-// current one, cycling around, and focuses it.
-func (cv *Code) selectTabDelta(delta int) {
-	tv := cv.Tabs()
-	if tv == nil || tv.NumTabs() == 0 {
-		return
+// focusedTabsEditor returns the text editor in the tabs panel that has
+// the focus, if any. (Read-only editors are not focusable, so they have
+// the focus without the focused state.)
+func (cv *Code) focusedTabsEditor() *textcore.Base {
+	if cv.CurPanel() != TabsIndex {
+		return nil
 	}
-	n := tv.NumTabs()
-	_, idx := tv.CurrentTab()
-	idx = ((idx+delta)%n + n) % n
-	fr := tv.SelectTabIndex(idx)
-	if fr != nil && fr.HasChildren() {
-		if tm, ok := fr.Child(0).(*terminal.Terminal); ok {
-			cv.lastTerminal = tm
-			tm.SetFocus()
-			return
+	var ed *textcore.Base
+	core.AsWidget(cv.Splits().Child(TabsIndex)).WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		if !cwb.ContainsFocus() {
+			return tree.Break
 		}
-	}
-	cv.FocusOnPanel(TabsIndex)
+		if be, ok := cw.(textcore.BaseEmbedder); ok {
+			ed = be.AsBase()
+			return tree.Break
+		}
+		return tree.Continue
+	})
+	return ed
 }
 
-// tabKeysActive returns whether the keys for moving among the tabs
-// move among them: when the focus is in the tabs panel, except in
-// editable text and in full-screen programs in terminals, which use them.
-func (cv *Code) tabKeysActive() bool {
+// tabsPanelKeys returns whether the keys of the tabs panel work, as the
+// Kill key clearing command output (see [Code.clearOutputTab]): when the
+// focus is in the tabs panel, except in editable text and in full-screen
+// programs in terminals, which use the keys.
+func (cv *Code) tabsPanelKeys() bool {
 	if cv.CurPanel() != TabsIndex {
 		return false
 	}

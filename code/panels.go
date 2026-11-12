@@ -219,7 +219,7 @@ func tabFrameEditor(fr tree.Node) *textcore.Editor {
 // and the tab is a read-only editor, such as the console and command
 // outputs, returning whether it was cleared.
 func (cv *Code) clearOutputTab() bool {
-	if !cv.tabKeysActive() {
+	if !cv.tabsPanelKeys() {
 		return false
 	}
 	ct, _ := cv.Tabs().CurrentTab()

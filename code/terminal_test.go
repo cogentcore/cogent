@@ -173,6 +173,18 @@ func TestCodeTerminal(t *testing.T) {
 	src.Key(events.KeyDown, 0, key.CodeRightArrow, shift)
 	waitFor("the second terminal again", func() bool { return cv.focusedTerminal() == tm2 })
 
+	// in the read-only editor of command output, they move among the tabs
+	// too, rather than selecting
+	b.AsyncLock()
+	_, oed, _ := cv.RecycleCmdTab("Output")
+	b.AsyncUnlock()
+	b.AsyncLock()
+	oed.SetFocus()
+	b.AsyncUnlock()
+	waitFor("the focus in the output", func() bool { return focusedTab() == "Output" && oed.ContainsFocus() })
+	src.Key(events.KeyDown, 0, key.CodeLeftArrow, shift)
+	waitFor("the second terminal, before the output", func() bool { return cv.focusedTerminal() == tm2 })
+
 	// the new terminal key in a terminal
 	rn, code, mods, err := terminal.ShortcutChord(keymap.New).Chords()[0].Decode()
 	require.NoError(t, err)

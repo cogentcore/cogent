@@ -26,15 +26,16 @@ func (cv *Code) codeKeys(e events.Event) {
 	if core.DebugSettings.KeyEventTrace {
 		slog.Info("Code KeyInput", "widget", cv, "keyFunction", kf, "keyChord", kc)
 	}
-	if (kc == prevTabChord || kc == nextTabChord) && cv.tabKeysActive() {
-		e.SetHandled()
-		cv.KeySeq1 = ""
-		if kc == prevTabChord {
-			cv.PrevTab()
-		} else {
-			cv.NextTab()
+	if kft := keymap.OfFallback(kc); (kft == keymap.NextTab || kft == keymap.PrevTab) && cv.KeySeq1 == "" {
+		// the keys for the tabs go to them (core.Tabs) in the read-only
+		// editors in them (command output), as in terminals, rather
+		// than selecting
+		if ed := cv.focusedTabsEditor(); ed != nil && ed.IsReadOnly() {
+			core.TabKeys(ed, e)
+			if e.IsHandled() {
+				return
+			}
 		}
-		return
 	}
 	if tm := cv.focusedTerminal(); tm != nil {
 		// all keys go to the terminal, except for moving to another panel,
