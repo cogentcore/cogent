@@ -189,3 +189,65 @@ func TestNewWindow(t *testing.T) {
 	require.NotNil(t, nf)
 	assert.Equal(t, filepath.Join(root, "docs"), nf.Root)
 }
+
+// TestTabKeys tests that the keys for the next and previous tabs
+// (Shift+RightArrow and Shift+LeftArrow), sent to the window, move among
+// the terminal tabs from a terminal, and among the directory tabs from the
+// table of the files.
+func TestTabKeys(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	Settings.Terminal = "/bin/sh"
+	t.Cleanup(func() { Settings.Terminal = "" })
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
+	fl := InitBody(b, root)
+	prevMap := keymap.ActiveMapName
+	keymap.SetActiveMapName("MacStandard")
+	defer keymap.SetActiveMapName(prevMap)
+	var shift key.Modifiers
+	shift.SetFlag(true, key.Shift)
+	current := func(ts *core.Tabs) int {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		_, idx := ts.CurrentTab()
+		return idx
+	}
+	b.RenderImage(func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		fl.OpenDir(filepath.Join(root, "docs"))
+		fl.NewTerminal(root)
+	}, func() {
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		press := func(code key.Codes) {
+			src.Key(events.KeyDown, 0, code, shift)
+			src.Key(events.KeyUp, 0, code, shift)
+			time.Sleep(200 * time.Millisecond)
+		}
+		tabs := fl.Tabs()
+		n := tabs.NumTabs()
+		require.GreaterOrEqual(t, n, 2)
+		b.AsyncLock()
+		fr, idx := tabs.CurrentTab()
+		tm := terminalIn(fr.(*core.Frame))
+		require.NotNil(t, tm)
+		tm.SetFocus()
+		b.AsyncUnlock()
+		press(key.CodeRightArrow)
+		assert.Equal(t, (idx+1)%n, current(tabs), "the next terminal tab, from a terminal")
+		press(key.CodeLeftArrow)
+		assert.Equal(t, idx, current(tabs), "the previous terminal tab")
+
+		dirs := fl.DirTabs()
+		require.GreaterOrEqual(t, dirs.NumTabs(), 2)
+		b.AsyncLock()
+		_, di := dirs.CurrentTab()
+		dt := fl.DirTables()[di]
+		dt.FocusTable()
+		b.AsyncUnlock()
+		eventually(t, b, "the table is focused", func() bool { return dt.table.ContainsFocus() })
+		press(key.CodeRightArrow)
+		assert.Equal(t, (di+1)%dirs.NumTabs(), current(dirs), "the next directory tab, from the table")
+	})
+}
