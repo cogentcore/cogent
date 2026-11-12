@@ -6,7 +6,10 @@ package main
 
 import (
 	"image"
+	"path/filepath"
+	"runtime"
 	"slices"
+	"strings"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -46,13 +49,17 @@ func (ft *FileTree) Init() {
 // right arrow on an open directory does, and opens a file in its default
 // app, as Enter does, and the context menu of a directory has
 // View, which also shows its files, and the [Files.dirMenuItems], and that
-// of a file has the items of [openWithMenuItems].
+// of a file has the items of [openWithMenuItems]. App bundles (see
+// [isApp]) open as apps.
 func initNode(fn *filetree.Node) {
 	fn.AddContextMenu(func(m *core.Scene, pos image.Point) {
 		if !fn.IsDir() {
 			openWithMenuItems(m, string(fn.Filepath))
 			core.NewSeparator(m)
 			return
+		}
+		if isApp(string(fn.Filepath), true) {
+			openAppMenuItem(m, string(fn.Filepath))
 		}
 		fl, ok := ParentFiles(fn.This)
 		if !ok {
@@ -72,7 +79,7 @@ func initNode(fn *filetree.Node) {
 			return
 		}
 		switch kf := keymap.Of(e.KeyChord()); {
-		case kf == keymap.Enter && !fn.IsDir():
+		case kf == keymap.Enter && (!fn.IsDir() || opensAsApp(string(fn.Filepath), true)):
 			// opens the file, as double-clicking does (directories toggle)
 			e.SetHandled()
 			openFile(string(fn.Filepath))
@@ -88,7 +95,7 @@ func initNode(fn *filetree.Node) {
 	})
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
-		if fn.IsDir() {
+		if fn.IsDir() && !opensAsApp(string(fn.Filepath), true) {
 			if fl, ok := ParentFiles(fn.This); ok {
 				fl.OpenDir(string(fn.Filepath))
 			}
@@ -110,4 +117,30 @@ func isFocus(fn *filetree.Node) bool {
 	return fn.ContainsFocus() && !slices.ContainsFunc(fn.Children, func(c tree.Node) bool {
 		return core.AsWidget(c).ContainsFocus()
 	})
+}
+
+// appBundles is whether directories named *.app are app bundles, which
+// are opened as apps (see [isApp]): on macOS. It is a variable for the tests.
+var appBundles = runtime.GOOS == "darwin"
+
+// isApp returns whether the given directory is an app bundle (on macOS),
+// which is opened as an app by double-clicking, as in the Finder, unless
+// hidden files are shown, in which case it is a directory, whose contents
+// can be viewed and edited (it can still be opened from its context menu).
+func isApp(path string, isDir bool) bool {
+	return appBundles && isDir && strings.EqualFold(filepath.Ext(path), ".app")
+}
+
+// opensAsApp returns whether double-clicking the given directory opens it
+// as an app (see [isApp]).
+func opensAsApp(path string, isDir bool) bool {
+	return isApp(path, isDir) && !Settings.ShowHidden
+}
+
+// openAppMenuItem adds the context menu item for opening the given app
+// bundle (see [isApp]).
+func openAppMenuItem(m *core.Scene, path string) {
+	core.NewButton(m).SetText("Open app").SetIcon(icons.Open).
+		SetTooltip("Open " + filepath.Base(path) + " as an app").
+		OnClick(func(e events.Event) { openFile(path) })
 }

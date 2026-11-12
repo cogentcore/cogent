@@ -213,7 +213,7 @@ func (dt *DirTable) openSelected() {
 	if fi == nil {
 		return
 	}
-	if fi.IsDir() {
+	if fi.IsDir() && !opensAsApp(fi.Path, true) {
 		dt.SetDir(fi.Path)
 		return
 	}
@@ -294,6 +294,9 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		})
 	if fi != nil && !fi.IsDir() {
 		openWithMenuItems(m, fi.Path)
+	}
+	if fi != nil && isApp(fi.Path, fi.IsDir()) {
+		openAppMenuItem(m, fi.Path)
 	}
 	if fi == nil || fi.IsDir() { // the selected directory, or this one
 		dir := dt.Dir

@@ -106,3 +106,39 @@ func TestDirTabDoubleClick(t *testing.T) {
 		}
 	})
 }
+
+// TestDirTableOpenApp tests that opening an app bundle (a directory named
+// *.app, on macOS) in the table of the files opens it as an app, unless
+// hidden files are shown, in which case its files are shown.
+func TestDirTableOpenApp(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	app := filepath.Join(root, "Tool.app")
+	require.NoError(t, os.Mkdir(app, 0750))
+	prevBundles, prevOpen, prevHidden := appBundles, openFile, Settings.ShowHidden
+	t.Cleanup(func() { appBundles, openFile, Settings.ShowHidden = prevBundles, prevOpen, prevHidden })
+	var opened []string
+	appBundles = true
+	openFile = func(path string) { opened = append(opened, path) }
+	b := core.NewBody()
+	dt := NewDirTable(b).SetDir(root)
+	b.RenderImage(func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		selectApp := func() {
+			idx := slices.IndexFunc(dt.files, func(fi *fileinfo.FileInfo) bool { return fi.Name == "Tool.app" })
+			require.GreaterOrEqual(t, idx, 0)
+			dt.table.SelectIndexEvent(idx, events.SelectOne)
+		}
+		selectApp()
+		dt.openSelected()
+		assert.Equal(t, []string{app}, opened)
+		assert.Equal(t, root, dt.Dir)
+
+		Settings.ShowHidden = true
+		selectApp()
+		dt.openSelected()
+		assert.Len(t, opened, 1)
+		assert.Equal(t, app, dt.Dir)
+	})
+}
