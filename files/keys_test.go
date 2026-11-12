@@ -147,7 +147,7 @@ func TestDirTableOpenApp(t *testing.T) {
 }
 
 // TestDirTableDeleteShortcut tests that the Delete item of the context
-// menu of the table of the files shows the delete shortcut.
+// menu of the table of the files shows the delete shortcut of the keymap.
 func TestDirTableDeleteShortcut(t *testing.T) {
 	root := testRoot(t)
 	testSettings(t)
@@ -170,7 +170,7 @@ func TestDirTableDeleteShortcut(t *testing.T) {
 		})
 		require.NotNil(t, del)
 		assert.NotEmpty(t, del.Shortcut)
-		assert.Equal(t, deleteShortcut(), del.Shortcut)
+		assert.Equal(t, keymap.Delete.Chord(), del.Shortcut)
 	})
 }
 

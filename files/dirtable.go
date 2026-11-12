@@ -19,13 +19,11 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 )
 
@@ -325,7 +323,7 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 			}
 			dt.Update()
 		})
-	core.NewButton(m).SetText("Delete").SetIcon(icons.Delete).SetShortcut(deleteShortcut()).
+	core.NewButton(m).SetText("Delete").SetIcon(icons.Delete).SetShortcut(keymap.Delete.Chord()).
 		SetTooltip("Delete moves the selected files to the trash / recycling bin").
 		OnClick(func(e events.Event) {
 			dt.deleteFiles(fis)
@@ -344,16 +342,6 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		})
 	core.NewSeparator(m)
 	core.NewFuncButton(m).SetFunc(dt.NewFolder).SetIcon(icons.CreateNewFolder)
-}
-
-// deleteShortcut returns the shortcut for deleting the selected files
-// that is shown in the context menu: Command+Backspace on macOS, as in the
-// Finder, or else the delete key (all of them work: see [DirTable.Init]).
-func deleteShortcut() key.Chord {
-	if core.TheApp.SystemPlatform() == system.MacOS {
-		return "Meta+Backspace"
-	}
-	return keymap.Delete.Chord()
 }
 
 // NewFolder makes a new folder with the given name in the directory.
