@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -115,10 +116,10 @@ func TestDirTableOpenApp(t *testing.T) {
 	testSettings(t)
 	app := filepath.Join(root, "Tool.app")
 	require.NoError(t, os.Mkdir(app, 0750))
-	prevBundles, prevOpen, prevHidden := appBundles, openFile, Settings.ShowHidden
-	t.Cleanup(func() { appBundles, openFile, Settings.ShowHidden = prevBundles, prevOpen, prevHidden })
+	prevBundles, prevOpen, prevHidden := filetree.AppBundles, openFile, Settings.ShowHidden
+	t.Cleanup(func() { filetree.AppBundles, openFile, Settings.ShowHidden = prevBundles, prevOpen, prevHidden })
 	var opened []string
-	appBundles = true
+	filetree.AppBundles = true
 	openFile = func(path string) { opened = append(opened, path) }
 	b := core.NewBody()
 	dt := NewDirTable(b).SetDir(root)

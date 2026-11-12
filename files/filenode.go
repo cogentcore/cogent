@@ -7,9 +7,7 @@ package main
 import (
 	"image"
 	"path/filepath"
-	"runtime"
 	"slices"
-	"strings"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -119,16 +117,13 @@ func isFocus(fn *filetree.Node) bool {
 	})
 }
 
-// appBundles is whether directories named *.app are app bundles, which
-// are opened as apps (see [isApp]): on macOS. It is a variable for the tests.
-var appBundles = runtime.GOOS == "darwin"
-
-// isApp returns whether the given directory is an app bundle (on macOS),
-// which is opened as an app by double-clicking, as in the Finder, unless
-// hidden files are shown, in which case it is a directory, whose contents
-// can be viewed and edited (it can still be opened from its context menu).
+// isApp returns whether the given directory is an app bundle (on macOS,
+// see [filetree.IsAppBundle]), which is opened as an app by double-clicking,
+// as in the Finder, unless hidden files are shown, in which case it is a
+// directory, whose contents can be viewed and edited (it can still be
+// opened from its context menu).
 func isApp(path string, isDir bool) bool {
-	return appBundles && isDir && strings.EqualFold(filepath.Ext(path), ".app")
+	return filetree.IsAppBundle(path, isDir)
 }
 
 // opensAsApp returns whether double-clicking the given directory opens it
