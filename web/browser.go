@@ -96,11 +96,26 @@ func (br *Browser) Init() {
 	}
 }
 
+// NewWindow returns the body of a new browser window, with a new tab,
+// for [core.NewWindowFunc], which it is set to by [InitBody].
+func NewWindow(from *core.Scene) *core.Body {
+	b := core.NewBody("Cogent Web")
+	br := InitBody(b)
+	if from != nil && from.Body != nil {
+		if fb := tree.ChildByType[*Browser](from.Body); fb != nil {
+			br.PageFunc = fb.PageFunc
+		}
+	}
+	br.NewTab("")
+	return b
+}
+
 // InitBody initializes the given body of a window as a browser window, with
 // a browser and its toolbar in the top bar, and returns the browser, which
 // has no tabs yet. It is used for the main window of the app, and for the
 // new windows that tabs are dragged into (see [core.Tabs.DragToWindow]).
 func InitBody(b *core.Body) *Browser {
+	core.NewWindowFunc = NewWindow
 	br := NewBrowser(b)
 	b.AddTopBar(func(bar *core.Frame) {
 		// the toolbar, with the bookmarks bar below it

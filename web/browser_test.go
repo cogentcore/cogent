@@ -14,7 +14,9 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBrowserTabs(t *testing.T) {
@@ -123,4 +125,21 @@ func TestBrowserMoveTab(t *testing.T) {
 	assert.Same(t, b2.Scene, two.Scene)
 	two.OpenNewTab("")
 	assert.Len(t, other.Pages(), 3, "a new tab of the page is in the other browser")
+}
+
+// TestNewWindow tests that a new browser window, made from another one by
+// the New window item of the Window menu or the New key (see
+// [core.NewWindowFunc]), has one new tab, and the page function of it.
+func TestNewWindow(t *testing.T) {
+	b := core.NewBody()
+	br := InitBody(b)
+	called := false
+	br.PageFunc = func(pg *Page) { called = true }
+	require.NotNil(t, core.NewWindowFunc)
+	nb := core.NewWindowFunc(b.Scene)
+	require.NotNil(t, nb)
+	nbr := tree.ChildByType[*Browser](nb)
+	require.NotNil(t, nbr)
+	assert.Equal(t, 1, nbr.Tabs.NumTabs())
+	assert.True(t, called, "the page function of the browser")
 }

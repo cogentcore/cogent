@@ -173,3 +173,19 @@ func TestDirTableDeleteShortcut(t *testing.T) {
 		assert.Equal(t, deleteShortcut(), del.Shortcut)
 	})
 }
+
+// TestNewWindow tests that a new Files window, made from another one by
+// the New window item of the Window menu or the New key (see
+// [core.NewWindowFunc]), has its root.
+func TestNewWindow(t *testing.T) {
+	root := testRoot(t)
+	testSettings(t)
+	b := core.NewBody()
+	InitBody(b, filepath.Join(root, "docs"))
+	require.NotNil(t, core.NewWindowFunc)
+	nb := core.NewWindowFunc(b.Scene)
+	require.NotNil(t, nb)
+	nf := tree.ChildByType[*Files](nb)
+	require.NotNil(t, nf)
+	assert.Equal(t, filepath.Join(root, "docs"), nf.Root)
+}
