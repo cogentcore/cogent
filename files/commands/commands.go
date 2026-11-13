@@ -67,7 +67,7 @@ func (en *Entry) Label() string {
 
 // version is the version of the format of the file of the [Commands]:
 // the parsed commands of other versions are parsed again.
-const version = 7
+const version = 8
 
 // Commands are the commands of the command bar, organized into categories
 // by the user, with the cache of the parsed help of commands, which are
@@ -379,17 +379,7 @@ func (cs *Commands) addSharedFlags(root string, sc *SubCmd) {
 	if errors.Log(err) != nil {
 		return
 	}
-	has := map[string]bool{}
-	for _, fl := range sc.Flags {
-		for _, n := range fl.Names {
-			has[n] = true
-		}
-	}
-	for _, fl := range from.Flags {
-		if !slices.ContainsFunc(fl.Names, func(n string) bool { return has[n] }) {
-			sc.Flags = append(sc.Flags, fl)
-		}
-	}
+	sc.Flags = mergeFlags(sc.Flags, from.Flags)
 }
 
 // copiedSubCmds returns whether the subcommands of the given subcommand

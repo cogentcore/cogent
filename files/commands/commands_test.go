@@ -542,3 +542,16 @@ func TestSharedFlags(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, build.Flags, 3)
 }
+
+// TestMergeFlags tests merging the flags of other help, as of go help
+// testflag for go test: after the flags, without those of their names.
+func TestMergeFlags(t *testing.T) {
+	flags := []*Flag{{Name: "-c", Names: []string{"-c"}}, {Name: "-v", Names: []string{"-v"}, Doc: "test"}}
+	others := []*Flag{{Name: "-v", Names: []string{"-v"}, Doc: "build"}, {Name: "-run", Names: []string{"-run"}}, {Name: "-run", Names: []string{"-run"}}}
+	var names []string
+	for _, fl := range mergeFlags(flags, others) {
+		names = append(names, fl.Name+":"+fl.Doc)
+	}
+	assert.Equal(t, []string{"-c:", "-v:test", "-run:"}, names)
+	assert.Equal(t, [][]string{{"go", "help", "testflag"}}, extraFlagHelp["go test"])
+}

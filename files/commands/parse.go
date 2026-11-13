@@ -96,6 +96,12 @@ func Parse(cmd string) (*SubCmd, error) {
 		doc = cmp.Or(doc, manDoc)
 	}
 	best.Doc = cmp.Or(best.Doc, doc)
+	// flags in other help, as of go test in go help testflag
+	for _, args := range extraFlagHelp[best.Cmd] {
+		more := &SubCmd{Cmd: best.Cmd}
+		more.SetFromHelp(runHelp(dir, args))
+		best.Flags = mergeFlags(best.Flags, more.Flags)
+	}
 	best.Usage = cmp.Or(best.Usage, usage)
 	return best, nil
 }
@@ -110,6 +116,32 @@ func flagScore(cm *SubCmd) int {
 		}
 	}
 	return n
+}
+
+// extraFlagHelp are the help commands of the flags of subcommands whose
+// help only refers to them: go help testflag for go test.
+var extraFlagHelp = map[string][][]string{
+	"go test": {{"go", "help", "testflag"}},
+}
+
+// mergeFlags returns the given flags with the given other flags after them,
+// other than those with a name of one of them.
+func mergeFlags(flags, others []*Flag) []*Flag {
+	has := map[string]bool{}
+	for _, fl := range flags {
+		for _, n := range fl.Names {
+			has[n] = true
+		}
+	}
+	for _, fl := range others {
+		if !slices.ContainsFunc(fl.Names, func(n string) bool { return has[n] }) {
+			flags = append(flags, fl)
+			for _, n := range fl.Names {
+				has[n] = true
+			}
+		}
+	}
+	return flags
 }
 
 // cmdScore returns the score of the subcommands of the given parse, for
