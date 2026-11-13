@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"image"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -130,4 +131,26 @@ func TestMacroDialogs(t *testing.T) {
 		fm.Update()
 	})
 	assert.Equal(t, "", ran)
+}
+
+// TestContext tests the context of the dialogs of the commands: the scene
+// of the window of an item of a menu, which closes when it is clicked, and
+// a command bar for an item of a closed menu (which crashed making a macro
+// from the dialog of a subcommand in a menu).
+func TestContext(t *testing.T) {
+	imagex.UpdateTestImagesFor(t) // the image is not compared
+	cs := &Commands{Parsed: map[string]*Cmd{}, Entries: Standard()}
+	b := core.NewBody()
+	tb := cs.Bar(b, nil)
+	b.AssertRender(t, "context", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		st := core.NewMenu(func(m *core.Scene, pos image.Point) { core.NewButton(m).SetText("Item") }, tb, image.Point{})
+		st.Run()
+		item := st.Scene.Child(0).(core.Widget)
+		assert.Equal(t, core.Widget(b.Scene), cs.context(item), "the scene of the window")
+		assert.Equal(t, core.Widget(tb), cs.context(tb))
+		st.ClosePopup()
+		assert.Equal(t, core.Widget(tb), cs.context(item), "a command bar")
+	})
 }

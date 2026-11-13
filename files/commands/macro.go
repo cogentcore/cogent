@@ -216,6 +216,7 @@ func (cs *Commands) DeleteMacro(root string, mc *Macro) error {
 // given command, parsing it in the background if needed, and calling the
 // given function with it, with the lock of the given context widget.
 func (cs *Commands) macroSubCmd(ctx core.Widget, root string, mc *Macro, fun func(sc *SubCmd)) {
+	ctx = cs.context(ctx)
 	cmd := mc.Cmd(root)
 	if sc := cs.cachedSub(cmd); sc != nil {
 		fun(sc)
@@ -238,6 +239,7 @@ func (cs *Commands) macroSubCmd(ctx core.Widget, root string, mc *Macro, fun fun
 // the given function, after prompting for the arguments it prompts for,
 // if any, in a dialog in the context of the given widget.
 func (cs *Commands) RunMacro(ctx core.Widget, root string, mc *Macro, run RunFunc) {
+	ctx = cs.context(ctx)
 	cs.macroSubCmd(ctx, root, mc, func(sc *SubCmd) {
 		if len(mc.Prompts) == 0 {
 			run(sc.ArgsCommandLine(mc.withPrompted(sc, nil, nil)))
@@ -251,6 +253,7 @@ func (cs *Commands) RunMacro(ctx core.Widget, root string, mc *Macro, run RunFun
 // arguments of the given macro of the given subcommand of the given
 // command, which runs its command line with the given function.
 func (cs *Commands) NewPromptDialog(ctx core.Widget, root string, sc *SubCmd, mc *Macro, run RunFunc) *core.Body {
+	ctx = cs.context(ctx)
 	d := core.NewBody(mc.Label(root))
 	keys := mc.promptKeys()
 	values := sc.formStruct(keys)
@@ -288,6 +291,7 @@ func (cs *Commands) NewPromptDialog(ctx core.Widget, root string, sc *SubCmd, mc
 // macro, if it is not nil, and otherwise as a new one. Its macros are run
 // with the given function.
 func (cs *Commands) NewMacroDialog(ctx core.Widget, root string, sc *SubCmd, mc, old *Macro, run RunFunc) *core.Body {
+	ctx = cs.context(ctx)
 	title := "New macro"
 	if old != nil {
 		title = "Edit macro"

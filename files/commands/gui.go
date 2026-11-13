@@ -363,6 +363,7 @@ func (cs *Commands) Edit(ctx core.Widget) {
 // with the given function. For a command with subcommands, such as git, it
 // shows the menu of its subcommands, as the menu of the given widget.
 func (cs *Commands) RunDialog(ctx core.Widget, cmd string, run RunFunc) {
+	ctx = cs.context(ctx)
 	if sc := cs.cachedSub(cmd); sc != nil {
 		cs.runDialog(ctx, sc, run)
 		return
@@ -400,6 +401,7 @@ func (cs *Commands) runDialog(ctx core.Widget, sc *SubCmd, run RunFunc) {
 // starts with the arguments last used for the subcommand, which are saved
 // when it is run (see [Args]).
 func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Body {
+	ctx = cs.context(ctx)
 	d := core.NewBody(sc.Cmd)
 	if sc.Doc != "" {
 		core.NewText(d).SetType(core.TextSupporting).SetText(html.EscapeString(sc.Doc))
@@ -684,4 +686,35 @@ var DialogMinSize = math32.Vec2(720, 0)
 // given widget, with the [DialogMinSize].
 func runDialog(d *core.Body, ctx core.Widget) {
 	d.NewWindowDialog(ctx).SetMinSize(DialogMinSize).Run()
+}
+
+// context returns the context widget to use for the dialogs and snackbars
+// of the commands, which lasts beyond the given one: the scene of the
+// window of an item of a menu (which closes when it is clicked), or else
+// the given widget, or a command bar if it is gone.
+func (cs *Commands) context(ctx core.Widget) core.Widget {
+	if live(ctx) {
+		if st := ctx.AsWidget().Scene.Stage; st.Type == core.MenuStage && st.Main != nil && st.Main.Scene != nil {
+			return st.Main.Scene
+		}
+		return ctx
+	}
+	cs.views.Lock()
+	defer cs.views.Unlock()
+	for _, tb := range cs.views.bars {
+		if live(tb) {
+			return tb
+		}
+	}
+	return ctx
+}
+
+// live returns whether the given widget is shown in a stage that is
+// running: not deleted, as an item of a closed menu is.
+func live(w core.Widget) bool {
+	if w == nil {
+		return false
+	}
+	wb := w.AsWidget()
+	return wb != nil && wb.This != nil && wb.Scene != nil && wb.Scene.Stage != nil && wb.Scene.Stage.Mains != nil
 }
