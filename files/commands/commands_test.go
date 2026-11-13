@@ -190,6 +190,22 @@ func TestSetFromHelp(t *testing.T) {
 	}
 	assert.Equal(t, []string{"--debug: If brewing fails, open an debugging session.", "--display-times: Print install times.", "--force: Install formulae."}, names)
 
+	// lists of subcommands separated by commas, as of npm -h, and flags
+	// separated by |
+	cm = &SubCmd{Cmd: "npm"}
+	cm.SetFromHelp("npm <command>\n\nAll commands:\n\n    access, adduser, audit,\n    ci, help, install\n\nSpecify configs in the ini-formatted file:\n    /Users/x/.npmrc\n")
+	var npm []string
+	for _, sub := range cm.Cmds {
+		npm = append(npm, sub.Cmd)
+	}
+	assert.Equal(t, []string{"npm access", "npm adduser", "npm audit", "npm ci", "npm install"}, npm)
+	assert.Equal(t, "", cm.Cmds[0].Group)
+	cm = &SubCmd{Cmd: "npm install"}
+	cm.SetFromHelp("Install a package\n\n  -S|--save\n    Save installed packages.\n\n  --install-strategy <hoisted|nested>\n    Sets the strategy.\n")
+	require.Len(t, cm.Flags, 2)
+	assert.Equal(t, []string{"-S", "--save"}, cm.Flags[0].Names)
+	assert.Equal(t, "<hoisted|nested>", cm.Flags[1].Value)
+
 	// lists of subcommands under "==> " headings, as of brew commands,
 	// without the developer commands
 	cm = &SubCmd{Cmd: "brew"}

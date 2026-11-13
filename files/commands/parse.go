@@ -78,7 +78,7 @@ func Parse(cmd string) (*SubCmd, error) {
 		if best == nil || flagScore(cm) > flagScore(best) {
 			best = cm
 		}
-		if cmds == nil || len(cm.Cmds) > len(cmds.Cmds) {
+		if cmds == nil || cmdScore(cm) > cmdScore(cmds) {
 			cmds = cm
 		}
 		if hc[0] == "man" {
@@ -112,6 +112,19 @@ func flagScore(cm *SubCmd) int {
 	return n
 }
 
+// cmdScore returns the score of the subcommands of the given parse, for
+// choosing the help output with the most subcommands, and then the most
+// documented ones (as of npm -l).
+func cmdScore(cm *SubCmd) int {
+	n := 2 * len(cm.Cmds)
+	for _, sub := range cm.Cmds {
+		if sub.Doc != "" {
+			n++
+		}
+	}
+	return n
+}
+
 // helpCommands returns the commands to get the help of the given command.
 func helpCommands(words []string) [][]string {
 	with := func(args ...string) []string {
@@ -133,10 +146,12 @@ func helpCommands(words []string) [][]string {
 
 // extraHelp are the arguments of other help commands of commands whose
 // usual help does not list all of their subcommands: brew commands lists
-// them under "==> " headings (see [SubCmd.SetFromHelp]). Other commands
+// them under "==> " headings (see [SubCmd.SetFromHelp]), and npm -l lists
+// them with their documentation. Other commands
 // are not run with such arguments, which they may not take as help.
 var extraHelp = map[string][][]string{
 	"brew": {{"commands"}},
+	"npm":  {{"-l"}},
 }
 
 // runHelp runs the given help command in the given (empty) directory,
@@ -226,6 +241,36 @@ func (cm *SubCmd) SetFromHelp(help string) {
 		}
 		cmds[b.name] = true
 		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + b.name, Doc: b.doc, Group: groupName(b.section)})
+	}
+	// lists of subcommands separated by commas, under a heading of
+	// commands, as of npm -h
+	commaSection := ""
+	for _, line := range lines {
+		text := strings.TrimSpace(line)
+		if text == "" {
+			continue
+		}
+		if indentOf(line) == 0 {
+			commaSection = ""
+			if strings.Contains(strings.ToLower(text), "command") && strings.HasSuffix(text, ":") {
+				commaSection = text
+			}
+			continue
+		}
+		if commaSection == "" || !strings.Contains(text, ",") || !commandSection(commaSection) {
+			continue
+		}
+		names := strings.FieldsFunc(text, func(r rune) bool { return r == ',' || r == ' ' })
+		if slices.ContainsFunc(names, func(n string) bool { return !isSubcommand(n) }) {
+			continue
+		}
+		for _, n := range names {
+			if cmds[n] || n == "help" {
+				continue
+			}
+			cmds[n] = true
+			cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + n, Group: groupName(commaSection)})
+		}
 	}
 	// lists of subcommands under "==> " headings, one per line, as of
 	// brew commands
@@ -328,7 +373,7 @@ func commandSection(section string) bool {
 func groupName(section string) string {
 	s := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(section), ":"))
 	switch strings.ToLower(s) {
-	case "the commands are", "commands", "subcommands", "available commands":
+	case "the commands are", "commands", "subcommands", "available commands", "all commands":
 		return ""
 	}
 	return s
@@ -443,7 +488,15 @@ var flagName = regexp.MustCompile(`^--?[A-Za-z0-9][A-Za-z0-9_.-]*$`)
 // such as "-m, --[no-]message <message>", or nil if it has no flag names.
 func parseFlag(name string) *Flag {
 	fl := &Flag{}
+	var toks []string
 	for _, tok := range strings.Fields(strings.ReplaceAll(name, ",", " ")) {
+		if strings.HasPrefix(tok, "-") && !strings.ContainsAny(tok, "<[") { // "-S|--save", as of npm
+			toks = append(toks, strings.Split(tok, "|")...)
+			continue
+		}
+		toks = append(toks, tok)
+	}
+	for _, tok := range toks {
 		if !strings.HasPrefix(tok, "-") {
 			if fl.Value == "" {
 				fl.Value = tok
