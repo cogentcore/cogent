@@ -5,32 +5,46 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"sync"
 
-	"cogentcore.org/cogent/files/commands"
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/terminal"
 )
 
-// CommandsFile is the file of the commands of the command bar, in the data
-// directory of the app (see [theCommands]), next to the commands-args.json
-// file of the arguments last used for them.
-var CommandsFile string
-
-// theCommandsOnce opens the commands once, in [theCommands].
-var theCommandsOnce = sync.OnceValue(func() *commands.Commands {
-	if CommandsFile == "" {
-		CommandsFile = filepath.Join(core.TheApp.AppDataDir(), "commands.json")
-	}
-	return commands.Open(CommandsFile)
-})
-
-// theCommands returns the commands of the command bar, opening them from
-// the [CommandsFile] the first time.
+// theCommands returns the commands of the command bar, which are the
+// [commands.Default] ones, shared by the apps. Those of an earlier version
+// of Files, in its own data directory, are copied to their file the first
+// time.
 func theCommands() *commands.Commands {
-	return theCommandsOnce()
+	moveCommandsOnce()
+	return commands.Default()
 }
+
+// moveCommandsOnce copies the files of the commands of an earlier version
+// of Files, in its own data directory, to those of the [commands.Default]
+// commands, if they do not exist yet, once.
+var moveCommandsOnce = sync.OnceFunc(func() {
+	if commands.File != "" { // (set, as in tests)
+		return
+	}
+	dir := core.TheApp.CogentCoreDataDir()
+	for _, name := range []string{"commands.json", "commands-args.json"} {
+		to := filepath.Join(dir, name)
+		if _, err := os.Stat(to); err == nil {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(core.TheApp.AppDataDir(), name))
+		if err != nil {
+			continue
+		}
+		errors.Log(os.MkdirAll(dir, 0o755))
+		errors.Log(os.WriteFile(to, b, 0o644))
+	}
+})
 
 // RunCommand runs the given command line in the last terminal used, or in
 // a new terminal in the current directory if there is none, selecting its

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -43,8 +44,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	CommandsFile = filepath.Join(dir, "commands.json")
-	if err := os.WriteFile(CommandsFile, []byte(testCommands), 0o644); err != nil {
+	commands.File = filepath.Join(dir, "commands.json")
+	if err := os.WriteFile(commands.File, []byte(testCommands), 0o644); err != nil {
 		panic(err)
 	}
 }
