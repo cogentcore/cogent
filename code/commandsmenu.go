@@ -105,8 +105,10 @@ func commandTabName(cmdline string) string {
 }
 
 // commandsDir returns the directory that the commands run in from the given
-// context widget (see [commands.Commands.Dir]): that of the [Code] of its
-// window (see [Code.commandDir]), or "" if there is none.
+// context widget (see [commands.Commands.Dir]), as in
+// [Code.RunCommandLine]: the working directory of the terminal that has the
+// focus in the [Code] of its window, if any, or else its [Code.commandDir],
+// or "" if there is none.
 func commandsDir(ctx core.Widget) string {
 	cv := tree.ParentByType[*Code](ctx)
 	if cv == nil && ctx.AsWidget().Scene != nil {
@@ -120,6 +122,9 @@ func commandsDir(ctx core.Widget) string {
 	}
 	if cv == nil {
 		return ""
+	}
+	if tm := cv.focusedTerminal(); tm != nil {
+		return tm.WorkingDir()
 	}
 	return cv.commandDir()
 }

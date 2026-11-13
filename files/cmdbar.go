@@ -22,8 +22,9 @@ func theCommands() *commands.Commands {
 }
 
 // commandsDir returns the directory that the commands run in from the given
-// context widget (see [commands.Commands.Dir]): the current directory of
-// the [Files] of its window, or "" if there is none.
+// context widget (see [commands.Commands.Dir]), as in [Files.RunCommand]:
+// the working directory of the last terminal of the [Files] of its window,
+// if any, or else its current directory, or "" if there is none.
 func commandsDir(ctx core.Widget) string {
 	fl := tree.ParentByType[*Files](ctx)
 	if fl == nil && ctx.AsWidget().Scene != nil {
@@ -37,6 +38,9 @@ func commandsDir(ctx core.Widget) string {
 	}
 	if fl == nil {
 		return ""
+	}
+	if tm := fl.lastTerminal; tm != nil && tm.This != nil && fl.hasTerminal(tm) {
+		return tm.WorkingDir()
 	}
 	return fl.CurrentDir()
 }
