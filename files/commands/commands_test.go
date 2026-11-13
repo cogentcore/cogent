@@ -181,6 +181,26 @@ func TestSetFromHelp(t *testing.T) {
 	assert.Equal(t, "-e", cm.Flags[3].Name)
 	assert.Equal(t, "-x", cm.Flags[4].Name)
 
+	// long flags indented more than short ones, as of brew
+	cm = &SubCmd{Cmd: "brew install"}
+	cm.SetFromHelp("Usage: brew install [options] formula\n\n  -d, --debug                      If brewing fails, open an\n                                   debugging session.\n      --display-times              Print install times.\n  -f, --force                      Install formulae.\n")
+	var names []string
+	for _, fl := range cm.Flags {
+		names = append(names, fl.Name+": "+fl.Doc)
+	}
+	assert.Equal(t, []string{"--debug: If brewing fails, open an debugging session.", "--display-times: Print install times.", "--force: Install formulae."}, names)
+
+	// lists of subcommands under "==> " headings, as of brew commands,
+	// without the developer commands
+	cm = &SubCmd{Cmd: "brew"}
+	cm.SetFromHelp("==> Built-in commands\n--cache\nanalytics\ninstall\n\n==> Built-in developer commands\naudit\nbottle\n")
+	var listed []string
+	for _, sub := range cm.Cmds {
+		listed = append(listed, sub.Cmd+": "+sub.Group)
+	}
+	assert.Equal(t, []string{"brew analytics: Built-in commands", "brew install: Built-in commands"}, listed)
+	assert.Equal(t, [][]string{{"brew", "-h"}, {"brew", "--help"}, {"brew", "help"}, {"brew", "help", "-a"}, {"man", "brew"}, {"brew", "commands"}}, helpCommands([]string{"brew"}))
+
 	// subcommands in the usage lines only
 	cm = &SubCmd{Cmd: "git stash"}
 	cm.SetFromHelp(gitStashHelp)

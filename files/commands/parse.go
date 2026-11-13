@@ -124,8 +124,19 @@ func helpCommands(words []string) [][]string {
 	} else {
 		// (git help -a has all of the commands of git, not just the common ones)
 		hcs = append(hcs, with("help"), with("help", "-a"), []string{"man", words[0]})
+		for _, args := range extraHelp[words[0]] {
+			hcs = append(hcs, with(args...))
+		}
 	}
 	return hcs
+}
+
+// extraHelp are the arguments of other help commands of commands whose
+// usual help does not list all of their subcommands: brew commands lists
+// them under "==> " headings (see [SubCmd.SetFromHelp]). Other commands
+// are not run with such arguments, which they may not take as help.
+var extraHelp = map[string][][]string{
+	"brew": {{"commands"}},
 }
 
 // runHelp runs the given help command in the given (empty) directory,
@@ -181,6 +192,10 @@ func stripOverstrike(s string) string {
 type block struct {
 	name, doc, section string
 	indent             int
+
+	// docCol is the column of the documentation, if known: after the gap on
+	// the line of the name, or of the first line after it.
+	docCol int
 }
 
 // SetFromHelp sets the documentation, usage, flags, and subcommands of the
@@ -211,6 +226,21 @@ func (cm *SubCmd) SetFromHelp(help string) {
 		}
 		cmds[b.name] = true
 		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + b.name, Doc: b.doc, Group: groupName(b.section)})
+	}
+	// lists of subcommands under "==> " headings, one per line, as of
+	// brew commands
+	listSection := ""
+	for _, line := range lines {
+		text := strings.TrimSpace(line)
+		if h, ok := strings.CutPrefix(text, "==> "); ok {
+			listSection = h
+			continue
+		}
+		if listSection == "" || !isSubcommand(text) || cmds[text] || text == "help" || !commandSection(listSection) {
+			continue
+		}
+		cmds[text] = true
+		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + text, Group: groupName(listSection)})
 	}
 	if len(cm.Flags) == 0 { // as for go mod tidy
 		cm.Flags = usageFlags(cm.Usage, lines)
@@ -279,11 +309,12 @@ func flagSentence(text, name string) string {
 }
 
 // commandSection returns whether the given section of help output can
-// have subcommands: not help topics, as of go, or the low-level commands,
-// interfaces, and external commands of git help -a.
+// have subcommands: not help topics, as of go, the low-level commands,
+// interfaces, and external commands of git help -a, or the developer
+// commands of brew.
 func commandSection(section string) bool {
 	s := strings.ToLower(section)
-	for _, not := range []string{"topic", "low-level", "interface", "external", "guide"} {
+	for _, not := range []string{"topic", "low-level", "interface", "external", "guide", "developer"} {
 		if strings.Contains(s, not) {
 			return false
 		}
@@ -357,7 +388,12 @@ func helpBlocks(lines []string) []block {
 		switch {
 		case text == "" || n == 0:
 			finish()
-		case cur != nil && n > cur.indent:
+		case cur != nil && n > cur.indent && !(strings.HasPrefix(text, "-") && cur.docCol > 0 && n < cur.docCol):
+			// (a flag indented more than the one before it, but less than its
+			// documentation, is another flag, as of brew: "      --name")
+			if cur.docCol == 0 {
+				cur.docCol = n
+			}
 			if cur.doc != "" {
 				cur.doc += " "
 			}
@@ -367,6 +403,7 @@ func helpBlocks(lines []string) []block {
 			cur = &block{name: text, indent: n, section: section}
 			if loc := nameGap.FindStringIndex(text); loc != nil {
 				cur.name, cur.doc = text[:loc[0]], strings.TrimSpace(text[loc[1]:])
+				cur.docCol = n + loc[1]
 			} else if strings.HasPrefix(text, "-") {
 				cur.name, cur.doc = splitFlagDoc(text)
 			}
