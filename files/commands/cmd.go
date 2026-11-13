@@ -4,40 +4,127 @@
 
 // Package commands provides a GUI for calling command line tools, such as
 // git, whose many options are hard to remember. The help output of each
-// command is parsed into a [Cmd], with its flags and subcommands, which is
-// cached (see [Commands]). The user organizes the commands into categories,
-// edited in a [core.TreeTable] (see [Commands.Edit]), which are shown in a
-// command bar like a bookmarks bar (see [Commands.Bar]). Clicking on a
-// command shows a form of its flags and arguments, which builds the command
-// line to run, in a terminal for example (see [Commands.RunDialog]).
+// command is parsed into a [Cmd], with its subcommands, such as git commit,
+// each a [SubCmd] with its flags, which are cached (see [Commands]). The
+// user organizes the commands into categories, edited in a
+// [core.TreeTable] (see [Commands.Edit]), which are shown in a command bar
+// like a bookmarks bar, with menus of the subcommands of the commands (see
+// [Commands.Bar]). Clicking on a subcommand shows a form of its flags and
+// arguments, which builds the command line to run, in a terminal for
+// example (see [Commands.RunDialog]), starting with the arguments last used
+// for it (see [Args]). The files of the commands and the arguments may be
+// shared by apps: they are read again when another app changes them.
 package commands
 
 import (
 	"strings"
+
+	"cogentcore.org/core/base/strcase"
 )
 
-// Cmd is a command line command, such as "git commit", with the
-// information parsed from its help output (see [Parse]).
+// Cmd is a command, such as git, with its subcommands, such as
+// git commit, parsed from its help output (see [ParseCmd]).
 type Cmd struct {
 
-	// Cmd is the command, with any subcommands: "git commit".
+	// Cmd is the command: "git".
 	Cmd string
 
 	// Doc is the documentation of the command, if found.
 	Doc string `json:",omitempty"`
 
-	// Usage is the usage synopsis of the command, if found.
+	// SubCmds are the subcommands of the command, which are parsed when
+	// they are used (see [SubCmd.IsParsed]). A command without
+	// subcommands has one, named [MainName], for the command itself.
+	SubCmds []*SubCmd
+}
+
+// MainName is the name of the [SubCmd] of a [Cmd] without subcommands,
+// which is the command itself.
+const MainName = "Main"
+
+// SubCmd returns the subcommand of the given name, such as "commit" or
+// "stash list", or nil if there is none.
+func (cm *Cmd) SubCmd(name string) *SubCmd {
+	for _, sc := range cm.SubCmds {
+		if sc.Name == name {
+			return sc
+		}
+	}
+	return nil
+}
+
+// HasSubCmds returns whether the command has subcommands, other than its
+// [MainName] one.
+func (cm *Cmd) HasSubCmds() bool {
+	return len(cm.SubCmds) > 1 || (len(cm.SubCmds) == 1 && cm.SubCmds[0].Name != MainName)
+}
+
+// SubCmd is a subcommand of a [Cmd], such as git commit, or the command
+// itself (see [MainName]), with the information parsed from its help
+// output (see [Parse]).
+type SubCmd struct {
+
+	// Name is the name of the subcommand, its words after the command:
+	// "commit", "stash list", or [MainName] for the command itself.
+	Name string
+
+	// Cmd is the command line of the subcommand: "git commit".
+	Cmd string
+
+	// Doc is the documentation of the subcommand, if found.
+	Doc string `json:",omitempty"`
+
+	// Usage is the usage synopsis of the subcommand, if found.
 	Usage string `json:",omitempty"`
 
-	// Flags are the flags of the command.
+	// Flags are the flags of the subcommand.
 	Flags []*Flag `json:",omitempty"`
 
-	// Cmds are the subcommands of the command, with their documentation,
-	// which are parsed separately, when they are used.
-	Cmds []*Cmd `json:",omitempty"`
+	// Group is the group of the subcommand in the help of its command,
+	// such as "Main Porcelain Commands" for git: the heading of its
+	// section, which is shown as a submenu, other than the first group.
+	Group string `json:",omitempty"`
 
-	// Source is the help command whose output was parsed: "git commit -h".
+	// Cmds are the subcommands of the subcommand, such as git stash list,
+	// with their documentation (or usage), which are parsed as subcommands
+	// of the command when they are used.
+	Cmds []*SubCmd `json:",omitempty"`
+
+	// Source is the help command whose output was parsed: "git commit -h",
+	// which is empty if the subcommand has not been parsed yet.
 	Source string `json:",omitempty"`
+}
+
+// IsParsed returns whether the help of the subcommand has been parsed.
+func (sc *SubCmd) IsParsed() bool {
+	return sc.Source != ""
+}
+
+// Label returns the text shown for the subcommand: [MainName], or its
+// last word in sentence case: "Commit", "List" for "stash list".
+func (sc *SubCmd) Label() string {
+	if sc.Name == MainName {
+		return MainName
+	}
+	return label(sc.Cmd)
+}
+
+// label returns the last word of the given command in sentence case.
+func label(cmd string) string {
+	if f := strings.Fields(cmd); len(f) > 0 {
+		return strcase.ToSentence(f[len(f)-1])
+	}
+	return ""
+}
+
+// splitCmd splits the given command line into the command and the name
+// of its subcommand: "git", "stash list".
+func splitCmd(cmd string) (root, name string) {
+	f := strings.Fields(cmd)
+	if len(f) == 0 {
+		return "", ""
+	}
+	return f[0], strings.Join(f[1:], " ")
 }
 
 // Flag is a flag of a [Cmd].

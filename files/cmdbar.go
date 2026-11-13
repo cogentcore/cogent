@@ -14,7 +14,8 @@ import (
 )
 
 // CommandsFile is the file of the commands of the command bar, in the data
-// directory of the app (see [theCommands]).
+// directory of the app (see [theCommands]), next to the commands-args.json
+// file of the arguments last used for them.
 var CommandsFile string
 
 // theCommandsOnce opens the commands once, in [theCommands].

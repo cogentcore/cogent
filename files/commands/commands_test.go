@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/core"
@@ -57,8 +58,58 @@ Flags:
         Name is the user-friendly name of the project.
 `
 
+// goHelp is part of the output of go -h.
+const goHelp = `Go is a tool for managing Go source code.
+
+Usage:
+
+	go <command> [arguments]
+
+The commands are:
+
+	bug         start a bug report
+	build       compile packages and dependencies
+
+Use "go help <command>" for more information about a command.
+
+Additional help topics:
+
+	buildconstraint build constraints
+	cache           build and test caching
+
+Use "go help <topic>" for more information about that topic.
+`
+
+// gitHelpAll is part of the output of git help -a, with an example.
+const gitHelpAll = `See 'git help <command>' to read about a specific subcommand
+
+Main Porcelain Commands
+   add                     Add file contents to the index
+   commit                  Record changes to the repository
+
+Ancillary Commands
+   config                  Get and set repository or global options
+   gc                      Cleanup unnecessary files and optimize the local repository
+
+Low-level Commands / Manipulators
+   apply                   Apply a patch to files and/or to the index
+   checkout-index          Copy files from the index to the working tree
+
+For example:
+   ok      archive/tar   0.011s
+`
+
+// gitStashHelp is part of the output of git stash -h.
+const gitStashHelp = `usage: git stash list [<log-options>]
+   or: git stash show [-u | --include-untracked] [<stash>]
+   or: git stash [push] [-p | --patch]
+   or: git stash save [-p | --patch] [<message>]
+
+    -q, --[no-]quiet      be quiet
+`
+
 func TestSetFromHelp(t *testing.T) {
-	cm := &Cmd{Cmd: "git commit"}
+	cm := &SubCmd{Cmd: "git commit"}
 	cm.SetFromHelp(gitCommitHelp)
 	assert.Equal(t, "git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n[--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|reword):]<commit>]", cm.Usage)
 	require.Len(t, cm.Flags, 7)
@@ -76,7 +127,7 @@ func TestSetFromHelp(t *testing.T) {
 	}
 	assert.Empty(t, cm.Cmds)
 
-	cm = &Cmd{Cmd: "core"}
+	cm = &SubCmd{Cmd: "core"}
 	cm.SetFromHelp(coreHelp)
 	assert.Equal(t, "core [flags]\ncore <subcommand> [flags]", cm.Usage)
 	require.Len(t, cm.Cmds, 2)
@@ -87,6 +138,34 @@ func TestSetFromHelp(t *testing.T) {
 	assert.True(t, cm.Flags[0].IsBool(), "a bool value hint is a flag without a value")
 	assert.Equal(t, "-verbose", cm.Flags[0].Name)
 	assert.Equal(t, "string", cm.Flags[1].Value)
+
+	// the help topics of go are not subcommands
+	cm = &SubCmd{Cmd: "go"}
+	cm.SetFromHelp(goHelp)
+	require.Len(t, cm.Cmds, 2)
+	assert.Equal(t, "go bug", cm.Cmds[0].Cmd)
+	assert.Equal(t, "go build", cm.Cmds[1].Cmd)
+
+	// the groups of git help -a, and an example in the text, which is not a
+	// subcommand
+	cm = &SubCmd{Cmd: "git"}
+	cm.SetFromHelp(gitHelpAll)
+	var groups []string
+	for _, sub := range cm.Cmds {
+		groups = append(groups, sub.Cmd+": "+sub.Group)
+	}
+	assert.Equal(t, []string{"git add: Main Porcelain Commands", "git commit: Main Porcelain Commands", "git config: Ancillary Commands", "git gc: Ancillary Commands"}, groups)
+
+	// subcommands in the usage lines only
+	cm = &SubCmd{Cmd: "git stash"}
+	cm.SetFromHelp(gitStashHelp)
+	var subs []string
+	for _, sub := range cm.Cmds {
+		subs = append(subs, sub.Cmd)
+	}
+	assert.Equal(t, []string{"git stash list", "git stash show", "git stash save"}, subs)
+	assert.Equal(t, "git stash list [<log-options>]", cm.Cmds[0].Doc)
+	assert.Equal(t, "git stash list [<log-options>]\ngit stash show [-u | --include-untracked] [<stash>]\ngit stash [push] [-p | --patch]\ngit stash save [-p | --patch] [<message>]", cm.Usage)
 }
 
 func TestStripOverstrike(t *testing.T) {
@@ -94,7 +173,7 @@ func TestStripOverstrike(t *testing.T) {
 }
 
 func TestCommandLine(t *testing.T) {
-	cm := &Cmd{Cmd: "git commit"}
+	cm := &SubCmd{Cmd: "git commit"}
 	cm.SetFromHelp(gitCommitHelp)
 	values := cm.FormStruct()
 	v := reflect.ValueOf(values).Elem()
@@ -126,45 +205,114 @@ func TestParse(t *testing.T) {
 		assert.NotEmpty(t, cm.Doc, cmd)
 	}
 	if _, err := exec.LookPath("git"); err == nil {
-		cm, err := Parse("git")
+		cm, err := ParseCmd("git")
 		require.NoError(t, err)
-		subs := []string{}
-		for _, sub := range cm.Cmds {
-			subs = append(subs, sub.Cmd)
-		}
-		assert.Contains(t, subs, "git commit")
+		assert.True(t, cm.HasSubCmds())
+		assert.NotNil(t, cm.SubCmd("commit"))
+		assert.False(t, cm.SubCmd("commit").IsParsed())
+	}
+	if _, err := exec.LookPath("go"); err == nil {
+		cm, err := ParseCmd("go")
+		require.NoError(t, err)
+		assert.NotNil(t, cm.SubCmd("build"))
+		assert.Nil(t, cm.SubCmd("cache"), "a help topic")
+	}
+	if _, err := exec.LookPath("ls"); err == nil {
+		cm, err := ParseCmd("ls")
+		require.NoError(t, err)
+		require.Len(t, cm.SubCmds, 1)
+		assert.Equal(t, MainName, cm.SubCmds[0].Name)
+		assert.True(t, cm.SubCmds[0].IsParsed())
 	}
 }
 
-// TestCommands tests opening, saving, and caching the commands.
+// testCommands returns commands saved in the given file, with git and its
+// commit subcommand parsed, and ls, without running help commands.
+func testCommands(t *testing.T, file string) *Commands {
+	cs := &Commands{file: sharedFile{path: file}, Parsed: map[string]*Cmd{}, Args: OpenArgs("")}
+	cs.Entries = Standard()
+	commit := &SubCmd{Name: "commit", Cmd: "git commit", Source: "git commit -h"}
+	commit.SetFromHelp(gitCommitHelp)
+	cs.Parsed["git"] = &Cmd{Cmd: "git", SubCmds: []*SubCmd{{Name: "status", Cmd: "git status", Doc: "Show the working tree status"}, commit}}
+	cs.Parsed["ls"] = &Cmd{Cmd: "ls", SubCmds: []*SubCmd{{Name: MainName, Cmd: "ls", Source: "man ls", Flags: []*Flag{{Name: "-l", Names: []string{"-l"}}}}}}
+	require.NoError(t, cs.Save())
+	return cs
+}
+
+// TestCommands tests opening, saving, and caching the commands, which are
+// shared by processes through their file.
 func TestCommands(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "commands.json")
-	cs := &Commands{filename: file, Parsed: map[string]*Cmd{}}
-	cs.Entries = Standard()
-	cm := &Cmd{Cmd: "git commit"}
-	cm.SetFromHelp(gitCommitHelp)
-	cs.Parsed["git commit"] = cm
-	require.NoError(t, cs.Save())
+	cs := testCommands(t, file)
 	_, err := os.Stat(file)
 	require.NoError(t, err)
 
-	cs2 := &Commands{filename: file}
-	b, _ := os.ReadFile(file)
-	require.NoError(t, jsonUnmarshal(b, cs2))
+	// another process
+	cs2 := &Commands{file: sharedFile{path: file}, Parsed: map[string]*Cmd{}}
+	cs2.reload()
+	assert.Equal(t, version, cs2.Version)
 	assert.Equal(t, "Git", cs2.Entries[0].Label())
-	assert.Equal(t, "Commit", cs2.Entries[0].Children[2].Label())
-	assert.Equal(t, "git commit", cs2.Entries[0].Children[2].Command)
-	got, err := cs2.Cmd("git  commit", false) // cached, not parsed
+	assert.Equal(t, "git", cs2.Entries[0].Command)
+	got, err := cs2.SubCmd("git  commit", false) // cached, not parsed
 	require.NoError(t, err)
 	assert.Len(t, got.Flags, 7)
+	ls, err := cs2.SubCmd("ls", false)
+	require.NoError(t, err)
+	assert.Equal(t, MainName, ls.Name)
+	_, err = cs2.SubCmd("git", false)
+	assert.Error(t, err, "git has subcommands")
+
+	// the changes of each are read by the other, and merged
+	time.Sleep(10 * time.Millisecond) // (a different modification time)
+	require.NoError(t, cs2.update(func() {
+		cs2.Parsed["git"].SubCmd("status").Source = "git status -h"
+		cs2.Entries = cs2.Entries[1:]
+	}))
+	assert.True(t, cs.file.changed())
+	assert.NotNil(t, cs.cachedSub("git status"), "parsed by the other")
+	assert.Equal(t, "go", cs.Entries[0].Command, "edited by the other")
+	require.NoError(t, cs.update(func() {
+		cs.Parsed["ls"].SubCmds[0].Doc = "list"
+	}))
+	assert.Equal(t, "list", cs2.cachedSub("ls").Doc)
+	assert.NotNil(t, cs2.cachedSub("git status"), "kept")
+
+	// a file of the first version has standard entries
+	require.NoError(t, os.WriteFile(file, []byte(`{"Entries": [{"Name": "Git", "Children": [{"Command": "git status"}]}], "Parsed": {"git status": {"Cmd": "git status"}}}`), 0o644))
+	cs3 := Open(file)
+	assert.Equal(t, Standard()[0].Command, cs3.Entries[0].Command)
+	assert.Nil(t, cs3.cached("git status"))
+}
+
+// TestArgs tests saving the arguments last used for a subcommand, and
+// setting them in its form, in another process.
+func TestArgs(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "commands-args.json")
+	as := OpenArgs(file)
+	sc := &SubCmd{Name: "commit", Cmd: "git commit"}
+	sc.SetFromHelp(gitCommitHelp)
+	values := sc.FormStruct()
+	v := reflect.ValueOf(values).Elem()
+	v.FieldByName("Arguments").SetString("a.go")
+	v.FieldByName("Verbose").SetBool(true)
+	v.FieldByName("Message").SetString("the message")
+	require.NoError(t, as.Set(sc, values))
+	saved := as.Cmds["git"].SubCmds["commit"]
+	assert.Equal(t, map[string]string{"--verbose": "true", "--message": "the message"}, saved.Flags, "only those used")
+
+	as2 := OpenArgs(file)
+	values2 := sc.FormStruct()
+	as2.SetValues(sc, values2)
+	assert.Equal(t, sc.CommandLine(values), sc.CommandLine(values2))
+	assert.Equal(t, `git commit --verbose --message 'the message' a.go`, sc.CommandLine(values2))
 }
 
 // TestDialog tests the dialog of the form of a command, and running its
 // command line.
 func TestDialog(t *testing.T) {
 	imagex.UpdateTestImagesFor(t)
-	cs := &Commands{Parsed: map[string]*Cmd{}}
-	cm := &Cmd{Cmd: "git commit", Doc: "Record changes to the repository"}
+	cs := &Commands{Parsed: map[string]*Cmd{}, Args: OpenArgs("")}
+	cm := &SubCmd{Name: "commit", Cmd: "git commit", Doc: "Record changes to the repository"}
 	cm.SetFromHelp(gitCommitHelp)
 	ran := ""
 	d := cs.NewDialog(nil, cm, func(cmdline string) { ran = cmdline })

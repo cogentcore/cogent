@@ -22,12 +22,34 @@ import (
 // HelpTimeout is the time a help command can take before it is stopped.
 var HelpTimeout = 10 * time.Second
 
-// Parse returns the [Cmd] for the given command, such as "git commit",
+// ParseCmd returns the [Cmd] for the given command, such as git, parsed
+// from the output of its help commands (see [Parse]), with its subcommands
+// to be parsed when they are used, or else its one [MainName] subcommand,
+// which is the command itself, parsed.
+func ParseCmd(cmd string) (*Cmd, error) {
+	sc, err := Parse(cmd)
+	if err != nil {
+		return nil, err
+	}
+	cm := &Cmd{Cmd: sc.Cmd, Doc: sc.Doc}
+	if len(sc.Cmds) == 0 {
+		sc.Name = MainName
+		cm.SubCmds = []*SubCmd{sc}
+		return cm, nil
+	}
+	for _, sub := range sc.Cmds {
+		_, sub.Name = splitCmd(sub.Cmd)
+		cm.SubCmds = append(cm.SubCmds, sub)
+	}
+	return cm, nil
+}
+
+// Parse returns the [SubCmd] for the given command, such as "git commit",
 // parsed from the output of its help commands: those of -h, --help, help,
 // and man, as the commands have them. The flags are those of the output
 // with the most flags, and the subcommands those of the output with the most
 // subcommands, other than a man page, whose indented lists are not commands.
-func Parse(cmd string) (*Cmd, error) {
+func Parse(cmd string) (*SubCmd, error) {
 	words := strings.Fields(cmd)
 	if len(words) == 0 {
 		return nil, errors.New("commands: no command to parse")
@@ -37,14 +59,14 @@ func Parse(cmd string) (*Cmd, error) {
 		return nil, err
 	}
 	defer os.RemoveAll(dir)
-	var best, cmds *Cmd
+	var best, cmds *SubCmd
 	doc, manDoc, usage := "", "", ""
 	for _, hc := range helpCommands(words) {
 		out := runHelp(dir, hc)
 		if strings.TrimSpace(out) == "" {
 			continue
 		}
-		cm := &Cmd{Cmd: strings.Join(words, " "), Source: strings.Join(hc, " ")}
+		cm := &SubCmd{Cmd: strings.Join(words, " "), Source: strings.Join(hc, " ")}
 		cm.SetFromHelp(out)
 		// the indented lists of man pages (which help commands may show) are
 		// not subcommands; a man page of the same name may be about something
@@ -88,7 +110,8 @@ func helpCommands(words []string) [][]string {
 		hcs = append(hcs, append([]string{words[0], "help"}, words[1:]...))
 		hcs = append(hcs, []string{"man", strings.Join(words, "-")})
 	} else {
-		hcs = append(hcs, with("help"), []string{"man", words[0]})
+		// (git help -a has all of the commands of git, not just the common ones)
+		hcs = append(hcs, with("help"), with("help", "-a"), []string{"man", words[0]})
 	}
 	return hcs
 }
@@ -141,15 +164,16 @@ func stripOverstrike(s string) string {
 }
 
 // block is a name, such as that of a flag or a subcommand, with its
-// documentation, in help output.
+// documentation, in help output, under a section heading, such as
+// "The commands are:".
 type block struct {
-	name, doc string
-	indent    int
+	name, doc, section string
+	indent             int
 }
 
 // SetFromHelp sets the documentation, usage, flags, and subcommands of the
 // command from the given help output.
-func (cm *Cmd) SetFromHelp(help string) {
+func (cm *SubCmd) SetFromHelp(help string) {
 	lines := strings.Split(strings.ReplaceAll(help, "\r\n", "\n"), "\n")
 	usage, doc := usageAndDoc(lines)
 	cm.Usage = cmp.Or(usage, cm.Usage)
@@ -170,12 +194,58 @@ func (cm *Cmd) SetFromHelp(help string) {
 			cm.Flags = append(cm.Flags, fl)
 			continue
 		}
-		if !isSubcommand(b.name) || cmds[b.name] || b.name == "help" {
+		if !isSubcommand(b.name) || cmds[b.name] || b.name == "help" || !commandSection(b.section) {
 			continue
 		}
 		cmds[b.name] = true
-		cm.Cmds = append(cm.Cmds, &Cmd{Cmd: cm.Cmd + " " + b.name, Doc: b.doc})
+		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + b.name, Doc: b.doc, Group: groupName(b.section)})
 	}
+	// a section with one subcommand is an example in the text, as in the
+	// help of go test
+	n := map[string]int{}
+	for _, sub := range cm.Cmds {
+		n[sub.Group]++
+	}
+	cm.Cmds = slices.DeleteFunc(cm.Cmds, func(sub *SubCmd) bool { return n[sub.Group] < 2 })
+	if len(cm.Cmds) > 0 {
+		return
+	}
+	// subcommands that are only in the usage lines, as for git stash list,
+	// with their usage as their documentation
+	for _, line := range strings.Split(cm.Usage, "\n") {
+		rest, ok := strings.CutPrefix(line, cm.Cmd+" ")
+		f := strings.Fields(rest)
+		if !ok || len(f) == 0 || !isSubcommand(f[0]) || cmds[f[0]] || f[0] == "help" {
+			continue
+		}
+		cmds[f[0]] = true
+		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + f[0], Doc: line})
+	}
+}
+
+// commandSection returns whether the given section of help output can
+// have subcommands: not help topics, as of go, or the low-level commands,
+// interfaces, and external commands of git help -a.
+func commandSection(section string) bool {
+	s := strings.ToLower(section)
+	for _, not := range []string{"topic", "low-level", "interface", "external", "guide"} {
+		if strings.Contains(s, not) {
+			return false
+		}
+	}
+	return true
+}
+
+// groupName returns the name of the group of the subcommands in the given
+// section of help output: its heading, without a colon, or "" for the
+// usual headings, such as "The commands are:".
+func groupName(section string) string {
+	s := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(section), ":"))
+	switch strings.ToLower(s) {
+	case "the commands are", "commands", "subcommands", "available commands":
+		return ""
+	}
+	return s
 }
 
 // isSubcommand returns whether the given name of a block is that of a
@@ -216,6 +286,7 @@ var nameGap = regexp.MustCompile(`\s{2,}|\t`)
 func helpBlocks(lines []string) []block {
 	var blocks []block
 	var cur *block
+	section := ""
 	finish := func() {
 		if cur != nil && cur.name != "" {
 			blocks = append(blocks, *cur)
@@ -225,6 +296,9 @@ func helpBlocks(lines []string) []block {
 	for _, line := range lines {
 		text := strings.TrimSpace(line)
 		n := indentOf(line)
+		if n == 0 && text != "" {
+			section = text
+		}
 		switch {
 		case text == "" || n == 0:
 			finish()
@@ -235,7 +309,7 @@ func helpBlocks(lines []string) []block {
 			cur.doc += text
 		case strings.HasPrefix(text, "-") || isSubcommand(text) || nameGap.MatchString(text):
 			finish()
-			cur = &block{name: text, indent: n}
+			cur = &block{name: text, indent: n, section: section}
 			if loc := nameGap.FindStringIndex(text); loc != nil {
 				cur.name, cur.doc = text[:loc[0]], strings.TrimSpace(text[loc[1]:])
 			} else if strings.HasPrefix(text, "-") {
@@ -341,7 +415,7 @@ func usageAndDoc(lines []string) (usage, doc string) {
 		}
 		switch {
 		case inUsage && text != "" && !strings.HasSuffix(lower, ":"):
-			us = append(us, text)
+			us = append(us, strings.TrimSpace(strings.TrimPrefix(text, "or:")))
 			continue
 		case inUsage:
 			inUsage, afterUsage = false, true

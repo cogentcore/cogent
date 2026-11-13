@@ -21,14 +21,19 @@ import (
 // testCommands are the commands of the command bar in the tests, with their
 // help already parsed, so that no help commands are run.
 const testCommands = `{
+	"Version": 2,
 	"Entries": [
-		{"Name": "Git", "Children": [{"Command": "git status"}]},
+		{"Command": "git"},
 		{"Command": "ls"}
 	],
 	"Parsed": {
-		"git": {"Cmd": "git"},
-		"git status": {"Cmd": "git status", "Flags": [{"Name": "--short", "Names": ["-s", "--short"]}]},
-		"ls": {"Cmd": "ls", "Flags": [{"Name": "-l", "Names": ["-l"]}]}
+		"git": {"Cmd": "git", "SubCmds": [
+			{"Name": "status", "Cmd": "git status", "Source": "git status -h", "Flags": [{"Name": "--short", "Names": ["-s", "--short"]}]},
+			{"Name": "commit", "Cmd": "git commit"}
+		]},
+		"ls": {"Cmd": "ls", "SubCmds": [
+			{"Name": "Main", "Cmd": "ls", "Source": "man ls", "Flags": [{"Name": "-l", "Names": ["-l"]}]}
+		]}
 	}
 }`
 
@@ -79,6 +84,8 @@ func TestCommandBar(t *testing.T) {
 			labels = append(labels, kid.(*core.Button).Text)
 		}
 		assert.Equal(t, []string{"Git", "Ls"}, labels)
+		assert.NotNil(t, tb.Child(0).(*core.Button).Menu, "the menu of the subcommands of git")
+		assert.Nil(t, tb.Child(1).(*core.Button).Menu, "ls has none")
 		assert.NotNil(t, tb.ChildByName("edit-commands"), "the edit button")
 
 		// the default terminal is the last one used at the start
