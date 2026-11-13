@@ -42,6 +42,29 @@ func (cv *Code) OpenTerminal() { //types:add
 	}
 }
 
+// cdDefaultTerminal changes the directory of the default terminal, if it
+// has been made, to the project root, as when a project is opened in the
+// initial empty window, whose terminal starts in its working directory.
+func (cv *Code) cdDefaultTerminal() {
+	tv := cv.Tabs()
+	if tv == nil || cv.ProjectRoot == "" {
+		return
+	}
+	fr := tv.TabByName(TerminalTabName)
+	if fr == nil || !fr.AsTree().HasChildren() {
+		return
+	}
+	tm, ok := fr.AsTree().Child(0).(*terminal.Terminal)
+	if !ok {
+		return
+	}
+	if tm.IsRunning() {
+		tm.Cd(string(cv.ProjectRoot))
+	} else {
+		tm.SetDir(string(cv.ProjectRoot))
+	}
+}
+
 // NewTerminal makes a new terminal tab, in addition to the default one.
 // The [keymap.New] key does this in a terminal (see [terminal.KeyFunction]).
 func (cv *Code) NewTerminal() { //types:add

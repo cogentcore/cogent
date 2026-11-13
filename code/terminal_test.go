@@ -351,3 +351,67 @@ func TestTerminalTabFocus(t *testing.T) {
 	pressTo(key.CodeLeftArrow, tm)
 	waitFor("the focus in the terminal, from the tabs", func() bool { return tm.ContainsFocus() })
 }
+
+// TestOpenProjectTerminalDir tests that opening a project in the initial
+// empty window changes the directory of its default terminal, which starts
+// in the working directory, to the project root.
+func TestOpenProjectTerminalDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	defer os.Chdir(wd) // (opening a project changes it)
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	proj := filepath.Join(tmp, "proj")
+	require.NoError(t, os.Mkdir(proj, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(proj, "a.txt"), []byte("a\n"), 0o644))
+	prevCmd := Settings.Terminal.Command
+	Settings.Terminal.Command = "/bin/sh"
+	defer func() { Settings.Terminal.Command = prevCmd }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { showed <- struct{}{} })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+	waitFor := func(what string, cond func() bool) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for time.Now().Before(deadline) {
+			b.AsyncLock()
+			ok := cond()
+			b.AsyncUnlock()
+			if ok {
+				return
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("timeout waiting for %s", what)
+	}
+	var tm *terminal.Terminal
+	waitFor("the default terminal", func() bool {
+		if tms := cv.Terminals(); len(tms) > 0 {
+			tm = tms[0]
+		}
+		return tm != nil && tm.IsRunning() && strings.Contains(terminalText(tm), "$")
+	})
+	b.AsyncLock()
+	require.True(t, cv.IsEmpty())
+	ncv := cv.OpenPath(core.Filename(proj))
+	b.AsyncUnlock()
+	require.Equal(t, cv, ncv, "in the same window")
+	waitFor("the cd", func() bool { return strings.Contains(terminalText(tm), "cd ") })
+	b.AsyncLock()
+	tm.SendText("pwd\r")
+	b.AsyncUnlock()
+	waitFor("the project root", func() bool { return hasOutputLine(tm, proj) })
+}
