@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
@@ -390,7 +391,7 @@ func (cs *Commands) RunDialog(ctx core.Widget, cmd string, run RunFunc) {
 
 // runDialog shows the form of the given subcommand (see [Commands.RunDialog]).
 func (cs *Commands) runDialog(ctx core.Widget, sc *SubCmd, run RunFunc) {
-	cs.NewDialog(ctx, sc, run).RunWindowDialog(ctx)
+	runDialog(cs.NewDialog(ctx, sc, run), ctx)
 }
 
 // NewDialog returns the body of the dialog of the form of the given
@@ -472,7 +473,7 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 				root, _ := splitCmd(sc.Cmd)
 				mc := &Macro{SubCmd: sc.Name, Values: sc.ArgsOf(values)}
 				d.Close()
-				cs.NewMacroDialog(ctx, root, sc, mc, nil, run).RunWindowDialog(ctx)
+				runDialog(cs.NewMacroDialog(ctx, root, sc, mc, nil, run), ctx)
 			})
 		d.AddOK(bar).SetText("Run").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
 			if cs.Args != nil {
@@ -672,4 +673,15 @@ func (cm *SubCmd) ArgsCommandLine(sa *SubCmdArgs) string {
 		words = append(words, args)
 	}
 	return strings.Join(words, " ")
+}
+
+// DialogMinSize is the minimum initial size of the dialogs of the commands,
+// in dp: wide enough for the layout of forms on a desktop, with one line
+// per field, rather than that of a phone.
+var DialogMinSize = math32.Vec2(720, 0)
+
+// runDialog runs the given dialog in a new window, in the context of the
+// given widget, with the [DialogMinSize].
+func runDialog(d *core.Body, ctx core.Widget) {
+	d.NewWindowDialog(ctx).SetMinSize(DialogMinSize).Run()
 }

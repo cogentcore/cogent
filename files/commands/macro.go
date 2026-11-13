@@ -243,7 +243,7 @@ func (cs *Commands) RunMacro(ctx core.Widget, root string, mc *Macro, run RunFun
 			run(sc.ArgsCommandLine(mc.withPrompted(sc, nil, nil)))
 			return
 		}
-		cs.NewPromptDialog(ctx, root, sc, mc, run).RunWindowDialog(ctx)
+		runDialog(cs.NewPromptDialog(ctx, root, sc, mc, run), ctx)
 	})
 }
 
@@ -268,7 +268,7 @@ func (cs *Commands) NewPromptDialog(ctx core.Widget, root string, sc *SubCmd, mc
 				w.SetText("Edit macro").SetIcon(icons.Edit)
 				w.OnClick(func(e events.Event) {
 					d.Close()
-					cs.NewMacroDialog(ctx, root, sc, mc, mc, run).RunWindowDialog(ctx)
+					runDialog(cs.NewMacroDialog(ctx, root, sc, mc, mc, run), ctx)
 				})
 			})
 		})
@@ -383,7 +383,7 @@ func (cs *Commands) macrosButton(p *tree.Plan, d *core.Body, ctx core.Widget, ro
 			for _, mc := range mcs {
 				core.NewButton(m).SetText(mc.Label(root)).OnClick(func(e events.Event) {
 					d.Close()
-					cs.NewMacroDialog(ctx, root, sc, mc, mc, run).RunWindowDialog(ctx)
+					runDialog(cs.NewMacroDialog(ctx, root, sc, mc, mc, run), ctx)
 				})
 			}
 		})
