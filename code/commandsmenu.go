@@ -76,8 +76,18 @@ func (cv *Code) commandDir() string {
 
 // commandTabName returns the name of the tab of the output of the given
 // command line: its command and subcommands, such as "git commit", up to
-// its first argument that is not a subcommand (a flag, path, or value).
+// its first argument that is not a subcommand (a flag, path, or value), or
+// the name of the file of a script run with sh, such as that of a script
+// of the commands (see [commands.Commands.ScriptCommandLine]).
 func commandTabName(cmdline string) string {
+	if file, ok := strings.CutPrefix(cmdline, "/bin/sh "); ok {
+		if n := len(file); n > 2 && file[0] == '\'' && file[n-1] == '\'' {
+			file = file[1 : n-1] // (a quoted path, of one word)
+		}
+		if !strings.ContainsAny(file, "' \t") || strings.HasPrefix(cmdline, "/bin/sh '") {
+			return filepath.Base(file)
+		}
+	}
 	f := strings.Fields(cmdline)
 	if len(f) == 0 {
 		return "command"

@@ -44,7 +44,9 @@ func TestCommandTabName(t *testing.T) {
 		"ls":                                   "ls",
 		"make":                                 "make",
 		"core run web":                         "core run web",
-		"":                                     "command",
+		"/bin/sh '/a/Cogent Core/scripts/run/git/gitprune'": "gitprune",
+		"/bin/sh /a/scripts/run/commands/psgrep":            "psgrep",
+		"":                                                  "command",
 	} {
 		assert.Equal(t, name, commandTabName(cmdline), cmdline)
 	}
