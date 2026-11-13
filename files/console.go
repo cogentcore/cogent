@@ -6,17 +6,12 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"log"
 	"os"
 	"runtime"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
@@ -98,19 +93,8 @@ func (fl *Files) OpenConsoleTab() { //types:add
 			ed.Lines.Settings.LineNumbers = false
 		}
 	})
-	// the Kill key (Command+K on macOS) clears the console, as in terminals
-	ed.OnKeyChord(func(e events.Event) {
-		if keymap.Of(e.KeyChord()) == keymap.Kill {
-			e.SetHandled()
-			TheConsole.Clear()
-		}
-	})
-	ed.AddContextMenu(func(m *core.Scene, pos image.Point) {
-		core.NewButton(m).SetText("Clear console").SetIcon(icons.ClearAll).
-			SetKey(keymap.Kill).OnClick(func(e events.Event) {
-			TheConsole.Clear()
-		})
-	})
+	// (its Clear, in its context menu and with the Kill key, Command+K on
+	// macOS, is that of read-only editors)
 	ts.Update()
 }
 

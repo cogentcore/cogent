@@ -234,7 +234,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 			ed.Copy(true)
 		})
 	if ed.IsReadOnly() {
-		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).SetKey(keymap.Kill).
 			OnClick(func(e events.Event) {
 				ed.Clear()
 			})
