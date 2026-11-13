@@ -31,6 +31,13 @@ type Entry struct {
 	// "git commit", which is empty for a category.
 	Command string `width:"30"`
 
+	// Common are the subcommands of the command that are used the most,
+	// such as "status add commit" for git, separated by spaces, which are
+	// at the top of the menu of its subcommands, followed by a submenu of
+	// the others, sorted by name. All of them are in the menu, by group,
+	// if it is empty.
+	Common string `width:"30"`
+
 	// Children are the entries in the category.
 	Children []*Entry `display:"-"`
 
@@ -55,7 +62,7 @@ func (en *Entry) Label() string {
 
 // version is the version of the format of the file of the [Commands]:
 // the parsed commands of other versions are parsed again.
-const version = 2
+const version = 3
 
 // Commands are the commands of the command bar, organized into categories
 // by the user, with the cache of the parsed help of commands, which are
@@ -107,6 +114,9 @@ func Open(filename string) *Commands {
 	cs.syncLocked()
 	if cs.Version < 2 { // (the first version had categories of git subcommands)
 		cs.Entries = Standard()
+	}
+	if cs.Version < 3 { // (the common subcommands were added)
+		addCommon(cs.Entries)
 	}
 	cs.mu.Unlock()
 	args := ""
@@ -272,7 +282,7 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 		}
 		return cs.cachedSub(cmd), nil
 	}
-	sc, err := Parse(cmd)
+	sc, err := parseSub(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +306,7 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 		}
 		sc.Doc = cmp.Or(sc.Doc, doc)
 		if i := slices.IndexFunc(pc.SubCmds, func(o *SubCmd) bool { return o.Name == name }); i >= 0 {
+			sc.Group = pc.SubCmds[i].Group // (from the help of the command)
 			pc.SubCmds[i] = sc
 		} else {
 			pc.SubCmds = append(pc.SubCmds, sc)
@@ -304,10 +315,14 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 	return sc, err
 }
 
+// parseSub parses the help of a subcommand: [Parse], other than in tests.
+var parseSub = Parse
+
 // ParseAll parses the help of all of the commands that have not been parsed
-// yet, and of their subcommands (but not those of the subcommands), saving
-// them, and then updates the command bars. It is called in the background
-// by [Open], so that the help is cached when the commands are used.
+// yet, and of their subcommands, and then of the subcommands of those, such
+// as git stash list, saving them, and updating the command bars. It is
+// called in the background by [Open], so that the help is cached when the
+// commands are used.
 func (cs *Commands) ParseAll() {
 	var cmds []string
 	var add func(ens []*Entry)
@@ -320,6 +335,16 @@ func (cs *Commands) ParseAll() {
 		}
 	}
 	add(cs.Entries)
+	parse := func(full string) *SubCmd {
+		if sc := cs.cachedSub(full); sc != nil {
+			return sc
+		}
+		sc, err := cs.SubCmd(full, false)
+		errors.Log(err)
+		return sc
+	}
+	// the subcommands first, and then the nested ones
+	var nested []string
 	for _, cmd := range cmds {
 		root, name := splitCmd(cmd)
 		cm, err := cs.Cmd(root, false)
@@ -338,12 +363,36 @@ func (cs *Commands) ParseAll() {
 			if sub != MainName {
 				full += " " + sub
 			}
-			if cs.cachedSub(full) == nil {
-				errors.Log1(cs.SubCmd(full, false))
+			if sc := parse(full); sc != nil {
+				for _, n := range sc.Cmds {
+					nested = append(nested, n.Cmd)
+				}
 			}
 		}
 	}
 	cs.updateViews(nil)
+	for _, full := range nested {
+		parse(full)
+	}
+	cs.updateViews(nil)
+}
+
+// standardCommon are the [Entry.Common] subcommands of the [Standard]
+// commands.
+var standardCommon = map[string]string{
+	"git": "status add commit diff log show branch switch checkout merge rebase cherry-pick stash fetch pull push clone tag reset restore rm mv remote worktree blame grep clean",
+}
+
+// addCommon sets the [Entry.Common] subcommands of the given entries of the
+// [Standard] commands that do not have them, for a file of a version from
+// before they were added.
+func addCommon(ens []*Entry) {
+	for _, en := range ens {
+		addCommon(en.Children)
+		if en.Common == "" {
+			en.Common = standardCommon[en.Command]
+		}
+	}
 }
 
 // Standard returns the standard commands, which the user starts with: git,
@@ -362,7 +411,7 @@ func Standard() []*Entry {
 		return en
 	}
 	return []*Entry{
-		{Command: "git"},
+		{Command: "git", Common: standardCommon["git"]},
 		{Command: "go"},
 		{Command: "core"},
 		category("Files", "", "ls", "find", "grep", "du", "tar", "rsync", "chmod"),

@@ -196,29 +196,54 @@ func (cs *Commands) menu(m *core.Scene, ens []*Entry, run RunFunc) {
 
 // subCmdsMenu adds the buttons of the subcommands of the given command,
 // such as git, to the given menu: those of the command, not the nested
-// ones (see [Commands.nestedMenu]). The subcommands of the first group
-// (see [SubCmd.Group]) are in the menu, and those of the others in
-// submenus after them.
+// ones (see [Commands.nestedMenu]). If the command has [Entry.Common]
+// subcommands, they are in the menu, followed by a submenu of the others,
+// sorted by name. Otherwise, the subcommands of the first group (see
+// [SubCmd.Group]) are in the menu, and those of the others in submenus
+// after them.
 func (cs *Commands) subCmdsMenu(m *core.Scene, root string, run RunFunc) {
 	cm := cs.cached(root)
 	if cm == nil {
 		return
 	}
-	var groups []string
-	byGroup := map[string][]*SubCmd{}
+	var subs []*SubCmd
 	for _, sc := range cm.SubCmds {
-		if strings.Contains(sc.Name, " ") {
-			continue // nested
+		if !strings.Contains(sc.Name, " ") { // not nested
+			subs = append(subs, sc)
 		}
-		if _, ok := byGroup[sc.Group]; !ok {
-			groups = append(groups, sc.Group)
-		}
-		byGroup[sc.Group] = append(byGroup[sc.Group], sc)
 	}
 	add := func(m *core.Scene, scs []*SubCmd) {
 		for _, sc := range scs {
 			cs.commandButton(m, sc.Label(), sc.Cmd, run)
 		}
+	}
+	submenu := func(text string, scs []*SubCmd) {
+		b := core.NewButton(m).SetText(text).SetIcon(icons.Folder)
+		b.SetMenu(func(sm *core.Scene, _ image.Point) { add(sm, scs) })
+	}
+	if common := strings.Fields(cs.common(root)); len(common) > 0 {
+		var top []*SubCmd
+		for _, name := range common {
+			if i := slices.IndexFunc(subs, func(sc *SubCmd) bool { return sc.Name == name }); i >= 0 {
+				top = append(top, subs[i])
+				subs = slices.Delete(subs, i, i+1)
+			}
+		}
+		add(m, top)
+		if len(subs) > 0 {
+			slices.SortFunc(subs, func(a, b *SubCmd) int { return strings.Compare(a.Name, b.Name) })
+			core.NewSeparator(m)
+			submenu("More", subs)
+		}
+		return
+	}
+	var groups []string
+	byGroup := map[string][]*SubCmd{}
+	for _, sc := range subs {
+		if _, ok := byGroup[sc.Group]; !ok {
+			groups = append(groups, sc.Group)
+		}
+		byGroup[sc.Group] = append(byGroup[sc.Group], sc)
 	}
 	for i, g := range groups {
 		if i == 0 {
@@ -228,9 +253,28 @@ func (cs *Commands) subCmdsMenu(m *core.Scene, root string, run RunFunc) {
 		if i == 1 {
 			core.NewSeparator(m)
 		}
-		b := core.NewButton(m).SetText(cmp.Or(g, "Other")).SetIcon(icons.Folder)
-		b.SetMenu(func(sm *core.Scene, _ image.Point) { add(sm, byGroup[g]) })
+		submenu(cmp.Or(g, "Other"), byGroup[g])
 	}
+}
+
+// common returns the [Entry.Common] subcommands of the first entry of the
+// given command, such as git, if any.
+func (cs *Commands) common(root string) string {
+	var find func(ens []*Entry) string
+	find = func(ens []*Entry) string {
+		for _, en := range ens {
+			if en.Command == root && en.Common != "" {
+				return en.Common
+			}
+			if c := find(en.Children); c != "" {
+				return c
+			}
+		}
+		return ""
+	}
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	return find(cs.Entries)
 }
 
 // nestedMenu adds the buttons of the given subcommand, such as git stash,

@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"image"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -99,6 +100,18 @@ For example:
    ok      archive/tar   0.011s
 `
 
+// goModTidyHelp is part of the output of go help mod tidy, with a
+// changed usage.
+const goModTidyHelp = `usage: go mod tidy [-v] [-go=version] [-C dir] [-e | -x]
+
+Tidy makes sure go.mod matches the source code in the module.
+
+The -v flag causes tidy to print information about removed modules
+to standard error.
+
+The -go flag causes tidy to update the 'go' directive. More.
+`
+
 // gitStashHelp is part of the output of git stash -h.
 const gitStashHelp = `usage: git stash list [<log-options>]
    or: git stash show [-u | --include-untracked] [<stash>]
@@ -155,6 +168,17 @@ func TestSetFromHelp(t *testing.T) {
 		groups = append(groups, sub.Cmd+": "+sub.Group)
 	}
 	assert.Equal(t, []string{"git add: Main Porcelain Commands", "git commit: Main Porcelain Commands", "git config: Ancillary Commands", "git gc: Ancillary Commands"}, groups)
+
+	// flags in the usage lines only, with their sentences in the text
+	cm = &SubCmd{Cmd: "go mod tidy"}
+	cm.SetFromHelp(goModTidyHelp)
+	require.Len(t, cm.Flags, 5)
+	assert.Equal(t, Flag{Name: "-v", Names: []string{"-v"}, Doc: "The -v flag causes tidy to print information about removed modules to standard error."}, *cm.Flags[0])
+	assert.Equal(t, Flag{Name: "-go", Names: []string{"-go"}, Value: "version", Equals: true, Doc: "The -go flag causes tidy to update the 'go' directive."}, *cm.Flags[1])
+	assert.Equal(t, "-C", cm.Flags[2].Name)
+	assert.Equal(t, "dir", cm.Flags[2].Value)
+	assert.Equal(t, "-e", cm.Flags[3].Name)
+	assert.Equal(t, "-x", cm.Flags[4].Name)
 
 	// subcommands in the usage lines only
 	cm = &SubCmd{Cmd: "git stash"}
@@ -282,6 +306,46 @@ func TestCommands(t *testing.T) {
 	cs3 := Open(file)
 	assert.Equal(t, Standard()[0].Command, cs3.Entries[0].Command)
 	assert.Nil(t, cs3.cached("git status"))
+}
+
+// TestSubCmdMenu tests that a parsed subcommand stays in its group, and the
+// menu of the subcommands of git: the common ones, and then a submenu of
+// the others.
+func TestSubCmdMenu(t *testing.T) {
+	cs := &Commands{Parsed: map[string]*Cmd{}, Entries: Standard()}
+	cs.Parsed["git"] = &Cmd{Cmd: "git", SubCmds: []*SubCmd{
+		{Name: "add", Cmd: "git add", Group: "Main"},
+		{Name: "bisect", Cmd: "git bisect", Group: "Main"},
+		{Name: "status", Cmd: "git status", Group: "Main"},
+		{Name: "archive", Cmd: "git archive", Group: "Ancillary"},
+	}}
+	prev := parseSub
+	parseSub = func(cmd string) (*SubCmd, error) { return &SubCmd{Cmd: cmd, Source: cmd + " -h"}, nil }
+	t.Cleanup(func() { parseSub = prev })
+	sc, err := cs.SubCmd("git bisect", false)
+	require.NoError(t, err)
+	assert.Equal(t, "Main", sc.Group)
+
+	texts := func(m *core.Scene) []string {
+		var ts []string
+		for _, kid := range m.Children {
+			if b, ok := kid.(*core.Button); ok {
+				ts = append(ts, b.Text)
+			}
+		}
+		return ts
+	}
+	m := core.NewScene()
+	cs.subCmdsMenu(m, "git", nil)
+	assert.Equal(t, []string{"Status", "Add", "More"}, texts(m))
+	more := core.NewScene()
+	m.Children[len(m.Children)-1].(*core.Button).Menu(more, image.Point{})
+	assert.Equal(t, []string{"Archive", "Bisect"}, texts(more))
+
+	cs.Entries[0].Common = "" // by group
+	m = core.NewScene()
+	cs.subCmdsMenu(m, "git", nil)
+	assert.Equal(t, []string{"Add", "Bisect", "Status", "Ancillary"}, texts(m))
 }
 
 // TestArgs tests saving the arguments last used for a subcommand, and

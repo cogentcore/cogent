@@ -75,7 +75,7 @@ func Parse(cmd string) (*SubCmd, error) {
 		if man {
 			cm.Cmds = nil
 		}
-		if best == nil || len(cm.Flags) > len(best.Flags) {
+		if best == nil || flagScore(cm) > flagScore(best) {
 			best = cm
 		}
 		if cmds == nil || len(cm.Cmds) > len(cmds.Cmds) {
@@ -98,6 +98,18 @@ func Parse(cmd string) (*SubCmd, error) {
 	best.Doc = cmp.Or(best.Doc, doc)
 	best.Usage = cmp.Or(best.Usage, usage)
 	return best, nil
+}
+
+// flagScore returns the score of the flags of the given parse, for choosing
+// the help output with the most flags, and then the most documented ones.
+func flagScore(cm *SubCmd) int {
+	n := 2 * len(cm.Flags)
+	for _, fl := range cm.Flags {
+		if fl.Doc != "" {
+			n++
+		}
+	}
+	return n
 }
 
 // helpCommands returns the commands to get the help of the given command.
@@ -200,6 +212,9 @@ func (cm *SubCmd) SetFromHelp(help string) {
 		cmds[b.name] = true
 		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + b.name, Doc: b.doc, Group: groupName(b.section)})
 	}
+	if len(cm.Flags) == 0 { // as for go mod tidy
+		cm.Flags = usageFlags(cm.Usage, lines)
+	}
 	// a section with one subcommand is an example in the text, as in the
 	// help of go test
 	n := map[string]int{}
@@ -221,6 +236,46 @@ func (cm *SubCmd) SetFromHelp(help string) {
 		cmds[f[0]] = true
 		cm.Cmds = append(cm.Cmds, &SubCmd{Cmd: cm.Cmd + " " + f[0], Doc: line})
 	}
+}
+
+// usageFlag matches a bracketed flag in a usage line, such as "[-v]",
+// "[-go=version]", "[-C dir]", or "[-a | -b]", not containing brackets.
+var usageFlag = regexp.MustCompile(`\[(-[^\[\]]*)\]`)
+
+// usageFlags returns the flags in the given usage lines, for help output
+// that only has them there, as for go mod tidy, with their documentation
+// from the given lines of the help output: the sentence about each, such
+// as "The -v flag causes tidy to print ...".
+func usageFlags(usage string, lines []string) []*Flag {
+	text := strings.Join(strings.Fields(strings.Join(lines, " ")), " ")
+	var flags []*Flag
+	seen := map[string]bool{}
+	for _, m := range usageFlag.FindAllStringSubmatch(usage, -1) {
+		for _, alt := range strings.Split(m[1], "|") {
+			fl := parseFlag(strings.TrimSpace(alt))
+			if fl == nil || seen[fl.Name] || len(strings.Fields(alt)) > 2 {
+				continue
+			}
+			seen[fl.Name] = true
+			fl.Doc = flagSentence(text, fl.Name)
+			flags = append(flags, fl)
+		}
+	}
+	return flags
+}
+
+// flagSentence returns the sentence of the given text that is about the
+// given flag, starting with "The -v flag", or "" if there is none.
+func flagSentence(text, name string) string {
+	i := strings.Index(text, "The "+name+" flag")
+	if i < 0 {
+		return ""
+	}
+	s := text[i:]
+	if j := strings.Index(s, ". "); j >= 0 {
+		s = s[:j+1]
+	}
+	return s
 }
 
 // commandSection returns whether the given section of help output can
