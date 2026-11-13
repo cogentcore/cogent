@@ -111,6 +111,12 @@ func TestRunCommandLine(t *testing.T) {
 	})
 	b.AsyncLock()
 	ct, _ := cv.Tabs().CurrentTab()
+	assert.Equal(t, sub, cv.buildDir(), "build in the directory of the active editor")
+	cv.Settings.BuildDir = core.Filename(tmp)
+	assert.Equal(t, sub, cv.buildDir(), "the project root is the default")
+	cv.Settings.BuildDir = core.Filename(filepath.Join(tmp, "build"))
+	assert.Equal(t, filepath.Join(tmp, "build"), cv.buildDir(), "set")
+	cv.Settings.BuildDir = ""
 	b.AsyncUnlock()
 	require.NotNil(t, ct)
 	assert.Equal(t, "pwd", ct.AsTree().Name, "its tab is shown")
@@ -157,7 +163,7 @@ func TestBuildRunCommands(t *testing.T) {
 	se := &ProjectSettings{ProjectRoot: "/proj", MainLang: fileinfo.Go}
 	assert.Equal(t, "go build -v", se.buildCommand())
 	assert.Equal(t, "core run", se.runCommand())
-	assert.Equal(t, "/proj", se.buildDir())
+	assert.Equal(t, "", se.buildDir(), "that of the active editor")
 	se.BuildCommand, se.RunCommand, se.BuildDir = "go build ./cmd/x", "./x -v", "/proj/cmd/x"
 	assert.Equal(t, "go build ./cmd/x", se.buildCommand())
 	assert.Equal(t, "./x -v", se.runCommand())

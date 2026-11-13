@@ -5,7 +5,6 @@
 package code
 
 import (
-	"cmp"
 	"os"
 	"path/filepath"
 	"strings"
@@ -228,8 +227,10 @@ type ProjectSettings struct { //types:add
 	// otherwise make.
 	BuildCommand string
 
-	// BuildDir is the directory that the Build and Run commands run in,
-	// which is the project root if it is empty.
+	// BuildDir is the directory that the Build and Run commands run in, if
+	// it is not empty or the project root: otherwise they run in the
+	// directory of the file of the active editor, as the commands do (or
+	// the project root).
 	BuildDir core.Filename
 
 	// RunExec is the executable that the debugger runs, and the Run button
@@ -528,10 +529,13 @@ func (se *ProjectSettings) runCommand() string {
 	return ""
 }
 
-// buildDir returns the [ProjectSettings.BuildDir], or else the project
-// root.
+// buildDir returns the [ProjectSettings.BuildDir], if it is set to a
+// directory other than the project root, and otherwise "".
 func (se *ProjectSettings) buildDir() string {
-	return string(cmp.Or(se.BuildDir, se.ProjectRoot))
+	if se.BuildDir == se.ProjectRoot {
+		return ""
+	}
+	return string(se.BuildDir)
 }
 
 // shellQuote returns the given string quoted for a POSIX shell, if needed.
