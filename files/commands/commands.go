@@ -6,7 +6,11 @@ package commands
 
 import (
 	"cmp"
+	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -73,6 +77,10 @@ type Commands struct {
 	// Version is the version of the format of the file.
 	Version int
 
+	// StandardVersion is the version of the [Standard] commands that the
+	// entries have (see [addStandard]).
+	StandardVersion int
+
 	// Entries are the top-level entries, which are the buttons of the
 	// command bar.
 	Entries []*Entry
@@ -114,9 +122,14 @@ func Open(filename string) *Commands {
 	cs.syncLocked()
 	if cs.Version < 2 { // (the first version had categories of git subcommands)
 		cs.Entries = Standard()
+		cs.StandardVersion = standardVersion
 	}
 	if cs.Version < 3 { // (the common subcommands were added)
 		addCommon(cs.Entries)
+	}
+	if cs.StandardVersion < standardVersion { // (the standard ones were added)
+		cs.Entries = addStandard(cs.Entries)
+		cs.StandardVersion = standardVersion
 	}
 	cs.mu.Unlock()
 	args := ""
@@ -136,9 +149,10 @@ func (cs *Commands) syncLocked() bool {
 		return false
 	}
 	var fc struct {
-		Version int
-		Entries []*Entry
-		Parsed  map[string]*Cmd
+		Version         int
+		StandardVersion int
+		Entries         []*Entry
+		Parsed          map[string]*Cmd
 	}
 	if errors.Log(cs.file.read(&fc)) != nil {
 		return false
@@ -147,6 +161,7 @@ func (cs *Commands) syncLocked() bool {
 		return true
 	}
 	cs.Version = max(cs.Version, fc.Version)
+	cs.StandardVersion = max(cs.StandardVersion, fc.StandardVersion)
 	cs.Entries = fc.Entries
 	if fc.Version != version { // only the macros, made by the user
 		for root, fcm := range fc.Parsed {
@@ -389,10 +404,32 @@ func (cs *Commands) ParseAll() {
 }
 
 // standardCommon are the [Entry.Common] subcommands of the [Standard]
-// commands.
+// commands. Those that a command does not have are ignored.
 var standardCommon = map[string]string{
-	"git": "status add commit diff log show branch switch checkout merge rebase cherry-pick stash fetch pull push clone tag reset restore rm mv remote worktree blame grep clean",
+	"git":       "status add commit diff log show branch switch checkout merge rebase cherry-pick stash fetch pull push clone tag reset restore rm mv remote worktree blame grep clean",
+	"brew":      "install upgrade update search info list uninstall outdated cleanup services",
+	"port":      "install upgrade selfupdate search info installed uninstall outdated",
+	"apt":       "install update upgrade search show list remove autoremove",
+	"apt-get":   "install update upgrade dist-upgrade remove autoremove purge",
+	"dnf":       "install upgrade search info list remove autoremove",
+	"yum":       "install update search info list remove",
+	"snap":      "install refresh find info list remove",
+	"flatpak":   "install update search info list uninstall",
+	"winget":    "install upgrade search show list uninstall",
+	"choco":     "install upgrade search info list uninstall",
+	"scoop":     "install update search info list uninstall",
+	"npm":       "install run test update outdated list uninstall init",
+	"pip3":      "install list show freeze uninstall download",
+	"cargo":     "build run test check add install update clean doc",
+	"systemctl": "status start stop restart reload enable disable list-units daemon-reload",
+	"launchctl": "list print load unload start stop kickstart",
+	"diskutil":  "list info mount unmount eject",
 }
+
+// standardVersion is the version of the [Standard] commands: the standard
+// entries are added to those of a file of an earlier version, which does
+// not have them (see [addStandard]).
+const standardVersion = 1
 
 // addCommon sets the [Entry.Common] subcommands of the given entries of the
 // [Standard] commands that do not have them, for a file of a version from
@@ -406,25 +443,114 @@ func addCommon(ens []*Entry) {
 	}
 }
 
-// Standard returns the standard commands, which the user starts with: git,
-// go, and core, with the menus of their subcommands, and a category of
-// commands for files.
-func Standard() []*Entry {
-	category := func(name, root string, subs ...string) *Entry {
-		en := &Entry{Name: name, Closed: true}
-		for _, sub := range subs {
-			cmd := sub
-			if root != "" {
-				cmd = root + " " + sub
+// addStandard adds the [Standard] entries that the given entries do not
+// have to them, returning them: the top-level commands and categories, and
+// the commands of the categories of the same names.
+func addStandard(ens []*Entry) []*Entry {
+	has := func(ens []*Entry, en *Entry) *Entry {
+		for _, e := range ens {
+			if (en.Command != "" && e.Command == en.Command) || (en.Command == "" && e.Command == "" && e.Name == en.Name) {
+				return e
 			}
-			en.Children = append(en.Children, &Entry{Command: cmd})
 		}
-		return en
+		return nil
 	}
-	return []*Entry{
-		{Command: "git", Common: standardCommon["git"]},
-		{Command: "go"},
-		{Command: "core"},
-		category("Files", "", "ls", "find", "grep", "du", "tar", "rsync", "chmod"),
+	for _, en := range Standard() {
+		e := has(ens, en)
+		if e == nil {
+			ens = append(ens, en)
+			continue
+		}
+		for _, c := range en.Children {
+			if has(e.Children, c) == nil {
+				e.Children = append(e.Children, c)
+			}
+		}
 	}
+	return ens
+}
+
+// standardCommands are the commands of the [Standard] categories, by
+// category, on all platforms, and on the platforms of the given GOOS.
+var standardCommands = []struct {
+	name, goos string
+	cmds       []string
+}{
+	{"Files", "", []string{"ls", "find", "cp", "mv", "rm", "mkdir", "ln", "chmod", "chown", "du", "df", "tar", "zip", "unzip", "rsync"}},
+	{"Text", "", []string{"grep", "sed", "awk", "sort", "uniq", "wc", "head", "tail", "cut", "diff", "jq"}},
+	{"Dev", "", []string{"make", "cmake", "pkg-config", "gcc", "g++", "clang", "clang++", "gdb", "lldb", "cargo", "python3", "node"}},
+	{"Packages", "darwin", []string{"brew", "port"}},
+	{"Packages", "linux", []string{"apt", "apt-get", "apt-cache", "dpkg", "dnf", "yum", "pacman", "zypper", "snap", "flatpak"}},
+	{"Packages", "windows", []string{"winget", "choco", "scoop"}},
+	{"Packages", "", []string{"pip3", "npm"}},
+	{"Network", "", []string{"curl", "wget", "ssh", "scp", "ping"}},
+	{"System", "", []string{"ps", "kill", "pkill", "lsof", "uname"}},
+	{"System", "darwin", []string{"open", "launchctl", "diskutil"}},
+	{"System", "linux", []string{"systemctl", "journalctl"}},
+}
+
+// Standard returns the standard commands, which the user starts with: git,
+// go, and core, with the menus of their subcommands, and categories of
+// commands for files, text, development, packages, the network, and the
+// system, those of this platform. Commands that are not installed are left
+// out (see [installed]).
+func Standard() []*Entry {
+	var all []string
+	for _, sc := range standardCommands {
+		all = append(all, sc.cmds...)
+	}
+	have := installed(append(all, "git", "go", "core"))
+	var ens []*Entry
+	for _, cmd := range []string{"git", "go", "core"} {
+		if have[cmd] {
+			ens = append(ens, &Entry{Command: cmd, Common: standardCommon[cmd]})
+		}
+	}
+	for _, sc := range standardCommands {
+		if sc.goos != "" && sc.goos != runtime.GOOS {
+			continue
+		}
+		i := slices.IndexFunc(ens, func(e *Entry) bool { return e.Command == "" && e.Name == sc.name })
+		if i < 0 {
+			ens = append(ens, &Entry{Name: sc.name, Closed: true})
+			i = len(ens) - 1
+		}
+		for _, cmd := range sc.cmds {
+			if have[cmd] {
+				ens[i].Children = append(ens[i].Children, &Entry{Command: cmd, Common: standardCommon[cmd]})
+			}
+		}
+	}
+	return slices.DeleteFunc(ens, func(e *Entry) bool { return e.Command == "" && len(e.Children) == 0 })
+}
+
+// installed returns which of the given commands are installed: found in
+// the PATH, or else by the login shell (whose PATH an app started from the
+// desktop may not have), in one call for all of those.
+func installed(cmds []string) map[string]bool {
+	have := map[string]bool{}
+	var rest []string
+	for _, cmd := range cmds {
+		if _, err := exec.LookPath(cmd); err == nil {
+			have[cmd] = true
+		} else {
+			rest = append(rest, cmd)
+		}
+	}
+	sh := os.Getenv("SHELL")
+	if len(rest) == 0 || sh == "" || runtime.GOOS == "windows" {
+		return have
+	}
+	quoted := make([]string, len(rest))
+	for i, c := range rest {
+		quoted[i] = shellQuote(c)
+	}
+	script := "for c in " + strings.Join(quoted, " ") + "; do command -v \"$c\" >/dev/null 2>&1 && echo \"$c\"; done"
+	ctx, cancel := context.WithTimeout(context.Background(), HelpTimeout)
+	defer cancel()
+	out, _ := exec.CommandContext(ctx, sh, "-l", "-c", script).Output()
+	for _, c := range strings.Fields(string(out)) {
+		have[c] = true
+	}
+	return have
 }

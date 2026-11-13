@@ -263,6 +263,7 @@ func (cs *Commands) NewPromptDialog(ctx core.Widget, root string, sc *SubCmd, mc
 	}
 	line := commandLineText(d, cmdline)
 	fm := core.NewForm(d).SetStruct(values)
+	focusForm(d, fm)
 	fm.OnChange(func(e events.Event) { line.Update() })
 	fm.OnInput(func(e events.Event) { line.Update() })
 	d.AddTopBar(func(bar *core.Frame) {
@@ -305,6 +306,7 @@ func (cs *Commands) NewMacroDialog(ctx core.Widget, root string, sc *SubCmd, mc,
 		return m.Label(root) + ": " + sc.ArgsCommandLine(m.Values)
 	})
 	fm := core.NewForm(d).SetStruct(values)
+	focusForm(d, fm)
 	fm.OnChange(func(e events.Event) { line.Update() })
 	fm.OnInput(func(e events.Event) { line.Update() })
 	if old != nil {

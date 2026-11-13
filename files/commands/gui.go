@@ -422,6 +422,7 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 	})
 	line.Updater(func() { line.SetText(html.EscapeString(sc.CommandLine(values))) })
 	fm := core.NewForm(d).SetStruct(values)
+	focusForm(d, fm)
 	fm.OnChange(func(e events.Event) { line.Update() })
 	fm.OnInput(func(e events.Event) { line.Update() })
 	d.AddTopBar(func(bar *core.Frame) {
@@ -717,4 +718,23 @@ func live(w core.Widget) bool {
 	}
 	wb := w.AsWidget()
 	return wb != nil && wb.This != nil && wb.Scene != nil && wb.Scene.Stage != nil && wb.Scene.Stage.Mains != nil
+}
+
+// focusForm makes the first field of the given form of the given dialog
+// the one in focus when it is shown, rather than the first button of its
+// top bar: such as the first argument prompted for by a macro.
+func focusForm(d *core.Body, fm *core.Form) {
+	fm.Update() // (makes the fields)
+	var first core.Widget
+	fm.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		switch cw.(type) {
+		case *core.TextField, *core.Switch, *core.Spinner, *core.Chooser:
+			first = cw
+			return tree.Break
+		}
+		return tree.Continue
+	})
+	if first != nil {
+		d.Scene.Events.SetStartFocus(first)
+	}
 }

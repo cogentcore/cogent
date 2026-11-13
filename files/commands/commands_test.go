@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 
@@ -389,4 +390,47 @@ func TestDialog(t *testing.T) {
 		fm.SendChange()
 	})
 	assert.Equal(t, "", ran, "not run until Run is clicked")
+}
+
+// TestStandard tests the standard commands: those of this platform that
+// are installed, and adding them to the entries of an earlier version.
+func TestStandard(t *testing.T) {
+	have := installed([]string{"ls", "no-such-command-xyz"})
+	assert.True(t, have["ls"])
+	assert.False(t, have["no-such-command-xyz"])
+
+	ens := Standard()
+	cmds := map[string]string{} // by category
+	for _, en := range ens {
+		for _, c := range en.Children {
+			cmds[c.Command] = en.Name
+		}
+	}
+	assert.Equal(t, "Files", cmds["ls"])
+	assert.Equal(t, "Text", cmds["sed"])
+	for _, c := range []string{"apt", "zypper", "winget"} {
+		if runtime.GOOS != "linux" || c == "winget" {
+			assert.NotContains(t, cmds, c, "not on this platform")
+		}
+	}
+	if _, err := exec.LookPath("brew"); err == nil && runtime.GOOS == "darwin" {
+		assert.Equal(t, "Packages", cmds["brew"])
+	}
+
+	old := []*Entry{{Command: "git"}, {Name: "Files", Children: []*Entry{{Command: "ls"}, {Command: "grep"}}}}
+	merged := addStandard(old)
+	assert.Equal(t, "git", merged[0].Command)
+	assert.Equal(t, "Files", merged[1].Name)
+	var files []string
+	for _, c := range merged[1].Children {
+		files = append(files, c.Command)
+	}
+	assert.Equal(t, []string{"ls", "grep", "find"}, files[:3], "kept, with the others added")
+	n := 0
+	for _, en := range merged {
+		if en.Command == "git" {
+			n++
+		}
+	}
+	assert.Equal(t, 1, n, "no duplicates")
 }

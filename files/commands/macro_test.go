@@ -14,6 +14,7 @@ import (
 
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,5 +153,25 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, core.Widget(tb), cs.context(tb))
 		st.ClosePopup()
 		assert.Equal(t, core.Widget(tb), cs.context(item), "a command bar")
+	})
+}
+
+// TestDialogFocus tests that the first field of the forms of the dialogs
+// is in focus when they are shown: the first prompt of a macro.
+func TestDialogFocus(t *testing.T) {
+	cs := &Commands{Parsed: map[string]*Cmd{}, Args: OpenArgs("")}
+	sc := testCommit()
+	mc := &Macro{Name: "wip", SubCmd: "commit", Values: &SubCmdArgs{Flags: map[string]string{"--message": "wip"}}, Prompts: []string{"--message"}}
+	d := cs.NewPromptDialog(nil, "git", sc, mc, func(string) {})
+	d.AssertRender(t, "macro-prompt-focus", func() {
+		tf := tree.ChildByType[*core.Form](d).AsTree().Children
+		var field *core.TextField
+		for _, kid := range tf {
+			if f, ok := kid.(*core.TextField); ok {
+				field = f
+			}
+		}
+		require.NotNil(t, field)
+		assert.True(t, field.StateIs(states.Focused), "the prompt is in focus")
 	})
 }
