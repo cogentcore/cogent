@@ -292,8 +292,18 @@ func (cm *SubCmd) SetFromHelp(help string) {
 		if commaSection == "" || !strings.Contains(text, ",") || !commandSection(commaSection) {
 			continue
 		}
-		names := strings.FieldsFunc(text, func(r rune) bool { return r == ',' || r == ' ' })
-		if slices.ContainsFunc(names, func(n string) bool { return !isSubcommand(n) }) {
+		// each item is one word, not prose with commas (as in go help build)
+		var names []string
+		prose := false
+		for _, item := range strings.Split(strings.TrimSuffix(text, ","), ",") {
+			item = strings.TrimSpace(item)
+			if !isSubcommand(item) {
+				prose = true
+				break
+			}
+			names = append(names, item)
+		}
+		if prose {
 			continue
 		}
 		for _, n := range names {

@@ -200,6 +200,9 @@ func TestSetFromHelp(t *testing.T) {
 	}
 	assert.Equal(t, []string{"npm access", "npm adduser", "npm audit", "npm ci", "npm install"}, npm)
 	assert.Equal(t, "", cm.Cmds[0].Group)
+	cm = &SubCmd{Cmd: "go build"}
+	cm.SetFromHelp("The build flags are shared by the build, clean, and test commands:\n\n\t-C dir\n\t\tChange to dir before running the command, such as\n\t\tthe number of programs, such as build commands or\n")
+	assert.Empty(t, cm.Cmds, "prose with commas")
 	cm = &SubCmd{Cmd: "npm install"}
 	cm.SetFromHelp("Install a package\n\n  -S|--save\n    Save installed packages.\n\n  --install-strategy <hoisted|nested>\n    Sets the strategy.\n")
 	require.Len(t, cm.Flags, 2)

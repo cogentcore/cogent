@@ -21,7 +21,7 @@ import (
 // testCommands are the commands of the command bar in the tests, with their
 // help already parsed, so that no help commands are run.
 const testCommands = `{
-	"Version": 8,
+	"Version": 9,
 	"Entries": [
 		{"Command": "git"},
 		{"Command": "ls"}

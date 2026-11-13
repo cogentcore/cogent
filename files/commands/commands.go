@@ -67,7 +67,7 @@ func (en *Entry) Label() string {
 
 // version is the version of the format of the file of the [Commands]:
 // the parsed commands of other versions are parsed again.
-const version = 8
+const version = 9
 
 // Commands are the commands of the command bar, organized into categories
 // by the user, with the cache of the parsed help of commands, which are
