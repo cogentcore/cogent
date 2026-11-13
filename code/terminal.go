@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
@@ -104,6 +105,14 @@ func (cv *Code) recycleTerminalIn(name, dir string) *terminal.Terminal {
 		tm.SetCommand(cmd...)
 	}
 	tv.Update()
+	// a click on the tab moves the keyboard focus to the terminal, once
+	// it is shown, as in Cogent Files
+	if _, tab := tv.TabAtIndex(fr.IndexInParent()); tab != nil {
+		tab.OnClick(func(e events.Event) {
+			tm.Defer(func() { tm.SetFocus() })
+			tm.NeedsRender()
+		})
+	}
 	cv.lastTerminal = tm
 	return tm
 }
