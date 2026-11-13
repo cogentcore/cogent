@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"slices"
 	"strings"
@@ -66,7 +67,7 @@ func (en *Entry) Label() string {
 
 // version is the version of the format of the file of the [Commands]:
 // the parsed commands of other versions are parsed again.
-const version = 6
+const version = 7
 
 // Commands are the commands of the command bar, organized into categories
 // by the user, with the cache of the parsed help of commands, which are
@@ -322,6 +323,7 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 	if copiedSubCmds(sc, cm) {
 		sc.Cmds = nil
 	}
+	cs.addSharedFlags(root, sc)
 	err = cs.update(func() {
 		pc := cs.Parsed[root]
 		if pc == nil {
@@ -352,6 +354,43 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 
 // parseSub parses the help of a subcommand: [Parse], other than in tests.
 var parseSub = Parse
+
+// sharedFlags are the flags that the subcommands of a command share with
+// one of its subcommands, which they name in their usage: those of go build,
+// which go run, install, test, vet, get, list, clean, and generate have
+// ("[build flags]" or "[build/test flags]"), but only describe in their
+// help by referring to go build.
+var sharedFlags = map[string]struct {
+	usage *regexp.Regexp
+	from  string
+}{
+	"go": {regexp.MustCompile(`\[build(/test)? flags`), "build"},
+}
+
+// addSharedFlags adds the [sharedFlags] of the given command to the given
+// subcommand, if its usage names them, after its own flags, without those
+// of the same names, parsing the subcommand that they are from if needed.
+func (cs *Commands) addSharedFlags(root string, sc *SubCmd) {
+	sf, ok := sharedFlags[root]
+	if !ok || sc.Name == sf.from || !sf.usage.MatchString(sc.Usage) {
+		return
+	}
+	from, err := cs.SubCmd(root+" "+sf.from, false)
+	if errors.Log(err) != nil {
+		return
+	}
+	has := map[string]bool{}
+	for _, fl := range sc.Flags {
+		for _, n := range fl.Names {
+			has[n] = true
+		}
+	}
+	for _, fl := range from.Flags {
+		if !slices.ContainsFunc(fl.Names, func(n string) bool { return has[n] }) {
+			sc.Flags = append(sc.Flags, fl)
+		}
+	}
+}
 
 // copiedSubCmds returns whether the subcommands of the given subcommand
 // are mostly those of the given command: its help is that of the command.

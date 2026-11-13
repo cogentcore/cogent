@@ -507,3 +507,38 @@ func TestBunLike(t *testing.T) {
 	}
 	assert.Equal(t, []string{"Run", "Test", "Install"}, texts)
 }
+
+// TestSharedFlags tests that the go subcommands whose usage names the build
+// flags have those of go build, after their own, without those they have.
+func TestSharedFlags(t *testing.T) {
+	cs := &Commands{Parsed: map[string]*Cmd{}}
+	cs.Parsed["go"] = &Cmd{Cmd: "go", SubCmds: []*SubCmd{{Name: "build", Cmd: "go build"}, {Name: "run", Cmd: "go run"}, {Name: "doc", Cmd: "go doc"}}}
+	helps := map[string]string{
+		"go build": "usage: go build [-o output] [build flags] [packages]\n\n\t-o output\n\t\twrite the output there\n\t-race\n\t\tenable data race detection\n\t-exec xprog\n\t\tthe build's exec\n",
+		"go run":   "usage: go run [build flags] [-exec xprog] package [arguments...]\n\n\t-exec xprog\n\t\trun the program with xprog\n\t-n\n\t\tprint the commands\n",
+		"go doc":   "usage: go doc [doc flags] [package|[package.]symbol]\n\n\t-all\n\t\tshow all the documentation\n\t-src\n\t\tshow the source\n",
+	}
+	prev := parseSub
+	parseSub = func(cmd string) (*SubCmd, error) {
+		sc := &SubCmd{Cmd: cmd, Source: cmd + " -h"}
+		sc.SetFromHelp(helps[cmd])
+		return sc, nil
+	}
+	t.Cleanup(func() { parseSub = prev })
+	flags := func(sc *SubCmd) []string {
+		var fs []string
+		for _, fl := range sc.Flags {
+			fs = append(fs, fl.Name+": "+fl.Doc)
+		}
+		return fs
+	}
+	run, err := cs.SubCmd("go run", false)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"-exec: run the program with xprog", "-n: print the commands", "-o: write the output there", "-race: enable data race detection"}, flags(run))
+	doc, err := cs.SubCmd("go doc", false)
+	require.NoError(t, err)
+	assert.Len(t, doc.Flags, 2, "no build flags")
+	build, err := cs.SubCmd("go build", false)
+	require.NoError(t, err)
+	assert.Len(t, build.Flags, 3)
+}
