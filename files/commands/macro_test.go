@@ -104,8 +104,8 @@ func TestMacros(t *testing.T) {
 	b, err := os.ReadFile(file)
 	require.NoError(t, err)
 	old := filepath.Join(t.TempDir(), "commands.json")
-	require.Contains(t, string(b), `"Version": 5`)
-	require.NoError(t, os.WriteFile(old, []byte(strings.Replace(string(b), `"Version": 5`, `"Version": 2`, 1)), 0o644))
+	require.Contains(t, string(b), `"Version": 6`)
+	require.NoError(t, os.WriteFile(old, []byte(strings.Replace(string(b), `"Version": 6`, `"Version": 2`, 1)), 0o644))
 	cs2 := &Commands{file: sharedFile{path: old}, Parsed: map[string]*Cmd{}}
 	cs2.reload()
 	require.NotNil(t, cs2.cached("git"))

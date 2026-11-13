@@ -230,14 +230,18 @@ func (cs *Commands) subCmdsMenu(m *core.Scene, root string, run RunFunc) {
 		b := core.NewButton(m).SetText(text).SetIcon(icons.Folder)
 		b.SetMenu(func(sm *core.Scene, _ image.Point) { add(sm, scs) })
 	}
+	var top, rest []*SubCmd
 	if common := strings.Fields(cs.common(root)); len(common) > 0 {
-		var top []*SubCmd
+		rest = slices.Clone(subs)
 		for _, name := range common {
-			if i := slices.IndexFunc(subs, func(sc *SubCmd) bool { return sc.Name == name }); i >= 0 {
-				top = append(top, subs[i])
-				subs = slices.Delete(subs, i, i+1)
+			if i := slices.IndexFunc(rest, func(sc *SubCmd) bool { return sc.Name == name }); i >= 0 {
+				top = append(top, rest[i])
+				rest = slices.Delete(rest, i, i+1)
 			}
 		}
+	}
+	if len(top) > 0 { // (otherwise, as without common subcommands)
+		subs = rest
 		add(m, top)
 		if len(subs) > 0 {
 			slices.SortFunc(subs, func(a, b *SubCmd) int { return strings.Compare(a.Name, b.Name) })

@@ -470,3 +470,40 @@ func TestStandard(t *testing.T) {
 	}
 	assert.Equal(t, 1, n, "no duplicates")
 }
+
+// TestBunLike tests a command whose subcommands print its help (as bun run
+// -h does), whose subcommands are not taken as theirs, and that common
+// subcommands that the command does not have (or a description typed as
+// them) leave its menu as without them.
+func TestBunLike(t *testing.T) {
+	cs := &Commands{Parsed: map[string]*Cmd{}, Entries: []*Entry{{Command: "bun", Common: "bun js package manager"}}}
+	help := "Usage: bun <command>\n\nCommands:\n  run       Execute a file\n  test      Run unit tests\n  install   Install dependencies\n"
+	prev := parseSub
+	parseSub = func(cmd string) (*SubCmd, error) {
+		sc := &SubCmd{Cmd: cmd, Source: cmd + " -h"}
+		sc.SetFromHelp(help)
+		return sc, nil
+	}
+	t.Cleanup(func() { parseSub = prev })
+	root := &SubCmd{Cmd: "bun"}
+	root.SetFromHelp(help)
+	cm := &Cmd{Cmd: "bun"}
+	for _, sub := range root.Cmds {
+		_, sub.Name = splitCmd(sub.Cmd)
+		cm.SubCmds = append(cm.SubCmds, sub)
+	}
+	cs.Parsed["bun"] = cm
+	sc, err := cs.SubCmd("bun run", false)
+	require.NoError(t, err)
+	assert.Empty(t, sc.Cmds, "those of bun")
+
+	m := core.NewScene()
+	cs.subCmdsMenu(m, "bun", nil)
+	var texts []string
+	for _, kid := range m.Children {
+		if b, ok := kid.(*core.Button); ok {
+			texts = append(texts, b.Text)
+		}
+	}
+	assert.Equal(t, []string{"Run", "Test", "Install"}, texts)
+}

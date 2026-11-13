@@ -40,7 +40,7 @@ type Entry struct {
 	// at the top of the menu of its subcommands, followed by a submenu of
 	// the others, sorted by name. All of them are in the menu, by group,
 	// if it is empty.
-	Common string `width:"30"`
+	Common string `width:"30" label:"Common subcommands" doc:"The subcommands used the most, separated by spaces, such as: status add commit, which are at the top of the menu of the command, followed by a submenu of the others"`
 
 	// Children are the entries in the category.
 	Children []*Entry `display:"-"`
@@ -66,7 +66,7 @@ func (en *Entry) Label() string {
 
 // version is the version of the format of the file of the [Commands]:
 // the parsed commands of other versions are parsed again.
-const version = 5
+const version = 6
 
 // Commands are the commands of the command bar, organized into categories
 // by the user, with the cache of the parsed help of commands, which are
@@ -317,6 +317,11 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 		return nil, err
 	}
 	sc.Name = name
+	// a subcommand whose help is that of the command (as of bun run -h)
+	// lists the subcommands of the command, not its own
+	if copiedSubCmds(sc, cm) {
+		sc.Cmds = nil
+	}
 	err = cs.update(func() {
 		pc := cs.Parsed[root]
 		if pc == nil {
@@ -347,6 +352,21 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 
 // parseSub parses the help of a subcommand: [Parse], other than in tests.
 var parseSub = Parse
+
+// copiedSubCmds returns whether the subcommands of the given subcommand
+// are mostly those of the given command: its help is that of the command.
+func copiedSubCmds(sc *SubCmd, cm *Cmd) bool {
+	if len(sc.Cmds) < 2 {
+		return false
+	}
+	n := 0
+	for _, sub := range sc.Cmds {
+		if cm.SubCmd(sub.Cmd[strings.LastIndex(sub.Cmd, " ")+1:]) != nil {
+			n++
+		}
+	}
+	return 2*n >= len(sc.Cmds)
+}
 
 // ParseAll parses the help of all of the commands that have not been parsed
 // yet, and of their subcommands, and then of the subcommands of those, such
