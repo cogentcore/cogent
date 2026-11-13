@@ -102,34 +102,38 @@ func (fn *FileNode) SetRunExec() {
 	cv, ok := ParentCode(fn.This)
 	if ok {
 		cv.Settings.RunExec = fn.Filepath
-		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
 	}
 }
 
-// ExecCmdFile pops up a menu to select a command appropriate for the given node,
-// and shows output in MainTab with name of command
+// ExecCmdFile pops up the menu of the commands (as the Command menu), which
+// run in the directory of the node (that of a file), with their output in
+// a tab.
 func (fn *FileNode) ExecCmdFile() { //types:add
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		cv.ExecCmdFileNode(&fn.Node)
+		core.NewMenu(cv.nodeCommandsMenu(&fn.Node), fn, fn.ContextMenuPos(nil)).Run()
 	}
 }
 
-// ExecCmdNameFile executes given command name on node
-func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	cv, ok := ParentCode(fn.This)
-	if ok {
-		cv.ExecCmdNameFile(string(fn.Filepath), CmdName(cmdNm))
+// dir returns the directory of the node: itself, or that of its file.
+func (fn *FileNode) dir() string {
+	if fn.IsDir() {
+		return string(fn.Filepath)
 	}
+	return filepath.Dir(string(fn.Filepath))
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene, pos image.Point) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-			SetMenu(cv.CommandMenuFileNode(&fn.Node)).Styler(func(s *styles.Style) {
+		core.NewButton(m).SetText("Command").SetIcon(icons.Terminal).
+			SetMenu(cv.nodeCommandsMenu(&fn.Node)).Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
+		dir := fn.dir()
+		core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+			SetTooltip("Open a new terminal in " + dir).
+			OnClick(func(e events.Event) { cv.TerminalHere(dir) })
 	}
 	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {

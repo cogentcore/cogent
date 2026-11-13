@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -213,4 +214,204 @@ func TestCodeTerminal(t *testing.T) {
 		return tree.Continue
 	})
 	assert.Equal(t, []string{"New terminal", "Cd to project", "Previous tab", "Next tab", "Copy", "Select all", "Paste", "Clear scrollback"}, items)
+}
+
+// TestTerminalTabFocus tests that a click on the tab of a terminal moves
+// the keyboard focus to the terminal, as in Cogent Files.
+func TestTerminalTabFocus(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	file := filepath.Join(tmp, "a.txt")
+	require.NoError(t, os.WriteFile(file, []byte("a\n"), 0o644))
+	prevCmd := Settings.Terminal.Command
+	Settings.Terminal.Command = "/bin/sh"
+	defer func() { Settings.Terminal.Command = prevCmd }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	var once sync.Once
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { once.Do(func() { close(showed) }) })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+	waitFor := func(what string, cond func() bool) bool {
+		deadline := time.Now().Add(10 * time.Second)
+		for time.Now().Before(deadline) {
+			b.AsyncLock()
+			ok := cond()
+			b.AsyncUnlock()
+			if ok {
+				return true
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Errorf("timeout waiting for %s", what)
+		return false
+	}
+
+	b.AsyncLock()
+	cv.NewTerminal()
+	tms := cv.Terminals()
+	tm := tms[len(tms)-1]
+	cv.ViewFileInIndex(file, 0)
+	cv.ActiveEditor().SetFocus()
+	b.AsyncUnlock()
+	if !waitFor("the focus in the editor", func() bool { return !tm.ContainsFocus() }) {
+		return
+	}
+	b.AsyncLock()
+	ts := cv.Tabs()
+	var tab *core.Tab
+	for i := range ts.NumTabs() {
+		if fr, tb := ts.TabAtIndex(i); fr != nil && fr.HasChildren() && fr.Child(0) == tm {
+			tab = tb
+		}
+	}
+	if tab != nil {
+		tab.Send(events.Click)
+	}
+	b.AsyncUnlock()
+	require.NotNil(t, tab, "the tab of the terminal")
+	waitFor("the focus in the terminal", func() bool { return tm.ContainsFocus() })
+
+	// moving among the panels (Shift+arrows), to the panel of the tabs
+	b.AsyncLock()
+	cv.ActiveEditor().SetFocus()
+	b.AsyncUnlock()
+	waitFor("the focus in the editor", func() bool { return !tm.ContainsFocus() })
+	b.AsyncLock()
+	for range len(cv.Splits().Children) {
+		if tm.ContainsFocus() {
+			break
+		}
+		cv.FocusNextPanel()
+	}
+	b.AsyncUnlock()
+	waitFor("the focus in the terminal, from the panels", func() bool { return tm.ContainsFocus() })
+
+	// moving among the tabs (Shift+arrows), to the tab of a terminal that
+	// has not had the focus, and back
+	b.AsyncLock()
+	cv.NewTerminal()
+	tms = cv.Terminals()
+	tm3 := tms[len(tms)-1]
+	cv.SelectTabByName(tm.Name) // (without the focus in tm3)
+	tm.SetFocus()
+	b.AsyncUnlock()
+	waitFor("the focus in the terminal", func() bool { return tm.ContainsFocus() && !tm3.ContainsFocus() })
+	inTab := func(tm *terminal.Terminal) bool {
+		ct, _ := cv.Tabs().CurrentTab()
+		return ct != nil && ct.AsTree().HasChildren() && ct.AsTree().Child(0) == tm
+	}
+	// with the keys, in the terminal that has the focus
+	src := b.Scene.RenderWindow().SystemWindow.Events()
+	shift := key.Modifiers(0)
+	shift.SetFlag(true, key.Shift)
+	press := func(code key.Codes) {
+		src.Key(events.KeyDown, 0, code, shift)
+		src.Key(events.KeyUp, 0, code, shift)
+	}
+	curTab := func() string {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		ct, _ := cv.Tabs().CurrentTab()
+		return ct.AsTree().Name
+	}
+	// pressTo presses the key until the tab of the given terminal is
+	// selected, waiting for each tab after another
+	pressTo := func(code key.Codes, to *terminal.Terminal) {
+		for range 10 {
+			b.AsyncLock()
+			in := inTab(to)
+			b.AsyncUnlock()
+			if in {
+				return
+			}
+			prev := curTab()
+			press(code)
+			waitFor("another tab", func() bool {
+				ct, _ := cv.Tabs().CurrentTab()
+				return ct.AsTree().Name != prev
+			})
+		}
+	}
+	pressTo(key.CodeRightArrow, tm3) // (after the other tabs)
+	waitFor("the focus in the next terminal, from the tabs", func() bool { return tm3.ContainsFocus() })
+	pressTo(key.CodeLeftArrow, tm)
+	waitFor("the focus in the terminal, from the tabs", func() bool { return tm.ContainsFocus() })
+}
+
+// TestOpenProjectTerminalDir tests that opening a project in the initial
+// empty window changes the directory of its default terminal, which starts
+// in the working directory, to the project root.
+func TestOpenProjectTerminalDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	defer os.Chdir(wd) // (opening a project changes it)
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	proj := filepath.Join(tmp, "proj")
+	require.NoError(t, os.Mkdir(proj, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(proj, "a.txt"), []byte("a\n"), 0o644))
+	prevCmd := Settings.Terminal.Command
+	Settings.Terminal.Command = "/bin/sh"
+	defer func() { Settings.Terminal.Command = prevCmd }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { showed <- struct{}{} })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+	waitFor := func(what string, cond func() bool) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for time.Now().Before(deadline) {
+			b.AsyncLock()
+			ok := cond()
+			b.AsyncUnlock()
+			if ok {
+				return
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("timeout waiting for %s", what)
+	}
+	var tm *terminal.Terminal
+	waitFor("the default terminal", func() bool {
+		if tms := cv.Terminals(); len(tms) > 0 {
+			tm = tms[0]
+		}
+		return tm != nil && tm.IsRunning() && strings.Contains(terminalText(tm), "$")
+	})
+	b.AsyncLock()
+	require.True(t, cv.IsEmpty())
+	cv.OpenRecent(core.Filename(proj)) // (as from the Recent menu)
+	b.AsyncUnlock()
+	require.Equal(t, core.Filename(proj), cv.ProjectRoot, "in the same window")
+	waitFor("the cd", func() bool { return strings.Contains(terminalText(tm), "cd ") })
+	b.AsyncLock()
+	tm.SendText("pwd\r")
+	b.AsyncUnlock()
+	waitFor("the project root", func() bool { return hasOutputLine(tm, proj) })
 }

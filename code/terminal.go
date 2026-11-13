@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
@@ -41,9 +42,39 @@ func (cv *Code) OpenTerminal() { //types:add
 	}
 }
 
+// cdDefaultTerminal changes the directory of the default terminal, if it
+// has been made, to the project root, as when a project is opened in the
+// initial empty window, whose terminal starts in its working directory.
+func (cv *Code) cdDefaultTerminal() {
+	tv := cv.Tabs()
+	if tv == nil || cv.ProjectRoot == "" {
+		return
+	}
+	fr := tv.TabByName(TerminalTabName)
+	if fr == nil || !fr.AsTree().HasChildren() {
+		return
+	}
+	tm, ok := fr.AsTree().Child(0).(*terminal.Terminal)
+	if !ok {
+		return
+	}
+	if tm.IsRunning() {
+		tm.Cd(string(cv.ProjectRoot))
+	} else {
+		tm.SetDir(string(cv.ProjectRoot))
+	}
+}
+
 // NewTerminal makes a new terminal tab, in addition to the default one.
 // The [keymap.New] key does this in a terminal (see [terminal.KeyFunction]).
 func (cv *Code) NewTerminal() { //types:add
+	cv.TerminalHere(string(cv.ProjectRoot))
+}
+
+// TerminalHere makes a new terminal tab, in addition to the default one,
+// in the given directory, as from the context menus of the file tree and
+// the editors.
+func (cv *Code) TerminalHere(dir string) {
 	tv := cv.Tabs()
 	if tv == nil {
 		return
@@ -52,7 +83,7 @@ func (cv *Code) NewTerminal() { //types:add
 	for tv.TabByName(terminalTabName(n)) != nil {
 		n++
 	}
-	tm := cv.recycleTerminal(terminalTabName(n))
+	tm := cv.recycleTerminalIn(terminalTabName(n), dir)
 	if tm != nil {
 		tm.SetFocus()
 	}
@@ -67,8 +98,14 @@ func terminalTabName(n int) string {
 }
 
 // recycleTerminal returns the terminal in the tab with the given name,
-// making it if needed, and selects the tab.
+// making it in the project root directory if needed, and selects the tab.
 func (cv *Code) recycleTerminal(name string) *terminal.Terminal {
+	return cv.recycleTerminalIn(name, string(cv.ProjectRoot))
+}
+
+// recycleTerminalIn returns the terminal in the tab with the given name,
+// making it in the given directory if needed, and selects the tab.
+func (cv *Code) recycleTerminalIn(name, dir string) *terminal.Terminal {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil
@@ -86,11 +123,19 @@ func (cv *Code) recycleTerminal(name string) *terminal.Terminal {
 	tm := terminal.NewTerminal(fr)
 	tm.SetName(name)
 	tm.AddContextMenu(cv.terminalContextMenu)
-	tm.SetDir(string(cv.ProjectRoot))
+	tm.SetDir(dir)
 	if cmd := strings.Fields(Settings.Terminal.Command); len(cmd) > 0 {
 		tm.SetCommand(cmd...)
 	}
 	tv.Update()
+	// a click on the tab moves the keyboard focus to the terminal, once
+	// it is shown, as in Cogent Files
+	if _, tab := tv.TabAtIndex(fr.IndexInParent()); tab != nil {
+		tab.OnClick(func(e events.Event) {
+			tm.Defer(func() { tm.SetFocus() })
+			tm.NeedsRender()
+		})
+	}
 	cv.lastTerminal = tm
 	return tm
 }

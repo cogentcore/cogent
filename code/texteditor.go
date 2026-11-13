@@ -6,6 +6,7 @@ package code
 
 import (
 	"image"
+	"path/filepath"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -233,7 +234,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 			ed.Copy(true)
 		})
 	if ed.IsReadOnly() {
-		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).SetKey(keymap.Kill).
 			OnClick(func(e events.Event) {
 				ed.Clear()
 			})
@@ -270,6 +271,14 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 		// core.NewFuncButton(m).SetFunc(ed.Code.ShowInlayHints).SetText("Show inlay hints")
 	} else {
 		core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
+	}
+
+	if ed.Lines != nil && ed.Lines.Filename() != "" {
+		dir := filepath.Dir(string(ed.Lines.Filename()))
+		core.NewSeparator(m)
+		core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+			SetTooltip("Open a new terminal in " + dir).
+			OnClick(func(e events.Event) { ed.Code.TerminalHere(dir) })
 	}
 
 	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
