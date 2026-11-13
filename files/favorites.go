@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -29,23 +30,53 @@ func (fl *Files) initFavorites(w *core.Table) {
 		s.Cursor = cursors.Pointer
 		s.Grow.Set(1, 1)
 	})
+	// a right click selects the row of its context menu, which must not
+	// change the Root
+	contextClick := false
+	tree.AddChildInit(w, "grid", func(g *core.ListGrid) {
+		g.On(events.MouseDown, func(e events.Event) {
+			contextClick = e.MouseButton() == events.Right
+		})
+	})
+	w.On(events.ContextMenu, func(e events.Event) {
+		contextClick = false
+	})
 	w.OnSelect(func(e events.Event) {
-		fav := core.SystemSettings.FavPaths
-		if w.SelectedIndex < 0 || w.SelectedIndex >= len(fav) {
+		if contextClick {
 			return
 		}
-		fl.SetRoot(errors.Log1(homedir.Expand(fav[w.SelectedIndex].Path)))
+		if path := favoriteAt(w.SelectedIndex); path != "" {
+			fl.SetRoot(path)
+		}
 	})
 	w.Updater(func() {
 		w.ResetSelectedIndexes() // so that the same one can be selected again
 	})
 	w.AddContextMenu(func(m *core.Scene, pos image.Point) {
+		if path := favoriteAt(w.SelectedIndex); path != "" {
+			core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+				SetTooltip("Open a new terminal in " + path).
+				OnClick(func(e events.Event) {
+					fl.NewTerminal(path)
+				})
+			core.NewSeparator(m)
+		}
 		core.NewButton(m).SetText("Edit favorites").SetIcon(icons.Edit).
 			SetTooltip("Edit the favorite paths, which are shared by all Cogent Core apps").
 			OnClick(func(e events.Event) {
 				fl.EditFavorites()
 			})
 	})
+}
+
+// favoriteAt returns the expanded path of the favorite path at the given
+// index, or "" if there is none.
+func favoriteAt(idx int) string {
+	fav := core.SystemSettings.FavPaths
+	if idx < 0 || idx >= len(fav) {
+		return ""
+	}
+	return errors.Log1(homedir.Expand(fav[idx].Path))
 }
 
 // EditFavorites edits the favorite paths in a window,

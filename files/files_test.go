@@ -179,12 +179,24 @@ func TestFavorites(t *testing.T) {
 		assert.Equal(t, []string{root, docs, src, "~/projects"}, paths)
 		assert.Equal(t, 4, fv.SliceSize)
 
-		// the context menu edits them, in a window that says they are shared
-		assert.Contains(t, menuItems(func(m *core.Scene, pos image.Point) {
+		// the context menu edits them, in a window that says they are shared,
+		// and opens a terminal in the one right-clicked, which a right click
+		// selects without changing the root
+		fv.ListGrid.HandleEvent(events.NewMouse(events.MouseDown, events.Right, image.Point{}, 0))
+		fv.SelectIndexEvent(0, events.SelectOne)
+		assert.Equal(t, docs, fl.Root, "not changed by a right click")
+		items := menuItems(func(m *core.Scene, pos image.Point) {
 			for _, menu := range fv.ContextMenus {
 				menu(m, pos)
 			}
-		}), "Edit favorites")
+		})
+		assert.Contains(t, items, "Terminal here")
+		assert.Contains(t, items, "Edit favorites")
+		fv.HandleEvent(events.NewMouse(events.ContextMenu, events.Right, image.Point{}, 0))
+		fv.SelectIndexEvent(1, events.SelectOne)
+		fv.SelectIndexEvent(0, events.SelectOne)
+		assert.Equal(t, root, fl.Root, "changed by a selection after the menu")
+		fl.SetRoot(docs)
 		d := core.NewBody()
 		fl.makeFavoritesEditor(d)
 		require.Equal(t, 2, d.NumChildren())
