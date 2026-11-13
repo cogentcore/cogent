@@ -11,7 +11,6 @@ import (
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/vcs"
-	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
@@ -212,7 +211,7 @@ func (cv *Code) Commit() { //types:add
 // CommitNoChecks commits with the git commit macro of the commands (or the
 // form of git commit, if there is none), without checking for unsaved files.
 func (cv *Code) CommitNoChecks() {
-	cs := commands.Default()
+	cs := theCommands()
 	run := func(cmdline string) {
 		cv.runCommandOutput(cmdline, cv.commandDir(), func() {
 			cv.SaveProjectIfExists(true)

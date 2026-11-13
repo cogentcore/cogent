@@ -6,13 +6,39 @@ package main
 
 import (
 	"cogentcore.org/core/cli/commands"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/terminal"
+	"cogentcore.org/core/tree"
 )
 
 // theCommands returns the commands of the command bar, which are the
-// [commands.Default] ones, shared by the apps.
+// [commands.Default] ones, shared by the apps, whose choosers run in the
+// current directory of the Files of the window they are used from (see
+// [commandsDir]).
 func theCommands() *commands.Commands {
-	return commands.Default()
+	cs := commands.Default()
+	cs.Dir = commandsDir
+	return cs
+}
+
+// commandsDir returns the directory that the commands run in from the given
+// context widget (see [commands.Commands.Dir]): the current directory of
+// the [Files] of its window, or "" if there is none.
+func commandsDir(ctx core.Widget) string {
+	fl := tree.ParentByType[*Files](ctx)
+	if fl == nil && ctx.AsWidget().Scene != nil {
+		ctx.AsWidget().Scene.WalkDown(func(n tree.Node) bool {
+			if f, ok := n.(*Files); ok {
+				fl = f
+				return tree.Break
+			}
+			return fl == nil
+		})
+	}
+	if fl == nil {
+		return ""
+	}
+	return fl.CurrentDir()
 }
 
 // RunCommand runs the given command line in the last terminal used, or in

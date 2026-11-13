@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"unicode"
 
 	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
@@ -20,13 +19,23 @@ import (
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/tree"
 )
 
 // commandsMenu adds the commands to the given menu: those shared by the
 // apps (see [commands.Default]), with their macros, run with
 // [Code.RunCommandLine].
 func (cv *Code) commandsMenu(m *core.Scene) {
-	commands.Default().Menu(m, cv.RunCommandLine)
+	theCommands().Menu(m, cv.RunCommandLine)
+}
+
+// theCommands returns the [commands.Default] commands, shared by the apps,
+// whose choosers run in the directory of the commands of the Code of the
+// window they are used from (see [commandsDir]).
+func theCommands() *commands.Commands {
+	cs := commands.Default()
+	cs.Dir = commandsDir
+	return cs
 }
 
 // nodeCommandsMenu returns a function that adds the commands to a menu,
@@ -38,7 +47,7 @@ func (cv *Code) nodeCommandsMenu(fn *filetree.Node) func(m *core.Scene, pos imag
 		dir = filepath.Dir(dir)
 	}
 	return func(m *core.Scene, pos image.Point) {
-		commands.Default().Menu(m, func(cmdline string) {
+		theCommands().Menu(m, func(cmdline string) {
 			cv.SaveAllCheck(true, func() {
 				cv.runCommandOutput(cmdline, dir, nil)
 			})
@@ -75,10 +84,11 @@ func (cv *Code) commandDir() string {
 }
 
 // commandTabName returns the name of the tab of the output of the given
-// command line: its command and subcommands, such as "git commit", up to
-// its first argument that is not a subcommand (a flag, path, or value), or
-// the name of the file of a script run with sh, such as that of a script
-// of the commands (see [commands.Commands.ScriptCommandLine]).
+// command line: its command and subcommands, such as "git commit", without
+// its arguments, or the name of the macro that ran it, such as "git commit
+// wip" (see [commands.Commands.Name]), or the name of the file of a script
+// run with sh, such as that of a script of the commands (see
+// [commands.Commands.ScriptCommandLine]).
 func commandTabName(cmdline string) string {
 	if file, ok := strings.CutPrefix(cmdline, "/bin/sh "); ok {
 		if n := len(file); n > 2 && file[0] == '\'' && file[n-1] == '\'' {
@@ -88,23 +98,30 @@ func commandTabName(cmdline string) string {
 			return filepath.Base(file)
 		}
 	}
-	f := strings.Fields(cmdline)
-	if len(f) == 0 {
-		return "command"
+	if name := commands.Default().Name(cmdline); name != "" {
+		return name
 	}
-	isSubcommand := func(w string) bool {
-		return w[0] != '-' && !strings.ContainsFunc(w, func(r rune) bool {
-			return !(unicode.IsLower(r) || unicode.IsDigit(r) || r == '-')
+	return "command"
+}
+
+// commandsDir returns the directory that the commands run in from the given
+// context widget (see [commands.Commands.Dir]): that of the [Code] of its
+// window (see [Code.commandDir]), or "" if there is none.
+func commandsDir(ctx core.Widget) string {
+	cv := tree.ParentByType[*Code](ctx)
+	if cv == nil && ctx.AsWidget().Scene != nil {
+		ctx.AsWidget().Scene.WalkDown(func(n tree.Node) bool {
+			if c, ok := n.(*Code); ok {
+				cv = c
+				return tree.Break
+			}
+			return cv == nil
 		})
 	}
-	words := f[:1]
-	for _, w := range f[1:] {
-		if len(words) == 3 || !isSubcommand(w) {
-			break
-		}
-		words = append(words, w)
+	if cv == nil {
+		return ""
 	}
-	return strings.Join(words, " ")
+	return cv.commandDir()
 }
 
 // shellCommand returns the command to run the given command line with the
