@@ -143,7 +143,8 @@ func shellCommand(cmdline, dir string) *exec.Cmd {
 }
 
 // runCommandOutput runs the given command line in the given directory,
-// with its output in its tab (see [commandTabName]), in which it is killed
+// with its output in its tab (see [commandTabName]), after a first line of
+// the directory and the command line (see [commandHeader]), in which it is killed
 // if the tab is closed, followed by its status, and then calls the given
 // function, if it is not nil (with the lock of cv).
 func (cv *Code) runCommandOutput(cmdline, dir string, done func()) {
@@ -153,6 +154,7 @@ func (cv *Code) runCommandOutput(cmdline, dir string, done func()) {
 		return
 	}
 	cv.SelectTabByName(name)
+	commandHeader(buf, cmdline, dir)
 	cmd := shellCommand(cmdline, dir)
 	cv.RunningCmds.AddCmd(name, cmdline, cmd)
 	lexer := ""
@@ -181,6 +183,18 @@ func (cv *Code) runCommandOutput(cmdline, dir string, done func()) {
 			done()
 		}
 	}()
+}
+
+// commandHeader appends the first line of the output of the given command
+// line, run in the given directory, to the given buffer: the directory and
+// the command line, in bold, as in a shell prompt: "/a/dir$ go build".
+func commandHeader(buf *lines.Lines, cmdline, dir string) {
+	sty := buf.FontStyle()
+	bold := *sty
+	bold.SetWeight(rich.Bold)
+	header := rich.NewText(sty, []rune(dir+"$ "))
+	header.AddSpan(&bold, []rune(cmdline))
+	buf.AppendTextMarkup([][]rune{header.Join()}, []rich.Text{header})
 }
 
 // commandStatus appends the status of the given command line, run with the
