@@ -121,23 +121,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) {
 
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Command").SetShortcut(KeyExecCmd.Chord())
-		w.SetMenu(func(m *core.Scene, pos image.Point) {
-			ec := ExecCmds(cv)
-			for _, cc := range ec {
-				cat := cc[0]
-				icon := CommandIcons[cat]
-				core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene, pos image.Point) {
-					nc := len(cc)
-					for i := 1; i < nc; i++ {
-						cm := cc[i]
-						core.NewButton(mm).SetText(cm).SetIcon(icon).OnClick(func(e events.Event) {
-							e.SetHandled()
-							cv.ExecCmdNameActive(CommandName(cat, cm))
-						})
-					}
-				})
-			}
-		})
+		w.SetMenu(func(m *core.Scene, pos image.Point) { cv.commandsMenu(m) })
 	})
 
 	tree.Add(p, func(w *core.Separator) {})

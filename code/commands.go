@@ -575,7 +575,7 @@ func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err erro
 	bold.SetWeight(rich.Bold)
 	outstr := ""
 	if out != nil {
-		outstr = string(out[:CmdOutStatusLen])
+		outstr = string(out[:min(len(out), CmdOutStatusLen)])
 		outlns := strings.Split(outstr, "\n")
 		outstr = outlns[0]
 	}

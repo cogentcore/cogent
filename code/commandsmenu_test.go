@@ -1,0 +1,152 @@
+// Copyright (c) 2026, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package code
+
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+	"time"
+
+	"cogentcore.org/core/cli/commands"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/terminal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func init() {
+	// (not the commands of the user, with only ls to parse)
+	dir, err := os.MkdirTemp("", "code-commands")
+	if err != nil {
+		panic(err)
+	}
+	commands.File = filepath.Join(dir, "commands.json")
+	if err := os.WriteFile(commands.File, []byte(`{"Version": 2, "StandardVersion": 2, "Entries": [{"Command": "ls"}]}`), 0o644); err != nil {
+		panic(err)
+	}
+}
+
+func TestCommandTabName(t *testing.T) {
+	for cmdline, name := range map[string]string{
+		"git commit --all --message 'the fix'": "git commit",
+		"go test -v ./...":                     "go test",
+		"go mod tidy":                          "go mod tidy",
+		"git push origin HEAD":                 "git push origin",
+		"ls":                                   "ls",
+		"make":                                 "make",
+		"core run web":                         "core run web",
+		"":                                     "command",
+	} {
+		assert.Equal(t, name, commandTabName(cmdline), cmdline)
+	}
+}
+
+// TestRunCommandLine tests running the command line of a command: in the
+// directory of the file of the active editor, with its output in its tab,
+// or else in the terminal that has the focus. It also tests the Command
+// menu, with the commands of the apps and the other commands of Code.
+func TestRunCommandLine(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	sub := filepath.Join(tmp, "sub")
+	require.NoError(t, os.Mkdir(sub, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(sub, "a.txt"), []byte("a\n"), 0o644))
+	prevCmd := Settings.Terminal.Command
+	Settings.Terminal.Command = "/bin/sh"
+	defer func() { Settings.Terminal.Command = prevCmd }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { showed <- struct{}{} })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+	waitFor := func(what string, cond func() bool) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for time.Now().Before(deadline) {
+			b.AsyncLock()
+			ok := cond()
+			b.AsyncUnlock()
+			if ok {
+				return
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("timeout waiting for %s", what)
+	}
+
+	// in the directory of the file of the active editor, with its output
+	b.AsyncLock()
+	cv.ViewFileInIndex(filepath.Join(sub, "a.txt"), 0)
+	cv.ActiveEditor().SetFocus()
+	cv.RunCommandLine("pwd")
+	b.AsyncUnlock()
+	waitFor("the output of pwd", func() bool {
+		buf := cv.CmdBufs["pwd"]
+		return buf != nil && strings.Contains(buf.String(), sub+"\n") && strings.Contains(buf.String(), "pwd successful")
+	})
+	b.AsyncLock()
+	ct, _ := cv.Tabs().CurrentTab()
+	b.AsyncUnlock()
+	require.NotNil(t, ct)
+	assert.Equal(t, "pwd", ct.AsTree().Name, "its tab is shown")
+
+	// in the terminal that has the focus
+	var tm *terminal.Terminal
+	waitFor("the default terminal", func() bool {
+		if tms := cv.Terminals(); len(tms) > 0 {
+			tm = tms[0]
+		}
+		return tm != nil && tm.IsRunning() && strings.Contains(terminalText(tm), "$")
+	})
+	b.AsyncLock()
+	cv.OpenTerminal()
+	tm.SetFocus()
+	b.AsyncUnlock()
+	waitFor("the focus in the terminal", func() bool { return cv.focusedTerminal() == tm })
+	b.AsyncLock()
+	cv.RunCommandLine("echo from-command")
+	b.AsyncUnlock()
+	waitFor("the command in the terminal", func() bool { return hasOutputLine(tm, "from-command") })
+	b.AsyncLock()
+	_, inBuf := cv.CmdBufs["echo"]
+	b.AsyncUnlock()
+	assert.False(t, inBuf, "not in an output tab")
+
+	// the Command menu
+	b.AsyncLock()
+	defer b.AsyncUnlock()
+	m := core.NewScene()
+	cv.commandsMenu(m)
+	var texts []string
+	for _, kid := range m.Children {
+		if bt, ok := kid.(*core.Button); ok {
+			texts = append(texts, bt.Text)
+		}
+	}
+	assert.Contains(t, texts, "Ls", "the commands of the apps")
+	assert.Contains(t, texts, "Edit commands")
+	for _, cat := range macroCategories[3:] {
+		assert.NotContains(t, texts, cat, "not used anymore")
+	}
+}

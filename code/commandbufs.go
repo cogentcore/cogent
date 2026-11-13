@@ -5,6 +5,7 @@
 package code
 
 import (
+	"image"
 	"strings"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -123,16 +124,15 @@ func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
 	})
 }
 
-// ExecCmd pops up a menu to select a command appropriate for the current
-// active text view, and shows output in Tab with name of command
+// ExecCmd pops up the menu of the commands (as the Command menu): those
+// shared by the apps, with their macros, and the other commands of Code
+// for the active file (see [Code.RunCommandLine]).
 func (cv *Code) ExecCmd() { //types:add
-	tv := cv.ActiveEditor()
-	ln := tv.Lines
-	if ln == nil {
-		cv.SetStatus("ExecCmd: No Active File")
-		return
+	var ctx core.Widget = cv
+	if tv := cv.ActiveEditor(); tv != nil {
+		ctx = tv
 	}
-	core.NewMenu(cv.CommandMenuLines(ln), tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenu(func(m *core.Scene, pos image.Point) { cv.commandsMenu(m) }, ctx, ctx.AsWidget().ContextMenuPos(nil)).Run()
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
