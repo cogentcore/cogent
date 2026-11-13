@@ -6,12 +6,17 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"os"
 	"runtime"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
@@ -88,6 +93,30 @@ func (fl *Files) OpenConsoleTab() { //types:add
 	ed.SetReadOnly(true)
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
+		// SetLines sets the line numbers from the editor settings
+		if ed.Lines != nil {
+			ed.Lines.Settings.LineNumbers = false
+		}
+	})
+	// the Kill key (Command+K on macOS) clears the console, as in terminals
+	ed.OnKeyChord(func(e events.Event) {
+		if keymap.Of(e.KeyChord()) == keymap.Kill {
+			e.SetHandled()
+			TheConsole.Clear()
+		}
+	})
+	ed.AddContextMenu(func(m *core.Scene, pos image.Point) {
+		core.NewButton(m).SetText("Clear console").SetIcon(icons.ClearAll).
+			SetKey(keymap.Kill).OnClick(func(e events.Event) {
+			TheConsole.Clear()
+		})
 	})
 	ts.Update()
+}
+
+// Clear clears all of the output in the console.
+func (cn *Console) Clear() {
+	if cn.Lines != nil {
+		cn.Lines.SetText(nil)
+	}
 }
