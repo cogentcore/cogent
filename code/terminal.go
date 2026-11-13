@@ -44,6 +44,13 @@ func (cv *Code) OpenTerminal() { //types:add
 // NewTerminal makes a new terminal tab, in addition to the default one.
 // The [keymap.New] key does this in a terminal (see [terminal.KeyFunction]).
 func (cv *Code) NewTerminal() { //types:add
+	cv.TerminalHere(string(cv.ProjectRoot))
+}
+
+// TerminalHere makes a new terminal tab, in addition to the default one,
+// in the given directory, as from the context menus of the file tree and
+// the editors.
+func (cv *Code) TerminalHere(dir string) {
 	tv := cv.Tabs()
 	if tv == nil {
 		return
@@ -52,7 +59,7 @@ func (cv *Code) NewTerminal() { //types:add
 	for tv.TabByName(terminalTabName(n)) != nil {
 		n++
 	}
-	tm := cv.recycleTerminal(terminalTabName(n))
+	tm := cv.recycleTerminalIn(terminalTabName(n), dir)
 	if tm != nil {
 		tm.SetFocus()
 	}
@@ -67,8 +74,14 @@ func terminalTabName(n int) string {
 }
 
 // recycleTerminal returns the terminal in the tab with the given name,
-// making it if needed, and selects the tab.
+// making it in the project root directory if needed, and selects the tab.
 func (cv *Code) recycleTerminal(name string) *terminal.Terminal {
+	return cv.recycleTerminalIn(name, string(cv.ProjectRoot))
+}
+
+// recycleTerminalIn returns the terminal in the tab with the given name,
+// making it in the given directory if needed, and selects the tab.
+func (cv *Code) recycleTerminalIn(name, dir string) *terminal.Terminal {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil
@@ -86,7 +99,7 @@ func (cv *Code) recycleTerminal(name string) *terminal.Terminal {
 	tm := terminal.NewTerminal(fr)
 	tm.SetName(name)
 	tm.AddContextMenu(cv.terminalContextMenu)
-	tm.SetDir(string(cv.ProjectRoot))
+	tm.SetDir(dir)
 	if cmd := strings.Fields(Settings.Terminal.Command); len(cmd) > 0 {
 		tm.SetCommand(cmd...)
 	}

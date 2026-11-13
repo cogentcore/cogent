@@ -116,6 +116,14 @@ func (fn *FileNode) ExecCmdFile() { //types:add
 	}
 }
 
+// dir returns the directory of the node: itself, or that of its file.
+func (fn *FileNode) dir() string {
+	if fn.IsDir() {
+		return string(fn.Filepath)
+	}
+	return filepath.Dir(string(fn.Filepath))
+}
+
 func (fn *FileNode) ContextMenu(m *core.Scene, pos image.Point) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
@@ -123,6 +131,10 @@ func (fn *FileNode) ContextMenu(m *core.Scene, pos image.Point) {
 			SetMenu(cv.nodeCommandsMenu(&fn.Node)).Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
+		dir := fn.dir()
+		core.NewButton(m).SetText("Terminal here").SetIcon(icons.Terminal).
+			SetTooltip("Open a new terminal in " + dir).
+			OnClick(func(e events.Event) { cv.TerminalHere(dir) })
 	}
 	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {

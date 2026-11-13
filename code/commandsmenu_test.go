@@ -5,6 +5,7 @@
 package code
 
 import (
+	"image"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -185,4 +186,107 @@ func TestOpenOldProjectSettings(t *testing.T) {
 	assert.Equal(t, core.Filename("/proj"), se.ProjectRoot)
 	assert.Equal(t, core.Filename("/proj/x"), se.RunExec)
 	assert.Equal(t, "", se.BuildCommand, "the default")
+}
+
+// TestTerminalHere tests the Terminal here items of the context menus of
+// the editors and the file tree, which open a new terminal in the
+// directory of the file, or in the directory.
+func TestTerminalHere(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	tmp, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	sub := filepath.Join(tmp, "sub")
+	require.NoError(t, os.Mkdir(sub, 0o755))
+	file := filepath.Join(sub, "a.txt")
+	require.NoError(t, os.WriteFile(file, []byte("a\n"), 0o644))
+	prevCmd := Settings.Terminal.Command
+	Settings.Terminal.Command = "/bin/sh"
+	defer func() { Settings.Terminal.Command = prevCmd }()
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { showed <- struct{}{} })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+	menuItem := func(menu func(m *core.Scene, pos image.Point), text string) *core.Button {
+		m := core.NewScene()
+		menu(m, image.Point{})
+		for _, kid := range m.Children {
+			if bt, ok := kid.(*core.Button); ok && bt.Text == text {
+				return bt
+			}
+		}
+		return nil
+	}
+	pwdIn := func(tm *terminal.Terminal, dir string) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		sent := false
+		for time.Now().Before(deadline) {
+			b.AsyncLock()
+			ready := tm.IsRunning() && strings.Contains(terminalText(tm), "$")
+			if ready && !sent {
+				tm.SendText("pwd\r")
+				sent = true
+			}
+			ok := sent && hasOutputLine(tm, dir)
+			b.AsyncUnlock()
+			if ok {
+				return
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("the terminal is not in %s", dir)
+	}
+	newest := func() *terminal.Terminal {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		tms := cv.Terminals()
+		return tms[len(tms)-1]
+	}
+
+	// the editor of a file: its directory
+	b.AsyncLock()
+	cv.ViewFileInIndex(file, 0)
+	var bt *core.Button
+	if ed := cv.ActiveEditor(); ed != nil {
+		bt = menuItem(ed.ContextMenu, "Terminal here")
+	}
+	if bt != nil {
+		bt.Send(events.Click)
+	}
+	b.AsyncUnlock()
+	require.NotNil(t, bt, "in the context menu of the editor")
+	tm := newest()
+	assert.NotEqual(t, TerminalTabName, tm.Name, "a new terminal")
+	pwdIn(tm, sub)
+
+	// the file tree: a directory itself, and the directory of a file
+	for path, dir := range map[string]string{sub: sub, file: sub} {
+		b.AsyncLock()
+		var bt *core.Button
+		if cv.Files.Filepath == "" {
+			cv.Files.OpenPath(tmp)
+		}
+		if n, ok := cv.Files.FindFile(path); ok {
+			bt = menuItem(n.This.(*FileNode).ContextMenu, "Terminal here")
+		}
+		if bt != nil {
+			bt.Send(events.Click)
+		}
+		b.AsyncUnlock()
+		require.NotNil(t, bt, "in the context menu of the file tree: %s", path)
+		pwdIn(newest(), dir)
+	}
 }
