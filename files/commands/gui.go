@@ -423,8 +423,7 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 		s.Grow.Set(1, 0)
 	})
 	line.Updater(func() { line.SetText(html.EscapeString(sc.CommandLine(values))) })
-	fm := core.NewForm(d).SetStruct(values)
-	focusForm(d, fm)
+	fm := newForm(d, values)
 	fm.OnChange(func(e events.Event) { line.Update() })
 	fm.OnInput(func(e events.Event) { line.Update() })
 	d.AddTopBar(func(bar *core.Frame) {
@@ -722,6 +721,39 @@ func live(w core.Widget) bool {
 	return wb != nil && wb.This != nil && wb.Scene != nil && wb.Scene.Stage != nil && wb.Scene.Stage.Mains != nil
 }
 
+// newForm adds a form of the given values to the given dialog, whose
+// fields are wide (see [styleFormFields]), with the first one in focus
+// (see [focusForm]).
+func newForm(d *core.Body, values any) *core.Form {
+	fm := core.NewForm(d)
+	styleFormFields(fm)
+	fm.SetStruct(values)
+	focusForm(d, fm)
+	return fm
+}
+
+// FieldMinWidth is the minimum width of the text fields of the forms of
+// the commands, in ch, which have no maximum width: they grow with the
+// window.
+var FieldMinWidth float32 = 60
+
+// styleFormFields makes the text fields of the given form, and of its
+// inline forms (as of the arguments of a macro), at least [FieldMinWidth]
+// wide, with no maximum width (rather than the 40ch of a text field).
+func styleFormFields(fm *core.Form) {
+	fm.SetOnChildAdded(func(n tree.Node) {
+		switch w := n.(type) {
+		case *core.TextField:
+			w.Styler(func(s *styles.Style) {
+				s.Min.X.Ch(FieldMinWidth)
+				s.Max.X.Zero()
+			})
+		case *core.Form:
+			styleFormFields(w)
+		}
+	})
+}
+
 // focusForm makes the first field of the given form of the given dialog
 // the one in focus when it is shown, rather than the first button of its
 // top bar: such as the first argument prompted for by a macro.
@@ -729,6 +761,9 @@ func focusForm(d *core.Body, fm *core.Form) {
 	fm.Update() // (makes the fields)
 	var first core.Widget
 	fm.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		if first != nil { // (Break only skips the children of a widget)
+			return tree.Break
+		}
 		switch cw.(type) {
 		case *core.TextField, *core.Switch, *core.Spinner, *core.Chooser:
 			first = cw

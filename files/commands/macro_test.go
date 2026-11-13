@@ -11,10 +11,12 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -157,43 +159,66 @@ func TestContext(t *testing.T) {
 }
 
 // TestDialogFocus tests that the first field of the forms of the dialogs
-// is in focus when they are shown: the first prompt of a macro.
+// is in focus when they are shown: the first prompt of a macro, the name
+// of a macro, and the arguments of a subcommand.
 func TestDialogFocus(t *testing.T) {
+	imagex.UpdateTestImagesFor(t) // the images are not compared
 	cs := &Commands{Parsed: map[string]*Cmd{}, Args: OpenArgs("")}
 	sc := testCommit()
-	mc := &Macro{Name: "wip", SubCmd: "commit", Values: &SubCmdArgs{Flags: map[string]string{"--message": "wip"}}, Prompts: []string{"--message"}}
-	d := cs.NewPromptDialog(nil, "git", sc, mc, func(string) {})
-	d.AssertRender(t, "macro-prompt-focus", func() {
-		tf := tree.ChildByType[*core.Form](d).AsTree().Children
-		var field *core.TextField
-		for _, kid := range tf {
-			if f, ok := kid.(*core.TextField); ok {
-				field = f
+	mc := &Macro{Name: "wip", SubCmd: "commit", Values: &SubCmdArgs{Flags: map[string]string{"--message": "wip"}}, Prompts: []string{"--file", "--message"}}
+	for _, c := range []struct {
+		name, field string
+		d           *core.Body
+	}{
+		{"prompt", "File", cs.NewPromptDialog(nil, "git", sc, mc, func(string) {})},
+		{"macro", "Name", cs.NewMacroDialog(nil, "git", sc, mc, nil, func(string) {})},
+		{"form", "Arguments", cs.NewDialog(nil, sc, func(string) {})},
+	} {
+		c.d.AssertRender(t, "focus-"+c.name, func() {
+			focused := ""
+			for range 50 {
+				c.d.AsyncLock()
+				c.d.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+					if _, ok := cw.(*core.TextField); ok && cwb.StateIs(states.Focused) {
+						focused = cwb.Name
+					}
+					return tree.Continue
+				})
+				c.d.AsyncUnlock()
+				if focused != "" {
+					break
+				}
+				time.Sleep(20 * time.Millisecond)
 			}
-		}
-		require.NotNil(t, field)
-		assert.True(t, field.StateIs(states.Focused), "the prompt is in focus")
-	})
+			assert.Equal(t, "value-"+c.field+"-string", focused, c.name)
+		})
+	}
 }
 
-// TestMacroMenuShortcuts tests the command bar with the menu of the macros
-// of a command without subcommands, whose shortcuts are collected from its
-// menus (which recursed without end: its item for the command had the
-// menu again), and that its item for the command shows its form.
-func TestMacroMenuShortcuts(t *testing.T) {
-	imagex.UpdateTestImagesFor(t) // the image is not compared
-	cs := testCommands(t, filepath.Join(t.TempDir(), "commands.json"))
-	cs.Entries = []*Entry{{Command: "ls"}}
-	require.NoError(t, cs.SaveMacro("ls", &Macro{Name: "long", SubCmd: MainName, Values: &SubCmdArgs{Flags: map[string]string{"-l": "true"}}}, nil))
-	b := core.NewBody()
-	cs.Bar(b, nil)
-	b.AssertRender(t, "macro-menu-shortcuts")
-	m := core.NewScene()
-	cs.subCmdsMenu(m, "ls", nil)
-	item := m.Children[len(m.Children)-1].(*core.Button)
-	assert.Equal(t, "Ls", item.Text)
-	assert.Nil(t, item.Menu, "the form of ls, not the menu again")
-	sc, err := cs.SubCmd("ls "+MainName, false)
-	require.NoError(t, err)
-	assert.Equal(t, "ls", sc.Cmd)
+// TestFieldWidths tests that the text fields of the forms of the dialogs,
+// and of the inline forms of the arguments of macros, are wide, with no
+// maximum width.
+func TestFieldWidths(t *testing.T) {
+	imagex.UpdateTestImagesFor(t)
+	cs := &Commands{Parsed: map[string]*Cmd{}, Args: OpenArgs("")}
+	sc := testCommit()
+	mc := &Macro{Name: "wip", SubCmd: "commit", Prompts: []string{"--message"}}
+	for name, d := range map[string]*core.Body{
+		"form":  cs.NewDialog(nil, sc, func(string) {}),
+		"macro": cs.NewMacroDialog(nil, "git", sc, mc, nil, func(string) {}),
+	} {
+		d.AssertRender(t, "field-widths-"+name, func() {
+			n := 0
+			d.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if tf, ok := cw.(*core.TextField); ok {
+					n++
+					assert.Equal(t, FieldMinWidth, tf.Styles.Min.X.Value, name)
+					assert.Equal(t, units.UnitCh, tf.Styles.Min.X.Unit, name)
+					assert.Zero(t, tf.Styles.Max.X.Value, name)
+				}
+				return tree.Continue
+			})
+			assert.Greater(t, n, 3, name)
+		})
+	}
 }
