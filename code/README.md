@@ -74,7 +74,7 @@ The `Splits` menu can be used to to configure the size and layout of the differe
 
 The idea here is to have a really simple overall plan, with easy customization of what panels are visible for different use-cases, so you know exactly where to look for anything.  We rely on tabs to hold all the many different kinds of output etc, and support multi-row tabs and a menu so you can really load them up.
 
-The `Build` and `Run` buttons run the `BuildCommand` and `RunCommand` command lines of the project Settings, in its `BuildDir`. By default they are `go build -v` and `core run` for Go, `latexmk -pdf` for TeX, and otherwise `make` and the `RunExec` executable, which you can select (to run and debug) from the file tree context menu.
+The `Build` and `Run` buttons run the `BuildCommand` and `RunCommand` command lines of the project Settings, in the directory of the file of the active editor (or the project root). By default they are `go build -v` and `core run` for Go, `latexmk -pdf` for TeX, and otherwise `make` and the `RunExec` executable, which you can select (to run and debug) from the file tree context menu.
 
 ## Keyboard Usage
 

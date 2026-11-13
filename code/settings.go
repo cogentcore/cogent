@@ -222,23 +222,19 @@ type ProjectSettings struct { //types:add
 	GoMod bool
 
 	// BuildCommand is the command line that the Build button runs, in the
-	// BuildDir, with its output in a tab. If it is empty, it is the default
+	// directory of the file of the active editor (or the project root),
+	// with its output in a tab. If it is empty, it is the default
 	// for the MainLang: go build -v for Go, latexmk -pdf for TeX, and
 	// otherwise make.
 	BuildCommand string
-
-	// BuildDir is the directory that the Build and Run commands run in, if
-	// it is not empty, the project root, or the directory of the RunExec:
-	// otherwise they run in the directory of the file of the active editor,
-	// as the commands do (or the project root).
-	BuildDir core.Filename
 
 	// RunExec is the executable that the debugger runs, and the Run button
 	// runs by default for a project that is not in Go or TeX.
 	RunExec core.Filename
 
 	// RunCommand is the command line that the Run button runs, in the
-	// BuildDir, with its output in a tab. If it is empty, it is the default
+	// directory of the file of the active editor (or the project root),
+	// with its output in a tab. If it is empty, it is the default
 	// for the MainLang: core run for Go, and otherwise the RunExec.
 	RunCommand string
 
@@ -305,14 +301,6 @@ func (se *ProjectSettings) addStandardIgnores() {
 	for _, ig := range StandardIgnoreProblems {
 		if _, has := se.IgnoreProblems[ig]; !has {
 			se.IgnoreProblems[ig] = false
-		}
-	}
-}
-
-func (se *ProjectSettings) Update() {
-	if se.BuildDir != se.ProjectRoot {
-		if se.RunExec == se.ProjectRoot {
-			se.RunExec = se.BuildDir
 		}
 	}
 }
@@ -487,10 +475,9 @@ func (cv *Code) SplitsEdit() { //types:add
 }
 
 // LangDefaults applies default language settings based on MainLang: the
-// build directory and run executable (the build and run commands default
+// run executable (the build and run commands default
 // to those of the MainLang when they are empty).
 func (cv *Code) LangDefaults() {
-	cv.Settings.BuildDir = cv.Settings.ProjectRoot
 	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Name))
 	cv.guessVersionControl()
 }
@@ -527,16 +514,6 @@ func (se *ProjectSettings) runCommand() string {
 		return shellQuote(string(se.RunExec))
 	}
 	return ""
-}
-
-// buildDir returns the [ProjectSettings.BuildDir], if it is set to a
-// directory other than the project root, and that of the RunExec (which
-// choosing the RunExec used to set it to), and otherwise "".
-func (se *ProjectSettings) buildDir() string {
-	if se.BuildDir == se.ProjectRoot || (se.RunExec != "" && string(se.BuildDir) == filepath.Dir(string(se.RunExec))) {
-		return ""
-	}
-	return string(se.BuildDir)
 }
 
 // shellQuote returns the given string quoted for a POSIX shell, if needed.

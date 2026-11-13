@@ -24,7 +24,6 @@ func ProjectSettingsEditor(pf *ProjectSettings) *core.Form {
 	core.NewText(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
 	tv := core.NewForm(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
-		pf.Update()
 		core.ErrorSnackbar(d, pf.Save(pf.ProjectFilename), "Error saving "+string(pf.ProjectFilename)+" settings")
 	})
 	d.RunWindow()

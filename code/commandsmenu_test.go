@@ -114,15 +114,6 @@ func TestRunCommandLine(t *testing.T) {
 	b.AsyncUnlock()
 	b.AsyncLock()
 	ct, _ := cv.Tabs().CurrentTab()
-	assert.Equal(t, sub, cv.buildDir(), "build in the directory of the active editor")
-	cv.Settings.BuildDir = core.Filename(tmp)
-	assert.Equal(t, sub, cv.buildDir(), "the project root is the default")
-	cv.Settings.BuildDir = core.Filename(filepath.Join(tmp, "build"))
-	assert.Equal(t, filepath.Join(tmp, "build"), cv.buildDir(), "set")
-	cv.Settings.RunExec = core.Filename(filepath.Join(tmp, "build", "x"))
-	assert.Equal(t, sub, cv.buildDir(), "that of the RunExec, which choosing it used to set")
-	cv.Settings.RunExec = ""
-	cv.Settings.BuildDir = ""
 	b.AsyncUnlock()
 	require.NotNil(t, ct)
 	assert.Equal(t, "pwd", ct.AsTree().Name, "its tab is shown")
@@ -169,11 +160,9 @@ func TestBuildRunCommands(t *testing.T) {
 	se := &ProjectSettings{ProjectRoot: "/proj", MainLang: fileinfo.Go}
 	assert.Equal(t, "go build -v", se.buildCommand())
 	assert.Equal(t, "core run", se.runCommand())
-	assert.Equal(t, "", se.buildDir(), "that of the active editor")
-	se.BuildCommand, se.RunCommand, se.BuildDir = "go build ./cmd/x", "./x -v", "/proj/cmd/x"
+	se.BuildCommand, se.RunCommand = "go build ./cmd/x", "./x -v"
 	assert.Equal(t, "go build ./cmd/x", se.buildCommand())
 	assert.Equal(t, "./x -v", se.runCommand())
-	assert.Equal(t, "/proj/cmd/x", se.buildDir())
 
 	se = &ProjectSettings{MainLang: fileinfo.TeX}
 	assert.Equal(t, "latexmk -pdf", se.buildCommand())
@@ -191,7 +180,7 @@ func TestBuildRunCommands(t *testing.T) {
 // names of commands.
 func TestOpenOldProjectSettings(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "old.code")
-	old := "ProjectRoot = \"/proj\"\nBuildCmds = [\"Go: Build Dir\"]\nBuildTarg = \"/proj\"\nRunCmds = [\"Core: Run\"]\nRunExec = \"/proj/x\"\n"
+	old := "ProjectRoot = \"/proj\"\nBuildCmds = [\"Go: Build Dir\"]\nBuildTarg = \"/proj\"\nBuildDir = \"/proj/cmd/x\"\nRunCmds = [\"Core: Run\"]\nRunExec = \"/proj/x\"\n"
 	require.NoError(t, os.WriteFile(file, []byte(old), 0o644))
 	se := &ProjectSettings{}
 	require.NoError(t, se.Open(core.Filename(file)))

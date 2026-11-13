@@ -5,7 +5,6 @@
 package code
 
 import (
-	"cmp"
 	"image"
 	"os/exec"
 	"slices"
@@ -166,9 +165,9 @@ func (cv *Code) ExecCmd() { //types:add
 	core.NewMenu(func(m *core.Scene, pos image.Point) { cv.commandsMenu(m) }, ctx, ctx.AsWidget().ContextMenuPos(nil)).Run()
 }
 
-// RunBuild runs the [ProjectSettings.BuildCommand] of the project in its
-// build directory (see [Code.buildDir]), after saving the files, with its
-// output in a tab.
+// RunBuild runs the [ProjectSettings.BuildCommand] of the project in the
+// directory of the file of the active editor, or else the project root (see
+// [Code.commandDir]), after saving the files, with its output in a tab.
 func (cv *Code) RunBuild() { //types:add
 	cmdline := cv.Settings.buildCommand()
 	if cmdline == "" {
@@ -176,20 +175,13 @@ func (cv *Code) RunBuild() { //types:add
 		return
 	}
 	cv.SaveAllCheck(true, func() {
-		cv.runCommandOutput(cmdline, cv.buildDir(), nil)
+		cv.runCommandOutput(cmdline, cv.commandDir(), nil)
 	})
 }
 
-// buildDir returns the directory that the build and run commands run in:
-// the [ProjectSettings.BuildDir], if it is set to a directory other than
-// the project root, and otherwise the directory of the file of the active
-// editor, as for the commands (see [Code.commandDir]).
-func (cv *Code) buildDir() string {
-	return cmp.Or(cv.Settings.buildDir(), cv.commandDir())
-}
-
-// Run runs the [ProjectSettings.RunCommand] of the project in its build
-// directory (see [Code.buildDir]), with its output in a tab: by default, for a project that is
+// Run runs the [ProjectSettings.RunCommand] of the project in the directory
+// of the file of the active editor, or else the project root (see
+// [Code.commandDir]), with its output in a tab: by default, for a project that is
 // not in Go or TeX, its RunExec executable, which is chosen if it is not
 // executable.
 func (cv *Code) Run() { //types:add
@@ -202,7 +194,7 @@ func (cv *Code) Run() { //types:add
 		core.MessageDialog(cv, "You need to set the RunCommand in the Project Settings", "No RunCommand set")
 		return
 	}
-	cv.runCommandOutput(cmdline, cv.buildDir(), nil)
+	cv.runCommandOutput(cmdline, cv.commandDir(), nil)
 }
 
 // Commit commits the current changes, after saving the files, with the
