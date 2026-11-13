@@ -308,7 +308,11 @@ func (cs *Commands) SubCmd(cmd string, reparse bool) (*SubCmd, error) {
 		}
 		return cs.cachedSub(cmd), nil
 	}
-	sc, err := parseSub(cmd)
+	pcmd := cmd
+	if name == MainName { // (as for "ls Main", the form of a command with macros)
+		pcmd = root
+	}
+	sc, err := parseSub(pcmd)
 	if err != nil {
 		return nil, err
 	}

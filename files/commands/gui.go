@@ -210,7 +210,9 @@ func (cs *Commands) subCmdsMenu(m *core.Scene, root string, run RunFunc) {
 	}
 	cs.macrosMenu(m, cm, run)
 	if !cm.HasSubCmds() { // the command itself
-		cs.commandButton(m, label(root), root, run)
+		// (its form, not the menu of its macros, which this is)
+		b := core.NewButton(m).SetText(label(root)).SetIcon(icons.Terminal).SetTooltip(tooltip(root, cm.Doc))
+		b.OnClick(func(e events.Event) { cs.RunDialog(b, root+" "+MainName, run) })
 		return
 	}
 	var subs []*SubCmd

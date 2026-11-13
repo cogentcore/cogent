@@ -175,3 +175,25 @@ func TestDialogFocus(t *testing.T) {
 		assert.True(t, field.StateIs(states.Focused), "the prompt is in focus")
 	})
 }
+
+// TestMacroMenuShortcuts tests the command bar with the menu of the macros
+// of a command without subcommands, whose shortcuts are collected from its
+// menus (which recursed without end: its item for the command had the
+// menu again), and that its item for the command shows its form.
+func TestMacroMenuShortcuts(t *testing.T) {
+	imagex.UpdateTestImagesFor(t) // the image is not compared
+	cs := testCommands(t, filepath.Join(t.TempDir(), "commands.json"))
+	cs.Entries = []*Entry{{Command: "ls"}}
+	require.NoError(t, cs.SaveMacro("ls", &Macro{Name: "long", SubCmd: MainName, Values: &SubCmdArgs{Flags: map[string]string{"-l": "true"}}}, nil))
+	b := core.NewBody()
+	cs.Bar(b, nil)
+	b.AssertRender(t, "macro-menu-shortcuts")
+	m := core.NewScene()
+	cs.subCmdsMenu(m, "ls", nil)
+	item := m.Children[len(m.Children)-1].(*core.Button)
+	assert.Equal(t, "Ls", item.Text)
+	assert.Nil(t, item.Menu, "the form of ls, not the menu again")
+	sc, err := cs.SubCmd("ls "+MainName, false)
+	require.NoError(t, err)
+	assert.Equal(t, "ls", sc.Cmd)
+}
