@@ -102,7 +102,6 @@ func (fn *FileNode) SetRunExec() {
 	cv, ok := ParentCode(fn.This)
 	if ok {
 		cv.Settings.RunExec = fn.Filepath
-		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
 	}
 }
 

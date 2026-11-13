@@ -119,6 +119,9 @@ func TestRunCommandLine(t *testing.T) {
 	assert.Equal(t, sub, cv.buildDir(), "the project root is the default")
 	cv.Settings.BuildDir = core.Filename(filepath.Join(tmp, "build"))
 	assert.Equal(t, filepath.Join(tmp, "build"), cv.buildDir(), "set")
+	cv.Settings.RunExec = core.Filename(filepath.Join(tmp, "build", "x"))
+	assert.Equal(t, sub, cv.buildDir(), "that of the RunExec, which choosing it used to set")
+	cv.Settings.RunExec = ""
 	cv.Settings.BuildDir = ""
 	b.AsyncUnlock()
 	require.NotNil(t, ct)

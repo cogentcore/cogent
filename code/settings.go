@@ -228,9 +228,9 @@ type ProjectSettings struct { //types:add
 	BuildCommand string
 
 	// BuildDir is the directory that the Build and Run commands run in, if
-	// it is not empty or the project root: otherwise they run in the
-	// directory of the file of the active editor, as the commands do (or
-	// the project root).
+	// it is not empty, the project root, or the directory of the RunExec:
+	// otherwise they run in the directory of the file of the active editor,
+	// as the commands do (or the project root).
 	BuildDir core.Filename
 
 	// RunExec is the executable that the debugger runs, and the Run button
@@ -530,9 +530,10 @@ func (se *ProjectSettings) runCommand() string {
 }
 
 // buildDir returns the [ProjectSettings.BuildDir], if it is set to a
-// directory other than the project root, and otherwise "".
+// directory other than the project root, and that of the RunExec (which
+// choosing the RunExec used to set it to), and otherwise "".
 func (se *ProjectSettings) buildDir() string {
-	if se.BuildDir == se.ProjectRoot {
+	if se.BuildDir == se.ProjectRoot || (se.RunExec != "" && string(se.BuildDir) == filepath.Dir(string(se.RunExec))) {
 		return ""
 	}
 	return string(se.BuildDir)
