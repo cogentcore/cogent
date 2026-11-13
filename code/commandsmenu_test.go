@@ -148,7 +148,7 @@ func TestRunCommandLine(t *testing.T) {
 			texts = append(texts, bt.Text)
 		}
 	}
-	assert.Equal(t, []string{"Ls", "Edit commands"}, texts, "the commands of the apps")
+	assert.Equal(t, []string{"Ls", "Edit commands", "Edit choosers"}, texts, "the commands of the apps")
 }
 
 // TestBuildRunCommands tests the default build and run command lines of
