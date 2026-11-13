@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -144,9 +145,42 @@ func TestRunCommandLine(t *testing.T) {
 			texts = append(texts, bt.Text)
 		}
 	}
-	assert.Contains(t, texts, "Ls", "the commands of the apps")
-	assert.Contains(t, texts, "Edit commands")
-	for _, cat := range macroCategories[3:] {
-		assert.NotContains(t, texts, cat, "not used anymore")
-	}
+	assert.Equal(t, []string{"Ls", "Edit commands"}, texts, "the commands of the apps")
+}
+
+// TestBuildRunCommands tests the default build and run command lines of
+// projects, by main language, and the settings that set them.
+func TestBuildRunCommands(t *testing.T) {
+	se := &ProjectSettings{ProjectRoot: "/proj", MainLang: fileinfo.Go}
+	assert.Equal(t, "go build -v", se.buildCommand())
+	assert.Equal(t, "core run", se.runCommand())
+	assert.Equal(t, "/proj", se.buildDir())
+	se.BuildCommand, se.RunCommand, se.BuildDir = "go build ./cmd/x", "./x -v", "/proj/cmd/x"
+	assert.Equal(t, "go build ./cmd/x", se.buildCommand())
+	assert.Equal(t, "./x -v", se.runCommand())
+	assert.Equal(t, "/proj/cmd/x", se.buildDir())
+
+	se = &ProjectSettings{MainLang: fileinfo.TeX}
+	assert.Equal(t, "latexmk -pdf", se.buildCommand())
+	assert.Equal(t, "", se.runCommand())
+
+	exe := filepath.Join(t.TempDir(), "my prog")
+	require.NoError(t, os.WriteFile(exe, []byte("#!/bin/sh\n"), 0o755))
+	se = &ProjectSettings{MainLang: fileinfo.C, RunExec: core.Filename(exe)}
+	assert.Equal(t, "make", se.buildCommand())
+	assert.Equal(t, "'"+exe+"'", se.runCommand(), "the RunExec, quoted")
+}
+
+// TestOpenOldProjectSettings tests that the project settings of a project
+// file from before the build and run command lines open, without the old
+// names of commands.
+func TestOpenOldProjectSettings(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "old.code")
+	old := "ProjectRoot = \"/proj\"\nBuildCmds = [\"Go: Build Dir\"]\nBuildTarg = \"/proj\"\nRunCmds = [\"Core: Run\"]\nRunExec = \"/proj/x\"\n"
+	require.NoError(t, os.WriteFile(file, []byte(old), 0o644))
+	se := &ProjectSettings{}
+	require.NoError(t, se.Open(core.Filename(file)))
+	assert.Equal(t, core.Filename("/proj"), se.ProjectRoot)
+	assert.Equal(t, core.Filename("/proj/x"), se.RunExec)
+	assert.Equal(t, "", se.BuildCommand, "the default")
 }

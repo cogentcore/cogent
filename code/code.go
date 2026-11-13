@@ -90,14 +90,8 @@ type Code struct {
 	// the command buffers for commands run in this project
 	CmdBufs map[string]*lines.Lines `set:"-" json:"-"`
 
-	// history of commands executed in this session
-	CmdHistory CmdNames `set:"-" json:"-"`
-
 	// currently running commands in this project
 	RunningCmds CmdRuns `set:"-" json:"-" xml:"-"`
-
-	// current arg var vals
-	ArgVals ArgVarVals `set:"-" json:"-" xml:"-"`
 
 	// settings for this project -- this is what is saved in a .code project file
 	Settings ProjectSettings `set:"-"`

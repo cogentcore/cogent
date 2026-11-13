@@ -106,28 +106,21 @@ func (fn *FileNode) SetRunExec() {
 	}
 }
 
-// ExecCmdFile pops up a menu to select a command appropriate for the given node,
-// and shows output in MainTab with name of command
+// ExecCmdFile pops up the menu of the commands (as the Command menu), which
+// run in the directory of the node (that of a file), with their output in
+// a tab.
 func (fn *FileNode) ExecCmdFile() { //types:add
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		cv.ExecCmdFileNode(&fn.Node)
-	}
-}
-
-// ExecCmdNameFile executes given command name on node
-func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	cv, ok := ParentCode(fn.This)
-	if ok {
-		cv.ExecCmdNameFile(string(fn.Filepath), CmdName(cmdNm))
+		core.NewMenu(cv.nodeCommandsMenu(&fn.Node), fn, fn.ContextMenuPos(nil)).Run()
 	}
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene, pos image.Point) {
 	cv, ok := ParentCode(fn.This)
 	if ok {
-		core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-			SetMenu(cv.CommandMenuFileNode(&fn.Node)).Styler(func(s *styles.Style) {
+		core.NewButton(m).SetText("Command").SetIcon(icons.Terminal).
+			SetMenu(cv.nodeCommandsMenu(&fn.Node)).Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	}

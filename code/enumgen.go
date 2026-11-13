@@ -6,49 +6,6 @@ import (
 	"cogentcore.org/core/enums"
 )
 
-var _ArgVarTypesValues = []ArgVarTypes{0, 1, 2, 3, 4, 5}
-
-// ArgVarTypesN is the highest valid value for type ArgVarTypes, plus one.
-const ArgVarTypesN ArgVarTypes = 6
-
-var _ArgVarTypesValueMap = map[string]ArgVarTypes{`File`: 0, `Dir`: 1, `Ext`: 2, `Pos`: 3, `Text`: 4, `Prompt`: 5}
-
-var _ArgVarTypesDescMap = map[ArgVarTypes]string{0: `ArgVarFile is a file name, not a directory`, 1: `ArgVarDir is a directory name, not a file`, 2: `ArgVarExt is a file extension`, 3: `ArgVarPos is a text position`, 4: `ArgVarText is text from a buffer`, 5: `ArgVarPrompt is a user-prompted variable`}
-
-var _ArgVarTypesMap = map[ArgVarTypes]string{0: `File`, 1: `Dir`, 2: `Ext`, 3: `Pos`, 4: `Text`, 5: `Prompt`}
-
-// String returns the string representation of this ArgVarTypes value.
-func (i ArgVarTypes) String() string { return enums.String(i, _ArgVarTypesMap) }
-
-// SetString sets the ArgVarTypes value from its string representation,
-// and returns an error if the string is invalid.
-func (i *ArgVarTypes) SetString(s string) error {
-	return enums.SetString(i, s, _ArgVarTypesValueMap, "ArgVarTypes")
-}
-
-// Int64 returns the ArgVarTypes value as an int64.
-func (i ArgVarTypes) Int64() int64 { return int64(i) }
-
-// SetInt64 sets the ArgVarTypes value from an int64.
-func (i *ArgVarTypes) SetInt64(in int64) { *i = ArgVarTypes(in) }
-
-// Desc returns the description of the ArgVarTypes value.
-func (i ArgVarTypes) Desc() string { return enums.Desc(i, _ArgVarTypesDescMap) }
-
-// ArgVarTypesValues returns all possible values for the type ArgVarTypes.
-func ArgVarTypesValues() []ArgVarTypes { return _ArgVarTypesValues }
-
-// Values returns all possible values for the type ArgVarTypes.
-func (i ArgVarTypes) Values() []enums.Enum { return enums.Values(_ArgVarTypesValues) }
-
-// MarshalText implements the [encoding.TextMarshaler] interface.
-func (i ArgVarTypes) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
-
-// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *ArgVarTypes) UnmarshalText(text []byte) error {
-	return enums.UnmarshalText(i, text, "ArgVarTypes")
-}
-
 var _DebugBreakStatusValues = []DebugBreakStatus{0, 1, 2, 3}
 
 // DebugBreakStatusN is the highest valid value for type DebugBreakStatus, plus one.

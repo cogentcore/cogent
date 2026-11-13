@@ -10,46 +10,38 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"strings"
 	"time"
 	"unicode"
 
 	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 )
 
-// macroCategories are the categories of the commands of Code that are
-// macros of the commands (see [commands.StandardMacros]), or that are not
-// used anymore (Svn, LaTeX), which are not in the Command menu.
-var macroCategories = []string{"Git", "Go", "Core", "Svn", "LaTeX"}
-
 // commandsMenu adds the commands to the given menu: those shared by the
 // apps (see [commands.Default]), with their macros, run with
-// [Code.RunCommandLine], followed by the other commands of Code for the
-// active file, such as those to build and run the project.
+// [Code.RunCommandLine].
 func (cv *Code) commandsMenu(m *core.Scene) {
 	commands.Default().Menu(m, cv.RunCommandLine)
-	ec := ExecCmds(cv)
-	ec = slices.DeleteFunc(ec, func(cc []string) bool { return slices.Contains(macroCategories, cc[0]) })
-	if len(ec) == 0 {
-		return
+}
+
+// nodeCommandsMenu returns a function that adds the commands to a menu,
+// as [Code.commandsMenu], to run in the directory of the given node of
+// the file tree (that of a file), with their output in a tab.
+func (cv *Code) nodeCommandsMenu(fn *filetree.Node) func(m *core.Scene, pos image.Point) {
+	dir := string(fn.Filepath)
+	if !fn.IsDir() {
+		dir = filepath.Dir(dir)
 	}
-	core.NewSeparator(m)
-	for _, cc := range ec {
-		cat := cc[0]
-		icon := CommandIcons[cat]
-		core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene, pos image.Point) {
-			for _, cm := range cc[1:] {
-				core.NewButton(mm).SetText(cm).SetIcon(icon).OnClick(func(e events.Event) {
-					e.SetHandled()
-					cv.ExecCmdNameActive(CommandName(cat, cm))
-				})
-			}
+	return func(m *core.Scene, pos image.Point) {
+		commands.Default().Menu(m, func(cmdline string) {
+			cv.SaveAllCheck(true, func() {
+				cv.runCommandOutput(cmdline, dir, nil)
+			})
 		})
 	}
 }
@@ -65,7 +57,7 @@ func (cv *Code) RunCommandLine(cmdline string) {
 		return
 	}
 	cv.SaveAllCheck(true, func() {
-		cv.runCommandOutput(cmdline)
+		cv.runCommandOutput(cmdline, cv.commandDir(), nil)
 	})
 }
 
@@ -118,18 +110,19 @@ func shellCommand(cmdline, dir string) *exec.Cmd {
 	return cmd
 }
 
-// runCommandOutput runs the given command line in the [Code.commandDir],
+// runCommandOutput runs the given command line in the given directory,
 // with its output in its tab (see [commandTabName]), in which it is killed
-// if the tab is closed, followed by its status.
-func (cv *Code) runCommandOutput(cmdline string) {
+// if the tab is closed, followed by its status, and then calls the given
+// function, if it is not nil (with the lock of cv).
+func (cv *Code) runCommandOutput(cmdline, dir string, done func()) {
 	name := commandTabName(cmdline)
 	buf, _, _ := cv.RecycleCmdTab(name)
 	if buf == nil {
 		return
 	}
 	cv.SelectTabByName(name)
-	cmd := shellCommand(cmdline, cv.commandDir())
-	cv.RunningCmds.AddCmd(name, cmdline, nil, cmd)
+	cmd := shellCommand(cmdline, dir)
+	cv.RunningCmds.AddCmd(name, cmdline, cmd)
 	lexer := ""
 	if strings.Contains(name, "diff") {
 		lexer = "diff"
@@ -152,6 +145,9 @@ func (cv *Code) runCommandOutput(cmdline string) {
 		defer cv.AsyncUnlock()
 		cv.RunningCmds.DeleteByName(name)
 		cv.commandStatus(name, buf, cmdline, err)
+		if done != nil {
+			done()
+		}
 	}()
 }
 

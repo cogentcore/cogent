@@ -74,7 +74,7 @@ The `Splits` menu can be used to to configure the size and layout of the differe
 
 The idea here is to have a really simple overall plan, with easy customization of what panels are visible for different use-cases, so you know exactly where to look for anything.  We rely on tabs to hold all the many different kinds of output etc, and support multi-row tabs and a menu so you can really load them up.
 
-The overall `Build` and `Run` commands are defined in the project Settings.  You can also select the executable to run (and debug) from the file tree context menu or in the Command menu.  
+The `Build` and `Run` buttons run the `BuildCommand` and `RunCommand` command lines of the project Settings, in its `BuildDir`. By default they are `go build -v` and `core run` for Go, `latexmk -pdf` for TeX, and otherwise `make` and the `RunExec` executable, which you can select (to run and debug) from the file tree context menu.
 
 ## Keyboard Usage
 
@@ -110,7 +110,7 @@ Not *everything* in emacs is intended to be supported, but the most important ke
 
 * `Ctrl-X b` = choose buffer, `Ctrl-X f` = open file, `Ctrl-X s` = save file, `Ctrl-X w`  = save as file,  all work as expected.
 
-* `Ctrl-C c` = execute command on active file
+* `Ctrl-C c` = the Command menu (see Commands below)
 
 * `Ctrl-X x / g` = register copy / paste supported.  registers are saved with the .gide project and thus persistent across sessions.
 
@@ -144,7 +144,7 @@ So, we chose `Ctrl-M` as the general `coMMand` key for these other platforms, as
 
 * `Ctrl-M o` = move focus to "other" or next panel
 * `Ctrl+M p` = move focus to previous panel
-* `Ctrl+M c` = execute command
+* `Ctrl+M c` = the Command menu
 * `Ctrl+M x` = register copy
 * `Ctrl+M g` = register get
 * `Ctrl+M i` = indent
@@ -160,69 +160,11 @@ Also, the following emacs-isms (which don't conflict with anything else) are sup
 
 ## Commands
 
-Much of the language-specific functionality (and version control operations) is achieved by calling command-line commands, configured under the `Settings`: click on `Edit cmds` in toolbar, and then `View standard` in the toolbar of the window that comes up from there, to see all the standard built-in commands.
+The `Command` menu (also `Ctrl-C c`, and the context menu of the file browser) has the command-line tools that are shared with Cogent Files (see the `commands` package of Cogent Core): git, go, core, and others, organized into categories that you can edit (`Edit commands` at the end of the menu). Each command has a menu of its subcommands, parsed from its help: clicking on one shows a form of its flags and arguments, which builds the command line to run.
 
-You can add additional custom commands to achieve anything not covered under the standard commands, and also any custom command with same name as a standard command will override the standard version, so that is how you can customize the standard commands.
+At the top of the menu of a command are its macros: versions of its subcommands with values for their arguments, some of which are prompted for when they run, such as `git commit` with `--all`, prompting for the message, or confirmed before they run, such as `git push force`. The standard macros have the git, go, and core commands that you use most, and you can make your own with `New macro` in the form of any subcommand.
 
-You can do the Context menu on any of the standard commands and then Paste into the custom commands editor, and modify from there.
-
-Click on the `Cmds` field to edit the actual commands executed -- there can be multiple individual commands executed for any given overall named command.
-
-You can use variables specified below to insert values derived from the current active file or file being operated in the file browser, or variables defined in the project preferences.
-
-### Special Arg Variables
-
-```Go
-	/// Current Filename
-	"{FilePath}":       ArgVarInfo{"Current file name with full path.", ArgVarFile},
-	"{FileName}":       ArgVarInfo{"Current file name only, without path.", ArgVarFile},
-	"{FileExt}":        ArgVarInfo{"Extension of current file name.", ArgVarExt},
-	"{FileExtLC}":      ArgVarInfo{"Extension of current file name, lowercase.", ArgVarExt},
-	"{FileNameNoExt}":  ArgVarInfo{"Current file name without path and extension.", ArgVarFile},
-	"{FileDir}":        ArgVarInfo{"Name only of current file's directory.", ArgVarDir},
-	"{FileDirPath}":    ArgVarInfo{"Full path to current file's directory.", ArgVarDir},
-	"{FileDirProjRel}": ArgVarInfo{"Path to current file's directory relative to project root.", ArgVarDir},
-
-	// Project Root dir
-	"{ProjDir}":  ArgVarInfo{"Current project directory name, without full path.", ArgVarDir},
-	"{ProjPath}": ArgVarInfo{"Full path to current project directory.", ArgVarDir},
-
-	// BuildDir
-	"{BuildDir}":    ArgVarInfo{"Full path to BuildDir specified in project prefs -- the default Build.", ArgVarDir},
-	"{BuildDirRel}": ArgVarInfo{"Path to BuildDir relative to project root.", ArgVarDir},
-
-	// BuildTarg
-	"{BuildTarg}":           ArgVarInfo{"Build target specified in prefs BuildTarg, just filename by itself, without path.", ArgVarFile},
-	"{BuildTargPath}":       ArgVarInfo{"Full path to build target specified in prefs BuildTarg.", ArgVarFile},
-	"{BuildTargDirPath}":    ArgVarInfo{"Full path to build target directory, without filename.", ArgVarDir},
-	"{BuildTargDirPathRel}": ArgVarInfo{"Project-relative path to build target directory, without filename.", ArgVarDir},
-
-	// RunExec
-	"{RunExec}":           ArgVarInfo{"Run-time executable file RunExec specified in project prefs -- just the raw name of the file, without path.", ArgVarFile},
-	"{RunExecPath}":       ArgVarInfo{"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
-	"{RunExecDirPath}":    ArgVarInfo{"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
-	"{RunExecDirPathRel}": ArgVarInfo{"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
-
-	// Cursor, Selection
-	"{CurLine}":      ArgVarInfo{"Cursor current line number (starts at 1).", ArgVarPos},
-	"{CurCol}":       ArgVarInfo{"Cursor current column number (starts at 0).", ArgVarPos},
-	"{SelStartLine}": ArgVarInfo{"Selection starting line (same as CurLine if no selection).", ArgVarPos},
-	"{SelStartCol}":  ArgVarInfo{"Selection starting column (same as CurCol if no selection).", ArgVarPos},
-	"{SelEndLine}":   ArgVarInfo{"Selection ending line (same as CurLine if no selection).", ArgVarPos},
-	"{SelEndCol}":    ArgVarInfo{"Selection ending column (same as CurCol if no selection).", ArgVarPos},
-
-	"{CurSel}":      ArgVarInfo{"Currently selected text.", ArgVarText},
-	"{CurLineText}": ArgVarInfo{"Current line text under cursor.", ArgVarText},
-	"{CurWord}":     ArgVarInfo{"Current word under cursor.", ArgVarText},
-
-	"{PromptFilePath}":       ArgVarInfo{"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
-	"{PromptFileName}":       ArgVarInfo{"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
-	"{PromptFileDir}":        ArgVarInfo{"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
-	"{PromptFileDirPath}":    ArgVarInfo{"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
-	"{PromptFileDirProjRel}": ArgVarInfo{"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
-	"{PromptString1}":        ArgVarInfo{"Prompt user for a string -- this is it.", ArgVarPrompt},
-	"{PromptString2}":        ArgVarInfo{"Prompt user for another string -- this is it.", ArgVarPrompt},
-```
+A command runs in the directory of the file in the active editor, with its output in a tab named for it (`git commit`, `go test`), in which it is killed if you close the tab; or, if a terminal has the keyboard focus, it is typed into the terminal, as when you choose a macro with the menu search (`Ctrl+M`) in a terminal.
 
 ## Debugging
 
