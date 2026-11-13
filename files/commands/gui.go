@@ -138,7 +138,7 @@ func (cs *Commands) configCommand(w *core.Button, cmd string, run RunFunc) {
 	root, name := splitCmd(cmd)
 	tip := cmd
 	if cm := cs.cached(root); cm != nil {
-		if name == "" && cm.HasSubCmds() {
+		if name == "" && (cm.HasSubCmds() || len(cm.Macros) > 0) {
 			w.SetTooltip(tooltip(root, cm.Doc))
 			w.SetMenu(func(m *core.Scene, _ image.Point) { cs.subCmdsMenu(m, root, run) })
 			return
@@ -196,7 +196,8 @@ func (cs *Commands) menu(m *core.Scene, ens []*Entry, run RunFunc) {
 
 // subCmdsMenu adds the buttons of the subcommands of the given command,
 // such as git, to the given menu: those of the command, not the nested
-// ones (see [Commands.nestedMenu]). If the command has [Entry.Common]
+// ones (see [Commands.nestedMenu]), after its macros (see [Macro]), or
+// the command itself, if it has none. If the command has [Entry.Common]
 // subcommands, they are in the menu, followed by a submenu of the others,
 // sorted by name. Otherwise, the subcommands of the first group (see
 // [SubCmd.Group]) are in the menu, and those of the others in submenus
@@ -204,6 +205,11 @@ func (cs *Commands) menu(m *core.Scene, ens []*Entry, run RunFunc) {
 func (cs *Commands) subCmdsMenu(m *core.Scene, root string, run RunFunc) {
 	cm := cs.cached(root)
 	if cm == nil {
+		return
+	}
+	cs.macrosMenu(m, cm, run)
+	if !cm.HasSubCmds() { // the command itself
+		cs.commandButton(m, label(root), root, run)
 		return
 	}
 	var subs []*SubCmd
@@ -365,7 +371,7 @@ func (cs *Commands) RunDialog(ctx core.Widget, cmd string, run RunFunc) {
 		root, name := splitCmd(cmd)
 		cm, err := cs.Cmd(root, false)
 		var sc *SubCmd
-		if err == nil && !(name == "" && cm.HasSubCmds()) {
+		if err == nil && !(name == "" && (cm.HasSubCmds() || len(cm.Macros) > 0)) {
 			sc, err = cs.SubCmd(cmd, false)
 		}
 		cs.updateViews(nil)
@@ -430,6 +436,8 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 					})
 				})
 			}
+			root, _ := splitCmd(sc.Cmd)
+			cs.macrosButton(p, d, ctx, root, sc, run)
 			tree.Add(p, func(w *core.Button) {
 				w.SetText("Clear").SetIcon(icons.ClearAll).SetTooltip("Clear the flags and arguments")
 				w.OnClick(func(e events.Event) {
@@ -458,6 +466,14 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 	})
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
+		core.NewButton(bar).SetType(core.ButtonOutlined).SetText("New macro").SetIcon(icons.Add).
+			SetTooltip("Make a macro of the command with these values, at the top of the menu of the command, which can prompt for some of them").
+			OnClick(func(e events.Event) {
+				root, _ := splitCmd(sc.Cmd)
+				mc := &Macro{SubCmd: sc.Name, Values: sc.ArgsOf(values)}
+				d.Close()
+				cs.NewMacroDialog(ctx, root, sc, mc, nil, run).RunWindowDialog(ctx)
+			})
 		d.AddOK(bar).SetText("Run").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
 			if cs.Args != nil {
 				errors.Log(cs.Args.Set(sc, values))
@@ -472,28 +488,75 @@ func (cs *Commands) NewDialog(ctx core.Widget, sc *SubCmd, run RunFunc) *core.Bo
 // [SubCmd.FormStruct].
 const argsField = "Arguments"
 
-// FormStruct returns a pointer to a new struct for a form of the flags of
-// the command: a field for the other arguments, and a bool or string field
-// for each flag, labeled with its names, with its documentation.
-func (cm *SubCmd) FormStruct() any {
-	fields := []reflect.StructField{{
-		Name: argsField, Type: reflect.TypeFor[string](),
-		Tag: `immediate:"+" doc:"The other arguments of the command, such as files and paths, as typed in a shell"`,
-	}}
-	used := map[string]bool{argsField: true}
+// fieldNames returns the names of the fields of the forms of the
+// subcommand (see [SubCmd.FormStruct]): [argsField] for the other
+// arguments, and then one for each flag, which are unique.
+func (cm *SubCmd) fieldNames() []string {
+	names := []string{argsField}
+	used := map[string]bool{argsField: true, macroNameField: true}
 	for _, fl := range cm.Flags {
 		name := fieldName(fl.Name)
 		for i := 2; used[name]; i++ {
 			name = fieldName(fl.Name) + strconv.Itoa(i)
 		}
 		used[name] = true
-		typ := reflect.TypeFor[string]()
-		if fl.IsBool() {
-			typ = reflect.TypeFor[bool]()
+		names = append(names, name)
+	}
+	return names
+}
+
+// argKey returns the key of the argument of the given index in the
+// [SubCmd.fieldNames]: [argsField] for the other arguments, and the name
+// of the flag for the others, as in [SubCmdArgs.Flags] and
+// [Macro.Prompts].
+func (cm *SubCmd) argKey(i int) string {
+	if i == 0 {
+		return argsField
+	}
+	return cm.Flags[i-1].Name
+}
+
+// argField returns the struct field of the form of the argument of the
+// given index in the [SubCmd.fieldNames], with the given type, and with
+// the given extra tags.
+func (cm *SubCmd) argField(i int, name string, typ reflect.Type, tags string) reflect.StructField {
+	if i == 0 {
+		return reflect.StructField{Name: name, Type: typ,
+			Tag: reflect.StructTag(`doc:"The other arguments of the command, such as files and paths, as typed in a shell"` + tags)}
+	}
+	fl := cm.Flags[i-1]
+	// (the label and doc are shown as markup)
+	tag := `label:` + strconv.Quote(html.EscapeString(fl.Label())) + ` doc:` + strconv.Quote(html.EscapeString(fl.Doc)) + tags
+	return reflect.StructField{Name: name, Type: typ, Tag: reflect.StructTag(tag)}
+}
+
+// argType returns the type of the value of the argument of the given index
+// in the [SubCmd.fieldNames]: bool for a flag without a value, and
+// otherwise string.
+func (cm *SubCmd) argType(i int) reflect.Type {
+	if i > 0 && cm.Flags[i-1].IsBool() {
+		return reflect.TypeFor[bool]()
+	}
+	return reflect.TypeFor[string]()
+}
+
+// FormStruct returns a pointer to a new struct for a form of the flags of
+// the command: a field for the other arguments, and a bool or string field
+// for each flag, labeled with its names, with its documentation.
+func (cm *SubCmd) FormStruct() any {
+	return cm.formStruct(nil)
+}
+
+// formStruct returns a pointer to a new struct for a form of the flags of
+// the command (see [SubCmd.FormStruct]), with only the arguments whose keys
+// (see [SubCmd.argKey]) are in the given set, if it is not nil.
+func (cm *SubCmd) formStruct(keys map[string]bool) any {
+	var fields []reflect.StructField
+	for i, name := range cm.fieldNames() {
+		if keys != nil && !keys[cm.argKey(i)] {
+			continue
 		}
-		// (the label and doc are shown as markup)
-		tag := `immediate:"+" label:` + strconv.Quote(html.EscapeString(fl.Label())) + ` doc:` + strconv.Quote(html.EscapeString(fl.Doc))
-		fields = append(fields, reflect.StructField{Name: name, Type: typ, Tag: reflect.StructTag(tag)})
+		fields = append(fields, cm.argField(i, name, cm.argType(i), ` immediate:"+"`))
 	}
 	return reflect.New(reflect.StructOf(fields)).Interface()
 }
@@ -512,26 +575,100 @@ func fieldName(flag string) string {
 	return name
 }
 
-// CommandLine returns the command line for the given values of the form of
-// the command made by [SubCmd.FormStruct]: the command, the flags that are on
-// or have values, and the other arguments.
-func (cm *SubCmd) CommandLine(values any) string {
-	v := reflect.ValueOf(values).Elem()
-	words := []string{cm.Cmd}
-	for i, fl := range cm.Flags {
-		f := v.Field(i + 1)
+// valueField returns the field of the value of the argument of the given
+// field name in the given values of a form of a subcommand, which is
+// invalid if there is none: the field itself, or the value field of the
+// field of a [SubCmd.MacroStruct].
+func valueField(values any, name string) reflect.Value {
+	f := reflect.ValueOf(values).Elem().FieldByName(name)
+	if f.Kind() == reflect.Struct {
+		f = f.FieldByName(macroValueField)
+	}
+	return f
+}
+
+// ArgsOf returns the arguments of the given values of a form of the
+// subcommand (see [SubCmd.FormStruct] and [SubCmd.MacroStruct]): only those
+// that are used.
+func (cm *SubCmd) ArgsOf(values any) *SubCmdArgs {
+	sa := &SubCmdArgs{}
+	for i, name := range cm.fieldNames() {
+		f := valueField(values, name)
+		val := ""
 		switch f.Kind() {
 		case reflect.Bool:
 			if f.Bool() {
-				words = append(words, fl.Arg(""))
+				val = "true"
 			}
 		case reflect.String:
-			if s := f.String(); s != "" {
-				words = append(words, fl.Arg(s))
+			val = f.String()
+		}
+		switch {
+		case i == 0:
+			sa.Args = val
+		case val != "":
+			if sa.Flags == nil {
+				sa.Flags = map[string]string{}
 			}
+			sa.Flags[cm.argKey(i)] = val
 		}
 	}
-	if args := strings.TrimSpace(v.Field(0).String()); args != "" {
+	return sa
+}
+
+// SetValues sets the given values of a form of the given subcommand (see
+// [SubCmd.FormStruct] and [SubCmd.MacroStruct]) to the arguments, for
+// those it has.
+func (sa *SubCmdArgs) SetValues(cm *SubCmd, values any) {
+	if sa == nil {
+		return
+	}
+	for i, name := range cm.fieldNames() {
+		f := valueField(values, name)
+		if !f.IsValid() {
+			continue
+		}
+		val := sa.Args
+		if i > 0 {
+			var ok bool
+			if val, ok = sa.Flags[cm.argKey(i)]; !ok {
+				continue
+			}
+		}
+		switch f.Kind() {
+		case reflect.Bool:
+			b, _ := strconv.ParseBool(val)
+			f.SetBool(b)
+		case reflect.String:
+			f.SetString(val)
+		}
+	}
+}
+
+// CommandLine returns the command line for the given values of a form of
+// the command made by [SubCmd.FormStruct]: the command, the flags that are
+// on or have values, and the other arguments.
+func (cm *SubCmd) CommandLine(values any) string {
+	return cm.ArgsCommandLine(cm.ArgsOf(values))
+}
+
+// ArgsCommandLine returns the command line for the given arguments: the
+// command, the flags that are on or have values, and the other arguments.
+func (cm *SubCmd) ArgsCommandLine(sa *SubCmdArgs) string {
+	words := []string{cm.Cmd}
+	for _, fl := range cm.Flags {
+		val, ok := sa.Flags[fl.Name]
+		switch {
+		case !ok || val == "":
+		case fl.IsBool():
+			if b, _ := strconv.ParseBool(val); b {
+				words = append(words, fl.Arg(""))
+			}
+		default:
+			words = append(words, fl.Arg(val))
+		}
+	}
+	if args := strings.TrimSpace(sa.Args); args != "" {
 		words = append(words, args)
 	}
 	return strings.Join(words, " ")

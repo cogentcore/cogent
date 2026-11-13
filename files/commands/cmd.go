@@ -36,6 +36,18 @@ type Cmd struct {
 	// they are used (see [SubCmd.IsParsed]). A command without
 	// subcommands has one, named [MainName], for the command itself.
 	SubCmds []*SubCmd
+
+	// Macros are the macros of the subcommands, made by the user, which
+	// are at the top of the menu of the command (see [Macro]). They are
+	// kept when the command is parsed again.
+	Macros []*Macro `json:",omitempty"`
+}
+
+// IsParsed returns whether the help of the command has been parsed: it
+// has subcommands (it may only have macros otherwise, from a file of
+// another version).
+func (cm *Cmd) IsParsed() bool {
+	return len(cm.SubCmds) > 0
 }
 
 // MainName is the name of the [SubCmd] of a [Cmd] without subcommands,

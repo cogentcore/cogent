@@ -148,7 +148,17 @@ func (cs *Commands) syncLocked() bool {
 	}
 	cs.Version = max(cs.Version, fc.Version)
 	cs.Entries = fc.Entries
-	if fc.Version != version {
+	if fc.Version != version { // only the macros, made by the user
+		for root, fcm := range fc.Parsed {
+			if len(fcm.Macros) == 0 {
+				continue
+			}
+			if cm := cs.Parsed[root]; cm != nil {
+				cm.Macros = fcm.Macros
+			} else {
+				cs.Parsed[root] = &Cmd{Cmd: root, Macros: fcm.Macros}
+			}
+		}
 		return true
 	}
 	for root, fcm := range fc.Parsed {
@@ -234,7 +244,7 @@ func (cs *Commands) cachedSub(cmd string) *SubCmd {
 // parsing its help and saving it if it has not been parsed yet, or if
 // reparse is true, keeping the subcommands that have been parsed.
 func (cs *Commands) Cmd(cmd string, reparse bool) (*Cmd, error) {
-	if cm := cs.cached(cmd); cm != nil && !reparse {
+	if cm := cs.cached(cmd); cm != nil && cm.IsParsed() && !reparse {
 		return cm, nil
 	}
 	cm, err := ParseCmd(cmd)
@@ -243,6 +253,7 @@ func (cs *Commands) Cmd(cmd string, reparse bool) (*Cmd, error) {
 	}
 	err = cs.update(func() {
 		if old := cs.Parsed[cmd]; old != nil {
+			cm.Macros = old.Macros
 			for i, sc := range cm.SubCmds {
 				if osc := old.SubCmd(sc.Name); osc != nil && osc.IsParsed() && !sc.IsParsed() {
 					cm.SubCmds[i] = osc

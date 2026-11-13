@@ -5,8 +5,6 @@
 package commands
 
 import (
-	"reflect"
-	"strconv"
 	"sync"
 
 	"cogentcore.org/core/base/errors"
@@ -89,28 +87,7 @@ func (as *Args) get(sc *SubCmd) *SubCmdArgs {
 // Set sets the arguments last used for the given subcommand from the given
 // values of its form (see [SubCmd.FormStruct]), and saves them.
 func (as *Args) Set(sc *SubCmd, values any) error {
-	sa := &SubCmdArgs{}
-	v := reflect.ValueOf(values).Elem()
-	sa.Args = v.Field(0).String()
-	for i, fl := range sc.Flags {
-		f := v.Field(i + 1)
-		val := ""
-		switch f.Kind() {
-		case reflect.Bool:
-			if f.Bool() {
-				val = "true"
-			}
-		case reflect.String:
-			val = f.String()
-		}
-		if val == "" {
-			continue
-		}
-		if sa.Flags == nil {
-			sa.Flags = map[string]string{}
-		}
-		sa.Flags[fl.Name] = val
-	}
+	sa := sc.ArgsOf(values)
 	root, _ := splitCmd(sc.Cmd)
 	as.mu.Lock()
 	defer as.mu.Unlock()
@@ -130,24 +107,5 @@ func (as *Args) Set(sc *SubCmd, values any) error {
 // SetValues sets the given values of the form of the given subcommand
 // (see [SubCmd.FormStruct]) to the arguments last used for it, if any.
 func (as *Args) SetValues(sc *SubCmd, values any) {
-	sa := as.get(sc)
-	if sa == nil {
-		return
-	}
-	v := reflect.ValueOf(values).Elem()
-	v.Field(0).SetString(sa.Args)
-	for i, fl := range sc.Flags {
-		val, ok := sa.Flags[fl.Name]
-		if !ok {
-			continue
-		}
-		f := v.Field(i + 1)
-		switch f.Kind() {
-		case reflect.Bool:
-			b, _ := strconv.ParseBool(val)
-			f.SetBool(b)
-		case reflect.String:
-			f.SetString(val)
-		}
-	}
+	as.get(sc).SetValues(sc, values)
 }
