@@ -737,20 +737,19 @@ func newForm(d *core.Body, values any) *core.Form {
 }
 
 // FieldMinWidth is the minimum width of the text fields of the forms of
-// the commands, in ch, which have no maximum width: they grow with the
-// window.
+// the commands, in ch; they grow with the window (as text fields in forms
+// have no maximum width).
 var FieldMinWidth float32 = 60
 
 // styleFormFields makes the text fields of the given form, and of its
 // inline forms (as of the arguments of a macro), at least [FieldMinWidth]
-// wide, with no maximum width (rather than the 40ch of a text field).
+// wide.
 func styleFormFields(fm *core.Form) {
 	fm.SetOnChildAdded(func(n tree.Node) {
 		switch w := n.(type) {
 		case *core.TextField:
 			w.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(FieldMinWidth)
-				s.Max.X.Zero()
 			})
 		case *core.Form:
 			styleFormFields(w)
