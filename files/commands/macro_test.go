@@ -208,6 +208,8 @@ func TestFieldWidths(t *testing.T) {
 		"macro": cs.NewMacroDialog(nil, "git", sc, mc, nil, func(string) {}),
 	} {
 		d.AssertRender(t, "field-widths-"+name, func() {
+			d.AsyncLock() // (not while it is styled)
+			defer d.AsyncUnlock()
 			n := 0
 			d.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 				if tf, ok := cw.(*core.TextField); ok {
