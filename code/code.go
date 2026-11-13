@@ -446,14 +446,14 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 	ncv := cv.openPath(path)
 	if empty {
 		cv.UpdateFiles()
-		cv.cdDefaultTerminal()
 	}
 	return ncv
 }
 
 // openPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
-// current Code object if it is empty, or otherwise opens a new window.
+// current Code object if it is empty, changing the directory of its terminal
+// to the project root, or otherwise opens a new window.
 func (cv *Code) openPath(path core.Filename) *Code { //types:add
 	if gproj, has := CheckForProjectAtPath(string(path)); has {
 		return cv.openProject(core.Filename(gproj))
@@ -481,6 +481,7 @@ func (cv *Code) openPath(path core.Filename) *Code { //types:add
 		if fnm != "" {
 			cv.NextViewFile(fnm)
 		}
+		cv.cdDefaultTerminal()
 	}
 	return cv
 }
@@ -493,13 +494,13 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 	ncv := cv.openProject(filename)
 	if empty {
 		cv.UpdateFiles()
-		cv.cdDefaultTerminal()
 	}
 	return ncv
 }
 
 // openProject opens .code project file and its settings from given filename,
-// in a standard toml-formatted file.
+// in a standard toml-formatted file: in the current Code object if it is
+// empty, changing the directory of its terminal to the project root.
 func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
@@ -527,6 +528,7 @@ func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 		}
 		cv.guessVersionControl()
 		cv.SetWindowNameTitle()
+		cv.cdDefaultTerminal()
 	}
 	return cv
 }
