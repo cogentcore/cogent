@@ -3963,7 +3963,13 @@
 		TextTrack, TextTrackList: TrackList, AudioTrackList: TrackList, VideoTrackList: TrackList,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screenX: 0, screenY: 0, screenLeft: 0, screenTop: 0,
-		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
+		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: {
+			// (with lock and unlock, which the video player of nytimes.com
+			// binds as it loads, which stopped it)
+			type: "landscape-primary", angle: 0, onchange: null,
+			lock() { return Promise.reject(domException("NotSupportedError", "screen orientation locking is not supported")); },
+			unlock() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true; },
+		} },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
 		devicePixelRatio: 1, status: "", isSecureContext: true, OffscreenCanvas, BroadcastChannel,

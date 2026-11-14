@@ -1648,3 +1648,11 @@ func TestDeclarativeShadowRoots(t *testing.T) {
 		[a.childNodes.length, a.firstChild.nodeName, a.shadowRoot.innerHTML, String(a.shadowRoot.querySelector("x-c").shadowRoot),
 			document.getElementById("t").content.childNodes.length].join("|")`))
 }
+
+func TestScreenOrientation(t *testing.T) {
+	// the video player of nytimes.com binds its lock and unlock as it loads
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "function function landscape-primary", run(t, e, `
+		const o = screen.orientation;
+		[typeof o.unlock.bind(o), typeof o.lock, o.type].join(" ")`))
+}
