@@ -394,8 +394,9 @@
 			if (!m) { m = {}; listeners.set(this, m); }
 			const l = m[type] || (m[type] = []);
 			for (const x of l) if (x.fn === fn && x.capture === capture) return;
+			const wired = wiredFor(this, type);
 			l.push({ fn, capture, once });
-			listenerAdded(this, type);
+			if (!wired) listenerAdded(this, type);
 			if (opts && typeof opts === "object" && opts.signal) {
 				opts.signal.addEventListener("abort", () => this.removeEventListener(type, fn, opts));
 			}
@@ -446,6 +447,17 @@
 	// are set up when the page is rendered (see hasListener), which it is
 	// rendered again for when a listener for them is added.
 	const wiredTypes = { click: true, submit: true };
+	// wiredFor returns whether the widgets of the given target already
+	// handle events of the given type (as it, an element that it is in, or
+	// the document or window has a listener for them), so that a listener
+	// added for them changes nothing (the scripts of npr.org added click
+	// listeners to the document many times, each reading the page again).
+	function wiredFor(t, type) {
+		if (!wiredTypes[type]) return true;
+		if (t instanceof Node) return D.hasListener(t[ID], type);
+		if (t === g) return D.hasListener(D.doc(), type);
+		return true; // (no widgets)
+	}
 	function listenerAdded(t, type) {
 		if (!wiredTypes[type]) return;
 		if (t instanceof Node) D.listenerAdded(t[ID]);
@@ -550,7 +562,11 @@
 		for (const type of eventTypes) {
 			Object.defineProperty(proto, "on" + type.toLowerCase(), {
 				get() { return this["_on" + type] || null; },
-				set(v) { this["_on" + type] = typeof v === "function" ? v : null; listenerAdded(this, type); },
+				set(v) {
+					const wired = wiredFor(this, type);
+					this["_on" + type] = typeof v === "function" ? v : null;
+					if (!wired) listenerAdded(this, type);
+				},
 				configurable: true,
 			});
 		}

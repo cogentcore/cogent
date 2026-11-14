@@ -1468,3 +1468,24 @@ func TestScriptsReleaseLock(t *testing.T) {
 		}))
 	})
 }
+
+// TestScriptsListenersAlreadyWired tests that click listeners added to the
+// document, or to elements in it, once it has one, do not render the page
+// again, as the widgets already handle clicks (the scripts of npr.org added
+// many, each of which read the page whole).
+func TestScriptsListenersAlreadyWired(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>document.addEventListener("click", () => {});</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		before := ps.renders + ps.rereads + ps.restyles
+		_, err := ps.engine.RunString(`document.addEventListener("click", () => {}); window.addEventListener("click", () => {});
+			document.getElementById("p").addEventListener("click", () => {}); document.getElementById("p").onclick = () => {};`)
+		require.NoError(t, err)
+		time.Sleep(300 * time.Millisecond)
+		settle(pg)
+		assert.Equal(t, before, ps.renders+ps.rereads+ps.restyles, "not rendered again")
+	})
+}
