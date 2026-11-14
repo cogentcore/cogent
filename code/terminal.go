@@ -9,9 +9,11 @@ import (
 	"image"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
@@ -295,4 +297,89 @@ func (cv *Code) tabsPanelKeys() bool {
 		return w.AsBase().IsReadOnly()
 	}
 	return true
+}
+
+// terminalFunctions are the key functions of Code that work in a
+// terminal (see [Code.terminalKeys]).
+var terminalFunctions = map[keymap.Functions]bool{
+	KeyNextPanel: true,
+	KeyPrevPanel: true,
+}
+
+// terminalKeys handles the keys of a focused terminal, which get all of
+// the keys, except for those of the [terminalFunctions] and the key for
+// a new terminal, as in Cogent Files. Their single chords always work,
+// and their key sequences (Control+X o) in the scrollback (the lines view
+// of the terminal), but not in a full-screen program on the alternate
+// screen, which gets all of the keys. The first chord of a sequence is
+// held only if it starts one of them, so that Control+C interrupts at
+// once, and goes on to the terminal before the next chord if that does
+// not complete one, so that the sequences of the shell, such as
+// Control+X Control+E, still work.
+func (cv *Code) terminalKeys(tm *terminal.Terminal, e events.Event, kc key.Chord, kf keymap.Functions) {
+	// the second chord of a sequence
+	if cv.KeySeq1 != "" {
+		seq := cv.KeySeq1
+		cv.KeySeq1 = ""
+		if kf2 := keymap.Of(seq + " " + kc); terminalFunctions[kf2] {
+			e.SetHandled()
+			cv.SetStatus(string(seq + " " + kc))
+			cv.terminalKeyFunction(kf2)
+			return
+		}
+		tm.SendText(chordText(seq)) // this key goes to the terminal after it
+		return
+	}
+
+	// single chords, and the start of a sequence
+	switch {
+	case terminalFunctions[kf]:
+		e.SetHandled()
+		cv.terminalKeyFunction(kf)
+	case terminal.KeyFunction(e) == keymap.New:
+		e.SetHandled()
+		cv.NewTerminal()
+	case tm.ActiveView() == tm.LinesView() && startsTerminalSequence(kc):
+		e.SetHandled()
+		cv.KeySeq1 = kc
+		cv.SetStatus(string(kc))
+	}
+}
+
+// terminalKeyFunction does the given one of the [terminalFunctions].
+func (cv *Code) terminalKeyFunction(kf keymap.Functions) {
+	switch kf {
+	case KeyNextPanel:
+		cv.FocusNextPanel()
+	case KeyPrevPanel:
+		cv.FocusPrevPanel()
+	}
+}
+
+// startsTerminalSequence returns whether the given chord is the first of
+// a key sequence of one of the [terminalFunctions] in the active key map.
+func startsTerminalSequence(kc key.Chord) bool {
+	prefix := string(kc) + " "
+	for ch, kf := range *keymap.ActiveMap {
+		if terminalFunctions[kf] && strings.HasPrefix(string(ch), prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// chordText returns the control character that the given Control+letter
+// chord sends to a terminal, or "" if it is not one.
+func chordText(kc key.Chord) string {
+	mods, k := key.ModifiersFromString(string(kc))
+	var ctrl key.Modifiers
+	ctrl.SetFlag(true, key.Control)
+	if mods != ctrl || len(k) != 1 {
+		return ""
+	}
+	r := unicode.ToUpper(rune(k[0]))
+	if r < 'A' || r > 'Z' {
+		return ""
+	}
+	return string(r - '@')
 }

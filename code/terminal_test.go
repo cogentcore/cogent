@@ -198,6 +198,21 @@ func TestCodeTerminal(t *testing.T) {
 	assert.Equal(t, TerminalTabName+" 3", cv.Terminals()[2].Name)
 	b.AsyncUnlock()
 
+	// the key sequences for the panels work in the scrollback of a
+	// terminal (at its prompt), as in Cogent Files
+	ctrlX := func(rn rune, code key.Codes) {
+		src.Key(events.KeyDown, 'x', key.CodeX, ctrl)
+		src.Key(events.KeyDown, rn, code, ctrl)
+	}
+	ctrlX('o', key.CodeO)
+	waitFor("Control+X Control+O from the terminal", func() bool {
+		return cv.CurPanel() != TabsIndex && cv.focusedTerminal() == nil
+	})
+	ctrlX('p', key.CodeP)
+	waitFor("Control+X Control+P back to the terminal", func() bool {
+		return cv.CurPanel() == TabsIndex && cv.focusedTerminal() == cv.Terminals()[2]
+	})
+
 	// the terminal commands are in the context menu
 	b.AsyncLock()
 	defer b.AsyncUnlock()

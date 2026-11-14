@@ -130,6 +130,12 @@ func TestCodePanelFocus(t *testing.T) {
 		chord('x', key.CodeX, ctrl)
 		chord('o', key.CodeO, 0)
 		expect("Control+X o", "editor 1", 1)
+		chord('x', key.CodeX, ctrl)
+		chord('p', key.CodeP, ctrl)
+		expect("Control+X Control+P", "editor 0", 0)
+		chord('x', key.CodeX, ctrl)
+		chord('o', key.CodeO, ctrl)
+		expect("Control+X Control+O", "editor 1", 1)
 
 		// with the preview tab shown
 		b.AsyncLock()
