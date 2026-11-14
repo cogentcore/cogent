@@ -1279,17 +1279,15 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 	}
 	defer func() { testReadHook = nil }()
 	b, pg := newScriptPage(t, map[string]string{
-		"/": `<html><body><p>page</p><script>
+		"/": `<html><head><style id="sheet">p { margin: 0 }</style></head><body><p>page</p><script>
 			setTimeout(() => {
 				for (let i = 0; i < 3; i++) {
 					const d = document.createElement("div");
 					d.textContent = "added " + i;
 					document.body.append(d);
-					// (a new style sheet, for which all of it is read again)
-					const l = document.createElement("link");
-					l.rel = "stylesheet";
-					l.href = "/none" + i + ".css";
-					document.head.append(l);
+					// (a style sheet changed other than by an addition to
+					// it, for which all of it is read again)
+					document.getElementById("sheet").textContent = "p { margin: " + i + "px }";
 					d.getBoundingClientRect();
 				}
 				window.done = true;
@@ -1623,5 +1621,26 @@ func TestScriptsIntersectionObserverScroll(t *testing.T) {
 			v, _ := ps.engine.RunString(`log.join()`)
 			return v == "false,true"
 		}), "intersecting when scrolled to")
+	})
+}
+
+// TestScriptsTitle tests that the title that the scripts of a page set is
+// that of the page, without reading the page again whole.
+func TestScriptsTitle(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><title>Old</title></head><body><p>page</p></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		renders := ps.renders
+		_, err := ps.engine.RunString(`document.title = "New title"`)
+		require.NoError(t, err)
+		assert.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			return pg.Title == "New title"
+		}), "the title of the page")
+		assert.Equal(t, renders, ps.renders, "not read whole")
 	})
 }

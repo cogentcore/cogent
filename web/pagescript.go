@@ -527,6 +527,11 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			ps.logFallback("reread", "reading the page whole")
 			return false
 		}
+		if t := ps.ctx.Title; t != pg.Title && pg.frame == nil {
+			// the title that the scripts set (see htmlcore.Context.Reread)
+			pg.Title = t
+			pg.opened(pg.currentURL())
+		}
 		if pg.media != nil && pg.media.ctx == ps.ctx {
 			// the width is checked again for the media queries of the
 			// rules that the changes may have added to the style sheets of

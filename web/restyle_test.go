@@ -99,7 +99,7 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 	var mu sync.Mutex
 	var sizes []float32 // of the font of the text, as each widget of it is first styled
 	b, pg := newScriptPageWith(t, map[string]string{
-		"/": `<html><body><div style="container-type: inline-size; width: 200px">` +
+		"/": `<html><head><style id="sheet">p { margin: 0 }</style></head><body><div style="container-type: inline-size; width: 200px">` +
 			`<div id="text" style="font-size: 10cqw">text</div></div><div id="other">other</div></body></html>`,
 	}, func(pg *Page) {
 		pg.Context.WidgetHandlers = append(pg.Context.WidgetHandlers, func(w core.Widget) {
@@ -120,9 +120,10 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 	b.RenderImage(func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
-		// (a new style sheet, for which all of it is read again)
-		_, err := ps.engine.RunString(`const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/none.css";
-			document.head.append(l); document.getElementById("other").textContent = "changed"`)
+		// (a style sheet changed other than by an addition to it, for
+		// which all of it is read again)
+		_, err := ps.engine.RunString(`document.getElementById("sheet").textContent = "p { margin: 1px }";
+			document.getElementById("other").textContent = "changed"`)
 		require.NoError(t, err)
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "changed") }), "the page is read again")
 		mu.Lock()
