@@ -1504,6 +1504,21 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	if Settings.BlockAds && !strings.Contains(ctx.Style, adStyles) {
 		ctx.Style += adStyles // (the slots of the ads that are blocked)
 	}
+	// the images of the noscripts of lazy images are set as they are
+	// gotten, with the lock of the page, once it is shown
+	ctx.AsyncImages = func(f func()) {
+		for range 300 {
+			if canceled() {
+				return
+			}
+			if pg.AsyncLockIfShown() {
+				defer pg.AsyncUnlock()
+				f()
+				return
+			}
+			time.Sleep(100 * time.Millisecond) // (not shown yet)
+		}
+	}
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
