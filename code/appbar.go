@@ -320,7 +320,7 @@ func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 		return
 	}
 	if cv.LangSvc().LSPActive(tv.Lines) {
-		sl := flattenSymbols(nestMethods(cv.LangSvc().lspB.PackageSymbols(tv.Lines)), "")
+		sl := flattenSymbols(nestMethods(cv.LangSvc().menuSymbols(tv.Lines)), "")
 		*items = append(*items, langSymItems(cv, sl)...)
 		return
 	}

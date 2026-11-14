@@ -78,6 +78,9 @@ type LangService struct {
 
 	hover hoverCache
 
+	// menuSyms has the package symbols for the menu search.
+	menuSyms symbolCache
+
 	// semanticTagged records which buffers currently carry semantic
 	// token highlighting tags.
 	semanticTagged map[string]bool
