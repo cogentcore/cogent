@@ -934,7 +934,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 		}
 		e.Dispatch(n, "click", ps.pointerProps(ev), func(prevented bool) {
 			if !prevented {
-				ps.followLink(href, ev)
+				ps.onPage(func() { ps.followLink(href, ev) })
 			}
 		})
 	})
@@ -1095,30 +1095,60 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 			ps.engine.Eval(strings.TrimSpace(url)[len("javascript:"):])
 			return
 		}
-		by := "a link of " + pg.currentURL() + " (" + htmlcore.GetAttr(link, "href") + ")"
-		// in the page of its target (as _top, of the links of the account
-		// menu of Google in a frame)
-		if t := htmlcore.GetAttr(link, "target"); t != "" {
-			if u, err := htmlcore.ParseRelativeURL(url, pg.currentURL()); err == nil {
-				url = u.String()
-			}
-			tp := pg.targetPage(t)
-			if tp == nil {
-				if top := pg.topPage(); top.OpenNewTab != nil {
-					top.OpenNewTab(url)
-					return
-				}
-				tp = pg.topPage()
-			}
-			if tp != pg {
-				tp.openedBy = by
-				tp.OpenURL(url, nil)
+		// (the attributes in the task, which the scripts may change)
+		href, target := htmlcore.GetAttr(link, "href"), htmlcore.GetAttr(link, "target")
+		ps.onPage(func() { ps.openLinkURL(url, href, target, ev) })
+	})
+}
+
+// openLinkURL opens the given URL of a link with the given href and target
+// attributes (see [pageScripts.openLink]), in the page of its target, with
+// the lock of the page held.
+func (ps *pageScripts) openLinkURL(url, href, target string, ev events.Event) {
+	pg := ps.pg
+	by := "a link of " + pg.currentURL() + " (" + href + ")"
+	// in the page of its target (as _top, of the links of the account
+	// menu of Google in a frame)
+	if target != "" {
+		if u, err := htmlcore.ParseRelativeURL(url, pg.currentURL()); err == nil {
+			url = u.String()
+		}
+		tp := pg.targetPage(target)
+		if tp == nil {
+			if top := pg.topPage(); top.OpenNewTab != nil {
+				top.OpenNewTab(url)
 				return
 			}
+			tp = pg.topPage()
 		}
-		pg.openedBy = by
-		pg.OpenURL(url, ev)
-	})
+		if tp != pg {
+			tp.openedBy = by
+			tp.OpenURL(url, nil)
+			return
+		}
+	}
+	pg.openedBy = by
+	pg.OpenURL(url, ev)
+}
+
+// onPage runs the given function of the page (as opening a page) after
+// the task of the scripts that calls it, in another goroutine, with the
+// lock of the page held, unless the page is gone or shows other scripts:
+// as for the default actions of the clicks that the scripts get, which
+// opened pages in the tasks, without the lock (a data race of the
+// widgets of the page, as their sizes for the media of the new page).
+func (ps *pageScripts) onPage(f func()) {
+	go func() {
+		pg := ps.pg
+		if !pg.AsyncLockIfShown() {
+			return
+		}
+		defer pg.AsyncUnlock()
+		if pg.scripts != ps {
+			return
+		}
+		f()
+	}()
 }
 
 // anchorFor returns the first a element of the document whose href is the
