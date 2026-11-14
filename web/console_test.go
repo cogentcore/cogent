@@ -112,7 +112,9 @@ func TestConsoleVerbose(t *testing.T) {
 				return
 			}
 			assert.True(t, ok, all)
-			assert.Contains(t, all, "DEBUG: page https://example.com/: 1 scripts", "the page, as the first message")
+			assert.Regexp(t, `DEBUG: \+\d+\.\d{3}s page https://example.com/: 1 scripts`, all, "the page, as the first message, with the time since it started opening")
+			assert.Contains(t, all, "first read of the page took")
+			assert.Contains(t, all, "first render of the page")
 			assert.Contains(t, all, "GET https://example.com/data.json (0 bytes): 200, 8 bytes")
 			assert.Contains(t, all, "missing: navigator.notInBrowsers")
 			assert.Contains(t, all, "missing: window.notDefinedAnywhere")
@@ -150,7 +152,7 @@ func TestConsolePanelVerbose(t *testing.T) {
 		b.AsyncLock()
 		br.ShowConsole(true)
 		b.AsyncUnlock()
-		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "DEBUG: GET https://example.com/data.txt") }), consoleTexts(b, br))
+		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "s GET https://example.com/data.txt") }), consoleTexts(b, br))
 	})
 }
 

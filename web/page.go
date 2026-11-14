@@ -447,6 +447,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			url = u.String()
 		}
 	}
+	start := time.Now() // of the navigation, for the verbose console
 	gen := pg.load.Add(1)
 	canceled := func() bool { return pg.load.Load() != gen }
 	openedBy := pg.openedBy // (for its console)
@@ -495,7 +496,8 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 			resp.Body.Close()
 			if err == nil && scripts {
 				// the page is shown by its scripts once they have run
-				if pg.openScripts(ctx, page, final, mode, index, cache, canceled, openedBy) {
+				lt := loadTimes{start: start, gotten: time.Since(start), size: len(page)}
+				if pg.openScripts(ctx, page, final, mode, index, cache, canceled, openedBy, lt) {
 					return
 				}
 			}

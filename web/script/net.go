@@ -448,6 +448,9 @@ func normalizeURL(pu *neturl.URL) {
 	pu.Host = host
 }
 
+// LogURL returns the given URL shortened for logs (see [logURL]).
+func LogURL(u string) string { return logURL(u) }
+
 // logURL returns the given URL shortened for logs: data URLs without
 // their data, and long URLs without their middle.
 func logURL(u string) string {
@@ -715,7 +718,12 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 	}
 	prev := e.current // (of a script that inserted this one, run in it)
 	e.current = s
+	start := time.Now()
 	e.run(name, code)
+	if d := time.Since(start); hasSrc || d >= 10*time.Millisecond {
+		// (the time of running it, for the verbose console)
+		e.tracef("ran %s in %v", logURL(name), d.Round(time.Millisecond))
+	}
 	e.current = prev
 	if hasSrc {
 		e.callPrelude("fireEvent", e.nodes.id(s), "load")
@@ -729,6 +737,7 @@ func (e *Engine) getScript(u string) (string, error) {
 	}
 	var resp *http.Response
 	var err error
+	start := time.Now()
 	if strings.HasPrefix(u, "blob:") {
 		resp, err = e.blobResponse(u)
 	} else if e.opts.GetURL == nil {
@@ -747,7 +756,7 @@ func (e *Engine) getScript(u string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	e.tracef("script %s: %d bytes", logURL(u), len(b))
+	e.tracef("got %s: %d bytes in %v", logURL(u), len(b), time.Since(start).Round(time.Millisecond))
 	return string(b), nil
 }
 

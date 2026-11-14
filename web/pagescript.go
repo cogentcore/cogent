@@ -116,12 +116,24 @@ type pageScripts struct {
 
 	consoleMu sync.Mutex
 	console   []string
+
+	// start is when the page started opening, which the messages of a
+	// verbose console are timed from.
+	start time.Time
+}
+
+// loadTimes are the times of the opening of a page, for the verbose
+// console: when it started, how long getting the page took, and its size.
+type loadTimes struct {
+	start  time.Time
+	gotten time.Duration
+	size   int
 }
 
 // newPageScripts returns the scripts of the given parsed document of the
 // page, which was gotten with the given context, for the given final URL.
-func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, openedBy string) (*pageScripts, error) {
-	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight}
+func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, openedBy string, start time.Time) (*pageScripts, error) {
+	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight, start: start}
 	e, err := script.New(doc, script.Options{
 		PageURL:       final,
 		GetURL:        ctx.GetURL,
@@ -181,6 +193,10 @@ func (ps *pageScripts) log(level slog.Level, msg string) {
 	defer ps.consoleMu.Unlock()
 	if len(ps.console) >= maxConsole {
 		ps.console = ps.console[1:]
+	}
+	if Settings.VerboseConsole && !ps.start.IsZero() {
+		// the time since the page started opening
+		msg = fmt.Sprintf("+%.3fs %s", time.Since(ps.start).Seconds(), msg)
 	}
 	ps.console = append(ps.console, level.String()+": "+msg)
 	go ps.pg.consoleChanged() // (not with consoleMu)
@@ -1412,7 +1428,7 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 // load), and then runs its scripts, after which (and as they change it)
 // it is rendered again, with the given change to the history. It returns
 // false if its scripts cannot be run, for the page to be read without them.
-func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string) bool {
+func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string, lt loadTimes) bool {
 	ctx.Scripting = true
 	// (as the photos of the front page of nytimes.com, which are read
 	// again with the page as its scripts change it)
@@ -1422,13 +1438,35 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		ctx.Scripting = false
 		return false
 	}
-	ps, err := pg.newPageScripts(ctx, doc, final, openedBy)
+	parsed := time.Since(lt.start)
+	ps, err := pg.newPageScripts(ctx, doc, final, openedBy, lt.start)
 	if err != nil {
 		slog.Error("web: running the scripts of the page", "url", final, "err", err)
 		ctx.Scripting = false
 		return false
 	}
+	if Settings.VerboseConsole {
+		ps.log(slog.LevelDebug, fmt.Sprintf("page gotten in %v (%d bytes), parsed at +%.3fs", lt.gotten.Round(time.Millisecond), lt.size, parsed.Seconds()))
+	}
+	trace := func(u string, status, size int, d time.Duration, typ string, err error) {
+		if !Settings.VerboseConsole || strings.Contains(typ, "javascript") || strings.Contains(typ, "ecmascript") {
+			return // (scripts are in the console as they are run)
+		}
+		if err != nil {
+			ps.log(slog.LevelDebug, fmt.Sprintf("GET %s: %v, %v", script.LogURL(u), err, d.Round(time.Millisecond)))
+			return
+		}
+		if typ != "" {
+			typ = ", " + typ
+		}
+		ps.log(slog.LevelDebug, fmt.Sprintf("GET %s: %d, %d bytes%s, %v", script.LogURL(u), status, size, typ, d.Round(time.Millisecond)))
+	}
+	cache.trace.Store(&trace)
+	readStart := time.Now()
 	content, err := ps.read() // no script has run yet
+	if Settings.VerboseConsole {
+		ps.log(slog.LevelDebug, fmt.Sprintf("first read of the page took %v (with the style sheets and images that it got)", time.Since(readStart).Round(time.Millisecond)))
+	}
 	if canceled() {
 		ps.engine.Close()
 		return true
@@ -1462,6 +1500,10 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	pg.setMedia(&pageMedia{ctx: ps.ctx, html: page, url: final, cache: cache})
 	pg.showScripts(ps)
 	pg.setContent(content)
+	if Settings.VerboseConsole {
+		// once it has been laid out and rendered
+		content.Defer(func() { ps.log(slog.LevelDebug, "first render of the page") })
+	}
 	if u, err := neturl.Parse(final); err == nil && u.Fragment != "" {
 		pg.Defer(func() { pg.scrollToFragment(u.Fragment) })
 	} else if mode == historyNew {
