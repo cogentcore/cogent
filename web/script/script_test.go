@@ -1586,3 +1586,36 @@ func TestTraceHold(t *testing.T) {
 		return strings.Contains(strings.Join(*logs, "\n"), "the page was held for 2s from rect, 1.5s of it in calls")
 	}, time.Second, 10*time.Millisecond, "%v", *logs)
 }
+
+// TestStructuredClone tests that structuredClone clones maps, sets, dates,
+// typed arrays, and cycles (Amazon's ad script on nytimes.com cloned a
+// map, which became an object without forEach), and throws for functions.
+func TestStructuredClone(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true k:v 2 true 3 true true true", run(t, e, `
+		const a = { m: new Map([["k", "v"]]), s: new Set([1, 2]), d: new Date(5), b: new Uint8Array([1, 2, 3]) };
+		a.self = a;
+		const c = structuredClone(a);
+		let kv = ""; c.m.forEach((v, k) => kv += k + ":" + v);
+		[c.m instanceof Map, kv, c.s.size, c.d instanceof Date && c.d.getTime() === 5, c.b[2], c.self === c, c !== a,
+			(() => { try { structuredClone(() => 1); return false; } catch (err) { return err.name === "DataCloneError"; } })()].join(" ")`))
+}
+
+func TestProxyTrapArgs(t *testing.T) {
+	// the arrays of arguments that traps keep are not overwritten by later
+	// calls (as fun-hooks keeps them, in nytimes.com's ad scripts)
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, `[[[1]],[[2]]] 3 true`, run(t, e, `
+		const kept = [];
+		function f(a) { return a + 1; }
+		const h = {};
+		const p = new Proxy(f, h);
+		h.apply = function (t, self, args) { kept.push(args); };
+		h.construct = function (t, args) { kept.push(args); return {}; };
+		p([1]);
+		((a, b, c) => a)(function () {}, 2, 3);
+		new p([2]);
+		((a, b, c) => a)(function () {}, 2, 3);
+		delete h.apply;
+		JSON.stringify(kept) + " " + p(2) + " " + (new Proxy({}, {}) instanceof Object)`))
+}

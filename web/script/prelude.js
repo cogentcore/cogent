@@ -40,6 +40,35 @@
 		};
 	}
 
+	// Proxy, whose apply and construct traps get copies of the arrays of
+	// arguments that the engine gives them: those are on the stack of the
+	// engine, so a trap that keeps one sees it overwritten by later calls
+	// (fun-hooks, in the ad scripts of media.net on nytimes.com, queues the
+	// calls of its hooks until it is ready, which then got functions for
+	// their arguments; fixed in goja branch fix-proxy-args). Only the
+	// handlers of functions are wrapped (no other target is called), with a
+	// proxy, as traps can be set after a proxy is made (as fun-hooks does).
+	{
+		const NativeProxy = g.Proxy;
+		const slice = Array.prototype.slice;
+		const handlerTraps = {
+			get(h, k, r) {
+				const v = Reflect.get(h, k, r);
+				if (typeof v !== "function") return v;
+				if (k === "apply") return function (t, self, args) { return v.call(this, t, self, slice.call(args)); };
+				if (k === "construct") return function (t, args, nt) { return v.call(this, t, slice.call(args), nt); };
+				return v;
+			},
+		};
+		const handlerOf = (t, h) => typeof t === "function" && h !== null && typeof h === "object" ? new NativeProxy(h, handlerTraps) : h;
+		const Proxy = function Proxy(t, h) {
+			if (new.target === undefined) throw new TypeError("Constructor Proxy requires 'new'");
+			return new NativeProxy(t, handlerOf(t, h));
+		};
+		Proxy.revocable = function revocable(t, h) { return NativeProxy.revocable(t, handlerOf(t, h)); };
+		Object.defineProperty(g, "Proxy", { value: Proxy, writable: true, configurable: true });
+	}
+
 	// ---- wrapping nodes ----
 
 	const wrappers = new Map(); // id -> object
@@ -3929,7 +3958,10 @@
 		requestIdleCallback(fn) { return setTimer(() => fn({ didTimeout: false, timeRemaining: () => 10 }), 1, [], false); },
 		cancelIdleCallback: clearTimer,
 		queueMicrotask(fn) { promiseThen.call(resolvedPromise, () => { try { fn(); } catch (e) { reportError(e); } }); },
-		structuredClone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); },
+		// (with its maps, sets, dates, typed arrays, and cycles, as for
+		// messages: Amazon's ad script on nytimes.com cloned a map, which
+		// became an object without forEach)
+		structuredClone(v) { return cloneDecode(JSON.parse(cloneJSON(v))); },
 		reportError,
 		atob(s) { return D.atob(String(s)); },
 		btoa(s) { return D.btoa(String(s)); },
