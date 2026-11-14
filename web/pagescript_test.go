@@ -20,6 +20,7 @@ import (
 
 	"cogentcore.org/core/styles/units"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
@@ -1642,5 +1643,56 @@ func TestScriptsTitle(t *testing.T) {
 			return pg.Title == "New title"
 		}), "the title of the page")
 		assert.Equal(t, renders, ps.renders, "not read whole")
+	})
+}
+
+// TestScriptsShadowDOM tests that the content of the shadow root of an
+// element is rendered in its place (as the votes of the posts of reddit.com,
+// in their shadow roots), with the children assigned to its slots in them,
+// that the style sheets of the shadow tree apply only to it (with :host for
+// the host and ::slotted() for the children in its slots), and that those
+// of the page do not apply to it.
+func TestScriptsShadowDOM(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><head><style>p { color: rgb(0, 0, 255) } b { color: rgb(0, 128, 0) }</style></head><body>
+			<p id="page">page</p>
+			<x-post id="post"><span slot="title">Title</span><div id="body">Body</div><i slot="nowhere">hidden</i></x-post>
+			<script>
+			const r = document.getElementById("post").attachShadow({ mode: "open" });
+			r.innerHTML = '<style>:host { display: block; padding: 7px } p { color: rgb(255, 0, 0) } ::slotted(div) { color: rgb(255, 0, 255) }</style>' +
+				'<p>Votes</p><slot name="title"></slot><div><slot></slot></div><p>Share</p>';
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		texts := pageTexts(b, pg)
+		assert.Regexp(t, `page.*Votes.*Title.*Body.*Share`, texts, "the shadow content, with the children in its slots")
+		assert.NotContains(t, texts, "hidden", "in no slot")
+		color := func(text string) string {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			c := ""
+			pg.WalkDown(func(n tree.Node) bool {
+				if tx, ok := n.(*core.Text); ok && strings.Contains(tx.Text, text) && c == "" {
+					c = colors.AsHex(colors.ToUniform(tx.Styles.Color))
+				}
+				return tree.Continue
+			})
+			return c
+		}
+		assert.Equal(t, "#0000FF", color("page"), "the rules of the shadow tree do not apply to the page")
+		assert.Equal(t, "#FF0000", color("Votes"), "nor those of the page to the shadow tree")
+		assert.Equal(t, "#FF00FF", color("Body"), "::slotted()")
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var host *core.WidgetBase
+		pg.WalkDown(func(n tree.Node) bool {
+			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "post" {
+				host = wb
+			}
+			return tree.Continue
+		})
+		if assert.NotNil(t, host) {
+			assert.InDelta(t, 7*pg.pxDots(), host.Styles.Padding.Top.Dots, 0.5, ":host")
+		}
 	})
 }

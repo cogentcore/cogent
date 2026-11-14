@@ -205,6 +205,11 @@ type Engine struct {
 	// if the page has not been rendered since (see [Engine.TakeFocus]).
 	focusRequest *html.Node
 
+	// composing is whether the nodes of the document are linked as its
+	// composed tree (see Engine.compose), and composed is the state of it.
+	composing bool
+	composed  composition
+
 	// scrollPending is whether a task of Scrolled has not run yet.
 	scrollPending atomic.Bool
 
@@ -773,6 +778,7 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 	if !e.needsRender() || e.opts.Render == nil || e.loading {
 		return
 	}
+	defer e.compose()() // (the page is read as its composed tree)
 	start := time.Now()
 	// the time of rendering is not that of the scripts of the task
 	if e.taskTimer != nil && e.taskTimer.Stop() {

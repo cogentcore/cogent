@@ -223,6 +223,10 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.Hovered = func(n *html.Node) bool { return ps.hoverSet[n] }
 	// the children of shadow hosts that are in no slot are not rendered
 	ctx.Unrendered = ps.engine.Unassigned
+	// the page is read as its composed tree, with the content of the shadow
+	// roots of elements in their place, whose style sheets apply to them
+	ctx.ShadowScope = ps.engine.ShadowScope
+	ctx.ComposedParent = ps.engine.ComposedParent
 	// details are toggled in the document, which is read again
 	ctx.ToggleDetails = func(n *html.Node) bool {
 		if ps.engine.Closed() { // in place, as the scripts were stopped

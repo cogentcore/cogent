@@ -1135,8 +1135,8 @@ func (e *Engine) Unassigned(n *html.Node) bool {
 // slots of the shadow roots that it is in (see [Engine.Unassigned]), at
 // the given depth of slots in slots.
 func (e *Engine) unassigned(n *html.Node, depth int) bool {
-	if n == nil || n.Type != html.ElementNode || n.Parent == nil || depth > 16 {
-		return false
+	if e.composing || n == nil || n.Type != html.ElementNode || n.Parent == nil || depth > 16 {
+		return false // (in the composed tree, they are in their slots, or in none)
 	}
 	root := e.shadowRoots[n.Parent]
 	if root == nil {
