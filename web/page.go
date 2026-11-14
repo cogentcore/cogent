@@ -178,6 +178,17 @@ const mediaDelay = 250 * time.Millisecond
 
 var _ tree.Node = (*Page)(nil)
 
+// ScrollChanged scrolls the page as the frame does, and tells its scripts
+// (see script.Engine.Scrolled), whose scroll handlers and
+// IntersectionObservers check what is shown (as the feeds of reddit.com,
+// which load more as their ends are shown).
+func (pg *Page) ScrollChanged(d math32.Dims, sb *core.Slider) {
+	pg.Frame.ScrollChanged(d, sb)
+	if ps := pg.scripts; ps != nil && ps.engine != nil {
+		ps.engine.Scrolled()
+	}
+}
+
 func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlcore.NewContext()

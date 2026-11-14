@@ -3250,35 +3250,122 @@
 			}
 		}
 	}
-	// IntersectionObserver reports the targets that are observed as
-	// intersecting, all of those observed at once in one call of its
-	// callback, with their boxes as of the last render (as browsers do as
-	// they render), not rendering the page for each: the lazy images of
-	// nytimes.com, each of whose callbacks changed the page, rendered it
-	// for the box of the next (1s each, for 80s).
+	// IntersectionObserver reports whether its targets intersect its root
+	// (the viewport, or an element), with its rootMargin, and how much, with
+	// their boxes as of the last render (as browsers do as they render),
+	// not rendering the page for each (the lazy images of nytimes.com, each
+	// of whose callbacks changed the page, rendered it for the box of the
+	// next, 1s each, for 80s): all of them when they are observed, and then
+	// those whose state changes (by their thresholds), as the page scrolls
+	// (see scrolled) or changes, checked by a timer shared by all of them
+	// while any targets are observed. (Reporting them all as intersecting
+	// loaded all of the pages of the feeds of reddit.com that load as
+	// their ends are shown, and its check of IntersectionObserverEntry
+	// replaced them with a polyfill without it.)
+	class IntersectionObserverEntry {
+		constructor(i) { this._i = i; }
+		get target() { return this._i.target; }
+		get isIntersecting() { return this._i.isIntersecting; }
+		get intersectionRatio() { return this._i.intersectionRatio; }
+		get boundingClientRect() { return this._i.boundingClientRect; }
+		get intersectionRect() { return this._i.intersectionRect; }
+		get rootBounds() { return this._i.rootBounds; }
+		get time() { return this._i.time; }
+	}
+	const intersectionObservers = new Set();
+	let intersectionTimer = 0;
+	const checkIntersections = () => {
+		intersectionTimer = 0;
+		for (const io of intersectionObservers) io._check();
+		if (intersectionObservers.size > 0) intersectionTimer = setTimer(checkIntersections, 200, [], false);
+	};
+	// rootMarginPx returns the top, right, bottom and left of the given
+	// rootMargin in px, with percentages of the given width and height.
+	function rootMarginPx(m, w, h) {
+		const fs = String(m || "0px").trim().split(/\s+/);
+		const v = (f, of) => f.endsWith("%") ? parseFloat(f) * of / 100 : (parseFloat(f) || 0);
+		const [t, r = t, b = t, l = r] = fs;
+		return [v(t, h), v(r, w), v(b, h), v(l, w)];
+	}
 	class IntersectionObserver {
-		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; this._pending = []; this._scheduled = false; }
+		constructor(cb, opts) {
+			this._cb = cb;
+			this.root = (opts && opts.root) || null;
+			this.rootMargin = (opts && opts.rootMargin) || "0px";
+			const th = opts && opts.threshold;
+			this.thresholds = (th === undefined ? [0] : Array.isArray(th) ? th : [th]).map(Number).sort((a, b) => a - b);
+			this._targets = [];
+			this._state = new Map(); // target -> the index of its last threshold, or -2 if not intersecting
+			this._scheduled = false;
+		}
 		observe(t) {
 			if (this._targets.indexOf(t) < 0) this._targets.push(t);
-			this._pending.push(t);
+			this._state.delete(t);
+			intersectionObservers.add(this);
+			if (!intersectionTimer) intersectionTimer = setTimer(checkIntersections, 200, [], false);
 			if (this._scheduled) return;
 			this._scheduled = true;
-			setTimer(() => {
-				this._scheduled = false;
-				const ts = this._pending.filter((x, i, a) => this._targets.indexOf(x) >= 0 && a.indexOf(x) === i);
-				this._pending = [];
-				if (ts.length === 0) return;
-				const time = performance.now();
-				this._cb(ts.map(t => {
-					const b = t instanceof Node ? D.rectNow(t[ID]) : null;
-					const r = b ? new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]) : new DOMRect(0, 0, 0, 0);
-					return { target: t, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time };
-				}), this);
-			}, 0, [], false);
+			setTimer(() => { this._scheduled = false; this._check(); }, 0, [], false);
 		}
-		unobserve(t) { this._targets = this._targets.filter(x => x !== t); }
-		disconnect() { this._targets = []; this._pending = []; }
+		unobserve(t) {
+			this._targets = this._targets.filter(x => x !== t);
+			this._state.delete(t);
+			if (this._targets.length === 0) intersectionObservers.delete(this);
+		}
+		disconnect() { this._targets = []; this._state.clear(); intersectionObservers.delete(this); }
 		takeRecords() { return []; }
+		// _rootBounds returns the box of the root with its margin, in the
+		// coordinates of the viewport, or null if it has none yet.
+		_rootBounds() {
+			let x = 0, y = 0, w = innerWidth, h = innerHeight;
+			if (this.root instanceof Element) {
+				const b = D.rectNow(this.root[ID]);
+				if (!b) return null;
+				[x, y, w, h] = [b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]];
+			}
+			const m = rootMarginPx(this.rootMargin, w, h);
+			return new DOMRect(x - m[3], y - m[0], w + m[1] + m[3], h + m[0] + m[2]);
+		}
+		// _check reports the targets whose intersection changed since they
+		// were last reported (and those not yet reported).
+		_check() {
+			if (this._targets.length === 0) return;
+			const root = this._rootBounds();
+			if (!root) return;
+			const time = performance.now(), entries = [];
+			for (const t of this._targets) {
+				// (one without a box, as one that is not displayed, does not intersect)
+				const b = t instanceof Node && t.isConnected ? D.rectNow(t[ID]) : null;
+				const r = b ? new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]) : new DOMRect(0, 0, 0, 0);
+				let inter = new DOMRect(0, 0, 0, 0), ratio = 0, isect = false;
+				if (b) {
+					const l = Math.max(r.left, root.left), tp = Math.max(r.top, root.top);
+					const rt = Math.min(r.right, root.right), bt = Math.min(r.bottom, root.bottom);
+					isect = rt >= l && bt >= tp;
+					if (isect) {
+						inter = new DOMRect(l, tp, rt - l, bt - tp);
+						const area = r.width * r.height;
+						ratio = area > 0 ? (inter.width * inter.height) / area : 1;
+					}
+				}
+				let key = -2;
+				if (isect) {
+					key = -1;
+					for (let i = 0; i < this.thresholds.length; i++) if (ratio >= this.thresholds[i]) key = i;
+				}
+				if (this._state.get(t) === key) continue;
+				this._state.set(t, key);
+				entries.push(new IntersectionObserverEntry({ target: t, isIntersecting: isect, intersectionRatio: ratio,
+					boundingClientRect: r, intersectionRect: inter, rootBounds: root, time }));
+			}
+			if (entries.length) this._cb(entries, this);
+		}
+	}
+	// scrolled is called as the page scrolls: its scroll event, and the
+	// intersections of the observed targets with their new boxes.
+	function scrolled() {
+		document.dispatchEvent(new Event("scroll", { bubbles: true }));
+		for (const io of intersectionObservers) io._check();
 	}
 	// ResizeObserver reports the size of each target when it is observed,
 	// and then when it changes, which a timer shared by all of them checks
@@ -4032,7 +4119,7 @@
 		DOMTokenList, CSSStyleDeclaration, DOMRect, DOMRectReadOnly: DOMRect, Location, MediaQueryList,
 		URL, URLSearchParams, Headers, Request, Response, XMLHttpRequest, Blob, File, FileReader, FormData,
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
-		MutationObserver, MutationRecord, IntersectionObserver, ResizeObserver, PerformanceObserver,
+		MutationObserver, MutationRecord, IntersectionObserver, IntersectionObserverEntry, ResizeObserver, PerformanceObserver,
 		fetch,
 		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,
@@ -4334,6 +4421,10 @@
 	D.resized = function () {
 		g.dispatchEvent(new Event("resize"));
 	};
+
+	// scrolled dispatches the scroll event of the page, and checks the
+	// intersections of the targets of the IntersectionObservers.
+	D.scrolled = scrolled;
 
 	// message dispatches a message posted to this window (as JSON) from
 	// the given origin and window (see frames.go).

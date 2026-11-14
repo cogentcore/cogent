@@ -1586,3 +1586,42 @@ func TestScriptsIntersectionObserverBatch(t *testing.T) {
 		assert.Contains(t, pageTexts(b, pg), "seen")
 	})
 }
+
+// TestScriptsIntersectionObserverScroll tests that an IntersectionObserver
+// reports a target below the viewport as not intersecting, and then as
+// intersecting when the page is scrolled to it (as the ends of the feeds of
+// reddit.com, which load more posts as they are shown), with entries that
+// are IntersectionObserverEntry, which reddit.com checks for.
+func TestScriptsIntersectionObserverScroll(t *testing.T) {
+	b, pg := newScriptPageWith(t, map[string]string{
+		"/": `<html><body><div style="height: 3000px">feed</div><div id="end" style="height: 20px">end</div><script>
+			window.log = [];
+			window.feature = "IntersectionObserverEntry" in window && "intersectionRatio" in IntersectionObserverEntry.prototype;
+			new IntersectionObserver(es => {
+				for (const e of es) log.push(e.isIntersecting && e instanceof IntersectionObserverEntry);
+			}).observe(document.getElementById("end"));
+			</script></body></html>`,
+	}, func(pg *Page) { // (the viewport, which the page scrolls in)
+		pg.Styler(func(s *styles.Style) {
+			s.Max.Y.Dp(600)
+			s.Overflow.Set(styles.OverflowAuto)
+		})
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`log.join()`)
+			return v == "false"
+		}), "not intersecting below the viewport")
+		v, _ := ps.engine.RunString(`feature`)
+		assert.Equal(t, true, v)
+		pg.AsyncLock()
+		pg.Geom.Scroll.SetDim(math32.Y, -2900*pg.pxDots())
+		pg.ScrollUpdateFromGeom(math32.Y)
+		pg.AsyncUnlock()
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`log.join()`)
+			return v == "false,true"
+		}), "intersecting when scrolled to")
+	})
+}

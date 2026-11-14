@@ -205,6 +205,9 @@ type Engine struct {
 	// if the page has not been rendered since (see [Engine.TakeFocus]).
 	focusRequest *html.Node
 
+	// scrollPending is whether a task of Scrolled has not run yet.
+	scrollPending atomic.Bool
+
 	// shadowRoots has the shadow roots (fragments) of the elements that
 	// scripts have attached them to, for [Engine.Unassigned].
 	shadowRoots map[*html.Node]*html.Node
@@ -1170,6 +1173,20 @@ func (e *Engine) Rerender() {
 // viewport has another size.
 func (e *Engine) Resized() {
 	e.Post(func() { e.callPrelude("resized") })
+}
+
+// Scrolled fires the scroll event of the page in a task, and checks the
+// intersections of the targets of its IntersectionObservers, as when the
+// user scrolls it (as the feeds of reddit.com load more as their ends are
+// shown). The scrolls before the task runs have one task.
+func (e *Engine) Scrolled() {
+	if e.scrollPending.Swap(true) {
+		return
+	}
+	e.Post(func() {
+		e.scrollPending.Store(false)
+		e.callPrelude("scrolled")
+	})
 }
 
 // Eval runs the given JavaScript in a task (as for a javascript: URL).
