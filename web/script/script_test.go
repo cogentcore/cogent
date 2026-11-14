@@ -1710,3 +1710,36 @@ func TestSlotAssignment(t *testing.T) {
 			a.querySelector("b").assignedSlot === s,
 			none.assignedNodes({ flatten: true }).map(n => n.nodeName).join(","), none.assignedNodes().length].join("|")`))
 }
+
+// TestNestedSlotsUnassigned tests that a child of a shadow host in a slot
+// that is itself in a hidden slot of the shadow root of another element
+// (as the labels of the tooltips of reddit.com) is not rendered, and is
+// where that slot is shown.
+func TestNestedSlotsUnassigned(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><x-dropdown id="d"><span id="label" slot="tooltip-content">Open sort options</span><b id="anchor">Best</b></x-dropdown></body></html>`, nil)
+	run(t, e, `
+		const d = document.getElementById("d").attachShadow({ mode: "open" });
+		d.innerHTML = '<x-tooltip id="tt"><slot></slot><slot slot="content" name="tooltip-content"></slot></x-tooltip>';
+		d.getElementById("tt").attachShadow({ mode: "open" }).innerHTML = '<x-popper><slot slot="anchor"></slot><div role="tooltip" hidden><slot name="content"></slot></div></x-popper>';`)
+	states := func() [2]bool {
+		ch := make(chan [2]bool, 1)
+		e.Post(func() {
+			var label, anchor *html.Node
+			for n := range e.Document().Descendants() {
+				for _, a := range n.Attr {
+					if a.Key == "id" && a.Val == "label" {
+						label = n
+					}
+					if a.Key == "id" && a.Val == "anchor" {
+						anchor = n
+					}
+				}
+			}
+			ch <- [2]bool{e.Unassigned(label), e.Unassigned(anchor)}
+		})
+		return <-ch
+	}
+	assert.Equal(t, [2]bool{true, false}, states(), "the label is in the hidden body of the tooltip")
+	run(t, e, `document.getElementById("d").shadowRoot.getElementById("tt").shadowRoot.querySelector("[role=tooltip]").hidden = false;`)
+	assert.Equal(t, [2]bool{false, false}, states(), "shown")
+}
