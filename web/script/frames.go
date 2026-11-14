@@ -216,7 +216,10 @@ func (e *Engine) FrameLoaded(n *html.Node) {
 func (e *Engine) defineFrames() {
 	vm := e.vm
 	d := e.jsDOM
-	d.Set("windowRel", func(call goja.FunctionCall) goja.Value {
+	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
+		d.Set(name, e.native(f)) // (see Engine.lockTask)
+	}
+	set("windowRel", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
 		if w == nil {
 			return vm.ToValue(-1)
@@ -232,7 +235,7 @@ func (e *Engine) defineFrames() {
 		}
 		return vm.ToValue(-1)
 	})
-	d.Set("frameWindow", func(call goja.FunctionCall) goja.Value {
+	set("frameWindow", func(call goja.FunctionCall) goja.Value {
 		n := e.nodes.node(int(call.Argument(0).ToInteger()))
 		if n == nil || e.opts.FrameOf == nil || !e.lockTask() {
 			return vm.ToValue(-1)
@@ -244,7 +247,7 @@ func (e *Engine) defineFrames() {
 	// iframe) or index, as window[name] and window.frames[name] (as
 	// reCAPTCHA gets the window of its checkbox from that of its
 	// challenge, by parent.frames[name]), or -1 for none.
-	d.Set("windowFrame", func(call goja.FunctionCall) goja.Value {
+	set("windowFrame", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
 		if w == nil || w.opts.FrameOf == nil || !e.lockTask() { // (for the document of the other window)
 			return vm.ToValue(-1)
@@ -276,7 +279,7 @@ func (e *Engine) defineFrames() {
 	// frameName returns the name of the iframe of the frame of this
 	// window, which is its window.name (as reCAPTCHA gets the name of the
 	// frame of its checkbox from that of its challenge), or "".
-	d.Set("frameName", func(call goja.FunctionCall) goja.Value {
+	set("frameName", func(call goja.FunctionCall) goja.Value {
 		if !e.lockTask() { // (for the documents of other windows)
 			return vm.ToValue("")
 		}
@@ -296,7 +299,7 @@ func (e *Engine) defineFrames() {
 	})
 	// windowFrameNames returns the names of the frames of the given
 	// window, for the console.
-	d.Set("windowFrameNames", func(call goja.FunctionCall) goja.Value {
+	set("windowFrameNames", func(call goja.FunctionCall) goja.Value {
 		if !e.lockTask() { // (for the documents of other windows)
 			return vm.ToValue("")
 		}
@@ -313,7 +316,7 @@ func (e *Engine) defineFrames() {
 	})
 	// windowLength returns the number of frames of the given window, as
 	// window.length.
-	d.Set("windowLength", func(call goja.FunctionCall) goja.Value {
+	set("windowLength", func(call goja.FunctionCall) goja.Value {
 		if !e.lockTask() { // (for the documents of other windows)
 			return vm.ToValue(0)
 		}
@@ -324,11 +327,11 @@ func (e *Engine) defineFrames() {
 		}
 		return vm.ToValue(n)
 	})
-	d.Set("windowClosed", func(call goja.FunctionCall) goja.Value {
+	set("windowClosed", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
 		return vm.ToValue(w == nil || w.Closed())
 	})
-	d.Set("postTo", func(call goja.FunctionCall) goja.Value {
+	set("postTo", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
 		e.postMessage(w, call.Argument(1).String(), call.Argument(2).String(), portIDs(call.Argument(3)))
 		return goja.Undefined()

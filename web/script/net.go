@@ -105,7 +105,7 @@ func (e *Engine) defineNet() {
 	vm := e.vm
 	d := e.jsDOM
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
-		d.Set(name, f)
+		d.Set(name, e.native(f))
 	}
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
 	e.setMediaFuncs(set)

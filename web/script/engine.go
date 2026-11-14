@@ -274,6 +274,14 @@ type Engine struct {
 	taskUnlock func()
 	taskLocked bool
 	lockLost   bool
+	// lockMu guards taskLocked, lockUses, lockUsed, and lockTimer, as the
+	// lock of a task is released by a timer (see Engine.lockTask):
+	// lockUses is the number of calls of the task that use it now, and
+	// lockUsed when the last of them ended.
+	lockMu    sync.Mutex
+	lockUses  int
+	lockUsed  time.Time
+	lockTimer *time.Timer
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
@@ -510,13 +518,15 @@ func (e *Engine) loop() {
 			// The task runs without the lock of the page, which it takes
 			// only when it needs the widgets of the page (see lockTask), so
 			// that the app is responsive while scripts run.
-			e.taskLock, e.taskUnlock, e.taskLocked = lock, unlock, false
+			e.lockMu.Lock()
+			e.taskLock, e.taskUnlock, e.taskLocked, e.lockUses = lock, unlock, false, 0
+			e.lockMu.Unlock()
 			e.runTask(task)
-			if e.taskLocked && !e.lockLost {
-				unlock()
-			}
+			e.unlockTask()
 			gone := e.lockLost
+			e.lockMu.Lock()
 			e.taskLock, e.taskUnlock, e.taskLocked, e.lockLost = nil, nil, false, false
+			e.lockMu.Unlock()
 			if gone {
 				e.done()
 				go e.Close() // the page is gone
@@ -534,20 +544,102 @@ func (e *Engine) InTask() bool {
 	return e.inTask
 }
 
-// lockTask locks the page for the task that is running, until its end,
-// if it is not locked yet, for what needs the widgets of the page (as the
-// boxes of elements), returning false if the page is gone. A task runs
+// lockTask locks the page for the task that is running, if it is not
+// locked yet, for what needs the widgets of the page (as the boxes of
+// elements), returning false if the page is gone. It is a use of the lock
+// by the native function that calls it (see [Engine.native]), which ends
+// when the function returns; the lock is released once it has not been
+// used for [lockIdle], as the scripts run on (a task of nytimes.com that
+// got the box of an element held the page to its end, for seconds, in
+// which nothing responded), or else at the end of the task. A task runs
 // without the lock until it needs it (see loop).
 func (e *Engine) lockTask() bool {
-	if e.taskLock == nil || e.taskLocked {
+	if e.taskLock == nil {
 		return !e.lockLost
 	}
-	if !e.taskLock() {
+	e.lockMu.Lock()
+	if e.taskLocked {
+		e.lockUses++
+		e.lockMu.Unlock()
+		return !e.lockLost
+	}
+	e.lockMu.Unlock()
+	if e.lockLost || !e.taskLock() {
 		e.lockLost = true
 		return false
 	}
+	e.lockMu.Lock()
 	e.taskLocked = true
+	e.lockUses++
+	e.lockMu.Unlock()
 	return true
+}
+
+// lockIdle is how long the lock of a task is kept without being used,
+// for the next uses of it (as of scripts that get the boxes of many
+// elements), before it is released (see [Engine.lockTask]).
+const lockIdle = 20 * time.Millisecond
+
+// native returns the given native function of the scripts, ending the uses
+// of the lock of the task that it makes (see [Engine.lockTask]).
+func (e *Engine) native(f func(call goja.FunctionCall) goja.Value) func(call goja.FunctionCall) goja.Value {
+	return func(call goja.FunctionCall) goja.Value {
+		e.lockMu.Lock()
+		before := e.lockUses
+		e.lockMu.Unlock()
+		defer e.endLockUses(before)
+		return f(call)
+	}
+}
+
+// endLockUses ends the uses of the lock of the task beyond the given
+// number, and releases it once it has not been used for [lockIdle].
+func (e *Engine) endLockUses(n int) {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	if e.lockUses <= n {
+		return
+	}
+	e.lockUses = n
+	if n > 0 {
+		return
+	}
+	e.lockUsed = time.Now()
+	if e.lockTimer == nil && e.taskLocked {
+		e.lockTimer = time.AfterFunc(lockIdle, e.releaseIdleLock)
+	}
+}
+
+// releaseIdleLock releases the lock of the task if it has not been used
+// for [lockIdle] (see [Engine.lockTask]), in the goroutine of a timer.
+func (e *Engine) releaseIdleLock() {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	e.lockTimer = nil
+	if !e.taskLocked || e.lockUses > 0 || e.taskUnlock == nil {
+		return
+	}
+	if idle := time.Since(e.lockUsed); idle < lockIdle {
+		e.lockTimer = time.AfterFunc(lockIdle-idle, e.releaseIdleLock)
+		return
+	}
+	e.taskUnlock()
+	e.taskLocked = false
+}
+
+// unlockTask releases the lock of the task, if it is held (at its end).
+func (e *Engine) unlockTask() {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	if e.lockTimer != nil {
+		e.lockTimer.Stop()
+		e.lockTimer = nil
+	}
+	if e.taskLocked && !e.lockLost && e.taskUnlock != nil {
+		e.taskUnlock()
+	}
+	e.taskLocked = false
+	e.lockUses = 0
 }
 
 // runTask runs the given task, within the time limit of a task.
@@ -643,19 +735,33 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		e.tracef("reading the page whole: %s", wholeWhy)
 	}
 	e.dirty = false
-	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && e.taskLocked {
+	e.lockMu.Lock()
+	locked := e.taskLocked
+	e.lockMu.Unlock()
+	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && locked {
 		// A render forced by a script (for the box of an element), in its
 		// task, with the lock held: the page is read without it (as for
 		// the renders after tasks), as no script runs meanwhile, so that it
 		// is responsive (it was not for seconds on theguardian.com), and
 		// it is locked again to show the new widgets (to the end of the
 		// task), unless the page is gone.
+		e.lockMu.Lock()
+		if e.lockTimer != nil {
+			e.lockTimer.Stop()
+			e.lockTimer = nil
+		}
 		e.taskUnlock()
 		e.taskLocked = false
+		uses := e.lockUses
+		e.lockUses = 0
+		e.lockMu.Unlock()
 		commit := e.opts.Render()
 		if !e.lockTask() {
 			return
 		}
+		e.lockMu.Lock()
+		e.lockUses = uses // (those of the calls that render it)
+		e.lockMu.Unlock()
 		if commit != nil {
 			commit()
 		}

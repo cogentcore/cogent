@@ -95,8 +95,8 @@ func TestConsoleVerbose(t *testing.T) {
 				const b = typeof notDefinedAnywhere;
 				const c = document.body.notAProperty;
 				window.postMessage({ hello: "there" }, "*");
-				// (a task that holds the page, as it gets a box, for long)
-				setTimeout(() => { document.body.getBoundingClientRect(); const t = Date.now(); while (Date.now() - t < 150) {} }, 10);
+				// (a task that holds the page, as it gets boxes, for long)
+				setTimeout(() => { const t = Date.now(); while (Date.now() - t < 150) { document.body.getBoundingClientRect(); } }, 10);
 				</script></body></html>`,
 			"/data.json": `{"a": 1}`,
 		})

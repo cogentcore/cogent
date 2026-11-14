@@ -1436,3 +1436,35 @@ func TestScriptsHoverFixedInPortal(t *testing.T) {
 		}, 3*time.Second, 20*time.Millisecond, "the overlay gets the mouse over it")
 	})
 }
+
+// TestScriptsReleaseLock tests that a task of the scripts of a page that
+// got the box of an element (with the lock of the page) does not hold the
+// page as it runs on (see script.Engine.lockTask), so that the app
+// responds meanwhile: a task of nytimes.com held it for seconds.
+func TestScriptsReleaseLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				document.getElementById("p").getBoundingClientRect();
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) {}
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task ran on")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}
