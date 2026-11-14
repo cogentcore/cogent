@@ -1471,6 +1471,8 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		ctx.Scripting = false
 		return false
 	}
+	// its resources, in parallel, as it is read
+	prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, canceled)
 	parsed := time.Since(lt.start)
 	ps, err := pg.newPageScripts(ctx, doc, final, openedBy, lt.start)
 	if err != nil {

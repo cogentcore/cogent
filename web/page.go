@@ -520,6 +520,10 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 				}
 			}
 			if err == nil {
+				// its resources, in parallel, as it is read
+				if doc, perr := html.Parse(bytes.NewReader(page)); perr == nil {
+					prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, canceled)
+				}
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
 			if err == nil && !canceled() {
