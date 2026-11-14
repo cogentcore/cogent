@@ -15,6 +15,7 @@ import (
 	neturl "net/url"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -435,6 +436,21 @@ func restoreCursor(w core.Widget, cursor int) {
 	tf.SetCursorPos(cursor)
 }
 
+// applySafely calls the given function that puts the widgets of the
+// elements read again in the page, returning false if it panicked, for the
+// page to be read whole: it runs in the goroutine of the scripts, where a
+// panic stopped the app (as for a duplicate name of a widget on github.com).
+func (ps *pageScripts) applySafely(apply func()) (ok bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			ps.log(slog.LevelError, fmt.Sprintf("reading the changed elements again: %v\n%s", r, debug.Stack()))
+			ok = false
+		}
+	}()
+	apply()
+	return true
+}
+
 // testReadHook, if set, is called before a page is read again (for tests).
 var testReadHook func(ps *pageScripts)
 
@@ -516,7 +532,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		}
 		ok = applyReread != nil
 		if ok {
-			applyReread()
+			ok = ps.applySafely(applyReread)
 		}
 		opens := pg.attachFrames(content)
 		pg.attachVideos(content) // (as a script sets the source of a video)
