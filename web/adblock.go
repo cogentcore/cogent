@@ -22,6 +22,23 @@ import (
 // Consent managers, captchas and bot protection, payments, and the hosts
 // of sites themselves are not blocked: pages need them.
 
+// adStyles hide the slots of ads, which are empty when their requests
+// are blocked (as the gray boxes of the ads of nytimes.com, for 20s, until
+// its scripts collapsed them), and the elements that only have them, as
+// the cosmetic filters of content blockers: they are styles of the pages
+// (see htmlcore.Context.Style) with BlockAds. (:haschild is that of
+// cascadia, as it has no relative :has, as :has(> x), whose rule would
+// be dropped with the others.)
+const adStyles = `[data-testid="StandardAd"], .place-ad, [id^="dfp-ad-"], [id^="div-gpt-ad"],
+ins.adsbygoogle, [data-ad-slot], [id^="google_ads_iframe"], iframe[src*="doubleclick.net"],
+iframe[src*="googlesyndication.com"], iframe[src*="amazon-adsystem.com"] {
+	display: none !important;
+}
+:haschild([data-testid="StandardAd"]) {
+	display: none !important;
+}
+`
+
 // errBlocked is the error of the requests that are blocked.
 var errBlocked = errors.New("blocked: a host of ads or tracking")
 

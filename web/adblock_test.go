@@ -7,7 +7,10 @@ package web
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/andybalholm/cascadia"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,4 +47,18 @@ func TestAdBlock(t *testing.T) {
 	resp, err = b.RoundTrip(req)
 	require.NoError(t, err)
 	resp.Body.Close()
+}
+
+// TestAdStyles tests that the selectors of the styles that hide the slots
+// of ads parse (a selector that does not drops its rule, as :has(> x),
+// with the others).
+func TestAdStyles(t *testing.T) {
+	for _, rule := range strings.Split(adStyles, "}") {
+		sel, _, ok := strings.Cut(rule, "{")
+		if !ok {
+			continue
+		}
+		_, err := cascadia.ParseGroup(strings.TrimSpace(sel))
+		assert.NoError(t, err, sel)
+	}
 }

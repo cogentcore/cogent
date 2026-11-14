@@ -1463,6 +1463,9 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	// (as the photos of the front page of nytimes.com, which are read
 	// again with the page as its scripts change it)
 	ctx.ImageCache = htmlcore.NewImageCache(256 << 20)
+	if Settings.BlockAds && !strings.Contains(ctx.Style, adStyles) {
+		ctx.Style += adStyles // (the slots of the ads that are blocked)
+	}
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
