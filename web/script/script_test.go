@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dop251/goja"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
@@ -1655,4 +1656,19 @@ func TestScreenOrientation(t *testing.T) {
 	assert.Equal(t, "function function landscape-primary", run(t, e, `
 		const o = screen.orientation;
 		[typeof o.unlock.bind(o), typeof o.lock, o.type].join(" ")`))
+}
+
+func TestActivitySummary(t *testing.T) {
+	// the summary of the time of the scripts names those that ran
+	var buf bytes.Buffer
+	require.NoError(t, goja.StartProfile(&buf))
+	vm := goja.New()
+	prog, err := goja.Compile("https://example.com/js/busy.js?v=1", `const end = Date.now() + 400; let n = 0; while (Date.now() < end) n++;`, false)
+	require.NoError(t, err)
+	_, err = vm.RunProgram(prog)
+	goja.StopProfile()
+	require.NoError(t, err)
+	s := activitySummary(buf.Bytes())
+	assert.Contains(t, s, "scripts ran ")
+	assert.Contains(t, s, "example.com/busy.js")
 }

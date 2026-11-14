@@ -419,6 +419,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 		*dst = f
 	}
 	go e.loop()
+	e.watchActivity()
 	return e, nil
 }
 
@@ -495,6 +496,7 @@ func (e *Engine) Close() {
 		return
 	}
 	e.closed = true
+	defer e.unwatchActivity()
 	for _, t := range e.timers {
 		t.Stop()
 	}
