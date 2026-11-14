@@ -37,10 +37,11 @@ var activity struct {
 }
 
 // watchActivity adds the summaries of the time of the scripts to the
-// verbose console of the engine, if it is that of a page (not of a frame),
+// verbose console of the engine, if it is that of a page (not of a frame
+// or a worker, whose time is in the summaries of their pages),
 // while it traces, until it is closed (see [Engine.unwatchActivity]).
 func (e *Engine) watchActivity() {
-	if e.opts.Trace == nil || e.opts.Parent != nil && e.opts.Parent() != nil {
+	if e.opts.Trace == nil || e.opts.worker || e.opts.Parent != nil && e.opts.Parent() != nil {
 		return
 	}
 	activity.Lock()
