@@ -249,12 +249,17 @@ func (e *Engine) defineFrames() {
 	// challenge, by parent.frames[name]), or -1 for none.
 	set("windowFrame", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))
-		if w == nil || w.opts.FrameOf == nil || !e.lockTask() { // (for the document of the other window)
+		// the document of another window is read with the lock of the
+		// page, and that of this one without it, which is only needed for
+		// the window of a frame that is found (as this is called for each
+		// property of the window that it does not have, as scripts check
+		// for features, which held the page of npr.org for 1.7s)
+		if w == nil || w.opts.FrameOf == nil || w != e && !e.lockTask() {
 			return vm.ToValue(-1)
 		}
 		key := call.Argument(1).String()
 		found := w.frameElement(key)
-		if found == nil {
+		if found == nil || w == e && !e.lockTask() {
 			return vm.ToValue(-1)
 		}
 		fe := w.opts.FrameOf(found)
@@ -266,10 +271,11 @@ func (e *Engine) defineFrames() {
 	// frameNode returns the iframe element of this window of the given
 	// name or index (see windowFrame), or -1 for none, for the window of a
 	// frame without a page of its own (as about:blank).
-	d.Set("frameNode", func(call goja.FunctionCall) goja.Value {
-		if !e.lockTask() {
-			return vm.ToValue(-1)
-		}
+	// (without the lock of the page, as it is of the document of this
+	// window, and called for each property of the window that it does
+	// not have; registered with set, as the uses of the lock of natives
+	// end as they return, which held the page to the end of tasks)
+	set("frameNode", func(call goja.FunctionCall) goja.Value {
 		n := e.frameElement(call.Argument(0).String())
 		if n == nil {
 			return vm.ToValue(-1)
@@ -317,10 +323,10 @@ func (e *Engine) defineFrames() {
 	// windowLength returns the number of frames of the given window, as
 	// window.length.
 	set("windowLength", func(call goja.FunctionCall) goja.Value {
-		if !e.lockTask() { // (for the documents of other windows)
+		w := e.windowOf(int(call.Argument(0).ToInteger()))
+		if w != e && !e.lockTask() { // (for the documents of other windows)
 			return vm.ToValue(0)
 		}
-		w := e.windowOf(int(call.Argument(0).ToInteger()))
 		n := 0
 		if w != nil {
 			w.forFrames(func(*html.Node) bool { n++; return true })

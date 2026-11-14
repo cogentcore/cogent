@@ -1522,3 +1522,36 @@ func TestScriptsYieldLock(t *testing.T) {
 		}))
 	})
 }
+
+// TestScriptsMissingGlobalReleasesLock tests that a script that gets a
+// property of the window that it does not have (as scripts check for
+// features), which looks for a frame of that name, does not hold the page
+// as it runs on: the lookup held it to the end of the task (on npr.org).
+func TestScriptsMissingGlobalReleasesLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				document.getElementById("p").getBoundingClientRect();
+				const x = window.noSuchFeature;
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) {}
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task ran on")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}
