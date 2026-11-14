@@ -243,6 +243,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// elements in them, as of font-size: 1cqw, not to be shown at the
 	// size of the viewport until the new widgets are laid out
 	ctx.KeepContainerSizes(ps.ctx)
+	ps.prefetch(ctx)
 	// the matches of the style rules of the elements that have not changed
 	// are those of the last read (the most of its time, as for the many
 	// times that npr.org was read again as it loaded)
@@ -484,6 +485,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 				tree.MoveToParent(fp, hold)
 			}
 		}
+		ps.prefetch(ps.ctx)
 		ok = ps.ctx.Reread(self, children)
 		opens := pg.attachFrames(content)
 		pg.attachVideos(content) // (as a script sets the source of a video)
@@ -1795,4 +1797,12 @@ func (ps *pageScripts) logFallback(kind, instead string) {
 		why = "unknown"
 	}
 	ps.log(slog.LevelDebug, fmt.Sprintf("%s of the page not possible (%s): %s", kind, why, instead))
+}
+
+// prefetch gets the resources of the document that the given context
+// reads that are not in the cache of the page yet in parallel (see
+// [prefetch]), as it is read: the images that scripts add (as the
+// slideshows of npr.org) were gotten one at a time as it was read (8s).
+func (ps *pageScripts) prefetch(ctx *htmlcore.Context) {
+	prefetch(ctx.PrefetchURLs(ps.doc), ctx.GetURL, ctx.WebFonts, ps.engine.Closed)
 }
