@@ -1555,3 +1555,34 @@ func TestScriptsMissingGlobalReleasesLock(t *testing.T) {
 		}))
 	})
 }
+
+// TestScriptsIntersectionObserverBatch tests that the targets that an
+// IntersectionObserver observes at once are reported in one call of its
+// callback, without rendering the page for the box of each as the callback
+// changes it (as the lazy images of nytimes.com, which took 80s to load).
+func TestScriptsIntersectionObserverBatch(t *testing.T) {
+	items := strings.Repeat(`<div class="lazy" style="height: 20px">item</div>`, 20)
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body>` + items + `<script>
+			window.calls = 0; window.entries = 0;
+			setTimeout(() => {
+				const io = new IntersectionObserver(es => {
+					calls++;
+					for (const e of es) { entries++; e.target.setAttribute("data-seen", "1"); e.target.textContent = "seen"; }
+				});
+				for (const el of document.querySelectorAll(".lazy")) io.observe(el);
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`entries`)
+			return v == int64(20)
+		}), "all reported")
+		v, _ := ps.engine.RunString(`calls`)
+		assert.Equal(t, int64(1), v, "in one call")
+		settle(pg)
+		assert.Contains(t, pageTexts(b, pg), "seen")
+	})
+}

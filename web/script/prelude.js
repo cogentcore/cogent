@@ -3187,18 +3187,34 @@
 			}
 		}
 	}
+	// IntersectionObserver reports the targets that are observed as
+	// intersecting, all of those observed at once in one call of its
+	// callback, with their boxes as of the last render (as browsers do as
+	// they render), not rendering the page for each: the lazy images of
+	// nytimes.com, each of whose callbacks changed the page, rendered it
+	// for the box of the next (1s each, for 80s).
 	class IntersectionObserver {
-		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; }
+		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; this._pending = []; this._scheduled = false; }
 		observe(t) {
-			this._targets.push(t);
+			if (this._targets.indexOf(t) < 0) this._targets.push(t);
+			this._pending.push(t);
+			if (this._scheduled) return;
+			this._scheduled = true;
 			setTimer(() => {
-				if (this._targets.indexOf(t) < 0) return;
-				const r = t.getBoundingClientRect();
-				this._cb([{ target: t, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time: performance.now() }], this);
+				this._scheduled = false;
+				const ts = this._pending.filter((x, i, a) => this._targets.indexOf(x) >= 0 && a.indexOf(x) === i);
+				this._pending = [];
+				if (ts.length === 0) return;
+				const time = performance.now();
+				this._cb(ts.map(t => {
+					const b = t instanceof Node ? D.rectNow(t[ID]) : null;
+					const r = b ? new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]) : new DOMRect(0, 0, 0, 0);
+					return { target: t, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time };
+				}), this);
 			}, 0, [], false);
 		}
 		unobserve(t) { this._targets = this._targets.filter(x => x !== t); }
-		disconnect() { this._targets = []; }
+		disconnect() { this._targets = []; this._pending = []; }
 		takeRecords() { return []; }
 	}
 	// ResizeObserver reports the size of each target when it is observed,

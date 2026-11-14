@@ -697,6 +697,21 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(x, y, w, h)
 	})
+	// rectNow returns the box of the given element as rect does, but as
+	// of the last render, without rendering the page for its changes (as
+	// for IntersectionObserver, which browsers update as they render),
+	// or null if it has none yet.
+	set("rectNow", func(call goja.FunctionCall) goja.Value {
+		n := node(arg(call, 0))
+		if n == nil || e.opts.Layout == nil || !e.lockTask() {
+			return goja.Null()
+		}
+		x, y, w, h, ok := e.opts.Layout(n)
+		if !ok {
+			return goja.Null()
+		}
+		return vm.NewArray(x, y, w, h)
+	})
 	set("elementAt", func(call goja.FunctionCall) goja.Value {
 		if e.opts.ElementAt == nil || !e.lockTask() {
 			return goja.Null()
