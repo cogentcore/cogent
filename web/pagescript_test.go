@@ -1285,7 +1285,11 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 					const d = document.createElement("div");
 					d.textContent = "added " + i;
 					document.body.append(d);
-					document.documentElement.setAttribute("lang", "x" + i); // (all of it is read again)
+					// (a new style sheet, for which all of it is read again)
+					const l = document.createElement("link");
+					l.rel = "stylesheet";
+					l.href = "/none" + i + ".css";
+					document.head.append(l);
 					d.getBoundingClientRect();
 				}
 				window.done = true;

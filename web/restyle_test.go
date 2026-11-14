@@ -120,9 +120,9 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 	b.RenderImage(func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
-		// (a change of the html element itself, for which all of it is read again)
-		_, err := ps.engine.RunString(`document.documentElement.setAttribute("lang", "fr");
-			document.getElementById("other").textContent = "changed"`)
+		// (a new style sheet, for which all of it is read again)
+		_, err := ps.engine.RunString(`const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/none.css";
+			document.head.append(l); document.getElementById("other").textContent = "changed"`)
 		require.NoError(t, err)
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "changed") }), "the page is read again")
 		mu.Lock()
