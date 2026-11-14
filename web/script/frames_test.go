@@ -128,3 +128,32 @@ func TestFrameNames(t *testing.T) {
 	assert.Equal(t, int64(2), run(t, chal, `parent.frames["a-check"].postMessage("hello", "https://captcha.example.net:443"); parent.length`))
 	assert.Eventually(t, func() bool { return run(t, anchor, `got.join(",")`) == "https://captcha.example.net,hello" }, 2*time.Second, 10*time.Millisecond)
 }
+
+// TestBlankFrameWindow tests the windows of iframes without a page of
+// their own (as about:blank), which are of the same origin, as
+// Cloudflare's challenge runs code with the eval of such a window (and
+// waited forever when it had none).
+func TestBlankFrameWindow(t *testing.T) {
+	e := frameEngine(t, `<html><body><iframe id="src" src="https://other.example/"></iframe></body></html>`, "https://example.com/", nil, func(n *html.Node) *Engine { return nil })
+	assert.Equal(t, "3 true true true true true", run(t, e, `
+		const f = document.createElement("iframe");
+		f.name = "blank";
+		document.body.appendChild(f);
+		const w = f.contentWindow;
+		[w.eval("1 + 2"), w === window[1], w === window.blank, w === f.contentWindow,
+			w instanceof Window, w.parent === window && w.frameElement === f].join(" ")`))
+	// its document is its own, and messages posted to it are dispatched
+	// to its listeners
+	assert.Equal(t, "hi HTML false", run(t, e, `
+		const d = f.contentDocument;
+		d.body.appendChild(d.createElement("p")).textContent = "hi";
+		[d.body.textContent, d.documentElement.tagName, d === document].join(" ")`))
+	run(t, e, `w.addEventListener("message", ev => { window.got = ev.data.x + " " + (ev.source === window); }); w.postMessage({ x: 1 }, "*")`)
+	assert.Eventually(t, func() bool { return run(t, e, `window.got`) == "1 true" }, time.Second, 10*time.Millisecond)
+	// a frame with a page of another origin has no window here (yet), and
+	// one that is not in the document has none
+	assert.Equal(t, "true true null", run(t, e, `
+		const s = document.getElementById("src");
+		const g = document.createElement("iframe");
+		[s.contentWindow === null, s.contentDocument === null, String(g.contentWindow)].join(" ")`))
+}

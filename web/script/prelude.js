@@ -1328,8 +1328,14 @@
 		Object.defineProperty(cls.prototype, "sandbox", { get() { return new DOMTokenList(this, "sandbox"); }, set(v) { this.setAttribute("sandbox", String(v)); } });
 		// the window of the page in its frame, a proxy that can only post
 		// messages to it (see frames.go), as for one of another origin
-		Object.defineProperty(cls.prototype, "contentWindow", { get() { return windowProxy(D.frameWindow(this[ID])); } });
-		Object.defineProperty(cls.prototype, "contentDocument", { get() { return null; } });
+		// or, for a frame without a page of its own (as about:blank), a
+		// window of the same origin (see blankWindow)
+		Object.defineProperty(cls.prototype, "contentWindow", {
+			get() { return windowProxy(D.frameWindow(this[ID])) || (isBlankFrame(this) ? blankWindow(this) : null); },
+		});
+		Object.defineProperty(cls.prototype, "contentDocument", {
+			get() { return D.frameWindow(this[ID]) < 0 && isBlankFrame(this) ? blankWindow(this).document : null; },
+		});
 	});
 
 	// changedState marks the element as changed, so that the page is
@@ -3740,6 +3746,53 @@
 		return p;
 	}
 
+	// The windows of the frames without a page of their own (with no src,
+	// or about:blank), which are of the same origin as this one, so that
+	// scripts use them directly: Cloudflare's challenge runs code with the
+	// eval of such a window (and waited forever when it had none), and
+	// editors write to their documents. A blank window has a document of
+	// its own (not rendered), and otherwise the properties of this window
+	// (its constructors and eval, which in browsers are of a realm of its
+	// own).
+	const blankWindows = new WeakMap(); // by their iframe elements
+	function isBlankFrame(el) {
+		const src = (el.getAttribute("src") || "").trim();
+		return el.isConnected && (src === "" || src === "about:blank");
+	}
+	function blankWindow(el) {
+		let w = blankWindows.get(el);
+		if (w) return w;
+		const doc = wrap(D.parseDocument("<!DOCTYPE html><html><head></head><body></body></html>"));
+		const events = new EventTarget();
+		const loc = {
+			href: "about:blank", protocol: "about:", host: "", hostname: "", port: "", pathname: "blank",
+			search: "", hash: "", get origin() { return location.origin; },
+			assign() {}, replace() {}, reload() {}, toString() { return "about:blank"; },
+		};
+		const own = {
+			get window() { return w; }, get self() { return w; }, get frames() { return w; }, get globalThis() { return w; },
+			get parent() { return g; }, get top() { return g.top; }, get frameElement() { return el; },
+			get document() { return doc; }, get location() { return loc; }, get origin() { return location.origin; },
+			get closed() { return !el.isConnected; }, get name() { return el.getAttribute("name") || ""; },
+			length: 0, opener: null,
+			addEventListener: (...a) => events.addEventListener(...a),
+			removeEventListener: (...a) => events.removeEventListener(...a),
+			dispatchEvent: e => events.dispatchEvent(e),
+			postMessage(data) {
+				const v = cloneDecode(JSON.parse(cloneJSON(data)));
+				setTimer(() => events.dispatchEvent(new MessageEvent("message", { data: v, origin: location.origin, source: g })), 0, [], false);
+			},
+		};
+		w = new Proxy(own, {
+			get(t, k) { return k in t ? t[k] : g[k]; },
+			set(t, k, v) { try { t[k] = v; } catch (e) {} return true; },
+			has(t, k) { return k in t || k in g; },
+		});
+		windowProxies.add(w);
+		blankWindows.set(el, w);
+		return w;
+	}
+
 	// ---- workers (see worker.go) ----
 
 	const workers = new Map(); // the Worker objects, by their numbers
@@ -4262,6 +4315,8 @@
 					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
 					const f = D.windowFrame(0, k);
 					if (f >= 0) return windowProxy(f);
+					const n = D.frameNode(k); // (a frame without a page, as about:blank)
+					if (n >= 0) { const w = wrap(n).contentWindow; if (w) return w; }
 					if (traceGlobal) traceGlobal(k);
 					return undefined;
 				},

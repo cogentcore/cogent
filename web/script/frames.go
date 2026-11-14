@@ -131,6 +131,27 @@ func (e *Engine) postMessage(to *Engine, data, targetOrigin string, ports []int)
 	})
 }
 
+// frameElement returns the iframe element of the document of the engine
+// of the given name (its name attribute) or index, or nil. It is called
+// as [Engine.forFrames].
+func (e *Engine) frameElement(key string) *html.Node {
+	index, err := strconv.Atoi(key)
+	if err != nil || index < 0 || strconv.Itoa(index) != key {
+		index = -1
+	}
+	i := 0
+	var found *html.Node
+	e.forFrames(func(n *html.Node) bool {
+		if i == index || index < 0 && key != "" && nameAttr(n) == key {
+			found = n
+			return false
+		}
+		i++
+		return true
+	})
+	return found
+}
+
 // nameAttr returns the name attribute of the given element.
 func nameAttr(n *html.Node) string {
 	v, _ := attr(n, "name")
@@ -229,20 +250,7 @@ func (e *Engine) defineFrames() {
 			return vm.ToValue(-1)
 		}
 		key := call.Argument(1).String()
-		index, err := strconv.Atoi(key)
-		if err != nil || index < 0 || strconv.Itoa(index) != key {
-			index = -1
-		}
-		i := 0
-		var found *html.Node
-		w.forFrames(func(n *html.Node) bool {
-			if i == index || index < 0 && key != "" && nameAttr(n) == key {
-				found = n
-				return false
-			}
-			i++
-			return true
-		})
+		found := w.frameElement(key)
 		if found == nil {
 			return vm.ToValue(-1)
 		}
@@ -251,6 +259,19 @@ func (e *Engine) defineFrames() {
 			e.tracef("frame %q of %s has no window (its page has no scripts yet)", key, w.Origin())
 		}
 		return vm.ToValue(e.windowID(fe))
+	})
+	// frameNode returns the iframe element of this window of the given
+	// name or index (see windowFrame), or -1 for none, for the window of a
+	// frame without a page of its own (as about:blank).
+	d.Set("frameNode", func(call goja.FunctionCall) goja.Value {
+		if !e.lockTask() {
+			return vm.ToValue(-1)
+		}
+		n := e.frameElement(call.Argument(0).String())
+		if n == nil {
+			return vm.ToValue(-1)
+		}
+		return vm.ToValue(e.nodes.id(n))
 	})
 	// frameName returns the name of the iframe of the frame of this
 	// window, which is its window.name (as reCAPTCHA gets the name of the
