@@ -282,8 +282,14 @@ type Engine struct {
 	lockUses  int
 	lockUsed  time.Time
 	lockTimer *time.Timer
-	// lockedAt is when the lock of the task was taken (see lockYield).
-	lockedAt time.Time
+	// lockedAt is when the lock of the task was taken (see lockYield),
+	// lockBy the native function that took it, lockBusy how long it has
+	// been used by calls (not idle) since, as of useStart, and nativeName the
+	// native function that is running, for the verbose console (see
+	// Engine.traceHold).
+	lockedAt, useStart time.Time
+	lockBy, nativeName string
+	lockBusy           time.Duration
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
@@ -561,11 +567,15 @@ func (e *Engine) lockTask() bool {
 	}
 	e.lockMu.Lock()
 	if e.taskLocked && (e.lockUses > 0 || time.Since(e.lockedAt) < lockYield) {
+		if e.lockUses == 0 {
+			e.useStart = time.Now()
+		}
 		e.lockUses++
 		e.lockMu.Unlock()
 		return !e.lockLost
 	}
 	if e.taskLocked {
+		e.traceHold()
 		// held for lockYield by uses that follow each other (as of a
 		// script that gets the boxes of elements as it animates them, for
 		// seconds on npr.org): it is released for the app to take it, and
@@ -584,7 +594,7 @@ func (e *Engine) lockTask() bool {
 	}
 	e.lockMu.Lock()
 	e.taskLocked = true
-	e.lockedAt = time.Now()
+	e.lockedAt, e.useStart, e.lockBusy, e.lockBy = time.Now(), time.Now(), 0, e.nativeName
 	e.lockUses++
 	e.lockMu.Unlock()
 	return true
@@ -602,14 +612,46 @@ const lockIdle = 20 * time.Millisecond
 
 // native returns the given native function of the scripts, ending the uses
 // of the lock of the task that it makes (see [Engine.lockTask]).
-func (e *Engine) native(f func(call goja.FunctionCall) goja.Value) func(call goja.FunctionCall) goja.Value {
+func (e *Engine) native(name string, f func(call goja.FunctionCall) goja.Value) func(call goja.FunctionCall) goja.Value {
 	return func(call goja.FunctionCall) goja.Value {
 		e.lockMu.Lock()
 		before := e.lockUses
+		prev := e.nativeName
+		e.nativeName = name
 		e.lockMu.Unlock()
-		defer e.endLockUses(before)
+		defer func() {
+			e.lockMu.Lock()
+			e.nativeName = prev
+			e.lockMu.Unlock()
+			e.endLockUses(before)
+		}()
 		return f(call)
 	}
+}
+
+// longHold is how long the lock of a task is held for it to be in the
+// verbose console with what held it (see [Engine.traceHold]).
+const longHold = time.Second
+
+// traceHold reports the hold of the lock of the task that ends, if it was
+// long, in the verbose console: the native function that took it, and how
+// long calls used it (as for a page of npr.org that was held for 5s by a
+// task, which was not otherwise in the console). It is called with lockMu
+// held, as the lock is released.
+func (e *Engine) traceHold() {
+	held := time.Since(e.lockedAt)
+	if held < longHold || !e.tracing() {
+		return
+	}
+	busy := e.lockBusy
+	if e.lockUses > 0 {
+		busy += time.Since(e.useStart)
+	}
+	by := e.lockBy
+	if by == "" {
+		by = "the engine"
+	}
+	go e.tracef("the page was held for %v from %s, %v of it in calls of the scripts that use it", held.Round(time.Millisecond), by, busy.Round(time.Millisecond))
 }
 
 // endLockUses ends the uses of the lock of the task beyond the given
@@ -625,6 +667,7 @@ func (e *Engine) endLockUses(n int) {
 		return
 	}
 	e.lockUsed = time.Now()
+	e.lockBusy += e.lockUsed.Sub(e.useStart)
 	if e.lockTimer == nil && e.taskLocked {
 		e.lockTimer = time.AfterFunc(lockIdle, e.releaseIdleLock)
 	}
@@ -643,6 +686,7 @@ func (e *Engine) releaseIdleLock() {
 		e.lockTimer = time.AfterFunc(lockIdle-idle, e.releaseIdleLock)
 		return
 	}
+	e.traceHold()
 	e.taskUnlock()
 	e.taskLocked = false
 }
@@ -656,6 +700,7 @@ func (e *Engine) unlockTask() {
 		e.lockTimer = nil
 	}
 	if e.taskLocked && !e.lockLost && e.taskUnlock != nil {
+		e.traceHold()
 		e.taskUnlock()
 	}
 	e.taskLocked = false
@@ -770,6 +815,7 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 			e.lockTimer.Stop()
 			e.lockTimer = nil
 		}
+		e.traceHold()
 		e.taskUnlock()
 		e.taskLocked = false
 		uses := e.lockUses

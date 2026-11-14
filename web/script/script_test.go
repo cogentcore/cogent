@@ -1572,3 +1572,17 @@ func TestPostMessageCycles(t *testing.T) {
 	assert.Eventually(t, func() bool { return run(t, e, `got`) != "" }, 3*time.Second, 10*time.Millisecond)
 	assert.Equal(t, "true true true true a", run(t, e, `got`))
 }
+
+// TestTraceHold tests that a long hold of the lock of the page by a task is
+// in the verbose console, with the native function that took it.
+func TestTraceHold(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	e.opts.Trace = func() bool { return true }
+	e.lockMu.Lock()
+	e.lockedAt, e.lockBy, e.lockBusy = time.Now().Add(-2*time.Second), "rect", 1500*time.Millisecond
+	e.traceHold()
+	e.lockMu.Unlock()
+	assert.Eventually(t, func() bool {
+		return strings.Contains(strings.Join(*logs, "\n"), "the page was held for 2s from rect, 1.5s of it in calls")
+	}, time.Second, 10*time.Millisecond, "%v", *logs)
+}

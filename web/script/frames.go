@@ -217,7 +217,7 @@ func (e *Engine) defineFrames() {
 	vm := e.vm
 	d := e.jsDOM
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
-		d.Set(name, e.native(f)) // (see Engine.lockTask)
+		d.Set(name, e.native(name, f)) // (see Engine.lockTask)
 	}
 	set("windowRel", func(call goja.FunctionCall) goja.Value {
 		w := e.windowOf(int(call.Argument(0).ToInteger()))

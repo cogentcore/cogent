@@ -265,7 +265,7 @@ func (e *Engine) defineDOM() {
 	node := func(v goja.Value) *html.Node { return ni.node(int(v.ToInteger())) }
 	id := func(n *html.Node) goja.Value { return vm.ToValue(ni.id(n)) }
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
-		d.Set(name, e.native(f))
+		d.Set(name, e.native(name, f))
 	}
 	arg := func(call goja.FunctionCall, i int) goja.Value { return call.Argument(i) }
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
