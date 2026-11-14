@@ -381,18 +381,28 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 	if !ps.shown {
 		return nil // (rendered once it is shown)
 	}
+	if ps.ctx == nil {
+		return nil
+	}
+	// the declarations of the elements are found without the lock of the
+	// page (see htmlcore.Context.PrepareRestyle), and the widgets are
+	// styled again with it
+	start := time.Now()
+	apply := ps.ctx.PrepareRestyle(nodes)
+	prepared := time.Since(start)
 	return func() bool {
 		pg := ps.pg
 		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil {
 			return false
 		}
 		start := time.Now()
-		if !ps.ctx.Restyle(nodes) {
+		if apply == nil {
 			ps.logFallback("restyle", "reading the changed elements again")
 			return false
 		}
+		apply()
 		ps.restyles++
-		ps.renderTime += time.Since(start)
+		ps.renderTime += prepared + time.Since(start)
 		ps.laidOut = false // (laid out again for the boxes of the scripts)
 		return true
 	}
@@ -441,6 +451,28 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		return nil // (rendered once it is shown)
 	}
 	ps.resizeIfNeeded()
+	if ps.ctx == nil {
+		return nil
+	}
+	// the elements are styled and read again into new widgets without the
+	// lock of the page (see htmlcore.Context.PrepareReread), which took as
+	// long as a second as the scripts of nytimes.com changed it, in which
+	// the app did not respond; they are put in the page with it
+	start := time.Now()
+	var applyStyled func()
+	if len(styled) > 0 {
+		if applyStyled = ps.ctx.PrepareRestyle(styled); applyStyled == nil {
+			// (as for a change of their display, for which they are read
+			// again as elements that have changed themselves)
+			ps.logFallback("restyle", "reading the changed elements again")
+			self = append(slices.Clip(self), styled...)
+		}
+	}
+	ps.ctx.LockStyles()
+	ps.prefetch(ps.ctx)
+	ps.ctx.UnlockStyles()
+	applyReread := ps.ctx.PrepareReread(self, children)
+	prepared := time.Since(start)
 	return func() bool {
 		pg := ps.pg
 		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil || pg.NumChildren() != 1 {
@@ -451,11 +483,8 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			return false
 		}
 		start := time.Now()
-		if len(styled) > 0 && !ps.ctx.Restyle(styled) {
-			// (as for a change of their display, for which they are read
-			// again as elements that have changed themselves)
-			ps.logFallback("restyle", "reading the changed elements again")
-			self = append(slices.Clip(self), styled...)
+		if applyStyled != nil {
+			applyStyled()
 		}
 		// the element that has the focus, and the scroll positions, for
 		// the widgets that are made new; the pages of the frames are kept
@@ -485,8 +514,10 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 				tree.MoveToParent(fp, hold)
 			}
 		}
-		ps.prefetch(ps.ctx)
-		ok = ps.ctx.Reread(self, children)
+		ok = applyReread != nil
+		if ok {
+			applyReread()
+		}
 		opens := pg.attachFrames(content)
 		pg.attachVideos(content) // (as a script sets the source of a video)
 		for _, fp := range pg.frames {
@@ -518,7 +549,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			})
 		}
 		ps.rereads++
-		ps.renderTime += time.Since(start)
+		ps.renderTime += prepared + time.Since(start)
 		ps.widgets = nil
 		ps.laidOut = false
 		return true

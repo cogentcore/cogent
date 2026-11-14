@@ -901,7 +901,15 @@ func (e *Engine) restyle(nodes []*html.Node, lock func() bool, unlock func()) bo
 	if e.opts.Restyle == nil || len(nodes) == 0 {
 		return false
 	}
-	commit := e.opts.Restyle(nodes)
+	var commit func() bool
+	prepare := func() { commit = e.opts.Restyle(nodes) }
+	if lock == nil {
+		if !e.withoutTaskLock(prepare) {
+			return false
+		}
+	} else {
+		prepare()
+	}
 	if commit == nil {
 		return false
 	}
@@ -926,7 +934,15 @@ func (e *Engine) reread(self, children, styled []*html.Node, lock func() bool, u
 		e.tracef("reading the page whole: an element is to get the focus")
 		return false // (the focus is given to the widget of the element as the page is rendered)
 	}
-	commit := e.opts.Reread(self, children, styled)
+	var commit func() bool
+	prepare := func() { commit = e.opts.Reread(self, children, styled) }
+	if lock == nil {
+		if !e.withoutTaskLock(prepare) {
+			return false
+		}
+	} else {
+		prepare()
+	}
 	if commit == nil {
 		return false
 	}
@@ -1295,4 +1311,37 @@ func (e *Engine) callBack(id int, args ...any) {
 		_, err := e.callback(goja.Undefined(), vals...)
 		e.reportError(err)
 	})
+}
+
+// withoutTaskLock runs the given function, which prepares a render without
+// the lock of the page (as the elements that are read again, which can
+// take as long as a second), with the lock of the task released if it
+// holds it (as for a render that a script forces in its task, for the box
+// of an element), and takes it again, returning false if the page is gone.
+func (e *Engine) withoutTaskLock(f func()) bool {
+	e.lockMu.Lock()
+	held := e.taskLocked && e.taskUnlock != nil
+	uses := e.lockUses
+	if held {
+		if e.lockTimer != nil {
+			e.lockTimer.Stop()
+			e.lockTimer = nil
+		}
+		e.traceHold()
+		e.taskUnlock()
+		e.taskLocked = false
+		e.lockUses = 0
+	}
+	e.lockMu.Unlock()
+	f()
+	if !held {
+		return true
+	}
+	if !e.lockTask() {
+		return false
+	}
+	e.lockMu.Lock()
+	e.lockUses = uses // (those of the calls that render it)
+	e.lockMu.Unlock()
+	return true
 }
