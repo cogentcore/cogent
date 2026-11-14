@@ -206,7 +206,7 @@ func (e *Engine) rangeRequest(u string, from, n int64) (*http.Response, error) {
 	htmlcore.SetRequestHeaders(req)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", from, from+n-1))
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second, Transport: Transport}
 	if origin(u) == origin(e.opts.PageURL) {
 		client.Jar = e.opts.Cookies
 	}

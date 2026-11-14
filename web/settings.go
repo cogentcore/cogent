@@ -37,6 +37,12 @@ type SettingsData struct { //types:add
 	// once each. It applies to pages opened (or reloaded) after it is set.
 	VerboseConsole bool
 
+	// BlockAds blocks the requests of pages to the hosts of ads, of the
+	// auctions of ads, and of the analytics and tracking of pages (as
+	// content blockers do in browsers), which fail as for a network error:
+	// their scripts take much of the time that pages take to load.
+	BlockAds bool
+
 	// Bookmarks are the bookmarks of pages, which are edited with
 	// [EditBookmarks]: the top-level ones are in the bookmarks bar of the
 	// browser, and groups have bookmarks in them.
@@ -48,6 +54,7 @@ var defaultUserAgent = htmlcore.UserAgent
 
 func (se *SettingsData) Defaults() {
 	se.UserAgent = defaultUserAgent
+	se.BlockAds = true
 }
 
 // Apply applies the settings.

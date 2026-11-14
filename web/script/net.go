@@ -506,12 +506,17 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	// by default (not with the requests of a page to other sites), unless
 	// the request is with credentials (as the APIs of Google, of other
 	// hosts, which were 401 Unauthorized without its cookies).
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second, Transport: Transport}
 	if credentials || origin(u) == origin(e.opts.PageURL) {
 		client.Jar = e.opts.Cookies
 	}
 	return client.Do(req)
 }
+
+// Transport is the transport of the requests of scripts (as of fetch and
+// XMLHttpRequest, and of media), or nil for the default one (as for the
+// content blocker of the app).
+var Transport http.RoundTripper
 
 // forbiddenHeaders are the headers of requests that scripts can not set,
 // as in browsers.

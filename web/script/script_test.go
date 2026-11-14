@@ -6,6 +6,8 @@ package script
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -1672,3 +1674,22 @@ func TestActivitySummary(t *testing.T) {
 	assert.Contains(t, s, "scripts ran ")
 	assert.Contains(t, s, "example.com/busy.js")
 }
+
+func TestFetchTransport(t *testing.T) {
+	// the requests of scripts with methods or headers (others are with
+	// GetURL) go through Transport (as the content
+	// blocker of the app), whose errors are those of the network
+	old := Transport
+	defer func() { Transport = old }()
+	Transport = roundTripFunc(func(r *http.Request) (*http.Response, error) { return nil, errors.New("blocked") })
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.got = ""; fetch("https://ads.example.com/x", { method: "POST", body: "b" }).then(() => { got = "ok" }, err => { got = err.name })`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return fmt.Sprint(v) == "TypeError"
+	}, 5*time.Second, 20*time.Millisecond)
+}
+
+type roundTripFunc func(r *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
