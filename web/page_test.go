@@ -5,6 +5,7 @@
 package web
 
 import (
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/core"
@@ -126,4 +128,18 @@ func TestPageErrorStatusShown(t *testing.T) {
 	b.RenderImage(func() { pg.wait() }, func() {
 		assert.Contains(t, pageTexts(b, pg), "unusual traffic")
 	})
+}
+
+// TestMediaAlternates tests that a page is not read again for sizes of
+// its viewport that alternate, as when a scrollbar comes and goes as it
+// is read for each (see [Page.mediaAlternates]), but is for a size that
+// it is resized back to later.
+func TestMediaAlternates(t *testing.T) {
+	pg := &Page{}
+	a, b := math32.Vec2(1200, 800), math32.Vec2(1200, 789)
+	now := time.Now()
+	assert.False(t, pg.mediaAlternates(a, now))
+	assert.False(t, pg.mediaAlternates(b, now.Add(400*time.Millisecond)))
+	assert.True(t, pg.mediaAlternates(a, now.Add(800*time.Millisecond)), "back to the size before, shortly after")
+	assert.False(t, pg.mediaAlternates(a, now.Add(10*time.Second)), "resized back to it later")
 }

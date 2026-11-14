@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	neturl "net/url"
@@ -102,6 +103,12 @@ type Page struct {
 	// for pages that use it (see [htmlcore.Context.ViewportHeightUsed]).
 	checkedHeight float32
 	mediaTimer    *time.Timer
+
+	// mediaReads are the last sizes of the viewport that the page was
+	// read again for (see [Page.checkMedia]), the last last, and
+	// mediaReadAt when the last was, for stopping sizes that alternate.
+	mediaReads  [2]math32.Vector2
+	mediaReadAt time.Time
 
 	// scripts is the state of the scripts of the page that is shown, if
 	// it is run with scripts.
@@ -641,7 +648,7 @@ func (pg *Page) applyZoom(zoom float32) {
 		ps.engine.Post(func() {
 			ps.base.Zoom = zoom
 			ps.width = width
-			ps.engine.Changed()
+			ps.engine.ChangedFor("the zoom changed")
 		})
 		return
 	}
@@ -744,6 +751,14 @@ func (pg *Page) checkMedia() {
 	if !m.ctx.MediaChanged(pg.checkedWidth) && !heightUsed {
 		return
 	}
+	size := math32.Vec2(pg.checkedWidth, pg.checkedHeight)
+	if pg.mediaAlternates(size, time.Now()) {
+		if ps := pg.scripts; ps != nil && Settings.VerboseConsole {
+			ps.log(slog.LevelDebug, fmt.Sprintf("the viewport alternates between %.0fx%.0f and %.0fx%.0f: not read again for it",
+				size.X, size.Y, pg.mediaReads[1].X, pg.mediaReads[1].Y))
+		}
+		return
+	}
 	pg.loads.Add(1)
 	pg.mediaTimer = time.AfterFunc(mediaDelay, func() {
 		defer pg.loads.Done()
@@ -766,11 +781,28 @@ func (pg *Page) stopMediaTimer() {
 	pg.mediaTimer = nil
 }
 
+// mediaAlternates returns whether the page is not to be read again for
+// the given size of its viewport at the given time, as the size that it
+// was read for before the last one, shortly before: the size depends on
+// how it is read (as with a scrollbar that the page needs at one size and
+// not at the other), so reading it again would alternate between them
+// endlessly (as on volkskrant.nl, every 0.4s). Otherwise it records the
+// size as the one that the page is read for.
+func (pg *Page) mediaAlternates(size math32.Vector2, now time.Time) bool {
+	if size == pg.mediaReads[0] && size != pg.mediaReads[1] && now.Sub(pg.mediaReadAt) < 2*time.Second {
+		return true
+	}
+	pg.mediaReads[0], pg.mediaReads[1] = pg.mediaReads[1], size
+	pg.mediaReadAt = now
+	return false
+}
+
 // setMedia sets what is needed to read the page that is shown again
 // for another width of its viewport.
 func (pg *Page) setMedia(m *pageMedia) {
 	pg.stopMediaTimer()
 	pg.media = m
+	pg.mediaReads = [2]math32.Vector2{}
 	pg.checkedWidth = m.ctx.MediaWidth
 	pg.checkedHeight = m.ctx.MediaHeight
 }
@@ -783,9 +815,10 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 	if ps := pg.scripts; ps != nil {
 		// the document as the scripts have made it is read again
 		height := pg.viewportHeight()
+		why := fmt.Sprintf("the viewport is %.0fx%.0f (read for %.0fx%.0f)", width, height, ps.width, ps.height)
 		ps.engine.Post(func() {
 			ps.width, ps.height = width, height
-			ps.engine.Changed()
+			ps.engine.ChangedFor(why)
 		})
 		return
 	}
@@ -1087,6 +1120,14 @@ func LocationURL(loc string) string {
 func (pg *Page) viewportHeight() float32 {
 	if fr := core.AsFrame(pg.Parent); fr != nil {
 		if h, dp := fr.Geom.Size.Alloc.Content.Y, pg.pxDots(); h > 0 && dp > 0 {
+			if fr.HasScroll[math32.X] {
+				// with the height of its horizontal scrollbar, as for the
+				// width (see viewportWidth): otherwise the page was read
+				// again for the height without it, without which the
+				// scrollbar was not needed, and so on, endlessly, every
+				// 0.4s (as on volkskrant.nl)
+				h += math32.Ceil(fr.Styles.ScrollbarWidth.Dots)
+			}
 			return h / dp
 		}
 	}

@@ -1006,7 +1006,13 @@ func (e *Engine) Eval(src string) {
 // page is rendered again at the end of the task, as for the value of a
 // form control that is changed by the user.
 func (e *Engine) Changed() {
-	e.dirty, e.whole, e.wholeWhy = true, true, "a control was changed"
+	e.ChangedFor("a control was changed")
+}
+
+// ChangedFor records that the page is to be read again whole (in a task)
+// for the given reason (for the verbose console), as [Engine.Changed].
+func (e *Engine) ChangedFor(why string) {
+	e.dirty, e.whole, e.wholeWhy = true, true, why
 }
 
 // StateChanged records that the states of the given elements that select

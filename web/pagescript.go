@@ -1545,7 +1545,7 @@ func (pg *Page) showScripts(ps *pageScripts) {
 	})
 	if ps.pending {
 		ps.pending = false
-		ps.engine.Changed()
+		ps.engine.ChangedFor("the page is shown")
 	}
 }
 
