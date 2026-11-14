@@ -3254,7 +3254,7 @@
 	let resizeTimer = 0;
 	const checkResizes = () => {
 		resizeTimer = 0;
-		for (const ro of resizeObservers) ro._check(false);
+		for (const ro of resizeObservers) ro._check();
 		if (resizeObservers.size > 0) resizeTimer = setTimer(checkResizes, 250, [], false);
 	};
 	class ResizeObserver {
@@ -3263,18 +3263,24 @@
 			if (this._targets.indexOf(t) < 0) this._targets.push(t);
 			this._sizes.delete(t);
 			resizeObservers.add(this);
-			setTimer(() => this._check(true), 0, [], false);
+			setTimer(() => this._check(), 0, [], false);
 			if (!resizeTimer) resizeTimer = setTimer(checkResizes, 250, [], false);
 		}
 		// _check reports the targets whose size changed since they were
-		// last reported (all of those not yet reported, if first).
-		_check(first) {
+		// last reported (and those not yet reported), with their sizes as
+		// last laid out, without laying out the page, as browsers report
+		// them after their layouts (with getBoundingClientRect, the checks
+		// every 250ms laid out the page as nytimes.com changed it, 100ms
+		// each time); those that have not been laid out yet are reported
+		// once they are.
+		_check() {
 			const entries = [];
 			for (const t of this._targets) {
-				const r = t.getBoundingClientRect();
+				const b = t instanceof Node ? D.rectNow(t[ID]) : null;
+				if (!b) continue;
+				const r = new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]);
 				const last = this._sizes.get(t);
 				if (last && last[0] === r.width && last[1] === r.height) continue;
-				if (!last && !first) continue;
 				this._sizes.set(t, [r.width, r.height]);
 				const size = [{ inlineSize: r.width, blockSize: r.height }];
 				entries.push({ target: t, contentRect: r, borderBoxSize: size, contentBoxSize: size, devicePixelContentBoxSize: size });
