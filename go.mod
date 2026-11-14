@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.36
+	cogentcore.org/core v0.5.37
 	cogentcore.org/lab v0.2.17
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
@@ -20,6 +20,7 @@ require (
 	github.com/emersion/go-smtp v0.21.1
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
+	github.com/google/pprof v0.0.0-20230207041349-798e818bf904
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sgtdi/fswatcher v1.3.0
 	github.com/shirou/gopsutil/v3 v3.24.2
@@ -65,8 +66,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20260724235538-61af6e1e6971 // indirect
-	github.com/google/pprof v0.0.0-20230207041349-798e818bf904
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
@@ -99,6 +98,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
+	github.com/yuin/goldmark/v2 v2.1.16 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.28.0 // indirect
