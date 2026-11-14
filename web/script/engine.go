@@ -402,6 +402,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	})
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
+	e.defineIntl()
 	e.defineNavigator()
 	e.defineFrames()
 	e.defineWorkers()

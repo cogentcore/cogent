@@ -3346,6 +3346,17 @@
 		}
 
 		const pad = (n, w) => String(n).padStart(w, "0");
+		// zoneName returns the short name of the time zone at the time, as
+		// Chrome has them in English: the abbreviations of the zones of the
+		// US (as EST), UTC, and GMT with the offset for others (as GMT+1)
+		const zoneName = (tz, ms) => {
+			if (tz === "UTC") return "UTC";
+			const abbrev = D.tzAbbrev(tz, ms), off = D.tzOffset(tz, ms);
+			if (/^(America|US)\//.test(tz) && /^[A-Z]{3,4}$/.test(abbrev)) return abbrev;
+			if (isNaN(off) || off === 0) return "GMT";
+			const a = Math.abs(off);
+			return "GMT" + (off < 0 ? "-" : "+") + Math.floor(a / 60) + (a % 60 ? ":" + pad(a % 60, 2) : "");
+		};
 		class DateTimeFormat {
 			constructor(loc, opts) {
 				const o = Object.assign({}, opts || {});
@@ -3355,12 +3366,28 @@
 					const ts = { full: { hour: "numeric", minute: "2-digit", second: "2-digit" }, long: { hour: "numeric", minute: "2-digit", second: "2-digit" }, medium: { hour: "numeric", minute: "2-digit", second: "2-digit" }, short: { hour: "numeric", minute: "2-digit" } };
 					Object.assign(o, ds[o.dateStyle] || {}, ts[o.timeStyle] || {});
 				} else if (!fields.some(f => o[f] !== undefined)) Object.assign(o, { year: "numeric", month: "numeric", day: "numeric" });
+				// the time zone ("" for the local one), from the time zone
+				// database of Go (intl.go); a name of a zone that it does
+				// not have is the local one, if it looks like one (as on
+				// platforms without the database)
+				this._tz = "";
+				if (o.timeZone !== undefined) {
+					const name = String(o.timeZone);
+					this._tz = D.tzCanonical(name);
+					if (!this._tz && !/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)+$/.test(name)) throw new RangeError("Invalid time zone specified: " + name);
+					o.timeZone = this._tz || name;
+				}
 				this._o = o;
 			}
 			formatToParts(d) {
 				d = d === undefined ? new Date() : new Date(typeof d === "number" ? d : d.valueOf());
-				const o = this._o, utc = o.timeZone === "UTC";
-				const get = f => utc ? d["getUTC" + f]() : d["get" + f]();
+				if (isNaN(d.valueOf())) throw new RangeError("Invalid time value");
+				const o = this._o, tz = this._tz;
+				// the fields in the time zone: those of UTC of the time
+				// moved by its offset, or the local ones
+				const off = tz ? D.tzOffset(tz, d.valueOf()) : NaN;
+				const zd = isNaN(off) ? d : new Date(d.valueOf() + off * 60000);
+				const get = f => isNaN(off) ? d["get" + f]() : zd["getUTC" + f]();
 				const parts = [];
 				const lit = v => parts.push({ type: "literal", value: v });
 				const textMonth = o.month === "long" || o.month === "short" || o.month === "narrow";
@@ -3387,13 +3414,13 @@
 					if (o.second) ts.push({ type: "second", value: pad(get("Seconds"), 2) });
 					ts.forEach((p, i) => { if (i) lit(":"); parts.push(p); });
 					if (o.hour && h12 !== null) { lit(" "); parts.push({ type: "dayPeriod", value: h24 < 12 ? "AM" : "PM" }); }
-					if (o.timeZoneName) { lit(" "); parts.push({ type: "timeZoneName", value: utc ? "UTC" : "local" }); }
+					if (o.timeZoneName) { lit(" "); parts.push({ type: "timeZoneName", value: zoneName(tz || D.localZone(), d.valueOf()) }); }
 				}
 				return parts;
 			}
 			format(d) { return this.formatToParts(d).map(p => p.value).join(""); }
 			formatRange(a, b) { return this.format(a) + " – " + this.format(b); }
-			resolvedOptions() { return Object.assign({ locale, calendar: "gregory", numberingSystem: "latn", timeZone: this._o.timeZone || "UTC" }, this._o); }
+			resolvedOptions() { return Object.assign({ locale, calendar: "gregory", numberingSystem: "latn" }, this._o, { timeZone: this._tz || this._o.timeZone || D.localZone() }); }
 			static supportedLocalesOf() { return supportedLocalesOf(); }
 		}
 
@@ -3501,6 +3528,28 @@
 		value: function toLocaleString(locales, options) { return new Intl.NumberFormat(locales, options).format(Number(this)); },
 		writable: true, configurable: true,
 	});
+	// and those of dates of Intl.DateTimeFormat, with its time zones (goja
+	// had only the local one), with the fields that browsers add when none
+	// of those of the kind are given (as ToDateTimeOptions)
+	{
+		const dateFields = ["weekday", "year", "month", "day"], timeFields = ["dayPeriod", "hour", "minute", "second", "fractionalSecondDigits"];
+		const define = (name, required, defaults) => Object.defineProperty(Date.prototype, name, {
+			value: function (locales, options) {
+				if (isNaN(this.valueOf())) return "Invalid Date";
+				const o = Object.assign({}, options || {});
+				const check = required === "date" ? dateFields : required === "time" ? timeFields : dateFields.concat(timeFields);
+				if (!check.some(f => o[f] !== undefined) && o.dateStyle === undefined && o.timeStyle === undefined) {
+					if (defaults !== "time") Object.assign(o, { year: "numeric", month: "numeric", day: "numeric" });
+					if (defaults !== "date") Object.assign(o, { hour: "numeric", minute: "2-digit", second: "2-digit" });
+				}
+				return new Intl.DateTimeFormat(locales, o).format(this);
+			},
+			writable: true, configurable: true,
+		});
+		define("toLocaleString", "any", "all");
+		define("toLocaleDateString", "date", "date");
+		define("toLocaleTimeString", "time", "time");
+	}
 
 	// ---- MessageChannel ----
 
@@ -4384,6 +4433,26 @@
 		}
 		for (const r of roots) {
 			try { Object.setPrototypeOf(r, proxy); } catch (e) { }
+		}
+	}
+
+	// The declarative shadow roots of the document (templates with a
+	// shadowrootmode), which are shadow roots of their parents, with their
+	// contents, as browsers parse them: they were templates, which React
+	// found where it hydrated the elements of their hosts (on nytimes.com,
+	// a template in each nyt-betamax), so it rendered the page again (error
+	// 418). Those in them are attached as they are moved, in order.
+	if (!D.isWorker() && document) {
+		for (const t of document.querySelectorAll("template[shadowrootmode]")) {
+			const host = t.parentNode, mode = t.getAttribute("shadowrootmode");
+			if (!host || host.nodeType !== 1 || (mode !== "open" && mode !== "closed") || shadows.has(host)) continue;
+			try {
+				const sr = host.attachShadow({ mode, delegatesFocus: t.hasAttribute("shadowrootdelegatesfocus") });
+				const content = templateContents.get(t);
+				const from = content || t;
+				while (from.firstChild) sr.appendChild(from.firstChild);
+				t.remove();
+			} catch (e) { }
 		}
 	}
 

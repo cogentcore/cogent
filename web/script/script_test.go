@@ -1619,3 +1619,32 @@ func TestProxyTrapArgs(t *testing.T) {
 		delete h.apply;
 		JSON.stringify(kept) + " " + p(2) + " " + (new Proxy({}, {}) instanceof Object)`))
 }
+
+func TestIntlTimeZones(t *testing.T) {
+	// times are formatted in the time zones of their options (nytimes.com
+	// formats its times in that of New York, as its server, for React)
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "11/14/2026, 9:52:00 AM|11/14/2026|9:52:00 AM|9:52 AM EST|2:52 PM UTC|1 PM GMT-1|UTC|America/New_York|RangeError|Invalid Date|true", run(t, e, `
+		const d = new Date(Date.UTC(2026, 10, 14, 14, 52));
+		const ny = { timeZone: "America/New_York" };
+		[d.toLocaleString("en-US", ny), d.toLocaleDateString("en-US", ny), d.toLocaleTimeString("en-US", ny),
+			new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "utc", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "Atlantic/Azores", hour: "numeric", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "Etc/UTC" }).resolvedOptions().timeZone,
+			new Intl.DateTimeFormat("en-US", ny).resolvedOptions().timeZone,
+			(() => { try { new Intl.DateTimeFormat("en-US", { timeZone: "nope" }); return "no error"; } catch (err) { return err.name; } })(),
+			new Date(NaN).toLocaleString(),
+			typeof new Intl.DateTimeFormat().resolvedOptions().timeZone === "string"].join("|")`))
+}
+
+func TestDeclarativeShadowRoots(t *testing.T) {
+	// templates with a shadowrootmode are shadow roots of their parents, as
+	// browsers parse them (React found them where it hydrated the elements
+	// of nytimes.com, and rendered the page again)
+	e, _ := testEngine(t, `<html><body><x-a id="a"><template shadowrootmode="open"><b>s</b><x-c id="c"><template shadowrootmode="closed"><i>n</i></template></x-c><slot></slot></template><x-b></x-b></x-a><template id="t"><p>x</p></template></body></html>`, nil)
+	assert.Equal(t, `1|X-B|<b>s</b><x-c id="c"></x-c><slot></slot>|null|1`, run(t, e, `
+		const a = document.getElementById("a");
+		[a.childNodes.length, a.firstChild.nodeName, a.shadowRoot.innerHTML, String(a.shadowRoot.querySelector("x-c").shadowRoot),
+			document.getElementById("t").content.childNodes.length].join("|")`))
+}
