@@ -1693,3 +1693,20 @@ func TestFetchTransport(t *testing.T) {
 type roundTripFunc func(r *http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestSlotAssignment(t *testing.T) {
+	// the nodes of slots, and the slots of nodes, by their slot attributes,
+	// flattened through the slots in them (the dialogs of reddit.com found
+	// their templates through them)
+	e, _ := testEngine(t, `<html><body><x-a id="a"><template id="t">c</template><b slot="s">b</b>t</x-a></body></html>`, nil)
+	assert.Equal(t, "TEMPLATE,#text|B|TEMPLATE|SLOT|default|true|I|0", run(t, e, `
+		const a = document.getElementById("a");
+		const r = a.attachShadow({ mode: "open" });
+		r.innerHTML = '<slot id="d"></slot><slot name="s"></slot><slot name="none"><i>f</i></slot>';
+		const [d, s, none] = r.querySelectorAll("slot");
+		[d.assignedNodes().map(n => n.nodeName).join(","), s.assignedNodes().map(n => n.nodeName).join(","),
+			d.assignedElements()[0].tagName, document.getElementById("t").assignedSlot.tagName,
+			document.getElementById("t").assignedSlot === d ? "default" : "other",
+			a.querySelector("b").assignedSlot === s,
+			none.assignedNodes({ flatten: true }).map(n => n.nodeName).join(","), none.assignedNodes().length].join("|")`))
+}

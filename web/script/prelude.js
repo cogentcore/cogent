@@ -632,6 +632,12 @@
 		get baseURI() { return D.baseURL(this[ID]); }
 		hasChildNodes() { return D.first(this[ID]) !== 0; }
 		getRootNode() { let n = this; while (n.parentNode) n = n.parentNode; return n; }
+		// the slot of the shadow root of its parent that it is in, if any
+		// (elements and text are slotted)
+		get assignedSlot() {
+			const p = this.parentNode, sh = p && shadows.get(p);
+			return sh && (this.nodeType === 1 || this.nodeType === 3) ? assignedSlot(sh.root, this) : null;
+		}
 		contains(o) { for (let n = o; n; n = n.parentNode) if (n === this) return true; return false; }
 		appendChild(c) { D.insert(this[ID], idOf(c), 0); return c; }
 		insertBefore(c, ref) { D.insert(this[ID], idOf(c), ref ? idOf(ref) : 0); return c; }
@@ -1521,7 +1527,35 @@
 	const HTMLEmbedElement = elementClass(["embed"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["type", "width", "height"]); });
 	const HTMLObjectElement = elementClass(["object"], HTMLElement, cls => { reflectURL(cls, ["data"]); reflect(cls, ["type", "name", "width", "height"]); });
 	const HTMLParamElement = elementClass(["param"], HTMLElement, cls => { reflect(cls, ["name", "value"]); });
-	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	// The nodes of a slot are the children of the host of its shadow root
+	// that are assigned to it (by their slot attributes, see assignedSlot),
+	// or, flattened, its own children if there are none, with the nodes of
+	// the slots in them (the dialogs and menus of reddit.com, built of
+	// web components, found their templates through the slots that they
+	// were in, and threw without them).
+	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => {
+		reflect(cls, ["name"]);
+		cls.prototype.assignedNodes = function (opts) {
+			let r = this;
+			while (r.parentNode) r = r.parentNode;
+			const hid = r[ID] !== undefined && shadowHosts.get(r[ID]);
+			const host = hid ? wrap(hid) : null, sh = host && shadows.get(host);
+			let out = [];
+			if (sh && sh.root === r) {
+				for (const k of host.childNodes) {
+					if ((k.nodeType === 1 || k.nodeType === 3) && assignedSlot(r, k) === this) out.push(k);
+				}
+			}
+			if (opts && opts.flatten) {
+				if (!out.length) out = [...this.childNodes];
+				out = out.flatMap(k => k instanceof HTMLSlotElement ? k.assignedNodes(opts) : [k]);
+			}
+			return out;
+		};
+		cls.prototype.assignedElements = function (opts) {
+			return this.assignedNodes(opts).filter(k => k.nodeType === 1);
+		};
+	});
 	const HTMLFontElement = elementClass(["font"], HTMLElement, cls => { reflect(cls, ["color", "face", "size"]); });
 	const HTMLOptionElement = elementClass(["option"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "value", { get() { const v = this.getAttribute("value"); return v === null ? this.textContent.trim() : v; }, set(v) { this.setAttribute("value", v); } });
