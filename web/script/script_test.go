@@ -1554,3 +1554,21 @@ func TestInsertRemoveNoChange(t *testing.T) {
 	r = next()
 	assert.Equal(t, []string{"body#"}, r.children, "the body has a new child")
 }
+
+// TestPostMessageCycles tests that messages with cycles and objects that
+// are in them more than once are cloned as such (as the structured clone
+// of browsers), not overflowing the stack (as for a message of npr.org).
+func TestPostMessageCycles(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `
+		window.got = "";
+		const a = { name: "a" };
+		a.self = a;
+		window.addEventListener("message", ev => {
+			const d = ev.data;
+			got = [d.a.self === d.a, d.list[0] === d.list[1], d.list[0] === d.a, d.m.get("k") === d.a, d.a.name].join(" ");
+		});
+		window.postMessage({ a, list: [a, a], m: new Map([["k", a]]) }, "*");`)
+	assert.Eventually(t, func() bool { return run(t, e, `got`) != "" }, 3*time.Second, 10*time.Millisecond)
+	assert.Equal(t, "true true true true a", run(t, e, `got`))
+}

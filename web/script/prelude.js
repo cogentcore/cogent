@@ -3661,7 +3661,12 @@
 	// dates, regular expressions, maps, sets, undefined values, and
 	// numbers that JSON has not.
 	const cloneError = () => new DOMException("could not be cloned", "DataCloneError");
-	function cloneEncode(v) {
+	// The objects, arrays, maps, and sets of a message are numbered as they
+	// are first encoded (in seen), and those that are in it again (as in a
+	// cycle, which overflowed the stack, as for a message of npr.org) are
+	// references to them ($c "ref"), which cloneDecode makes the same
+	// objects (in refs, in the same order).
+	function cloneEncode(v, seen) {
 		switch (typeof v) {
 			case "undefined": return { $c: "u" };
 			case "bigint": return { $c: "b", v: String(v) };
@@ -3675,19 +3680,35 @@
 		if (ArrayBuffer.isView(v)) return { $c: "ta", t: v.constructor.name, v: Array.from(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
 		if (v instanceof Date) return { $c: "d", v: v.getTime() };
 		if (v instanceof RegExp) return { $c: "r", s: v.source, f: v.flags };
-		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [cloneEncode(k), cloneEncode(x)]) };
-		if (v instanceof Set) return { $c: "s", v: Array.from(v, cloneEncode) };
 		if (v instanceof Error) return { $c: "e", n: v.name, m: v.message };
-		if (Array.isArray(v)) return v.map(cloneEncode);
 		if (v instanceof Node) throw cloneError();
+		seen = seen || new Map();
+		if (seen.has(v)) return { $c: "ref", i: seen.get(v) };
+		seen.set(v, seen.size);
+		const enc = x => cloneEncode(x, seen);
+		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [enc(k), enc(x)]) };
+		if (v instanceof Set) return { $c: "s", v: Array.from(v, x => enc(x)) };
+		if (Array.isArray(v)) return Array.from(v, x => enc(x));
 		const o = {};
-		for (const k of Object.keys(v)) o[k] = cloneEncode(v[k]);
+		for (const k of Object.keys(v)) o[k] = enc(v[k]);
 		return "$c" in o ? { $c: "o", v: o } : o;
 	}
-	function cloneDecode(v) {
+	function cloneDecode(v, refs) {
 		if (v === null || typeof v !== "object") return v;
-		if (Array.isArray(v)) return v.map(cloneDecode);
-		const decodeObject = o => { const r = {}; for (const k of Object.keys(o)) r[k] = cloneDecode(o[k]); return r; };
+		refs = refs || [];
+		const dec = x => cloneDecode(x, refs);
+		if (Array.isArray(v)) {
+			const r = [];
+			refs.push(r);
+			for (const x of v) r.push(dec(x));
+			return r;
+		}
+		const decodeObject = o => {
+			const r = {};
+			refs.push(r);
+			for (const k of Object.keys(o)) r[k] = dec(o[k]);
+			return r;
+		};
 		switch (v.$c) {
 			case undefined: return decodeObject(v);
 			case "u": return undefined;
@@ -3702,9 +3723,20 @@
 			}
 			case "d": return new Date(v.v);
 			case "r": return new RegExp(v.s, v.f);
-			case "m": return new Map(v.v.map(([k, x]) => [cloneDecode(k), cloneDecode(x)]));
-			case "s": return new Set(v.v.map(cloneDecode));
+			case "m": {
+				const m = new Map();
+				refs.push(m);
+				for (const [k, x] of v.v) m.set(dec(k), dec(x));
+				return m;
+			}
+			case "s": {
+				const set = new Set();
+				refs.push(set);
+				for (const x of v.v) set.add(dec(x));
+				return set;
+			}
 			case "e": { const C = g[v.n] || Error; const e = new C(v.m); return e; }
+			case "ref": return refs[v.i];
 			case "o": return decodeObject(v.v);
 		}
 		return decodeObject(v);

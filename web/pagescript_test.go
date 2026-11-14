@@ -1489,3 +1489,36 @@ func TestScriptsListenersAlreadyWired(t *testing.T) {
 		assert.Equal(t, before, ps.renders+ps.rereads+ps.restyles, "not rendered again")
 	})
 }
+
+// TestScriptsYieldLock tests that a task of the scripts of a page that
+// gets the boxes of elements without pause (as the slideshows of npr.org
+// as they animate, for seconds) lets the app lock the page meanwhile (see
+// script.Engine.lockTask).
+func TestScriptsYieldLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				const p = document.getElementById("p");
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) { p.getBoundingClientRect(); }
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		time.Sleep(100 * time.Millisecond)
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task got boxes")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}

@@ -282,6 +282,8 @@ type Engine struct {
 	lockUses  int
 	lockUsed  time.Time
 	lockTimer *time.Timer
+	// lockedAt is when the lock of the task was taken (see lockYield).
+	lockedAt time.Time
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
@@ -558,10 +560,22 @@ func (e *Engine) lockTask() bool {
 		return !e.lockLost
 	}
 	e.lockMu.Lock()
-	if e.taskLocked {
+	if e.taskLocked && (e.lockUses > 0 || time.Since(e.lockedAt) < lockYield) {
 		e.lockUses++
 		e.lockMu.Unlock()
 		return !e.lockLost
+	}
+	if e.taskLocked {
+		// held for lockYield by uses that follow each other (as of a
+		// script that gets the boxes of elements as it animates them, for
+		// seconds on npr.org): it is released for the app to take it, and
+		// taken again
+		if e.lockTimer != nil {
+			e.lockTimer.Stop()
+			e.lockTimer = nil
+		}
+		e.taskUnlock()
+		e.taskLocked = false
 	}
 	e.lockMu.Unlock()
 	if e.lockLost || !e.taskLock() {
@@ -570,10 +584,16 @@ func (e *Engine) lockTask() bool {
 	}
 	e.lockMu.Lock()
 	e.taskLocked = true
+	e.lockedAt = time.Now()
 	e.lockUses++
 	e.lockMu.Unlock()
 	return true
 }
+
+// lockYield is how long the lock of a task is held for uses of it that
+// follow each other before it is released between them, for the app to
+// take it (see [Engine.lockTask]).
+const lockYield = 50 * time.Millisecond
 
 // lockIdle is how long the lock of a task is kept without being used,
 // for the next uses of it (as of scripts that get the boxes of many
