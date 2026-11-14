@@ -188,3 +188,26 @@ func TestPageAudioControls(t *testing.T) {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "ended") }), pageTexts(b, pg))
 	})
 }
+
+// TestPageAudioAutoplay tests that an audio element of a page with autoplay
+// and no controls (which has no box), which no script uses, plays, as in
+// browsers.
+func TestPageAudioAutoplay(t *testing.T) {
+	srv := audioServer(t, `<html><body><p>page</p><audio autoplay muted src="/tone.mp3"></audio><script>window.x = 1</script></body></html>`)
+	defer srv.Close()
+	openAudioPage(t, srv, func(b *core.Body, pg *Page, eval func(src string) any) {
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			for _, pv := range pg.videos {
+				pv.mu.Lock()
+				pb := pv.playback
+				pv.mu.Unlock()
+				if pv.audio() && pb != nil && pb.IsPlaying() {
+					return true
+				}
+			}
+			return false
+		}), "the audio plays")
+	})
+}

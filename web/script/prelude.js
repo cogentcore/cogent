@@ -4429,6 +4429,16 @@
 		g.dispatchEvent(new Event("resize"));
 	};
 
+	// the audio elements of the page that have autoplay (and no controls,
+	// without which they have no box that the page plays as it is read)
+	// are loaded as the page is parsed, so that the player plays them, as
+	// browsers do (scripts load the others as they use them)
+	if (mediaPlayer && !D.isWorker() && document) {
+		document.addEventListener("DOMContentLoaded", () => {
+			for (const a of document.querySelectorAll("audio[autoplay]:not([controls])")) a._mediaLoad();
+		});
+	}
+
 	// scrolled dispatches the scroll event of the page, and checks the
 	// intersections of the targets of the IntersectionObservers.
 	D.scrolled = scrolled;
