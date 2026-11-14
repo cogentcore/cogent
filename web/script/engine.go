@@ -205,6 +205,9 @@ type Engine struct {
 	// if the page has not been rendered since (see [Engine.TakeFocus]).
 	focusRequest *html.Node
 
+	// scrollPending is whether a task of Scrolled has not run yet.
+	scrollPending atomic.Bool
+
 	// shadowRoots has the shadow roots (fragments) of the elements that
 	// scripts have attached them to, for [Engine.Unassigned].
 	shadowRoots map[*html.Node]*html.Node
@@ -274,6 +277,22 @@ type Engine struct {
 	taskUnlock func()
 	taskLocked bool
 	lockLost   bool
+	// lockMu guards taskLocked, lockUses, lockUsed, and lockTimer, as the
+	// lock of a task is released by a timer (see Engine.lockTask):
+	// lockUses is the number of calls of the task that use it now, and
+	// lockUsed when the last of them ended.
+	lockMu    sync.Mutex
+	lockUses  int
+	lockUsed  time.Time
+	lockTimer *time.Timer
+	// lockedAt is when the lock of the task was taken (see lockYield),
+	// lockBy the native function that took it, lockBusy how long it has
+	// been used by calls (not idle) since, as of useStart, and nativeName the
+	// native function that is running, for the verbose console (see
+	// Engine.traceHold).
+	lockedAt, useStart time.Time
+	lockBy, nativeName string
+	lockBusy           time.Duration
 	// domChanges is the number of changes of the document, by which the
 	// iframe elements of it, frameNodes, are found again when it has
 	// changed since framesAt (minus one; see [Engine.forFrames]).
@@ -386,6 +405,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 	})
 	e.jsDOM = e.vm.NewObject()
 	e.defineDOM()
+	e.defineIntl()
 	e.defineNavigator()
 	e.defineFrames()
 	e.defineWorkers()
@@ -402,6 +422,7 @@ func New(doc *html.Node, opts Options) (*Engine, error) {
 		*dst = f
 	}
 	go e.loop()
+	e.watchActivity()
 	return e, nil
 }
 
@@ -478,6 +499,7 @@ func (e *Engine) Close() {
 		return
 	}
 	e.closed = true
+	defer e.unwatchActivity()
 	for _, t := range e.timers {
 		t.Stop()
 	}
@@ -510,13 +532,15 @@ func (e *Engine) loop() {
 			// The task runs without the lock of the page, which it takes
 			// only when it needs the widgets of the page (see lockTask), so
 			// that the app is responsive while scripts run.
-			e.taskLock, e.taskUnlock, e.taskLocked = lock, unlock, false
+			e.lockMu.Lock()
+			e.taskLock, e.taskUnlock, e.taskLocked, e.lockUses = lock, unlock, false, 0
+			e.lockMu.Unlock()
 			e.runTask(task)
-			if e.taskLocked && !e.lockLost {
-				unlock()
-			}
+			e.unlockTask()
 			gone := e.lockLost
+			e.lockMu.Lock()
 			e.taskLock, e.taskUnlock, e.taskLocked, e.lockLost = nil, nil, false, false
+			e.lockMu.Unlock()
 			if gone {
 				e.done()
 				go e.Close() // the page is gone
@@ -534,20 +558,159 @@ func (e *Engine) InTask() bool {
 	return e.inTask
 }
 
-// lockTask locks the page for the task that is running, until its end,
-// if it is not locked yet, for what needs the widgets of the page (as the
-// boxes of elements), returning false if the page is gone. A task runs
+// lockTask locks the page for the task that is running, if it is not
+// locked yet, for what needs the widgets of the page (as the boxes of
+// elements), returning false if the page is gone. It is a use of the lock
+// by the native function that calls it (see [Engine.native]), which ends
+// when the function returns; the lock is released once it has not been
+// used for [lockIdle], as the scripts run on (a task of nytimes.com that
+// got the box of an element held the page to its end, for seconds, in
+// which nothing responded), or else at the end of the task. A task runs
 // without the lock until it needs it (see loop).
 func (e *Engine) lockTask() bool {
-	if e.taskLock == nil || e.taskLocked {
+	if e.taskLock == nil {
 		return !e.lockLost
 	}
-	if !e.taskLock() {
+	e.lockMu.Lock()
+	if e.taskLocked && (e.lockUses > 0 || time.Since(e.lockedAt) < lockYield) {
+		if e.lockUses == 0 {
+			e.useStart = time.Now()
+		}
+		e.lockUses++
+		e.lockMu.Unlock()
+		return !e.lockLost
+	}
+	if e.taskLocked {
+		e.traceHold()
+		// held for lockYield by uses that follow each other (as of a
+		// script that gets the boxes of elements as it animates them, for
+		// seconds on npr.org): it is released for the app to take it, and
+		// taken again
+		if e.lockTimer != nil {
+			e.lockTimer.Stop()
+			e.lockTimer = nil
+		}
+		e.taskUnlock()
+		e.taskLocked = false
+	}
+	e.lockMu.Unlock()
+	if e.lockLost || !e.taskLock() {
 		e.lockLost = true
 		return false
 	}
+	e.lockMu.Lock()
 	e.taskLocked = true
+	e.lockedAt, e.useStart, e.lockBusy, e.lockBy = time.Now(), time.Now(), 0, e.nativeName
+	e.lockUses++
+	e.lockMu.Unlock()
 	return true
+}
+
+// lockYield is how long the lock of a task is held for uses of it that
+// follow each other before it is released between them, for the app to
+// take it (see [Engine.lockTask]).
+const lockYield = 50 * time.Millisecond
+
+// lockIdle is how long the lock of a task is kept without being used,
+// for the next uses of it (as of scripts that get the boxes of many
+// elements), before it is released (see [Engine.lockTask]).
+const lockIdle = 20 * time.Millisecond
+
+// native returns the given native function of the scripts, ending the uses
+// of the lock of the task that it makes (see [Engine.lockTask]).
+func (e *Engine) native(name string, f func(call goja.FunctionCall) goja.Value) func(call goja.FunctionCall) goja.Value {
+	return func(call goja.FunctionCall) goja.Value {
+		e.lockMu.Lock()
+		before := e.lockUses
+		prev := e.nativeName
+		e.nativeName = name
+		e.lockMu.Unlock()
+		defer func() {
+			e.lockMu.Lock()
+			e.nativeName = prev
+			e.lockMu.Unlock()
+			e.endLockUses(before)
+		}()
+		return f(call)
+	}
+}
+
+// longHold is how long the lock of a task is held for it to be in the
+// verbose console with what held it (see [Engine.traceHold]).
+const longHold = time.Second
+
+// traceHold reports the hold of the lock of the task that ends, if it was
+// long, in the verbose console: the native function that took it, and how
+// long calls used it (as for a page of npr.org that was held for 5s by a
+// task, which was not otherwise in the console). It is called with lockMu
+// held, as the lock is released.
+func (e *Engine) traceHold() {
+	held := time.Since(e.lockedAt)
+	if held < longHold || !e.tracing() {
+		return
+	}
+	busy := e.lockBusy
+	if e.lockUses > 0 {
+		busy += time.Since(e.useStart)
+	}
+	by := e.lockBy
+	if by == "" {
+		by = "the engine"
+	}
+	go e.tracef("the page was held for %v from %s, %v of it in calls of the scripts that use it", held.Round(time.Millisecond), by, busy.Round(time.Millisecond))
+}
+
+// endLockUses ends the uses of the lock of the task beyond the given
+// number, and releases it once it has not been used for [lockIdle].
+func (e *Engine) endLockUses(n int) {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	if e.lockUses <= n {
+		return
+	}
+	e.lockUses = n
+	if n > 0 {
+		return
+	}
+	e.lockUsed = time.Now()
+	e.lockBusy += e.lockUsed.Sub(e.useStart)
+	if e.lockTimer == nil && e.taskLocked {
+		e.lockTimer = time.AfterFunc(lockIdle, e.releaseIdleLock)
+	}
+}
+
+// releaseIdleLock releases the lock of the task if it has not been used
+// for [lockIdle] (see [Engine.lockTask]), in the goroutine of a timer.
+func (e *Engine) releaseIdleLock() {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	e.lockTimer = nil
+	if !e.taskLocked || e.lockUses > 0 || e.taskUnlock == nil {
+		return
+	}
+	if idle := time.Since(e.lockUsed); idle < lockIdle {
+		e.lockTimer = time.AfterFunc(lockIdle-idle, e.releaseIdleLock)
+		return
+	}
+	e.traceHold()
+	e.taskUnlock()
+	e.taskLocked = false
+}
+
+// unlockTask releases the lock of the task, if it is held (at its end).
+func (e *Engine) unlockTask() {
+	e.lockMu.Lock()
+	defer e.lockMu.Unlock()
+	if e.lockTimer != nil {
+		e.lockTimer.Stop()
+		e.lockTimer = nil
+	}
+	if e.taskLocked && !e.lockLost && e.taskUnlock != nil {
+		e.traceHold()
+		e.taskUnlock()
+	}
+	e.taskLocked = false
+	e.lockUses = 0
 }
 
 // runTask runs the given task, within the time limit of a task.
@@ -643,19 +806,34 @@ func (e *Engine) renderIfDirty(lock func() bool, unlock func()) {
 		e.tracef("reading the page whole: %s", wholeWhy)
 	}
 	e.dirty = false
-	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && e.taskLocked {
+	e.lockMu.Lock()
+	locked := e.taskLocked
+	e.lockMu.Unlock()
+	if lock == nil && e.taskLock != nil && e.taskUnlock != nil && locked {
 		// A render forced by a script (for the box of an element), in its
 		// task, with the lock held: the page is read without it (as for
 		// the renders after tasks), as no script runs meanwhile, so that it
 		// is responsive (it was not for seconds on theguardian.com), and
 		// it is locked again to show the new widgets (to the end of the
 		// task), unless the page is gone.
+		e.lockMu.Lock()
+		if e.lockTimer != nil {
+			e.lockTimer.Stop()
+			e.lockTimer = nil
+		}
+		e.traceHold()
 		e.taskUnlock()
 		e.taskLocked = false
+		uses := e.lockUses
+		e.lockUses = 0
+		e.lockMu.Unlock()
 		commit := e.opts.Render()
 		if !e.lockTask() {
 			return
 		}
+		e.lockMu.Lock()
+		e.lockUses = uses // (those of the calls that render it)
+		e.lockMu.Unlock()
 		if commit != nil {
 			commit()
 		}
@@ -997,6 +1175,20 @@ func (e *Engine) Resized() {
 	e.Post(func() { e.callPrelude("resized") })
 }
 
+// Scrolled fires the scroll event of the page in a task, and checks the
+// intersections of the targets of its IntersectionObservers, as when the
+// user scrolls it (as the feeds of reddit.com load more as their ends are
+// shown). The scrolls before the task runs have one task.
+func (e *Engine) Scrolled() {
+	if e.scrollPending.Swap(true) {
+		return
+	}
+	e.Post(func() {
+		e.scrollPending.Store(false)
+		e.callPrelude("scrolled")
+	})
+}
+
 // Eval runs the given JavaScript in a task (as for a javascript: URL).
 func (e *Engine) Eval(src string) {
 	e.Post(func() { e.run("javascript: URL", src) })
@@ -1006,7 +1198,13 @@ func (e *Engine) Eval(src string) {
 // page is rendered again at the end of the task, as for the value of a
 // form control that is changed by the user.
 func (e *Engine) Changed() {
-	e.dirty, e.whole, e.wholeWhy = true, true, "a control was changed"
+	e.ChangedFor("a control was changed")
+}
+
+// ChangedFor records that the page is to be read again whole (in a task)
+// for the given reason (for the verbose console), as [Engine.Changed].
+func (e *Engine) ChangedFor(why string) {
+	e.dirty, e.whole, e.wholeWhy = true, true, why
 }
 
 // StateChanged records that the states of the given elements that select

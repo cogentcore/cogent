@@ -95,8 +95,6 @@ func TestConsoleVerbose(t *testing.T) {
 				const b = typeof notDefinedAnywhere;
 				const c = document.body.notAProperty;
 				window.postMessage({ hello: "there" }, "*");
-				// (a task that holds the page, as it gets a box, for long)
-				setTimeout(() => { document.body.getBoundingClientRect(); const t = Date.now(); while (Date.now() - t < 150) {} }, 10);
 				</script></body></html>`,
 			"/data.json": `{"a": 1}`,
 		})
@@ -112,15 +110,17 @@ func TestConsoleVerbose(t *testing.T) {
 				return
 			}
 			assert.True(t, ok, all)
-			assert.Contains(t, all, "DEBUG: page https://example.com/: 1 scripts", "the page, as the first message")
+			assert.Regexp(t, `DEBUG: \+\d+\.\d{3}s page https://example.com/: 1 scripts`, all, "the page, as the first message, with the time since it started opening")
+			assert.Contains(t, all, "first read of the page took")
+			assert.Contains(t, all, "first render of the page")
 			assert.Contains(t, all, "GET https://example.com/data.json (0 bytes): 200, 8 bytes")
 			assert.Contains(t, all, "missing: navigator.notInBrowsers")
 			assert.Contains(t, all, "missing: window.notDefinedAnywhere")
 			assert.Contains(t, all, "missing: <body>.notAProperty")
 			assert.Contains(t, all, `postMessage to https://example.com: {"hello":"there"}`)
-			assert.True(t, eventually(func() bool {
-				return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "a task of the scripts held the page for")
-			}), "a long task")
+			// (tasks that hold the page for long are in it too, but those
+			// that get boxes without pause let the app have it every 50ms;
+			// see TestScriptsYieldLock)
 		})
 	}
 	Settings.VerboseConsole = false
@@ -150,7 +150,7 @@ func TestConsolePanelVerbose(t *testing.T) {
 		b.AsyncLock()
 		br.ShowConsole(true)
 		b.AsyncUnlock()
-		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "DEBUG: GET https://example.com/data.txt") }), consoleTexts(b, br))
+		assert.True(t, eventually(func() bool { return strings.Contains(consoleTexts(b, br), "s GET https://example.com/data.txt") }), consoleTexts(b, br))
 	})
 }
 

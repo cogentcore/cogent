@@ -88,6 +88,19 @@ func (fl *Files) OpenConsoleTab() { //types:add
 	ed.SetReadOnly(true)
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
+		// SetLines sets the line numbers from the editor settings
+		if ed.Lines != nil {
+			ed.Lines.Settings.LineNumbers = false
+		}
 	})
+	// (its Clear, in its context menu and with the Kill key, Command+K on
+	// macOS, is that of read-only editors)
 	ts.Update()
+}
+
+// Clear clears all of the output in the console.
+func (cn *Console) Clear() {
+	if cn.Lines != nil {
+		cn.Lines.SetText(nil)
+	}
 }

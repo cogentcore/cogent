@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 // resourceCache caches the resources of a page (its HTML, style sheets and
@@ -29,6 +31,11 @@ type resourceCache struct {
 
 	mu    sync.Mutex
 	items map[string]*cachedResource
+
+	// trace, if set, is called with each resource that is gotten (not
+	// from the cache), with how long getting it took, for the verbose
+	// console.
+	trace atomic.Pointer[func(url string, status, size int, d time.Duration, typ string, err error)]
 }
 
 // cachedResource is a resource in a [resourceCache].
@@ -46,8 +53,17 @@ func (rc *resourceCache) Get(url string) (*http.Response, error) {
 	r := rc.items[url]
 	rc.mu.Unlock()
 	if r == nil {
+		start := time.Now()
 		resp, err := rc.get(url)
+		traced := func(status, size int, typ string, err error) {
+			if t := rc.trace.Load(); t != nil {
+				(*t)(url, status, size, time.Since(start), typ, err)
+			}
+		}
 		if err != nil {
+			if !errors.Is(err, errStopped) {
+				traced(0, 0, "", err)
+			}
 			if errors.Is(err, errStopped) {
 				return nil, err
 			}
@@ -64,6 +80,7 @@ func (rc *resourceCache) Get(url string) (*http.Response, error) {
 		}
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
+		traced(resp.StatusCode, len(body), resp.Header.Get("Content-Type"), err)
 		if err != nil {
 			return nil, err
 		}

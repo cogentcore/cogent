@@ -204,7 +204,6 @@ func (cv *Code) updatePreviewPanel() {
 func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 	if exePath != "" {
 		cv.Settings.RunExec = exePath
-		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(exePath)))
 		if !cv.Settings.RunExecIsExec() {
 			core.MessageDialog(cv, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}

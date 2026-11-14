@@ -105,7 +105,7 @@ func (e *Engine) defineNet() {
 	vm := e.vm
 	d := e.jsDOM
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
-		d.Set(name, f)
+		d.Set(name, e.native(name, f))
 	}
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
 	e.setMediaFuncs(set)
@@ -448,6 +448,9 @@ func normalizeURL(pu *neturl.URL) {
 	pu.Host = host
 }
 
+// LogURL returns the given URL shortened for logs (see [logURL]).
+func LogURL(u string) string { return logURL(u) }
+
 // logURL returns the given URL shortened for logs: data URLs without
 // their data, and long URLs without their middle.
 func logURL(u string) string {
@@ -503,12 +506,17 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 	// by default (not with the requests of a page to other sites), unless
 	// the request is with credentials (as the APIs of Google, of other
 	// hosts, which were 401 Unauthorized without its cookies).
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second, Transport: Transport}
 	if credentials || origin(u) == origin(e.opts.PageURL) {
 		client.Jar = e.opts.Cookies
 	}
 	return client.Do(req)
 }
+
+// Transport is the transport of the requests of scripts (as of fetch and
+// XMLHttpRequest, and of media), or nil for the default one (as for the
+// content blocker of the app).
+var Transport http.RoundTripper
 
 // forbiddenHeaders are the headers of requests that scripts can not set,
 // as in browsers.
@@ -715,7 +723,12 @@ func (e *Engine) runScript(s *html.Node, sync bool) {
 	}
 	prev := e.current // (of a script that inserted this one, run in it)
 	e.current = s
+	start := time.Now()
 	e.run(name, code)
+	if d := time.Since(start); hasSrc || d >= 10*time.Millisecond {
+		// (the time of running it, for the verbose console)
+		e.tracef("ran %s in %v", logURL(name), d.Round(time.Millisecond))
+	}
 	e.current = prev
 	if hasSrc {
 		e.callPrelude("fireEvent", e.nodes.id(s), "load")
@@ -729,6 +742,7 @@ func (e *Engine) getScript(u string) (string, error) {
 	}
 	var resp *http.Response
 	var err error
+	start := time.Now()
 	if strings.HasPrefix(u, "blob:") {
 		resp, err = e.blobResponse(u)
 	} else if e.opts.GetURL == nil {
@@ -747,7 +761,7 @@ func (e *Engine) getScript(u string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	e.tracef("script %s: %d bytes", logURL(u), len(b))
+	e.tracef("got %s: %d bytes in %v", logURL(u), len(b), time.Since(start).Round(time.Millisecond))
 	return string(b), nil
 }
 

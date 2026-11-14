@@ -7,12 +7,14 @@ package code
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/base/vcs"
+	"cogentcore.org/core/cli/commands"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -64,9 +66,6 @@ type SettingsData struct { //types:add
 	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveLangOpts bool
 
-	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
-	SaveCmds bool
-
 	// executable paths for language servers, keyed by server id (gopls, typescript-language-server, pyright-langserver, pylsp, rust-analyzer, clangd, bash-language-server, vscode-json-language-server) -- paths or names to search in PATH if not an absolute path -- empty by default, meaning just search the PATH for the standard executable
 	LSExecs map[string]string `display:"-"`
 }
@@ -107,9 +106,6 @@ func (se *SettingsData) Save() error {
 	if se.SaveLangOpts {
 		AvailableLanguages.SaveSettings()
 	}
-	if se.SaveCmds {
-		CustomCommands.SaveSettings()
-	}
 	AvailableSplits.SaveSettings()
 	AvailableRegisters.SaveSettings()
 	return err
@@ -123,9 +119,6 @@ func (se *SettingsData) Open() error {
 	if se.SaveLangOpts {
 		AvailableLanguages.OpenSettings()
 	}
-	if se.SaveCmds {
-		CustomCommands.OpenSettings()
-	}
 	AvailableSplits.OpenSettings()
 	AvailableRegisters.OpenSettings()
 	return err
@@ -133,8 +126,6 @@ func (se *SettingsData) Open() error {
 
 // Apply settings updates things according with settings
 func (se *SettingsData) Apply() { //types:add
-	MergeAvailableCmds()
-	AvailableLanguages.Validate()
 }
 
 // SetGoMod applies the given gomod setting, setting the GO111MODULE env var
@@ -168,20 +159,10 @@ func (se *SettingsData) EditLangOpts() { //types:add
 	LanguagesView(&AvailableLanguages)
 }
 
-// EditCmds opens the CmdsView editor to customize commands you can run.
+// EditCmds opens the editor of the commands of the Command menu, which
+// are shared by the apps (see [commands.Default]), with their macros.
 func (se *SettingsData) EditCmds() { //types:add
-	se.SaveCmds = true
-	if len(CustomCommands) == 0 {
-		exc := &Command{Name: "Example Cmd",
-			Desc: "list current dir",
-			Lang: fileinfo.Any,
-			Cmds: []CmdAndArgs{{Cmd: "ls", Args: []string{"-la"}}},
-			Dir:  "{FileDirPath}",
-			Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}
-
-		CustomCommands = append(CustomCommands, exc)
-	}
-	CmdsView(&CustomCommands)
+	commands.Default().Edit(nil)
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
@@ -240,20 +221,22 @@ type ProjectSettings struct { //types:add
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
 	GoMod bool
 
-	// command(s) to run for main Build button
-	BuildCmds CmdNames
+	// BuildCommand is the command line that the Build button runs, in the
+	// directory of the file of the active editor (or the project root),
+	// with its output in a tab. If it is empty, it is the default
+	// for the MainLang: go build -v for Go, latexmk -pdf for TeX, and
+	// otherwise make.
+	BuildCommand string
 
-	// build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands
-	BuildDir core.Filename
-
-	// build target for main Build button, if relevant for your  BuildCmds
-	BuildTarg core.Filename
-
-	// executable to run for this project via main Run button -- called by standard Run Project command
+	// RunExec is the executable that the debugger runs, and the Run button
+	// runs by default for a project that is not in Go or TeX.
 	RunExec core.Filename
 
-	// command(s) to run for main Run button (typically Run Project)
-	RunCmds CmdNames
+	// RunCommand is the command line that the Run button runs, in the
+	// directory of the file of the active editor (or the project root),
+	// with its output in a tab. If it is empty, it is the default
+	// for the MainLang: core run for Go, and otherwise the RunExec.
+	RunCommand string
 
 	// custom debugger parameters for this project
 	Debug cdebug.Params
@@ -318,17 +301,6 @@ func (se *ProjectSettings) addStandardIgnores() {
 	for _, ig := range StandardIgnoreProblems {
 		if _, has := se.IgnoreProblems[ig]; !has {
 			se.IgnoreProblems[ig] = false
-		}
-	}
-}
-
-func (se *ProjectSettings) Update() {
-	if se.BuildDir != se.ProjectRoot {
-		if se.BuildTarg == se.ProjectRoot {
-			se.BuildTarg = se.BuildDir
-		}
-		if se.RunExec == se.ProjectRoot {
-			se.RunExec = se.BuildDir
 		}
 	}
 }
@@ -502,25 +474,56 @@ func (cv *Code) SplitsEdit() { //types:add
 	SplitsView(&AvailableSplits)
 }
 
-// LangDefaults applies default language settings based on MainLang
+// LangDefaults applies default language settings based on MainLang: the
+// run executable (the build and run commands default
+// to those of the MainLang when they are empty).
 func (cv *Code) LangDefaults() {
-	cv.Settings.RunCmds = CmdNames{"Build: Run Project"}
-	cv.Settings.BuildDir = cv.Settings.ProjectRoot
-	cv.Settings.BuildTarg = cv.Settings.ProjectRoot
 	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Name))
-	if len(cv.Settings.BuildCmds) == 0 {
-		switch cv.Settings.MainLang {
-		case fileinfo.Go:
-			cv.Settings.BuildCmds = CmdNames{"Go: Build Dir"}
-			cv.Settings.RunCmds = CmdNames{"Core: Run"}
-		case fileinfo.TeX:
-			cv.Settings.BuildCmds = CmdNames{"LaTeX: LaTeX PDF"}
-			cv.Settings.RunCmds = CmdNames{"File: Open Target"}
-		default:
-			cv.Settings.BuildCmds = CmdNames{"Build: Make"}
-		}
-	}
 	cv.guessVersionControl()
+}
+
+// buildCommand returns the [ProjectSettings.BuildCommand], or else the
+// default for the MainLang.
+func (se *ProjectSettings) buildCommand() string {
+	if se.BuildCommand != "" {
+		return se.BuildCommand
+	}
+	switch se.MainLang {
+	case fileinfo.Go:
+		return "go build -v"
+	case fileinfo.TeX:
+		return "latexmk -pdf"
+	}
+	return "make"
+}
+
+// runCommand returns the [ProjectSettings.RunCommand], or else the default
+// for the MainLang: core run for Go, nothing for TeX, and otherwise the
+// RunExec, if it is executable.
+func (se *ProjectSettings) runCommand() string {
+	if se.RunCommand != "" {
+		return se.RunCommand
+	}
+	switch se.MainLang {
+	case fileinfo.Go:
+		return "core run"
+	case fileinfo.TeX:
+		return ""
+	}
+	if se.RunExec != "" && se.RunExecIsExec() {
+		return shellQuote(string(se.RunExec))
+	}
+	return ""
+}
+
+// shellQuote returns the given string quoted for a POSIX shell, if needed.
+func shellQuote(s string) string {
+	if s != "" && !strings.ContainsFunc(s, func(r rune) bool {
+		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune("-_./:=,@%+", r))
+	}) {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // guessVersionControl sets the version control system, if not set, to that

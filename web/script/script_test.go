@@ -6,6 +6,8 @@ package script
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -16,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dop251/goja"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
@@ -1553,4 +1556,190 @@ func TestInsertRemoveNoChange(t *testing.T) {
 		const f = document.createElement("iframe"); document.body.appendChild(f); document.body.removeChild(f);`)
 	r = next()
 	assert.Equal(t, []string{"body#"}, r.children, "the body has a new child")
+}
+
+// TestPostMessageCycles tests that messages with cycles and objects that
+// are in them more than once are cloned as such (as the structured clone
+// of browsers), not overflowing the stack (as for a message of npr.org).
+func TestPostMessageCycles(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `
+		window.got = "";
+		const a = { name: "a" };
+		a.self = a;
+		window.addEventListener("message", ev => {
+			const d = ev.data;
+			got = [d.a.self === d.a, d.list[0] === d.list[1], d.list[0] === d.a, d.m.get("k") === d.a, d.a.name].join(" ");
+		});
+		window.postMessage({ a, list: [a, a], m: new Map([["k", a]]) }, "*");`)
+	assert.Eventually(t, func() bool { return run(t, e, `got`) != "" }, 3*time.Second, 10*time.Millisecond)
+	assert.Equal(t, "true true true true a", run(t, e, `got`))
+}
+
+// TestTraceHold tests that a long hold of the lock of the page by a task is
+// in the verbose console, with the native function that took it.
+func TestTraceHold(t *testing.T) {
+	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	e.opts.Trace = func() bool { return true }
+	e.lockMu.Lock()
+	e.lockedAt, e.lockBy, e.lockBusy = time.Now().Add(-2*time.Second), "rect", 1500*time.Millisecond
+	e.traceHold()
+	e.lockMu.Unlock()
+	assert.Eventually(t, func() bool {
+		return strings.Contains(strings.Join(*logs, "\n"), "the page was held for 2s from rect, 1.5s of it in calls")
+	}, time.Second, 10*time.Millisecond, "%v", *logs)
+}
+
+// TestStructuredClone tests that structuredClone clones maps, sets, dates,
+// typed arrays, and cycles (Amazon's ad script on nytimes.com cloned a
+// map, which became an object without forEach), and throws for functions.
+func TestStructuredClone(t *testing.T) {
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "true k:v 2 true 3 true true true", run(t, e, `
+		const a = { m: new Map([["k", "v"]]), s: new Set([1, 2]), d: new Date(5), b: new Uint8Array([1, 2, 3]) };
+		a.self = a;
+		const c = structuredClone(a);
+		let kv = ""; c.m.forEach((v, k) => kv += k + ":" + v);
+		[c.m instanceof Map, kv, c.s.size, c.d instanceof Date && c.d.getTime() === 5, c.b[2], c.self === c, c !== a,
+			(() => { try { structuredClone(() => 1); return false; } catch (err) { return err.name === "DataCloneError"; } })()].join(" ")`))
+}
+
+func TestProxyTrapArgs(t *testing.T) {
+	// the arrays of arguments that traps keep are not overwritten by later
+	// calls (as fun-hooks keeps them, in nytimes.com's ad scripts)
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, `[[[1]],[[2]]] 3 true`, run(t, e, `
+		const kept = [];
+		function f(a) { return a + 1; }
+		const h = {};
+		const p = new Proxy(f, h);
+		h.apply = function (t, self, args) { kept.push(args); };
+		h.construct = function (t, args) { kept.push(args); return {}; };
+		p([1]);
+		((a, b, c) => a)(function () {}, 2, 3);
+		new p([2]);
+		((a, b, c) => a)(function () {}, 2, 3);
+		delete h.apply;
+		JSON.stringify(kept) + " " + p(2) + " " + (new Proxy({}, {}) instanceof Object)`))
+}
+
+func TestIntlTimeZones(t *testing.T) {
+	// times are formatted in the time zones of their options (nytimes.com
+	// formats its times in that of New York, as its server, for React)
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "11/14/2026, 9:52:00 AM|11/14/2026|9:52:00 AM|9:52 AM EST|2:52 PM UTC|1 PM GMT-1|UTC|America/New_York|RangeError|Invalid Date|true", run(t, e, `
+		const d = new Date(Date.UTC(2026, 10, 14, 14, 52));
+		const ny = { timeZone: "America/New_York" };
+		[d.toLocaleString("en-US", ny), d.toLocaleDateString("en-US", ny), d.toLocaleTimeString("en-US", ny),
+			new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "utc", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "Atlantic/Azores", hour: "numeric", timeZoneName: "short" }).format(d),
+			new Intl.DateTimeFormat("en-US", { timeZone: "Etc/UTC" }).resolvedOptions().timeZone,
+			new Intl.DateTimeFormat("en-US", ny).resolvedOptions().timeZone,
+			(() => { try { new Intl.DateTimeFormat("en-US", { timeZone: "nope" }); return "no error"; } catch (err) { return err.name; } })(),
+			new Date(NaN).toLocaleString(),
+			typeof new Intl.DateTimeFormat().resolvedOptions().timeZone === "string"].join("|")`))
+}
+
+func TestDeclarativeShadowRoots(t *testing.T) {
+	// templates with a shadowrootmode are shadow roots of their parents, as
+	// browsers parse them (React found them where it hydrated the elements
+	// of nytimes.com, and rendered the page again)
+	e, _ := testEngine(t, `<html><body><x-a id="a"><template shadowrootmode="open"><b>s</b><x-c id="c"><template shadowrootmode="closed"><i>n</i></template></x-c><slot></slot></template><x-b></x-b></x-a><template id="t"><p>x</p></template></body></html>`, nil)
+	assert.Equal(t, `1|X-B|<b>s</b><x-c id="c"></x-c><slot></slot>|null|1`, run(t, e, `
+		const a = document.getElementById("a");
+		[a.childNodes.length, a.firstChild.nodeName, a.shadowRoot.innerHTML, String(a.shadowRoot.querySelector("x-c").shadowRoot),
+			document.getElementById("t").content.childNodes.length].join("|")`))
+}
+
+func TestScreenOrientation(t *testing.T) {
+	// the video player of nytimes.com binds its lock and unlock as it loads
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	assert.Equal(t, "function function landscape-primary", run(t, e, `
+		const o = screen.orientation;
+		[typeof o.unlock.bind(o), typeof o.lock, o.type].join(" ")`))
+}
+
+func TestActivitySummary(t *testing.T) {
+	// the summary of the time of the scripts names those that ran
+	var buf bytes.Buffer
+	require.NoError(t, goja.StartProfile(&buf))
+	vm := goja.New()
+	prog, err := goja.Compile("https://example.com/js/busy.js?v=1", `const end = Date.now() + 400; let n = 0; while (Date.now() < end) n++;`, false)
+	require.NoError(t, err)
+	_, err = vm.RunProgram(prog)
+	goja.StopProfile()
+	require.NoError(t, err)
+	s := activitySummary(buf.Bytes())
+	assert.Contains(t, s, "scripts ran ")
+	assert.Contains(t, s, "example.com/busy.js")
+}
+
+func TestFetchTransport(t *testing.T) {
+	// the requests of scripts with methods or headers (others are with
+	// GetURL) go through Transport (as the content
+	// blocker of the app), whose errors are those of the network
+	old := Transport
+	defer func() { Transport = old }()
+	Transport = roundTripFunc(func(r *http.Request) (*http.Response, error) { return nil, errors.New("blocked") })
+	e, _ := testEngine(t, `<html><body></body></html>`, nil)
+	run(t, e, `window.got = ""; fetch("https://ads.example.com/x", { method: "POST", body: "b" }).then(() => { got = "ok" }, err => { got = err.name })`)
+	assert.Eventually(t, func() bool {
+		v, _ := e.RunString(`got`)
+		return fmt.Sprint(v) == "TypeError"
+	}, 5*time.Second, 20*time.Millisecond)
+}
+
+type roundTripFunc func(r *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestSlotAssignment(t *testing.T) {
+	// the nodes of slots, and the slots of nodes, by their slot attributes,
+	// flattened through the slots in them (the dialogs of reddit.com found
+	// their templates through them)
+	e, _ := testEngine(t, `<html><body><x-a id="a"><template id="t">c</template><b slot="s">b</b>t</x-a></body></html>`, nil)
+	assert.Equal(t, "TEMPLATE,#text|B|TEMPLATE|SLOT|default|true|I|0", run(t, e, `
+		const a = document.getElementById("a");
+		const r = a.attachShadow({ mode: "open" });
+		r.innerHTML = '<slot id="d"></slot><slot name="s"></slot><slot name="none"><i>f</i></slot>';
+		const [d, s, none] = r.querySelectorAll("slot");
+		[d.assignedNodes().map(n => n.nodeName).join(","), s.assignedNodes().map(n => n.nodeName).join(","),
+			d.assignedElements()[0].tagName, document.getElementById("t").assignedSlot.tagName,
+			document.getElementById("t").assignedSlot === d ? "default" : "other",
+			a.querySelector("b").assignedSlot === s,
+			none.assignedNodes({ flatten: true }).map(n => n.nodeName).join(","), none.assignedNodes().length].join("|")`))
+}
+
+// TestNestedSlotsUnassigned tests that a child of a shadow host in a slot
+// that is itself in a hidden slot of the shadow root of another element
+// (as the labels of the tooltips of reddit.com) is not rendered, and is
+// where that slot is shown.
+func TestNestedSlotsUnassigned(t *testing.T) {
+	e, _ := testEngine(t, `<html><body><x-dropdown id="d"><span id="label" slot="tooltip-content">Open sort options</span><b id="anchor">Best</b></x-dropdown></body></html>`, nil)
+	run(t, e, `
+		const d = document.getElementById("d").attachShadow({ mode: "open" });
+		d.innerHTML = '<x-tooltip id="tt"><slot></slot><slot slot="content" name="tooltip-content"></slot></x-tooltip>';
+		d.getElementById("tt").attachShadow({ mode: "open" }).innerHTML = '<x-popper><slot slot="anchor"></slot><div role="tooltip" hidden><slot name="content"></slot></div></x-popper>';`)
+	states := func() [2]bool {
+		ch := make(chan [2]bool, 1)
+		e.Post(func() {
+			var label, anchor *html.Node
+			for n := range e.Document().Descendants() {
+				for _, a := range n.Attr {
+					if a.Key == "id" && a.Val == "label" {
+						label = n
+					}
+					if a.Key == "id" && a.Val == "anchor" {
+						anchor = n
+					}
+				}
+			}
+			ch <- [2]bool{e.Unassigned(label), e.Unassigned(anchor)}
+		})
+		return <-ch
+	}
+	assert.Equal(t, [2]bool{true, false}, states(), "the label is in the hidden body of the tooltip")
+	run(t, e, `document.getElementById("d").shadowRoot.getElementById("tt").shadowRoot.querySelector("[role=tooltip]").hidden = false;`)
+	assert.Equal(t, [2]bool{false, false}, states(), "shown")
 }

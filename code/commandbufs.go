@@ -5,17 +5,18 @@
 package code
 
 import (
-	"strings"
+	"image"
+	"os/exec"
+	"slices"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
+	"github.com/alecthomas/chroma/v3/lexers"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -72,131 +73,136 @@ func (cv *Code) TabDeleted(tabnm string) {
 	cv.RunningCmds.KillByName(tabnm)
 }
 
-// ExecCmdName executes command of given name; this is the final common
-// pathway for all command invocation except on a node.
-func (cv *Code) ExecCmdName(cmdName CmdName) {
-	cmd, _, ok := AvailableCommands.CmdByName(cmdName, true)
-	if !ok {
-		return
-	}
-	cv.SetArgVarVals()
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
-	cmd.Run(cv, cbuf)
+// CmdRun is a command that is running, with its output in a tab.
+type CmdRun struct {
+
+	// Name is the name of the tab of its output.
+	Name string
+
+	// CmdStr is its command line.
+	CmdStr string
+
+	// Exec is its process.
+	Exec *exec.Cmd
 }
 
-// ExecCmdNameFile executes command of given name on given file name
-func (cv *Code) ExecCmdNameFile(fname string, cmdNm CmdName) {
-	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
-	if !ok {
-		return
+// Kill kills the process.
+func (cm *CmdRun) Kill() {
+	if cm.Exec.Process != nil {
+		cm.Exec.Process.Kill()
 	}
-	cv.ArgVals.Set(fname, &cv.Settings, nil)
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
-	cmd.Run(cv, cbuf)
 }
 
-// ExecCmds gets list of available commands for current active file
-func ExecCmds(cv *Code) [][]string {
-	tv := cv.ActiveEditor()
-	if tv == nil {
-		return nil
-	}
-	var cmds [][]string
+// CmdRuns is a list of running commands.
+type CmdRuns []*CmdRun
 
-	vc := cv.VersionControl()
-	if cv.ActiveLang == fileinfo.Unknown {
-		cmds = AvailableCommands.FilterCmdNames(cv.Settings.MainLang, vc)
-	} else {
-		cmds = AvailableCommands.FilterCmdNames(cv.ActiveLang, vc)
-	}
-	return cmds
+// AddCmd adds a running command with the given name (of its tab), command
+// line, and process.
+func (rc *CmdRuns) AddCmd(name, cmdstr string, ex *exec.Cmd) {
+	*rc = append(*rc, &CmdRun{Name: name, CmdStr: cmdstr, Exec: ex})
 }
 
-// ExecCmdNameActive calls given command on current active texteditor
-func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
-	tv := cv.ActiveEditor()
-	if tv == nil {
-		return
+// ByName returns the running command of the given name, and its index,
+// which is -1 if there is none.
+func (rc *CmdRuns) ByName(name string) (*CmdRun, int) {
+	for i, cm := range *rc {
+		if cm.Name == name {
+			return cm, i
+		}
 	}
-	cv.SaveAllCheck(true, func() { // true = cancel option
-		cv.ExecCmdName(CmdName(cmdName))
-	})
+	return nil, -1
 }
 
-// ExecCmd pops up a menu to select a command appropriate for the current
-// active text view, and shows output in Tab with name of command
+// DeleteByName removes the running command of the given name from the
+// list, returning whether there was one.
+func (rc *CmdRuns) DeleteByName(name string) bool {
+	_, idx := rc.ByName(name)
+	if idx >= 0 {
+		*rc = slices.Delete(*rc, idx, idx+1)
+	}
+	return idx >= 0
+}
+
+// KillByName kills the running command of the given name, and removes it
+// from the list, returning whether there was one.
+func (rc *CmdRuns) KillByName(name string) bool {
+	cm, idx := rc.ByName(name)
+	if idx >= 0 {
+		cm.Kill()
+		*rc = slices.Delete(*rc, idx, idx+1)
+	}
+	return idx >= 0
+}
+
+// MarkupCmdOutput applies links to the first element in command output line
+// if it looks like a file name / position, and runs markup using given lexer
+// name if provided (default is "bash")
+func MarkupCmdOutput(buf *lines.Lines, out []rune, lexName string) rich.Text {
+	if len(out) == 0 {
+		return rich.NewPlainText(nil)
+	}
+	clex := lexers.Get("bash")
+	if lexName != "" {
+		nl := lexers.Get(lexName)
+		if nl != nil {
+			clex = nl
+		}
+	}
+	sout := string(out)
+	ctags, _ := highlighting.ChromaTagsLine(clex, sout)
+	mu := highlighting.MarkupLineRich(buf.Highlighter.Style, buf.FontStyle(), out, ctags, nil)
+	mu = highlighting.MarkupPathsAsLinks(out, mu, 2) // first 2 fields
+	return mu
+}
+
+// ExecCmd pops up the menu of the commands (as the Command menu), shared
+// by the apps, with their macros (see [Code.RunCommandLine]).
 func (cv *Code) ExecCmd() { //types:add
-	tv := cv.ActiveEditor()
-	ln := tv.Lines
-	if ln == nil {
-		cv.SetStatus("ExecCmd: No Active File")
-		return
+	var ctx core.Widget = cv
+	if tv := cv.ActiveEditor(); tv != nil {
+		ctx = tv
 	}
-	core.NewMenu(cv.CommandMenuLines(ln), tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenu(func(m *core.Scene, pos image.Point) { cv.commandsMenu(m) }, ctx, ctx.AsWidget().ContextMenuPos(nil)).Run()
 }
 
-// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
-// and shows output in Tab with name of command
-func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
-	tv := cv.ActiveEditor()
-	core.NewMenu(cv.CommandMenuFileNode(fn), tv, tv.ContextMenuPos(nil)).Run()
-}
-
-// SetArgVarVals sets the ArgVar values for commands, from Code values
-func (cv *Code) SetArgVarVals() {
-	tv := cv.ActiveEditor()
-	tve := textcore.AsEditor(tv)
-	if tv == nil || tv.Lines == nil {
-		cv.ArgVals.Set("", &cv.Settings, tve)
-	} else {
-		cv.ArgVals.Set(tv.Lines.Filename(), &cv.Settings, tve)
-	}
-}
-
-// ExecCmds executes a sequence of commands.
-func (cv *Code) ExecCmds(cmdNms CmdNames) {
-	for _, cmdNm := range cmdNms {
-		cv.ExecCmdName(cmdNm)
-	}
-}
-
-// ExecCmdsFile executes a sequence of commands on file node
-func (cv *Code) ExecCmdsFile(fname string, cmdNames CmdNames) {
-	for _, cmdNm := range cmdNames {
-		cv.ExecCmdNameFile(fname, cmdNm)
-	}
-}
-
-// RunBuild runs the BuildCmds set for this project
+// RunBuild runs the [ProjectSettings.BuildCommand] of the project in the
+// directory of the file of the active editor, or else the project root (see
+// [Code.commandDir]), after saving the files, with its output in a tab.
 func (cv *Code) RunBuild() { //types:add
-	if len(cv.Settings.BuildCmds) == 0 {
-		core.MessageDialog(cv, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
+	cmdline := cv.Settings.buildCommand()
+	if cmdline == "" {
+		core.MessageDialog(cv, "You need to set the BuildCommand in the Project Settings", "No BuildCommand set")
 		return
 	}
 	cv.SaveAllCheck(true, func() {
-		cv.ExecCmds(cv.Settings.BuildCmds)
+		cv.runCommandOutput(cmdline, cv.commandDir(), nil)
 	})
 }
 
-// Run runs the RunCmds set for this project
+// Run runs the [ProjectSettings.RunCommand] of the project in the directory
+// of the file of the active editor, or else the project root (see
+// [Code.commandDir]), with its output in a tab: by default, for a project that is
+// not in Go or TeX, its RunExec executable, which is chosen if it is not
+// executable.
 func (cv *Code) Run() { //types:add
-	if len(cv.Settings.RunCmds) == 0 {
-		core.MessageDialog(cv, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
+	cmdline := cv.Settings.runCommand()
+	if cmdline == "" {
+		if cv.Settings.MainLang != fileinfo.Go && cv.Settings.MainLang != fileinfo.TeX {
+			core.CallFunc(cv, cv.ChooseRunExec)
+			return
+		}
+		core.MessageDialog(cv, "You need to set the RunCommand in the Project Settings", "No RunCommand set")
 		return
 	}
-	if cv.Settings.RunCmds[0] == "Run Project" && !cv.Settings.RunExecIsExec() {
-		core.CallFunc(cv, cv.ChooseRunExec)
-		return
-	}
-	cv.ExecCmds(cv.Settings.RunCmds)
+	cv.runCommandOutput(cmdline, cv.commandDir(), nil)
 }
 
-// Commit commits the current changes using relevant VCS tool.
-// Checks for VCS setting and for unsaved files.
+// Commit commits the current changes, after saving the files, with the
+// git commit macro of the commands (see [commands.StandardMacros]), which
+// prompts for the message, and then updates the files.
 func (cv *Code) Commit() { //types:add
-	vc := cv.VersionControl()
-	if vc == vcs.NoVCS {
-		core.MessageDialog(cv, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
+	if cv.VersionControl() != vcs.Git {
+		core.MessageDialog(cv, "Commit is for git repositories: no git repository was found in the project, or defined in its settings. Use the Command menu for others.", "No git repository")
 		return
 	}
 	cv.SaveAllCheck(true, func() { // true = cancel option
@@ -204,51 +210,19 @@ func (cv *Code) Commit() { //types:add
 	})
 }
 
-// CommitNoChecks does the commit without any further checks for VCS, and unsaved files
+// CommitNoChecks commits with the git commit macro of the commands (or the
+// form of git commit, if there is none), without checking for unsaved files.
 func (cv *Code) CommitNoChecks() {
-	vc := cv.VersionControl()
-	cmds := AvailableCommands.FilterCmdNames(cv.ActiveLang, vc)
-	cmdnm := ""
-	for _, ct := range cmds {
-		if len(ct) < 2 {
-			continue
-		}
-		var vcstype vcs.Types
-		if vcstype.SetString(ct[0]) != nil {
-			continue
-		}
-		for _, cm := range ct {
-			if strings.Contains(cm, "Commit") {
-				cmdnm = CommandName(ct[0], cm)
-				break
-			}
-		}
-	}
-	if cmdnm == "" {
-		core.MessageDialog(cv, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check settings settings etc", "No Commit command found")
-		return
-	}
-	cv.SetArgVarVals() // need to set before setting prompt string below..
-
-	d := core.NewBody("Commit message")
-	core.NewText(d).SetType(core.TextSupporting).SetText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
-	tf := core.NewTextField(d)
-	curval, _ := CmdPrompt1Vals["Commit"]
-	tf.SetText(curval)
-	tf.Styler(func(s *styles.Style) {
-		s.Min.X.Ch(100)
-	})
-	d.AddBottomBar(func(bar *core.Frame) {
-		d.AddCancel(bar)
-		d.AddOK(bar).SetText("Commit").OnClick(func(e events.Event) {
-			val := tf.Text()
-			cv.ArgVals["{PromptString1}"] = val
-			CmdPrompt1Vals["Commit"] = val
-			CmdNoUserPrompt = true         // don't re-prompt!
-			cv.ExecCmdName(CmdName(cmdnm)) // must be wait
-			cv.SaveProjectIfExists(true)   // saveall
+	cs := theCommands()
+	run := func(cmdline string) {
+		cv.runCommandOutput(cmdline, cv.commandDir(), func() {
+			cv.SaveProjectIfExists(true)
 			cv.UpdateFiles()
 		})
-	})
-	d.RunDialog(cv)
+	}
+	if mc := cs.Macro("git", "commit", ""); mc != nil {
+		cs.RunMacro(cv, "git", mc, run)
+		return
+	}
+	cs.RunDialog(cv, "git commit", run)
 }

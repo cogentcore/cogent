@@ -1285,7 +1285,11 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 					const d = document.createElement("div");
 					d.textContent = "added " + i;
 					document.body.append(d);
-					document.documentElement.setAttribute("lang", "x" + i); // (all of it is read again)
+					// (a new style sheet, for which all of it is read again)
+					const l = document.createElement("link");
+					l.rel = "stylesheet";
+					l.href = "/none" + i + ".css";
+					document.head.append(l);
 					d.getBoundingClientRect();
 				}
 				window.done = true;
@@ -1430,5 +1434,194 @@ func TestScriptsHoverFixedInPortal(t *testing.T) {
 			v, _ := pg.scripts.engine.RunString(`document.getElementById("log").textContent`)
 			return strings.TrimSpace(fmt.Sprint(v)) == "overlay"
 		}, 3*time.Second, 20*time.Millisecond, "the overlay gets the mouse over it")
+	})
+}
+
+// TestScriptsReleaseLock tests that a task of the scripts of a page that
+// got the box of an element (with the lock of the page) does not hold the
+// page as it runs on (see script.Engine.lockTask), so that the app
+// responds meanwhile: a task of nytimes.com held it for seconds.
+func TestScriptsReleaseLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				document.getElementById("p").getBoundingClientRect();
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) {}
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task ran on")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}
+
+// TestScriptsListenersAlreadyWired tests that click listeners added to the
+// document, or to elements in it, once it has one, do not render the page
+// again, as the widgets already handle clicks (the scripts of npr.org added
+// many, each of which read the page whole).
+func TestScriptsListenersAlreadyWired(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>document.addEventListener("click", () => {});</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.NotNil(t, ps)
+		before := ps.renders + ps.rereads + ps.restyles
+		_, err := ps.engine.RunString(`document.addEventListener("click", () => {}); window.addEventListener("click", () => {});
+			document.getElementById("p").addEventListener("click", () => {}); document.getElementById("p").onclick = () => {};`)
+		require.NoError(t, err)
+		time.Sleep(300 * time.Millisecond)
+		settle(pg)
+		assert.Equal(t, before, ps.renders+ps.rereads+ps.restyles, "not rendered again")
+	})
+}
+
+// TestScriptsYieldLock tests that a task of the scripts of a page that
+// gets the boxes of elements without pause (as the slideshows of npr.org
+// as they animate, for seconds) lets the app lock the page meanwhile (see
+// script.Engine.lockTask).
+func TestScriptsYieldLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				const p = document.getElementById("p");
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) { p.getBoundingClientRect(); }
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		time.Sleep(100 * time.Millisecond)
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task got boxes")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}
+
+// TestScriptsMissingGlobalReleasesLock tests that a script that gets a
+// property of the window that it does not have (as scripts check for
+// features), which looks for a frame of that name, does not hold the page
+// as it runs on: the lookup held it to the end of the task (on npr.org).
+func TestScriptsMissingGlobalReleasesLock(t *testing.T) {
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body><p id="p">page</p><script>
+			setTimeout(() => {
+				document.getElementById("p").getBoundingClientRect();
+				const x = window.noSuchFeature;
+				console.log("started");
+				const t = Date.now();
+				while (Date.now() - t < 1000) {}
+				window.done = true;
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
+		}), "the task started")
+		start := time.Now()
+		b.AsyncLock()
+		got := time.Since(start)
+		b.AsyncUnlock()
+		assert.Less(t, got, 300*time.Millisecond, "the page could be locked while the task ran on")
+		require.True(t, eventually(func() bool {
+			v, _ := pg.scripts.engine.RunString(`!!window.done`)
+			return v == true
+		}))
+	})
+}
+
+// TestScriptsIntersectionObserverBatch tests that the targets that an
+// IntersectionObserver observes at once are reported in one call of its
+// callback, without rendering the page for the box of each as the callback
+// changes it (as the lazy images of nytimes.com, which took 80s to load).
+func TestScriptsIntersectionObserverBatch(t *testing.T) {
+	items := strings.Repeat(`<div class="lazy" style="height: 20px">item</div>`, 20)
+	b, pg := newScriptPage(t, map[string]string{
+		"/": `<html><body>` + items + `<script>
+			window.calls = 0; window.entries = 0;
+			setTimeout(() => {
+				const io = new IntersectionObserver(es => {
+					calls++;
+					for (const e of es) { entries++; e.target.setAttribute("data-seen", "1"); e.target.textContent = "seen"; }
+				});
+				for (const el of document.querySelectorAll(".lazy")) io.observe(el);
+			}, 50);
+			</script></body></html>`,
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`entries`)
+			return v == int64(20)
+		}), "all reported")
+		v, _ := ps.engine.RunString(`calls`)
+		assert.Equal(t, int64(1), v, "in one call")
+		settle(pg)
+		assert.Contains(t, pageTexts(b, pg), "seen")
+	})
+}
+
+// TestScriptsIntersectionObserverScroll tests that an IntersectionObserver
+// reports a target below the viewport as not intersecting, and then as
+// intersecting when the page is scrolled to it (as the ends of the feeds of
+// reddit.com, which load more posts as they are shown), with entries that
+// are IntersectionObserverEntry, which reddit.com checks for.
+func TestScriptsIntersectionObserverScroll(t *testing.T) {
+	b, pg := newScriptPageWith(t, map[string]string{
+		"/": `<html><body><div style="height: 3000px">feed</div><div id="end" style="height: 20px">end</div><script>
+			window.log = [];
+			window.feature = "IntersectionObserverEntry" in window && "intersectionRatio" in IntersectionObserverEntry.prototype;
+			new IntersectionObserver(es => {
+				for (const e of es) log.push(e.isIntersecting && e instanceof IntersectionObserverEntry);
+			}).observe(document.getElementById("end"));
+			</script></body></html>`,
+	}, func(pg *Page) { // (the viewport, which the page scrolls in)
+		pg.Styler(func(s *styles.Style) {
+			s.Max.Y.Dp(600)
+			s.Overflow.Set(styles.OverflowAuto)
+		})
+	})
+	b.RenderImage(func() { settle(pg) }, func() {
+		ps := pg.scripts
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`log.join()`)
+			return v == "false"
+		}), "not intersecting below the viewport")
+		v, _ := ps.engine.RunString(`feature`)
+		assert.Equal(t, true, v)
+		pg.AsyncLock()
+		pg.Geom.Scroll.SetDim(math32.Y, -2900*pg.pxDots())
+		pg.ScrollUpdateFromGeom(math32.Y)
+		pg.AsyncUnlock()
+		require.True(t, eventually(func() bool {
+			v, _ := ps.engine.RunString(`log.join()`)
+			return v == "false,true"
+		}), "intersecting when scrolled to")
 	})
 }

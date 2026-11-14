@@ -13,7 +13,6 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/text/terminal"
 )
 
 func (cv *Code) codeKeys(e events.Event) {
@@ -38,21 +37,8 @@ func (cv *Code) codeKeys(e events.Event) {
 		}
 	}
 	if tm := cv.focusedTerminal(); tm != nil {
-		// all keys go to the terminal, except for moving to another panel,
-		// and making a new terminal
 		cv.lastTerminal = tm
-		cv.KeySeq1 = ""
-		switch {
-		case kf == KeyNextPanel:
-			e.SetHandled()
-			cv.FocusNextPanel()
-		case kf == KeyPrevPanel:
-			e.SetHandled()
-			cv.FocusPrevPanel()
-		case terminal.KeyFunction(e) == keymap.New:
-			e.SetHandled()
-			cv.NewTerminal()
-		}
+		cv.terminalKeys(tm, e, kc, kf)
 		return
 	}
 	// not in a key sequence (Control+X Control+K etc)

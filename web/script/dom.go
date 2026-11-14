@@ -265,7 +265,7 @@ func (e *Engine) defineDOM() {
 	node := func(v goja.Value) *html.Node { return ni.node(int(v.ToInteger())) }
 	id := func(n *html.Node) goja.Value { return vm.ToValue(ni.id(n)) }
 	set := func(name string, f func(call goja.FunctionCall) goja.Value) {
-		d.Set(name, f)
+		d.Set(name, e.native(name, f))
 	}
 	arg := func(call goja.FunctionCall, i int) goja.Value { return call.Argument(i) }
 	str := func(call goja.FunctionCall, i int) string { return call.Argument(i).String() }
@@ -697,6 +697,21 @@ func (e *Engine) defineDOM() {
 		}
 		return vm.NewArray(x, y, w, h)
 	})
+	// rectNow returns the box of the given element as rect does, but as
+	// of the last render, without rendering the page for its changes (as
+	// for IntersectionObserver, which browsers update as they render),
+	// or null if it has none yet.
+	set("rectNow", func(call goja.FunctionCall) goja.Value {
+		n := node(arg(call, 0))
+		if n == nil || e.opts.Layout == nil || !e.lockTask() {
+			return goja.Null()
+		}
+		x, y, w, h, ok := e.opts.Layout(n)
+		if !ok {
+			return goja.Null()
+		}
+		return vm.NewArray(x, y, w, h)
+	})
 	set("elementAt", func(call goja.FunctionCall) goja.Value {
 		if e.opts.ElementAt == nil || !e.lockTask() {
 			return goja.Null()
@@ -1107,9 +1122,20 @@ func escapeText(s string, attr bool) string {
 // as in browsers (as the closed dropdown panels of the menus of MDN, in a
 // slot of their shadow root only when they are open). Shadow roots are not
 // rendered themselves, so the children that they have slots for are
-// rendered in their place. It must be called in a task of the engine.
+// rendered in their place. A slot that is (or is in) a child of another
+// element with a shadow root is rendered only where that one has a slot
+// for it (as the labels of the tooltips of reddit.com, in a slot in a
+// tooltip, which has a slot for it in its hidden body, which were shown
+// in the page). It must be called in a task of the engine.
 func (e *Engine) Unassigned(n *html.Node) bool {
-	if n == nil || n.Type != html.ElementNode || n.Parent == nil {
+	return e.unassigned(n, 0)
+}
+
+// unassigned returns whether the given element is not rendered for the
+// slots of the shadow roots that it is in (see [Engine.Unassigned]), at
+// the given depth of slots in slots.
+func (e *Engine) unassigned(n *html.Node, depth int) bool {
+	if n == nil || n.Type != html.ElementNode || n.Parent == nil || depth > 16 {
 		return false
 	}
 	root := e.shadowRoots[n.Parent]
@@ -1122,13 +1148,24 @@ func (e *Engine) Unassigned(n *html.Node) bool {
 			name = a.Val
 		}
 	}
-	return !hasSlot(root, name)
+	slot := shownSlot(root, name)
+	if slot == nil {
+		return true
+	}
+	// the slot and the elements that it is in, in the shadow root, that are
+	// children of elements with shadow roots of their own
+	for a := slot; a != nil && a != root; a = a.Parent {
+		if e.unassigned(a, depth+1) {
+			return true
+		}
+	}
+	return false
 }
 
-// hasSlot returns whether the given tree has a slot element of the given
+// shownSlot returns the first slot element of the given tree of the given
 // name ("" for the default slot) that is not hidden (with its hidden
-// attribute, or in an element with it).
-func hasSlot(n *html.Node, name string) bool {
+// attribute, or in an element with it), or nil.
+func shownSlot(n *html.Node, name string) *html.Node {
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
 		if k.Type != html.ElementNode {
 			continue
@@ -1150,14 +1187,14 @@ func hasSlot(n *html.Node, name string) bool {
 				}
 			}
 			if sn == name {
-				return true
+				return k
 			}
 		}
-		if hasSlot(k, name) {
-			return true
+		if s := shownSlot(k, name); s != nil {
+			return s
 		}
 	}
-	return false
+	return nil
 }
 
 // ToggleDetails toggles the given details element open or closed (its open

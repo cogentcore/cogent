@@ -302,43 +302,21 @@ func (cv *Code) CloseActiveView() { //types:add
 	})
 }
 
-// RunPostCmds runs any registered post commands on the given open file.
-// Returns true if commands were run and file was reverted after that.
-// Uses MainLang to disambiguate if multiple languages associated with extension.
-// For a Goal file, if Go files have post commands (goimports by default),
-// it is formatted and its imports fixed with goalfmt instead.
+// RunPostCmds formats a Goal file and fixes its imports with goalfmt after
+// it is saved (the imports of Go files are fixed by the language server),
+// returning true if it was changed, and reverted after that.
 func (cv *Code) RunPostCmds(ln *lines.Lines) bool {
-	if ln == nil {
+	if ln == nil || !isGoalFile(ln) {
 		return false
 	}
-	if isGoalFile(ln) { // the Go commands are not for Goal files, of type Go
-		if len(AvailableLanguages[fileinfo.Go].PostSaveCmds) == 0 {
-			return false
-		}
-		changed, err := formatGoal(ln.Filename())
-		if err != nil {
-			cv.SetStatus("Formatting " + filepath.Base(ln.Filename()) + ": " + strings.Split(err.Error(), "\n")[0])
-		}
-		if changed {
-			ln.Revert()
-		}
-		return changed
+	changed, err := formatGoal(ln.Filename())
+	if err != nil {
+		cv.SetStatus("Formatting " + filepath.Base(ln.Filename()) + ": " + strings.Split(err.Error(), "\n")[0])
 	}
-	lang := ln.FileInfo().Known
-	lopt, has := AvailableLanguages[lang]
-	if !has {
-		return false
+	if changed {
+		ln.Revert()
 	}
-	if len(lopt.PostSaveCmds) == 0 {
-		return false
-	}
-	_, ptab := cv.Tabs().CurrentTab()
-	cv.ExecCmdsFile(ln.Filename(), lopt.PostSaveCmds)
-	if ptab >= 0 {
-		cv.Tabs().SelectTabIndex(ptab) // we stay at the previous tab
-	}
-	ln.Revert()
-	return true
+	return changed
 }
 
 // AutosaveCheck checks for an autosave file and prompts user about opening it.
@@ -633,17 +611,17 @@ func (cv *Code) FileNodeForFile(fpath string) *filetree.Node {
 	return fn
 }
 
-// FileNodeRunExe runs the given executable file node
+// FileNodeRunExe runs the given executable file node, in its directory,
+// with its output in a tab.
 func (cv *Code) FileNodeRunExe(fn *filetree.Node) {
-	cv.SetArgVarVals()
-	cv.ArgVals["{PromptString1}"] = string(fn.Filepath)
-	CmdNoUserPrompt = true // don't re-prompt!
-	cmd, _, ok := AvailableCommands.CmdByName(CmdName("Build: Run Prompt"), true)
-	if ok {
-		cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
-		cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
-		cmd.Run(cv, cbuf)
-	}
+	fpath := string(fn.Filepath)
+	cv.runCommandOutput(shellQuote(fpath), filepath.Dir(fpath), nil)
+}
+
+// openWithSystem opens the given file with the app of the system for it
+// (open on macOS, xdg-open on Linux).
+func openWithSystem(fpath string) {
+	core.TheApp.OpenURL(fpath)
 }
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
@@ -657,7 +635,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		return
 	case fileinfo.Font, fileinfo.Video, fileinfo.Model, fileinfo.Audio, fileinfo.Sheet, fileinfo.Bin,
 		fileinfo.Archive, fileinfo.Image:
-		cv.ExecCmdNameFile(string(fn.Filepath), CmdName("File: Open"))
+		openWithSystem(string(fn.Filepath))
 		return
 	}
 
@@ -673,7 +651,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		}
 	}
 	if !edit {
-		cv.ExecCmdNameFile(string(fn.Filepath), CmdName("File: Open"))
+		openWithSystem(string(fn.Filepath))
 		return
 	}
 	// program, document, data

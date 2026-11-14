@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.32
-	cogentcore.org/lab v0.2.16
+	cogentcore.org/core v0.5.37
+	cogentcore.org/lab v0.2.17
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
@@ -20,14 +20,14 @@ require (
 	github.com/emersion/go-smtp v0.21.1
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
-	github.com/mattn/go-shellwords v1.0.12
+	github.com/google/pprof v0.0.0-20230207041349-798e818bf904
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sgtdi/fswatcher v1.3.0
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/font v0.0.0-20261010204837-88a7f6b56918
 	github.com/yuin/goldmark v1.8.5
-	golang.org/x/net v0.60.0
+	golang.org/x/net v0.61.0
 	golang.org/x/oauth2 v0.28.0
 	gonum.org/v1/gonum v0.17.0
 )
@@ -54,7 +54,6 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cogentcore/mvm v0.0.0-20261026193832-5ebd19c3fa21 // indirect
-	github.com/cogentcore/readline v0.1.3 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -67,8 +66,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20260724235538-61af6e1e6971 // indirect
-	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
@@ -82,6 +79,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20240226150601-1dcf7310316a // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.27 // indirect
+	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/oliverbestmann/webgpu v1.38.0 // indirect
 	github.com/oliverbestmann/webgpu/libs-android v0.0.0-20261112101134-9fc0777bdf01 // indirect
@@ -100,6 +98,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
+	github.com/yuin/goldmark/v2 v2.1.16 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.28.0 // indirect

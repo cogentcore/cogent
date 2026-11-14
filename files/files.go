@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
 
@@ -46,7 +47,16 @@ func InitBody(b *core.Body, root string) *Files {
 	core.NewWindowFunc = newWindow
 	fl := NewFiles(b).SetRoot(root)
 	b.AddTopBar(func(bar *core.Frame) {
-		core.NewToolbar(bar).Maker(fl.MakeToolbar)
+		// the toolbar, with the command bar below it
+		bars := core.NewFrame(bar)
+		bars.Styler(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Grow.Set(1, 0)
+			s.Padding.Zero()
+			s.Gap.Zero()
+		})
+		core.NewToolbar(bars).Maker(fl.MakeToolbar)
+		theCommands().Bar(bars, fl.RunCommand)
 	})
 	return fl
 }

@@ -5,7 +5,6 @@
 package code
 
 import (
-	"log"
 	"path/filepath"
 	"slices"
 	"sync/atomic"
@@ -19,9 +18,6 @@ import (
 // LanguageOptions defines options associated with a given language / file format
 // only languages in fileinfo.Known list are supported..
 type LanguageOptions struct {
-
-	// command(s) to run after a file of this type is saved
-	PostSaveCmds CmdNames
 
 	// Parser uses the built-in parser for this language, for highlighting,
 	// completion, lookup, symbols, and indentation, instead of a language
@@ -103,21 +99,6 @@ func UpdateParserUse(cvs ...*Code) {
 	}
 }
 
-// Validate checks to make sure post save command names exist, issuing
-// warnings to log for those that don't
-func (lt Languages) Validate() bool {
-	ok := true
-	for _, lr := range lt {
-		for _, cmdnm := range lr.PostSaveCmds {
-			if !cmdnm.IsValid() {
-				log.Printf("code.Langs Validate: post-save command: %v not found on current AvailCmds list\n", cmdnm)
-				ok = false
-			}
-		}
-	}
-	return ok
-}
-
 // LanguageSettingsFilename is the name of the settings file in the app settings
 // directory for saving / loading the default [AvailableLanguages] languages list
 var LanguageSettingsFilename = "language-settings.toml"
@@ -160,7 +141,6 @@ func (lt *Languages) CopyFrom(cp Languages) {
 	*lt = make(Languages, len(cp)) // reset
 	for ky, val := range cp {
 		lo := *val // copy, so editing does not change cp
-		lo.PostSaveCmds = slices.Clone(lo.PostSaveCmds)
 		(*lt)[ky] = &lo
 	}
 }
@@ -188,7 +168,7 @@ var AvailableLanguagesChanged = false
 
 // StandardLanguages is the original compiled-in set of standard language options.
 var StandardLanguages = Languages{
-	fileinfo.Go:       {PostSaveCmds: CmdNames{"Go: Imports File"}},
+	fileinfo.Go:       {},
 	fileinfo.Markdown: {Parser: true},
 	fileinfo.TeX:      {Parser: true},
 }

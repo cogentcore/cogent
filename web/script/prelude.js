@@ -40,6 +40,35 @@
 		};
 	}
 
+	// Proxy, whose apply and construct traps get copies of the arrays of
+	// arguments that the engine gives them: those are on the stack of the
+	// engine, so a trap that keeps one sees it overwritten by later calls
+	// (fun-hooks, in the ad scripts of media.net on nytimes.com, queues the
+	// calls of its hooks until it is ready, which then got functions for
+	// their arguments; fixed in goja branch fix-proxy-args). Only the
+	// handlers of functions are wrapped (no other target is called), with a
+	// proxy, as traps can be set after a proxy is made (as fun-hooks does).
+	{
+		const NativeProxy = g.Proxy;
+		const slice = Array.prototype.slice;
+		const handlerTraps = {
+			get(h, k, r) {
+				const v = Reflect.get(h, k, r);
+				if (typeof v !== "function") return v;
+				if (k === "apply") return function (t, self, args) { return v.call(this, t, self, slice.call(args)); };
+				if (k === "construct") return function (t, args, nt) { return v.call(this, t, slice.call(args), nt); };
+				return v;
+			},
+		};
+		const handlerOf = (t, h) => typeof t === "function" && h !== null && typeof h === "object" ? new NativeProxy(h, handlerTraps) : h;
+		const Proxy = function Proxy(t, h) {
+			if (new.target === undefined) throw new TypeError("Constructor Proxy requires 'new'");
+			return new NativeProxy(t, handlerOf(t, h));
+		};
+		Proxy.revocable = function revocable(t, h) { return NativeProxy.revocable(t, handlerOf(t, h)); };
+		Object.defineProperty(g, "Proxy", { value: Proxy, writable: true, configurable: true });
+	}
+
 	// ---- wrapping nodes ----
 
 	const wrappers = new Map(); // id -> object
@@ -394,8 +423,9 @@
 			if (!m) { m = {}; listeners.set(this, m); }
 			const l = m[type] || (m[type] = []);
 			for (const x of l) if (x.fn === fn && x.capture === capture) return;
+			const wired = wiredFor(this, type);
 			l.push({ fn, capture, once });
-			listenerAdded(this, type);
+			if (!wired) listenerAdded(this, type);
 			if (opts && typeof opts === "object" && opts.signal) {
 				opts.signal.addEventListener("abort", () => this.removeEventListener(type, fn, opts));
 			}
@@ -446,6 +476,17 @@
 	// are set up when the page is rendered (see hasListener), which it is
 	// rendered again for when a listener for them is added.
 	const wiredTypes = { click: true, submit: true };
+	// wiredFor returns whether the widgets of the given target already
+	// handle events of the given type (as it, an element that it is in, or
+	// the document or window has a listener for them), so that a listener
+	// added for them changes nothing (the scripts of npr.org added click
+	// listeners to the document many times, each reading the page again).
+	function wiredFor(t, type) {
+		if (!wiredTypes[type]) return true;
+		if (t instanceof Node) return D.hasListener(t[ID], type);
+		if (t === g) return D.hasListener(D.doc(), type);
+		return true; // (no widgets)
+	}
 	function listenerAdded(t, type) {
 		if (!wiredTypes[type]) return;
 		if (t instanceof Node) D.listenerAdded(t[ID]);
@@ -550,7 +591,11 @@
 		for (const type of eventTypes) {
 			Object.defineProperty(proto, "on" + type.toLowerCase(), {
 				get() { return this["_on" + type] || null; },
-				set(v) { this["_on" + type] = typeof v === "function" ? v : null; listenerAdded(this, type); },
+				set(v) {
+					const wired = wiredFor(this, type);
+					this["_on" + type] = typeof v === "function" ? v : null;
+					if (!wired) listenerAdded(this, type);
+				},
 				configurable: true,
 			});
 		}
@@ -587,6 +632,12 @@
 		get baseURI() { return D.baseURL(this[ID]); }
 		hasChildNodes() { return D.first(this[ID]) !== 0; }
 		getRootNode() { let n = this; while (n.parentNode) n = n.parentNode; return n; }
+		// the slot of the shadow root of its parent that it is in, if any
+		// (elements and text are slotted)
+		get assignedSlot() {
+			const p = this.parentNode, sh = p && shadows.get(p);
+			return sh && (this.nodeType === 1 || this.nodeType === 3) ? assignedSlot(sh.root, this) : null;
+		}
 		contains(o) { for (let n = o; n; n = n.parentNode) if (n === this) return true; return false; }
 		appendChild(c) { D.insert(this[ID], idOf(c), 0); return c; }
 		insertBefore(c, ref) { D.insert(this[ID], idOf(c), ref ? idOf(ref) : 0); return c; }
@@ -1328,8 +1379,14 @@
 		Object.defineProperty(cls.prototype, "sandbox", { get() { return new DOMTokenList(this, "sandbox"); }, set(v) { this.setAttribute("sandbox", String(v)); } });
 		// the window of the page in its frame, a proxy that can only post
 		// messages to it (see frames.go), as for one of another origin
-		Object.defineProperty(cls.prototype, "contentWindow", { get() { return windowProxy(D.frameWindow(this[ID])); } });
-		Object.defineProperty(cls.prototype, "contentDocument", { get() { return null; } });
+		// or, for a frame without a page of its own (as about:blank), a
+		// window of the same origin (see blankWindow)
+		Object.defineProperty(cls.prototype, "contentWindow", {
+			get() { return windowProxy(D.frameWindow(this[ID])) || (isBlankFrame(this) ? blankWindow(this) : null); },
+		});
+		Object.defineProperty(cls.prototype, "contentDocument", {
+			get() { return D.frameWindow(this[ID]) < 0 && isBlankFrame(this) ? blankWindow(this).document : null; },
+		});
 	});
 
 	// changedState marks the element as changed, so that the page is
@@ -1470,7 +1527,35 @@
 	const HTMLEmbedElement = elementClass(["embed"], HTMLElement, cls => { reflectURL(cls, ["src"]); reflect(cls, ["type", "width", "height"]); });
 	const HTMLObjectElement = elementClass(["object"], HTMLElement, cls => { reflectURL(cls, ["data"]); reflect(cls, ["type", "name", "width", "height"]); });
 	const HTMLParamElement = elementClass(["param"], HTMLElement, cls => { reflect(cls, ["name", "value"]); });
-	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => { reflect(cls, ["name"]); });
+	// The nodes of a slot are the children of the host of its shadow root
+	// that are assigned to it (by their slot attributes, see assignedSlot),
+	// or, flattened, its own children if there are none, with the nodes of
+	// the slots in them (the dialogs and menus of reddit.com, built of
+	// web components, found their templates through the slots that they
+	// were in, and threw without them).
+	const HTMLSlotElement = elementClass(["slot"], HTMLElement, cls => {
+		reflect(cls, ["name"]);
+		cls.prototype.assignedNodes = function (opts) {
+			let r = this;
+			while (r.parentNode) r = r.parentNode;
+			const hid = r[ID] !== undefined && shadowHosts.get(r[ID]);
+			const host = hid ? wrap(hid) : null, sh = host && shadows.get(host);
+			let out = [];
+			if (sh && sh.root === r) {
+				for (const k of host.childNodes) {
+					if ((k.nodeType === 1 || k.nodeType === 3) && assignedSlot(r, k) === this) out.push(k);
+				}
+			}
+			if (opts && opts.flatten) {
+				if (!out.length) out = [...this.childNodes];
+				out = out.flatMap(k => k instanceof HTMLSlotElement ? k.assignedNodes(opts) : [k]);
+			}
+			return out;
+		};
+		cls.prototype.assignedElements = function (opts) {
+			return this.assignedNodes(opts).filter(k => k.nodeType === 1);
+		};
+	});
 	const HTMLFontElement = elementClass(["font"], HTMLElement, cls => { reflect(cls, ["color", "face", "size"]); });
 	const HTMLOptionElement = elementClass(["option"], HTMLElement, cls => {
 		Object.defineProperty(cls.prototype, "value", { get() { const v = this.getAttribute("value"); return v === null ? this.textContent.trim() : v; }, set(v) { this.setAttribute("value", v); } });
@@ -3165,19 +3250,122 @@
 			}
 		}
 	}
+	// IntersectionObserver reports whether its targets intersect its root
+	// (the viewport, or an element), with its rootMargin, and how much, with
+	// their boxes as of the last render (as browsers do as they render),
+	// not rendering the page for each (the lazy images of nytimes.com, each
+	// of whose callbacks changed the page, rendered it for the box of the
+	// next, 1s each, for 80s): all of them when they are observed, and then
+	// those whose state changes (by their thresholds), as the page scrolls
+	// (see scrolled) or changes, checked by a timer shared by all of them
+	// while any targets are observed. (Reporting them all as intersecting
+	// loaded all of the pages of the feeds of reddit.com that load as
+	// their ends are shown, and its check of IntersectionObserverEntry
+	// replaced them with a polyfill without it.)
+	class IntersectionObserverEntry {
+		constructor(i) { this._i = i; }
+		get target() { return this._i.target; }
+		get isIntersecting() { return this._i.isIntersecting; }
+		get intersectionRatio() { return this._i.intersectionRatio; }
+		get boundingClientRect() { return this._i.boundingClientRect; }
+		get intersectionRect() { return this._i.intersectionRect; }
+		get rootBounds() { return this._i.rootBounds; }
+		get time() { return this._i.time; }
+	}
+	const intersectionObservers = new Set();
+	let intersectionTimer = 0;
+	const checkIntersections = () => {
+		intersectionTimer = 0;
+		for (const io of intersectionObservers) io._check();
+		if (intersectionObservers.size > 0) intersectionTimer = setTimer(checkIntersections, 200, [], false);
+	};
+	// rootMarginPx returns the top, right, bottom and left of the given
+	// rootMargin in px, with percentages of the given width and height.
+	function rootMarginPx(m, w, h) {
+		const fs = String(m || "0px").trim().split(/\s+/);
+		const v = (f, of) => f.endsWith("%") ? parseFloat(f) * of / 100 : (parseFloat(f) || 0);
+		const [t, r = t, b = t, l = r] = fs;
+		return [v(t, h), v(r, w), v(b, h), v(l, w)];
+	}
 	class IntersectionObserver {
-		constructor(cb, opts) { this._cb = cb; this.root = (opts && opts.root) || null; this.rootMargin = (opts && opts.rootMargin) || "0px"; this.thresholds = [0]; this._targets = []; }
-		observe(t) {
-			this._targets.push(t);
-			setTimer(() => {
-				if (this._targets.indexOf(t) < 0) return;
-				const r = t.getBoundingClientRect();
-				this._cb([{ target: t, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time: performance.now() }], this);
-			}, 0, [], false);
+		constructor(cb, opts) {
+			this._cb = cb;
+			this.root = (opts && opts.root) || null;
+			this.rootMargin = (opts && opts.rootMargin) || "0px";
+			const th = opts && opts.threshold;
+			this.thresholds = (th === undefined ? [0] : Array.isArray(th) ? th : [th]).map(Number).sort((a, b) => a - b);
+			this._targets = [];
+			this._state = new Map(); // target -> the index of its last threshold, or -2 if not intersecting
+			this._scheduled = false;
 		}
-		unobserve(t) { this._targets = this._targets.filter(x => x !== t); }
-		disconnect() { this._targets = []; }
+		observe(t) {
+			if (this._targets.indexOf(t) < 0) this._targets.push(t);
+			this._state.delete(t);
+			intersectionObservers.add(this);
+			if (!intersectionTimer) intersectionTimer = setTimer(checkIntersections, 200, [], false);
+			if (this._scheduled) return;
+			this._scheduled = true;
+			setTimer(() => { this._scheduled = false; this._check(); }, 0, [], false);
+		}
+		unobserve(t) {
+			this._targets = this._targets.filter(x => x !== t);
+			this._state.delete(t);
+			if (this._targets.length === 0) intersectionObservers.delete(this);
+		}
+		disconnect() { this._targets = []; this._state.clear(); intersectionObservers.delete(this); }
 		takeRecords() { return []; }
+		// _rootBounds returns the box of the root with its margin, in the
+		// coordinates of the viewport, or null if it has none yet.
+		_rootBounds() {
+			let x = 0, y = 0, w = innerWidth, h = innerHeight;
+			if (this.root instanceof Element) {
+				const b = D.rectNow(this.root[ID]);
+				if (!b) return null;
+				[x, y, w, h] = [b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]];
+			}
+			const m = rootMarginPx(this.rootMargin, w, h);
+			return new DOMRect(x - m[3], y - m[0], w + m[1] + m[3], h + m[0] + m[2]);
+		}
+		// _check reports the targets whose intersection changed since they
+		// were last reported (and those not yet reported).
+		_check() {
+			if (this._targets.length === 0) return;
+			const root = this._rootBounds();
+			if (!root) return;
+			const time = performance.now(), entries = [];
+			for (const t of this._targets) {
+				// (one without a box, as one that is not displayed, does not intersect)
+				const b = t instanceof Node && t.isConnected ? D.rectNow(t[ID]) : null;
+				const r = b ? new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]) : new DOMRect(0, 0, 0, 0);
+				let inter = new DOMRect(0, 0, 0, 0), ratio = 0, isect = false;
+				if (b) {
+					const l = Math.max(r.left, root.left), tp = Math.max(r.top, root.top);
+					const rt = Math.min(r.right, root.right), bt = Math.min(r.bottom, root.bottom);
+					isect = rt >= l && bt >= tp;
+					if (isect) {
+						inter = new DOMRect(l, tp, rt - l, bt - tp);
+						const area = r.width * r.height;
+						ratio = area > 0 ? (inter.width * inter.height) / area : 1;
+					}
+				}
+				let key = -2;
+				if (isect) {
+					key = -1;
+					for (let i = 0; i < this.thresholds.length; i++) if (ratio >= this.thresholds[i]) key = i;
+				}
+				if (this._state.get(t) === key) continue;
+				this._state.set(t, key);
+				entries.push(new IntersectionObserverEntry({ target: t, isIntersecting: isect, intersectionRatio: ratio,
+					boundingClientRect: r, intersectionRect: inter, rootBounds: root, time }));
+			}
+			if (entries.length) this._cb(entries, this);
+		}
+	}
+	// scrolled is called as the page scrolls: its scroll event, and the
+	// intersections of the observed targets with their new boxes.
+	function scrolled() {
+		document.dispatchEvent(new Event("scroll", { bubbles: true }));
+		for (const io of intersectionObservers) io._check();
 	}
 	// ResizeObserver reports the size of each target when it is observed,
 	// and then when it changes, which a timer shared by all of them checks
@@ -3187,7 +3375,7 @@
 	let resizeTimer = 0;
 	const checkResizes = () => {
 		resizeTimer = 0;
-		for (const ro of resizeObservers) ro._check(false);
+		for (const ro of resizeObservers) ro._check();
 		if (resizeObservers.size > 0) resizeTimer = setTimer(checkResizes, 250, [], false);
 	};
 	class ResizeObserver {
@@ -3196,18 +3384,24 @@
 			if (this._targets.indexOf(t) < 0) this._targets.push(t);
 			this._sizes.delete(t);
 			resizeObservers.add(this);
-			setTimer(() => this._check(true), 0, [], false);
+			setTimer(() => this._check(), 0, [], false);
 			if (!resizeTimer) resizeTimer = setTimer(checkResizes, 250, [], false);
 		}
 		// _check reports the targets whose size changed since they were
-		// last reported (all of those not yet reported, if first).
-		_check(first) {
+		// last reported (and those not yet reported), with their sizes as
+		// last laid out, without laying out the page, as browsers report
+		// them after their layouts (with getBoundingClientRect, the checks
+		// every 250ms laid out the page as nytimes.com changed it, 100ms
+		// each time); those that have not been laid out yet are reported
+		// once they are.
+		_check() {
 			const entries = [];
 			for (const t of this._targets) {
-				const r = t.getBoundingClientRect();
+				const b = t instanceof Node ? D.rectNow(t[ID]) : null;
+				if (!b) continue;
+				const r = new DOMRect(b[0] - scrollState.x, b[1] - scrollState.y, b[2], b[3]);
 				const last = this._sizes.get(t);
 				if (last && last[0] === r.width && last[1] === r.height) continue;
-				if (!last && !first) continue;
 				this._sizes.set(t, [r.width, r.height]);
 				const size = [{ inlineSize: r.width, blockSize: r.height }];
 				entries.push({ target: t, contentRect: r, borderBoxSize: size, contentBoxSize: size, devicePixelContentBoxSize: size });
@@ -3279,6 +3473,17 @@
 		}
 
 		const pad = (n, w) => String(n).padStart(w, "0");
+		// zoneName returns the short name of the time zone at the time, as
+		// Chrome has them in English: the abbreviations of the zones of the
+		// US (as EST), UTC, and GMT with the offset for others (as GMT+1)
+		const zoneName = (tz, ms) => {
+			if (tz === "UTC") return "UTC";
+			const abbrev = D.tzAbbrev(tz, ms), off = D.tzOffset(tz, ms);
+			if (/^(America|US)\//.test(tz) && /^[A-Z]{3,4}$/.test(abbrev)) return abbrev;
+			if (isNaN(off) || off === 0) return "GMT";
+			const a = Math.abs(off);
+			return "GMT" + (off < 0 ? "-" : "+") + Math.floor(a / 60) + (a % 60 ? ":" + pad(a % 60, 2) : "");
+		};
 		class DateTimeFormat {
 			constructor(loc, opts) {
 				const o = Object.assign({}, opts || {});
@@ -3288,12 +3493,28 @@
 					const ts = { full: { hour: "numeric", minute: "2-digit", second: "2-digit" }, long: { hour: "numeric", minute: "2-digit", second: "2-digit" }, medium: { hour: "numeric", minute: "2-digit", second: "2-digit" }, short: { hour: "numeric", minute: "2-digit" } };
 					Object.assign(o, ds[o.dateStyle] || {}, ts[o.timeStyle] || {});
 				} else if (!fields.some(f => o[f] !== undefined)) Object.assign(o, { year: "numeric", month: "numeric", day: "numeric" });
+				// the time zone ("" for the local one), from the time zone
+				// database of Go (intl.go); a name of a zone that it does
+				// not have is the local one, if it looks like one (as on
+				// platforms without the database)
+				this._tz = "";
+				if (o.timeZone !== undefined) {
+					const name = String(o.timeZone);
+					this._tz = D.tzCanonical(name);
+					if (!this._tz && !/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)+$/.test(name)) throw new RangeError("Invalid time zone specified: " + name);
+					o.timeZone = this._tz || name;
+				}
 				this._o = o;
 			}
 			formatToParts(d) {
 				d = d === undefined ? new Date() : new Date(typeof d === "number" ? d : d.valueOf());
-				const o = this._o, utc = o.timeZone === "UTC";
-				const get = f => utc ? d["getUTC" + f]() : d["get" + f]();
+				if (isNaN(d.valueOf())) throw new RangeError("Invalid time value");
+				const o = this._o, tz = this._tz;
+				// the fields in the time zone: those of UTC of the time
+				// moved by its offset, or the local ones
+				const off = tz ? D.tzOffset(tz, d.valueOf()) : NaN;
+				const zd = isNaN(off) ? d : new Date(d.valueOf() + off * 60000);
+				const get = f => isNaN(off) ? d["get" + f]() : zd["getUTC" + f]();
 				const parts = [];
 				const lit = v => parts.push({ type: "literal", value: v });
 				const textMonth = o.month === "long" || o.month === "short" || o.month === "narrow";
@@ -3320,13 +3541,13 @@
 					if (o.second) ts.push({ type: "second", value: pad(get("Seconds"), 2) });
 					ts.forEach((p, i) => { if (i) lit(":"); parts.push(p); });
 					if (o.hour && h12 !== null) { lit(" "); parts.push({ type: "dayPeriod", value: h24 < 12 ? "AM" : "PM" }); }
-					if (o.timeZoneName) { lit(" "); parts.push({ type: "timeZoneName", value: utc ? "UTC" : "local" }); }
+					if (o.timeZoneName) { lit(" "); parts.push({ type: "timeZoneName", value: zoneName(tz || D.localZone(), d.valueOf()) }); }
 				}
 				return parts;
 			}
 			format(d) { return this.formatToParts(d).map(p => p.value).join(""); }
 			formatRange(a, b) { return this.format(a) + " – " + this.format(b); }
-			resolvedOptions() { return Object.assign({ locale, calendar: "gregory", numberingSystem: "latn", timeZone: this._o.timeZone || "UTC" }, this._o); }
+			resolvedOptions() { return Object.assign({ locale, calendar: "gregory", numberingSystem: "latn" }, this._o, { timeZone: this._tz || this._o.timeZone || D.localZone() }); }
 			static supportedLocalesOf() { return supportedLocalesOf(); }
 		}
 
@@ -3434,6 +3655,28 @@
 		value: function toLocaleString(locales, options) { return new Intl.NumberFormat(locales, options).format(Number(this)); },
 		writable: true, configurable: true,
 	});
+	// and those of dates of Intl.DateTimeFormat, with its time zones (goja
+	// had only the local one), with the fields that browsers add when none
+	// of those of the kind are given (as ToDateTimeOptions)
+	{
+		const dateFields = ["weekday", "year", "month", "day"], timeFields = ["dayPeriod", "hour", "minute", "second", "fractionalSecondDigits"];
+		const define = (name, required, defaults) => Object.defineProperty(Date.prototype, name, {
+			value: function (locales, options) {
+				if (isNaN(this.valueOf())) return "Invalid Date";
+				const o = Object.assign({}, options || {});
+				const check = required === "date" ? dateFields : required === "time" ? timeFields : dateFields.concat(timeFields);
+				if (!check.some(f => o[f] !== undefined) && o.dateStyle === undefined && o.timeStyle === undefined) {
+					if (defaults !== "time") Object.assign(o, { year: "numeric", month: "numeric", day: "numeric" });
+					if (defaults !== "date") Object.assign(o, { hour: "numeric", minute: "2-digit", second: "2-digit" });
+				}
+				return new Intl.DateTimeFormat(locales, o).format(this);
+			},
+			writable: true, configurable: true,
+		});
+		define("toLocaleString", "any", "all");
+		define("toLocaleDateString", "date", "date");
+		define("toLocaleTimeString", "time", "time");
+	}
 
 	// ---- MessageChannel ----
 
@@ -3639,7 +3882,12 @@
 	// dates, regular expressions, maps, sets, undefined values, and
 	// numbers that JSON has not.
 	const cloneError = () => new DOMException("could not be cloned", "DataCloneError");
-	function cloneEncode(v) {
+	// The objects, arrays, maps, and sets of a message are numbered as they
+	// are first encoded (in seen), and those that are in it again (as in a
+	// cycle, which overflowed the stack, as for a message of npr.org) are
+	// references to them ($c "ref"), which cloneDecode makes the same
+	// objects (in refs, in the same order).
+	function cloneEncode(v, seen) {
 		switch (typeof v) {
 			case "undefined": return { $c: "u" };
 			case "bigint": return { $c: "b", v: String(v) };
@@ -3653,19 +3901,35 @@
 		if (ArrayBuffer.isView(v)) return { $c: "ta", t: v.constructor.name, v: Array.from(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
 		if (v instanceof Date) return { $c: "d", v: v.getTime() };
 		if (v instanceof RegExp) return { $c: "r", s: v.source, f: v.flags };
-		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [cloneEncode(k), cloneEncode(x)]) };
-		if (v instanceof Set) return { $c: "s", v: Array.from(v, cloneEncode) };
 		if (v instanceof Error) return { $c: "e", n: v.name, m: v.message };
-		if (Array.isArray(v)) return v.map(cloneEncode);
 		if (v instanceof Node) throw cloneError();
+		seen = seen || new Map();
+		if (seen.has(v)) return { $c: "ref", i: seen.get(v) };
+		seen.set(v, seen.size);
+		const enc = x => cloneEncode(x, seen);
+		if (v instanceof Map) return { $c: "m", v: Array.from(v, ([k, x]) => [enc(k), enc(x)]) };
+		if (v instanceof Set) return { $c: "s", v: Array.from(v, x => enc(x)) };
+		if (Array.isArray(v)) return Array.from(v, x => enc(x));
 		const o = {};
-		for (const k of Object.keys(v)) o[k] = cloneEncode(v[k]);
+		for (const k of Object.keys(v)) o[k] = enc(v[k]);
 		return "$c" in o ? { $c: "o", v: o } : o;
 	}
-	function cloneDecode(v) {
+	function cloneDecode(v, refs) {
 		if (v === null || typeof v !== "object") return v;
-		if (Array.isArray(v)) return v.map(cloneDecode);
-		const decodeObject = o => { const r = {}; for (const k of Object.keys(o)) r[k] = cloneDecode(o[k]); return r; };
+		refs = refs || [];
+		const dec = x => cloneDecode(x, refs);
+		if (Array.isArray(v)) {
+			const r = [];
+			refs.push(r);
+			for (const x of v) r.push(dec(x));
+			return r;
+		}
+		const decodeObject = o => {
+			const r = {};
+			refs.push(r);
+			for (const k of Object.keys(o)) r[k] = dec(o[k]);
+			return r;
+		};
 		switch (v.$c) {
 			case undefined: return decodeObject(v);
 			case "u": return undefined;
@@ -3680,9 +3944,20 @@
 			}
 			case "d": return new Date(v.v);
 			case "r": return new RegExp(v.s, v.f);
-			case "m": return new Map(v.v.map(([k, x]) => [cloneDecode(k), cloneDecode(x)]));
-			case "s": return new Set(v.v.map(cloneDecode));
+			case "m": {
+				const m = new Map();
+				refs.push(m);
+				for (const [k, x] of v.v) m.set(dec(k), dec(x));
+				return m;
+			}
+			case "s": {
+				const set = new Set();
+				refs.push(set);
+				for (const x of v.v) set.add(dec(x));
+				return set;
+			}
 			case "e": { const C = g[v.n] || Error; const e = new C(v.m); return e; }
+			case "ref": return refs[v.i];
 			case "o": return decodeObject(v.v);
 		}
 		return decodeObject(v);
@@ -3740,6 +4015,53 @@
 		return p;
 	}
 
+	// The windows of the frames without a page of their own (with no src,
+	// or about:blank), which are of the same origin as this one, so that
+	// scripts use them directly: Cloudflare's challenge runs code with the
+	// eval of such a window (and waited forever when it had none), and
+	// editors write to their documents. A blank window has a document of
+	// its own (not rendered), and otherwise the properties of this window
+	// (its constructors and eval, which in browsers are of a realm of its
+	// own).
+	const blankWindows = new WeakMap(); // by their iframe elements
+	function isBlankFrame(el) {
+		const src = (el.getAttribute("src") || "").trim();
+		return el.isConnected && (src === "" || src === "about:blank");
+	}
+	function blankWindow(el) {
+		let w = blankWindows.get(el);
+		if (w) return w;
+		const doc = wrap(D.parseDocument("<!DOCTYPE html><html><head></head><body></body></html>"));
+		const events = new EventTarget();
+		const loc = {
+			href: "about:blank", protocol: "about:", host: "", hostname: "", port: "", pathname: "blank",
+			search: "", hash: "", get origin() { return location.origin; },
+			assign() {}, replace() {}, reload() {}, toString() { return "about:blank"; },
+		};
+		const own = {
+			get window() { return w; }, get self() { return w; }, get frames() { return w; }, get globalThis() { return w; },
+			get parent() { return g; }, get top() { return g.top; }, get frameElement() { return el; },
+			get document() { return doc; }, get location() { return loc; }, get origin() { return location.origin; },
+			get closed() { return !el.isConnected; }, get name() { return el.getAttribute("name") || ""; },
+			length: 0, opener: null,
+			addEventListener: (...a) => events.addEventListener(...a),
+			removeEventListener: (...a) => events.removeEventListener(...a),
+			dispatchEvent: e => events.dispatchEvent(e),
+			postMessage(data) {
+				const v = cloneDecode(JSON.parse(cloneJSON(data)));
+				setTimer(() => events.dispatchEvent(new MessageEvent("message", { data: v, origin: location.origin, source: g })), 0, [], false);
+			},
+		};
+		w = new Proxy(own, {
+			get(t, k) { return k in t ? t[k] : g[k]; },
+			set(t, k, v) { try { t[k] = v; } catch (e) {} return true; },
+			has(t, k) { return k in t || k in g; },
+		});
+		windowProxies.add(w);
+		blankWindows.set(el, w);
+		return w;
+	}
+
 	// ---- workers (see worker.go) ----
 
 	const workers = new Map(); // the Worker objects, by their numbers
@@ -3768,7 +4090,13 @@
 		TextTrack, TextTrackList: TrackList, AudioTrackList: TrackList, VideoTrackList: TrackList,
 		document, location, history, navigation, navigator, Navigation, NavigationHistoryEntry,
 		screenX: 0, screenY: 0, screenLeft: 0, screenTop: 0,
-		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: { type: "landscape-primary", angle: 0, addEventListener() {} } },
+		screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, availTop: 0, availLeft: 0, colorDepth: 24, pixelDepth: 24, orientation: {
+			// (with lock and unlock, which the video player of nytimes.com
+			// binds as it loads, which stopped it)
+			type: "landscape-primary", angle: 0, onchange: null,
+			lock() { return Promise.reject(domException("NotSupportedError", "screen orientation locking is not supported")); },
+			unlock() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true; },
+		} },
 		localStorage: storageProxy("local"), sessionStorage: storageProxy("session"),
 		performance, crypto, customElements,
 		devicePixelRatio: 1, status: "", isSecureContext: true, OffscreenCanvas, BroadcastChannel,
@@ -3791,7 +4119,7 @@
 		DOMTokenList, CSSStyleDeclaration, DOMRect, DOMRectReadOnly: DOMRect, Location, MediaQueryList,
 		URL, URLSearchParams, Headers, Request, Response, XMLHttpRequest, Blob, File, FileReader, FormData,
 		AbortController, AbortSignal, TextEncoder, TextDecoder, DOMParser, XMLSerializer,
-		MutationObserver, MutationRecord, IntersectionObserver, ResizeObserver, PerformanceObserver,
+		MutationObserver, MutationRecord, IntersectionObserver, IntersectionObserverEntry, ResizeObserver, PerformanceObserver,
 		fetch,
 		Function: FunctionProxy,
 		__dynamicImport: dynamicImport,
@@ -3812,7 +4140,10 @@
 		requestIdleCallback(fn) { return setTimer(() => fn({ didTimeout: false, timeRemaining: () => 10 }), 1, [], false); },
 		cancelIdleCallback: clearTimer,
 		queueMicrotask(fn) { promiseThen.call(resolvedPromise, () => { try { fn(); } catch (e) { reportError(e); } }); },
-		structuredClone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); },
+		// (with its maps, sets, dates, typed arrays, and cycles, as for
+		// messages: Amazon's ad script on nytimes.com cloned a map, which
+		// became an object without forEach)
+		structuredClone(v) { return cloneDecode(JSON.parse(cloneJSON(v))); },
 		reportError,
 		atob(s) { return D.atob(String(s)); },
 		btoa(s) { return D.btoa(String(s)); },
@@ -4091,6 +4422,10 @@
 		g.dispatchEvent(new Event("resize"));
 	};
 
+	// scrolled dispatches the scroll event of the page, and checks the
+	// intersections of the targets of the IntersectionObservers.
+	D.scrolled = scrolled;
+
 	// message dispatches a message posted to this window (as JSON) from
 	// the given origin and window (see frames.go).
 	D.message = function (data, origin, source, pairs) {
@@ -4238,6 +4573,26 @@
 		}
 	}
 
+	// The declarative shadow roots of the document (templates with a
+	// shadowrootmode), which are shadow roots of their parents, with their
+	// contents, as browsers parse them: they were templates, which React
+	// found where it hydrated the elements of their hosts (on nytimes.com,
+	// a template in each nyt-betamax), so it rendered the page again (error
+	// 418). Those in them are attached as they are moved, in order.
+	if (!D.isWorker() && document) {
+		for (const t of document.querySelectorAll("template[shadowrootmode]")) {
+			const host = t.parentNode, mode = t.getAttribute("shadowrootmode");
+			if (!host || host.nodeType !== 1 || (mode !== "open" && mode !== "closed") || shadows.has(host)) continue;
+			try {
+				const sr = host.attachShadow({ mode, delegatesFocus: t.hasAttribute("shadowrootdelegatesfocus") });
+				const content = templateContents.get(t);
+				const from = content || t;
+				while (from.firstChild) sr.appendChild(from.firstChild);
+				t.remove();
+			} catch (e) { }
+		}
+	}
+
 	// the windows of the frames of this window by their names and indexes
 	// (as window[name] and frames[name]), from the root of the prototypes
 	// of the global object, a proxy of Object.prototype, which also reports
@@ -4262,6 +4617,8 @@
 					if (typeof k !== "string" || k in t) return Reflect.get(t, k, r);
 					const f = D.windowFrame(0, k);
 					if (f >= 0) return windowProxy(f);
+					const n = D.frameNode(k); // (a frame without a page, as about:blank)
+					if (n >= 0) { const w = wrap(n).contentWindow; if (w) return w; }
 					if (traceGlobal) traceGlobal(k);
 					return undefined;
 				},
