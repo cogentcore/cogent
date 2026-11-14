@@ -5,7 +5,10 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/png"
 	"io"
 	"net/http"
 	"strings"
@@ -13,15 +16,19 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/core/htmlcore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestPrefetch tests that the resources of a page are gotten in parallel
-// into its cache (with the web fonts of its style sheets), each once, and
+// into its cache (with the web fonts of its style sheets, and its images
+// decoded into its image cache), each once, and
 // that one that is being gotten when the page asks for it is waited for,
 // not gotten again.
 func TestPrefetch(t *testing.T) {
+	var pngData bytes.Buffer
+	require.NoError(t, png.Encode(&pngData, image.NewRGBA(image.Rect(0, 0, 8, 8))))
 	var mu sync.Mutex
 	gets := map[string]int{}
 	running, most := 0, 0
@@ -35,7 +42,7 @@ func TestPrefetch(t *testing.T) {
 		mu.Lock()
 		running--
 		mu.Unlock()
-		body, typ := "data", "image/png"
+		body, typ := pngData.String(), "image/png"
 		if strings.HasSuffix(u, ".css") {
 			body, typ = `@font-face { font-family: F; src: url(font.woff2) format("woff2") }`, "text/css"
 		}
@@ -46,7 +53,8 @@ func TestPrefetch(t *testing.T) {
 		urls = append(urls, fmt.Sprintf("https://example.com/img%d.png", i))
 	}
 	start := time.Now()
-	prefetch(urls, rc.Get, true, func() bool { return false })
+	images := htmlcore.NewImageCache(1 << 20)
+	prefetch(urls, rc.Get, true, images, func() bool { return false })
 	// (as the page is read, while it is being gotten)
 	resp, err := rc.Get("https://example.com/img19.png")
 	require.NoError(t, err)
@@ -62,5 +70,6 @@ func TestPrefetch(t *testing.T) {
 		assert.Equal(t, 1, n, "gotten once: %s", u)
 	}
 	assert.Greater(t, most, 10, "in parallel")
+	require.Eventually(t, func() bool { return images.Get("https://example.com/img0.png") != nil }, time.Second, 10*time.Millisecond, "decoded")
 	assert.Less(t, time.Since(start), 500*time.Millisecond, "not one at a time (22 x 50ms)")
 }

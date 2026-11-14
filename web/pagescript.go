@@ -1474,7 +1474,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 		return false
 	}
 	// its resources, in parallel, as it is read
-	prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, canceled)
+	prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, canceled)
 	parsed := time.Since(lt.start)
 	ps, err := pg.newPageScripts(ctx, doc, final, openedBy, lt.start)
 	if err != nil {
@@ -1804,5 +1804,5 @@ func (ps *pageScripts) logFallback(kind, instead string) {
 // [prefetch]), as it is read: the images that scripts add (as the
 // slideshows of npr.org) were gotten one at a time as it was read (8s).
 func (ps *pageScripts) prefetch(ctx *htmlcore.Context) {
-	prefetch(ctx.PrefetchURLs(ps.doc), ctx.GetURL, ctx.WebFonts, ps.engine.Closed)
+	prefetch(ctx.PrefetchURLs(ps.doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, ps.engine.Closed)
 }

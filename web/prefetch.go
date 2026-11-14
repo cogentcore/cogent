@@ -26,7 +26,10 @@ const prefetchWorkers = 24
 // volkskrant.nl got 255 of them in 8s, each in 20-100ms, before it was
 // shown). The resources that are being gotten as the page is read are
 // waited for, not gotten again (see [resourceCache.Get]).
-func prefetch(urls []string, get func(url string) (*http.Response, error), webFonts bool, canceled func() bool) {
+//
+// The images that it gets are decoded into the given cache (if not nil),
+// in parallel, as they would be one at a time as the page is read.
+func prefetch(urls []string, get func(url string) (*http.Response, error), webFonts bool, images *htmlcore.ImageCache, canceled func() bool) {
 	if len(urls) == 0 {
 		return
 	}
@@ -70,6 +73,11 @@ func prefetch(urls []string, get func(url string) (*http.Response, error), webFo
 				continue
 			}
 			ct := strings.ToLower(resp.Header.Get("Content-Type"))
+			if images != nil && strings.HasPrefix(ct, "image/") && !strings.Contains(ct, "svg") {
+				if b, err := io.ReadAll(resp.Body); err == nil {
+					images.Decode(u, b)
+				}
+			}
 			if strings.Contains(ct, "css") {
 				// its imports and web fonts, as it is added to the page
 				b, err := io.ReadAll(resp.Body)
