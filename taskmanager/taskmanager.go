@@ -8,6 +8,8 @@ package main
 
 import (
 	_ "embed"
+	"slices"
+	"sync/atomic"
 	"time"
 
 	"cogentcore.org/core/base/datasize"
@@ -54,33 +56,75 @@ var appIcon string
 func main() {
 	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Task Manager")
+	makeApp(b, time.Second)
+	b.RunMainWindow()
+}
 
+// makeApp makes the app in the given body, updating the tasks at the
+// given interval, and returns its table of tasks.
+func makeApp(b *core.Body, interval time.Duration) *core.Table {
 	ts := getTasks(b)
 	tv := core.NewTable(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
 
+	// selected is the PID of the selected task, which stays selected when
+	// the tasks are updated and sorted again, so that the actions apply to
+	// the task that the user selected, not the one now at its index.
+	selected := int32(-1)
+	tv.OnSelect(func(e events.Event) {
+		selected = -1
+		if tv.SelectedIndex >= 0 && tv.SelectedIndex < len(ts) {
+			selected = ts[tv.SelectedIndex].PID
+		}
+	})
+	selectedTask := func() *Task {
+		for _, t := range ts {
+			if t.PID == selected {
+				return t
+			}
+		}
+		return nil
+	}
+
 	tv.OnDoubleClick(func(e events.Event) {
-		t := ts[tv.SelectedIndex]
+		t := selectedTask()
+		if t == nil {
+			return
+		}
 		d := core.NewBody("Task info")
 		core.NewForm(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().RunDialog(b)
 	})
 
-	tick := time.NewTicker(time.Second)
-	paused := false
+	tick := time.NewTicker(interval)
+	var paused atomic.Bool
 
 	b.OnShow(func(e events.Event) {
 		tv.SortColumn(1)
 		tv.SortColumn(1)
 		go func() {
 			for range tick.C {
-				if paused {
+				if paused.Load() {
 					continue
 				}
-				ts = getTasks(b)
-				tv.AsyncLock()
+				nts := getTasks(b)
+				if !tv.AsyncLockIfShown() { // closed
+					tick.Stop()
+					return
+				}
+				if paused.Load() { // paused while getting them
+					tv.AsyncUnlock()
+					continue
+				}
+				ts = nts // (with the lock, as the table shows it)
 				tv.SortSlice()
+				// the selected task stays selected, at its new index
+				tv.ResetSelectedIndexes()
+				tv.SelectedIndex = slices.IndexFunc(ts, func(t *Task) bool { return t.PID == selected })
+				if tv.SelectedIndex >= 0 {
+					tv.SelectIndex(tv.SelectedIndex)
+				}
 				tv.Update()
 				tv.AsyncUnlock()
 			}
@@ -93,7 +137,11 @@ func main() {
 				w.SetText("End task").SetIcon(icons.Cancel).
 					SetTooltip("Stop the currently selected task").
 					OnClick(func(e events.Event) {
-						t := ts[tv.SelectedIndex]
+						t := selectedTask()
+						if t == nil {
+							core.MessageSnackbar(tv, "No task is selected")
+							return
+						}
 						core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 					})
 			})
@@ -101,8 +149,8 @@ func main() {
 				w.SetText("Pause").SetIcon(icons.Pause).
 					SetTooltip("Stop updating the list of tasks").
 					OnClick(func(e events.Event) {
-						paused = !paused
-						if paused {
+						paused.Store(!paused.Load())
+						if paused.Load() {
 							w.SetText("Resume").SetIcon(icons.Resume).
 								SetTooltip("Resume updating the list of tasks")
 						} else {
@@ -114,13 +162,17 @@ func main() {
 			})
 		})
 	})
-
-	b.RunMainWindow()
+	return tv
 }
 
+// getTasks returns the current tasks, in an error dialog if it fails
+// (in the window of the given body, which it locks).
 func getTasks(b *core.Body) []*Task {
 	ps, err := process.Processes()
-	core.ErrorDialog(b, err, "Error getting system processes")
+	if errors.Log(err) != nil && b.AsyncLockIfShown() {
+		core.ErrorDialog(b, err, "Error getting system processes")
+		b.AsyncUnlock()
+	}
 
 	ts := make([]*Task, len(ps))
 	for i, p := range ps {
