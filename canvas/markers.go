@@ -79,7 +79,7 @@ func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColo
 
 // MarkerSetColors sets color properties in each element
 func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
-	mk.WalkDown(func(k tree.Node) bool {
+	for k := range mk.All() {
 		fp := k.AsTree().Property("fill")
 		if fp != nil {
 			if strings.HasPrefix(mk.Name, "Empty") {
@@ -96,13 +96,12 @@ func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
 				k.AsTree().SetProperty("stroke", stroke)
 			}
 		}
-		return tree.Continue
-	})
+	}
 }
 
 // MarkerDeleteCtxtColors deletes context-* color names from standard code
 func MarkerDeleteCtxtColors(mk *svg.Marker) {
-	mk.WalkDown(func(k tree.Node) bool {
+	for k := range mk.All() {
 		fp := k.AsTree().Property("fill")
 		if fp != nil {
 			fps := reflectx.ToString(fp)
@@ -117,8 +116,7 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 				k.AsTree().DeleteProperty("stroke")
 			}
 		}
-		return tree.Continue
-	})
+	}
 }
 
 // NewMarkerFromXML makes a new marker from given XML source.

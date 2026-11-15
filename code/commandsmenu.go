@@ -112,13 +112,12 @@ func commandTabName(cmdline string) string {
 func commandsDir(ctx core.Widget) string {
 	cv := tree.ParentByType[*Code](ctx)
 	if cv == nil && ctx.AsWidget().Scene != nil {
-		ctx.AsWidget().Scene.WalkDown(func(n tree.Node) bool {
+		for n := range ctx.AsWidget().Scene.All() {
 			if c, ok := n.(*Code); ok {
 				cv = c
-				return tree.Break
+				break
 			}
-			return cv == nil
-		})
+		}
 	}
 	if cv == nil {
 		return ""

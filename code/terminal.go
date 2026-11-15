@@ -281,13 +281,12 @@ func (cv *Code) tabsPanelKeys() bool {
 		return false
 	}
 	var foc core.Widget
-	core.AsWidget(cv.Splits().Child(TabsIndex)).WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+	for cw, cwb := range core.AsWidget(cv.Splits().Child(TabsIndex)).AllWidgets() {
 		if cwb.StateIs(states.Focused) {
 			foc = cw
-			return tree.Break
+			break
 		}
-		return tree.Continue
-	})
+	}
 	switch w := foc.(type) {
 	case *terminal.View:
 		return w == w.Terminal.LinesView() && w.Terminal.ActiveView() == w

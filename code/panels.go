@@ -77,16 +77,12 @@ func (cv *Code) FocusOnPanel(panel int) bool {
 // [core.Events.FocusNextFrom], which goes on to the widgets after it.
 func focusWithin(w core.Widget) bool {
 	var foc core.Widget
-	w.AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-		if foc != nil {
-			return tree.Break
-		}
+	for cw, cwb := range w.AsWidget().AllWidgets() {
 		if cwb.IsDisplayable() && !cwb.StateIs(states.Disabled) && cwb.AbilityIs(abilities.Focusable) {
 			foc = cw
-			return tree.Break
+			break
 		}
-		return tree.Continue
-	})
+	}
 	if foc == nil {
 		return false
 	}

@@ -314,7 +314,7 @@ func (ps *pageScripts) render() func() {
 		var focused *html.Node
 		cursor := -1 // (of a text field that has the focus)
 		scrolls := map[*html.Node]math32.Vector2{}
-		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		for cw, cwb := range pg.AllWidgets() {
 			if cwb.StateIs(states.Focused) {
 				focused = htmlcore.NodeOf(cw)
 				cursor = focusedCursor(cw)
@@ -324,8 +324,7 @@ func (ps *pageScripts) render() func() {
 					scrolls[n] = fr.Geom.Scroll
 				}
 			}
-			return tree.Continue
-		})
+		}
 		if requested != nil && requested != focused {
 			focused, cursor = requested, -1
 		}
@@ -804,14 +803,14 @@ func (ps *pageScripts) setHovered(n *html.Node) {
 // restoreScrolls restores the given scroll positions of the elements that
 // scroll in the given content (read again), after its layout.
 func restoreScrolls(content *core.Frame, scrolls map[*html.Node]math32.Vector2) {
-	content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+	for cw, _ := range content.AllWidgets() {
 		fr := core.AsFrame(cw)
 		if fr == nil {
-			return tree.Continue
+			continue
 		}
 		pos, ok := scrolls[htmlcore.NodeOf(cw)]
 		if !ok {
-			return tree.Continue
+			continue
 		}
 		for d := math32.X; d <= math32.Y; d++ {
 			if fr.HasScroll[d] {
@@ -819,8 +818,7 @@ func restoreScrolls(content *core.Frame, scrolls map[*html.Node]math32.Vector2) 
 				fr.ScrollUpdateFromGeom(d)
 			}
 		}
-		return tree.Continue
-	})
+	}
 }
 
 // summaryDetails returns the details element whose summary the given
@@ -1498,14 +1496,13 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 	}
 	if ps.widgets == nil {
 		ps.widgets = map[*html.Node]*core.WidgetBase{}
-		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		for _, cwb := range pg.AllWidgets() {
 			if nd, ok := cwb.Property("node").(*html.Node); ok && nd != nil {
 				if _, has := ps.widgets[nd]; !has {
 					ps.widgets[nd] = cwb
 				}
 			}
-			return tree.Continue
-		})
+		}
 	}
 	return ps.widgets[n]
 }

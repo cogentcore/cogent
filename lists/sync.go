@@ -487,17 +487,16 @@ func (ls *Lists) editingText() bool {
 // the current list, and the undo of the lists that are not changed.
 func (ls *Lists) reload(local, files map[string][]byte) {
 	old := map[string]*List{}
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		old[n.(*List).ID] = n.(*List)
-		return tree.Continue
-	})
+	}
 	var current string
 	if ls.Current != nil {
 		current = ls.Current.ID
 	}
 	ls.load(files)
 	ls.Current = nil
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		l := n.(*List)
 		path := listPath(l.ID)
 		if o := old[l.ID]; o != nil && bytes.Equal(local[path], files[path]) {
@@ -506,8 +505,7 @@ func (ls *Lists) reload(local, files map[string][]byte) {
 		if l.ID == current {
 			ls.Current = l
 		}
-		return tree.Continue
-	})
+	}
 	ls.tableList = nil // for the column widths and sort of the current list
 	ls.Update()
 	ls.updateItems()

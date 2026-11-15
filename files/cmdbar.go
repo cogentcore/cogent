@@ -28,13 +28,12 @@ func theCommands() *commands.Commands {
 func commandsDir(ctx core.Widget) string {
 	fl := tree.ParentByType[*Files](ctx)
 	if fl == nil && ctx.AsWidget().Scene != nil {
-		ctx.AsWidget().Scene.WalkDown(func(n tree.Node) bool {
+		for n := range ctx.AsWidget().Scene.All() {
 			if f, ok := n.(*Files); ok {
 				fl = f
-				return tree.Break
+				break
 			}
-			return fl == nil
-		})
+		}
 	}
 	if fl == nil {
 		return ""
