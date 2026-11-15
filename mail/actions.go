@@ -161,8 +161,11 @@ func (a *App) label(newLabels []string) {
 		})
 		return nil
 	}, func() {
-		// Now that we are done, we can save resultantLabels to the cache.
+		// Now that we are done, we can save resultantLabels to the cache,
+		// with the lock of the window, as it shows the labels.
+		a.AsyncLock()
 		a.readMessage.Labels = resultantLabels
+		a.AsyncUnlock()
 	})
 }
 
@@ -270,7 +273,10 @@ func (a *App) markSeen(seen bool) {
 		if err != nil {
 			return err
 		}
-		// Also directly update the cache:
+		// Also directly update the cache, with the lock of the window,
+		// as it shows the flags.
+		a.AsyncLock()
+		defer a.AsyncUnlock()
 		flags := &a.readMessage.Flags
 		if seen && !slices.Contains(*flags, imap.FlagSeen) {
 			*flags = append(*flags, imap.FlagSeen)
