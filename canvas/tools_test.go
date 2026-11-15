@@ -47,7 +47,8 @@ func TestDrawShapes(t *testing.T) {
 	fs = append(fs, drag(RectTool)...)
 	fs = append(fs, func(cv *Canvas) {
 		assert.Equal(t, nrect+1, count[*svg.Rect](cv), "a new rectangle")
-		rc := cv.EditState.FirstSelected().(*svg.Rect)
+		rc, ok := cv.EditState.FirstSelected().(*svg.Rect)
+		require.True(t, ok, "the new rectangle is selected")
 		assert.InDelta(t, 100, rc.BBox.Size().X, 2, "the size of the drag")
 	})
 	fs = append(fs, func(cv *Canvas) {

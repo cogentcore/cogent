@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,7 +186,6 @@ func TestSelectArrange(t *testing.T) {
 	runCanvas(t, "shapes.svg", func(cv *Canvas) {
 		root := cv.SVG.Root()
 		idx := func(nm string) int { return node(t, cv, nm).AsTree().IndexInParent() }
-		i847, i59 := idx("rect847"), idx("rect59")
 		selectNodes(t, cv, "rect847", "rect59")
 		assert.Len(t, cv.EditState.SelectedNames(), 2)
 		n0 := len(root.Children)
@@ -213,7 +213,6 @@ func TestSelectArrange(t *testing.T) {
 		assert.Equal(t, 1, idx("rect847"), "undo of lower")
 		assert.NotEmpty(t, cv.Redo())
 		assert.Equal(t, 0, idx("rect847"), "redo of lower")
-		_, _ = i847, i59
 	})
 }
 
@@ -268,5 +267,43 @@ func TestClipboard(t *testing.T) {
 		cv.CutSelected()
 		cv.DeleteSelected()
 		assert.Len(t, root.Children, n0-1)
+	})
+}
+
+// TestSelectModes tests the modes of selecting items.
+func TestSelectModes(t *testing.T) {
+	runCanvas(t, "shapes.svg", func(cv *Canvas) {
+		es := &cv.EditState
+		a, b := node(t, cv, "rect59"), node(t, cv, "rect318")
+		es.ResetSelected()
+		es.SelectAction(a, events.SelectOne, image.Point{})
+		es.SelectAction(b, events.ExtendOne, image.Point{})
+		assert.Equal(t, []string{"rect59", "rect318"}, es.SelectedNames())
+		assert.Equal(t, "rect59 rect318", es.SelectedNamesString())
+		es.SelectAction(b, events.ExtendContinuous, image.Point{})
+		assert.Equal(t, []string{"rect59"}, es.SelectedNames(), "toggled off")
+		es.SelectAction(b, events.SelectQuiet, image.Point{})
+		es.SelectAction(a, events.UnselectQuiet, image.Point{})
+		assert.Equal(t, []string{"rect318"}, es.SelectedNames())
+		es.SelectAction(b, events.Unselect, image.Point{})
+		assert.False(t, es.HasSelected())
+		es.SelectAction(a, events.NoSelect, image.Point{})
+		assert.False(t, es.HasSelected())
+		es.SelectAction(a, events.SelectOne, image.Point{})
+		es.SelectAction(b, events.ExtendOne, image.Point{})
+		es.SelectAction(a, events.SelectOne, image.Point{}) // of a selected one
+		assert.Equal(t, []string{"rect59"}, es.SelectedNames())
+		assert.Contains(t, es.RecentlySelected, b)
+		es.StartRecents(image.Pt(10, 10))
+		assert.True(t, es.PosInLastSelect(image.Pt(11, 9)))
+		assert.False(t, es.PosInLastSelect(image.Pt(30, 9)))
+
+		gp := svg.NewGroup()
+		cv.SVG.Root().AddChild(gp)
+		es.ResetSelected()
+		es.Select(gp)
+		tree.MoveToParent(b, gp)
+		es.Select(b)
+		assert.Equal(t, []string{"rect318"}, es.SelectedNames(), "not both a group and its item")
 	})
 }

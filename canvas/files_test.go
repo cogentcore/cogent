@@ -96,9 +96,7 @@ func TestExport(t *testing.T) {
 func TestAutosave(t *testing.T) {
 	defer core.TrackWindows()()
 	var asfn string
-	var b *core.Body
 	runCanvas(t, "shapes.svg", func(cv *Canvas) {
-		b = cv.Scene.Body
 		asfn = cv.autoSaveFilename(cv.Filename)
 		assert.Equal(t, "#shapes.svg#", filepath.Base(asfn))
 		assert.False(t, cv.AutosaveCheck(cv.Filename))
@@ -124,7 +122,6 @@ func TestAutosave(t *testing.T) {
 		require.NoError(t, cv.SaveDrawingAs(core.Filename(filepath.Join(filepath.Dir(asfn), "shapes.svg"))))
 		assert.NoFileExists(t, asfn, "deleted on save")
 	})
-	_ = b
 	n := &Canvas{}
 	n.Name = "x"
 	assert.Equal(t, "#new_file_x.svg#", n.autoSaveFilename(""))

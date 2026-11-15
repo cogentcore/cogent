@@ -134,8 +134,8 @@ func TestConstrain(t *testing.T) {
 	runCanvas(t, "shapes.svg", func(cv *Canvas) {
 		p318 = center(node(t, cv, "rect318"))
 		bb = node(t, cv, "rect318").AsNodeBase().BBox
+		selectNodes(t, cv, "rect318") // not by a click, which would make the press a double click
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		click(b, p318)
 		dragMods(b, p318, p318.Add(image.Pt(60, 5)), key.Control)
 	}), func(cv *Canvas) {
 		nb := node(t, cv, "rect318").AsNodeBase().BBox
@@ -216,7 +216,6 @@ func TestSprites(t *testing.T) {
 		selectNodes(t, cv, "rect59", "rect318") // selection boxes for each
 		_, ok := SpriteByName(cv.SVG, SpSelBBox, SpUpL, 0)
 		assert.True(t, ok)
-		cv.SVG.TransformAllLeaves(math32.Vec2(10, 0), math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
 	})
 }
 

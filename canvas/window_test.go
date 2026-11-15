@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -107,7 +106,6 @@ func TestOpenDropped(t *testing.T) {
 		assert.Greater(t, len(core.AllRenderWindows), n, "a new window")
 	})
 	os.Chdir(wd)
-	_ = fileinfo.TextPlain
 }
 
 // TestAlignView tests the buttons of the align tab.
