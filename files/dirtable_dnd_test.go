@@ -53,7 +53,7 @@ func TestDirTableDND(t *testing.T) {
 		de.Typ = events.Drop
 		dt.drop(de)
 	}
-	b.AssertRender(t, "dnd", func() {
+	core.AssertRender(t, b, "dnd", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 

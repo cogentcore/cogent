@@ -66,7 +66,7 @@ func TestBookmarksBar(t *testing.T) {
 	var opened string
 	br.PageFunc = func(pg *Page) {}
 	pg := br.NewTab("")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		texts, bar := barButtons(b)
@@ -119,7 +119,7 @@ func TestBookmarksSaved(t *testing.T) {
 func TestEditBookmarks(t *testing.T) {
 	withBookmarks(t, testBookmarks())
 	b := core.NewBody()
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		EditBookmarks(b)
 		b.AsyncUnlock()
@@ -174,7 +174,7 @@ func TestBookmarksBarMove(t *testing.T) {
 	b := core.NewBody()
 	br := InitBody(b)
 	br.NewTab("")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		_, bar := barButtons(b)

@@ -43,7 +43,7 @@ func TestBrowserTabs(t *testing.T) {
 			f()
 		}
 	}
-	b.RenderImage(wait, locked(func() {
+	core.RenderImage(b, wait, locked(func() {
 		assert.Equal(t, two, br.CurrentPage(), "a new tab is selected")
 		_, tab := br.Tabs.TabAtIndex(0)
 		assert.Equal(t, "Page /one", tab.Text, "tabs have the titles of their pages")
@@ -73,7 +73,7 @@ func TestBrowserNewTabClick(t *testing.T) {
 			pg.wait()
 		}
 	}
-	b.RenderImage(wait, func() {
+	core.RenderImage(b, wait, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		e := events.NewKey(events.KeyDown, 0, 0, key.Modifiers(0))

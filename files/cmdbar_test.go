@@ -69,7 +69,7 @@ func TestCommandBar(t *testing.T) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
 	fl := InitBody(b, root)
-	b.AssertRender(t, "command-bar", func() {
+	core.AssertRender(t, b, "command-bar", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		var tb *core.Toolbar

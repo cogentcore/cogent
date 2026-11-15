@@ -110,7 +110,7 @@ func TestScriptsBuildPage(t *testing.T) {
 		"/items.json": `["first item", "second item"]`,
 	})
 	var texts string
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.True(t, eventually(func() bool {
 			texts = pageTexts(b, pg)
 			return strings.Contains(texts, "timer fired") && strings.Contains(texts, "second item")
@@ -148,7 +148,7 @@ func TestScriptsClick(t *testing.T) {
 		}
 		b.AsyncUnlock()
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		clickNode("b")
 		clickNode("b")
 		clickNode("d")
@@ -170,7 +170,7 @@ func TestScriptsLinks(t *testing.T) {
 			</script></body></html>`,
 		"/other": `<html><body><p>The other page</p></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.scripts.openURL("https://example.com/other", nil) // the first link
 		b.AsyncUnlock()
@@ -192,7 +192,7 @@ func TestScriptsLayout(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body style="margin: 0"><div id="box" style="width: 300px; height: 50px">box</div></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		v, err := pg.scripts.engine.RunString(`const r = document.getElementById("box").getBoundingClientRect(); [Math.round(r.width), Math.round(r.height), innerWidth > 0, document.documentElement.clientWidth === innerWidth].join(",")`)
 		assert.NoError(t, err)
 		assert.Equal(t, "300,50,true,true", v, "the client width of the root element is that of the viewport")
@@ -207,7 +207,7 @@ func TestScriptsComputedStyle(t *testing.T) {
 		"/": `<html><head><style>:root{--accent: #0f0} h1{text-align:center;color:#0000ff;font-size:32px} .faded{color:rgba(255,0,0,0.5)}</style></head>` +
 			`<body><h1 id="h">Heading <span id="s">x</span></h1><p id="p" class="faded">p</p></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		v, err := pg.scripts.engine.RunString(`const h = getComputedStyle(document.getElementById("h")), s = getComputedStyle(document.getElementById("s")), p = getComputedStyle(document.getElementById("p"));
 			[h.textAlign, h.color, s.textAlign, s.color, h.fontSize, s.getPropertyValue("--accent"), p.color, p.textAlign, p.backgroundColor].join(";")`)
 		assert.NoError(t, err)
@@ -227,7 +227,7 @@ func TestScriptsOff(t *testing.T) {
 			`<html><body><p id="p">static</p><noscript><p>No scripts here</p></noscript><script>document.getElementById("p").textContent = "changed";</script></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		s := pageTexts(b, pg)
 		assert.Contains(t, s, "static")
 		assert.NotContains(t, s, "changed")
@@ -268,7 +268,7 @@ func TestScriptsForms(t *testing.T) {
 			target.AsWidget().Send(events.Click)
 		}
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		clickID("go")
 	}, func() {
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "submitted first") }), pageTexts(b, pg))
@@ -303,7 +303,7 @@ func TestScriptsTyping(t *testing.T) {
 		return tf
 	}
 	var first *core.TextField
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		first = field()
 		if assert.NotNil(t, first) {
@@ -361,7 +361,7 @@ func TestScriptsPost(t *testing.T) {
 	b := core.NewBody()
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "content with granted") }), pageTexts(b, pg))
 	})
 	assert.Equal(t, "POST application/x-www-form-urlencoded a b&c", posted)
@@ -391,7 +391,7 @@ func TestFormPost(t *testing.T) {
 		pg := NewPage(b)
 		pg.Scripts = scripts
 		pg.OpenURL(srv.URL+"/", nil)
-		b.RenderImage(func() { settle(pg) }, func() {
+		core.RenderImage(b, func() { settle(pg) }, func() {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
 			var target core.Widget
@@ -435,7 +435,7 @@ func TestScriptsStyleLinkLoad(t *testing.T) {
 			</script></body></html>`,
 		"/style.css": `.hidden { display: none }`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "loaded and failed") }), pageTexts(b, pg))
 	})
 }
@@ -450,7 +450,7 @@ func TestScriptsResize(t *testing.T) {
 			addEventListener("resize", () => { document.getElementById("out").textContent = start + " to " + innerWidth; });
 		</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		ps := pg.scripts
 		b.AsyncUnlock()
@@ -474,7 +474,7 @@ func TestScriptsResizeOnce(t *testing.T) {
 			addEventListener("resize", () => { document.getElementById("out").textContent = "resized " + (++n); });
 		</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		ps := pg.scripts
 		b.AsyncUnlock()
@@ -505,7 +505,7 @@ func TestScriptsClickInLink(t *testing.T) {
 					<script>document.addEventListener("click", e => { ` + prevent + ` });</script></body></html>`,
 				"/item": `<html><body><p>the item</p></body></html>`,
 			})
-			b.RenderImage(func() { settle(pg) }, func() {
+			core.RenderImage(b, func() { settle(pg) }, func() {
 				if mode == "stopped" {
 					b.AsyncLock()
 					ps := pg.scripts
@@ -566,7 +566,7 @@ func TestScriptsCheckedMenu(t *testing.T) {
 			target.AsWidget().Send(events.Click)
 		}
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.NotContains(t, pageTexts(b, pg), "Menu item")
 		send(func(w core.Widget) bool { _, ok := w.(*core.Switch); return ok })
 	}, func() {
@@ -587,7 +587,7 @@ func TestScriptsTransparentControlHover(t *testing.T) {
 			`<label for="cb" id="lb" style="display: inline-block">Menu</label></div>` +
 			`<script>document.addEventListener("click", e => {});</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		var sw *core.Switch
@@ -619,7 +619,7 @@ func TestScriptsSummaryTextClick(t *testing.T) {
 			`<script>document.addEventListener("click", e => {});</script></body></html>`,
 	})
 	var text *core.Text
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.WalkDown(func(n tree.Node) bool {
 			if tx, ok := n.(*core.Text); ok && strings.Contains(tx.Text, "Modules") {
@@ -671,7 +671,7 @@ func TestScriptsSummaryClickStopped(t *testing.T) {
 		}
 		return true
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		pg.scripts.engine.Close()
 		b.AsyncLock()
 		text := find("Modules")
@@ -714,7 +714,7 @@ func TestScriptsScrollKept(t *testing.T) {
 		})
 		return fr
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		fr := side()
 		if assert.NotNil(t, fr) && assert.True(t, fr.HasScroll[math32.Y]) {
@@ -757,7 +757,7 @@ func TestScriptsHoverEvents(t *testing.T) {
 		})
 		return p
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		a, bp := center("a"), center("b")
 		b.AsyncUnlock()
@@ -803,7 +803,7 @@ func TestScriptsHoverMenu(t *testing.T) {
 		_, shown := find("", "Case studies")
 		return shown
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		item, shown := find("item", "Case studies")
 		b.AsyncUnlock()
@@ -832,7 +832,7 @@ func TestScriptsFocusAndKeys(t *testing.T) {
 			setTimeout(() => i.focus(), 0);</script></body></html>`,
 	})
 	var tf *core.TextField
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.WalkDown(func(n tree.Node) bool {
 			if f, ok := n.(*core.TextField); ok {
@@ -877,7 +877,7 @@ func TestScriptsTypeWithSuggestions(t *testing.T) {
 			});
 			setTimeout(() => i.focus(), 0);</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ev := b.Scene.RenderWindow().SystemWindow.Events()
 		for _, r := range "abc" {
 			ev.KeyChord(r, 0, 0)
@@ -914,7 +914,7 @@ func TestScriptsPointerCapture(t *testing.T) {
 			});</script></body></html>`,
 	})
 	var split image.Rectangle
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if n := htmlcore.NodeOf(cw); n != nil && htmlcore.GetAttr(n, "id") == "split" {
@@ -974,7 +974,7 @@ func TestScriptsLinkOwnClick(t *testing.T) {
 			`<script>window.got = []; for (const id of ["first", "second"]) document.getElementById(id).addEventListener("click", () => got.push(id));</script></body></html>`,
 	})
 	var pos image.Point
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.WalkDown(func(n tree.Node) bool {
 			if wb := core.AsWidget(n); wb != nil && wb.Property("id") == "second" {
@@ -1031,7 +1031,7 @@ func testLabelChecksControl(t *testing.T, label string) {
 		})
 		return found
 	}
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, shown(), "the thread is shown")
 		var pos image.Point
 		b.AsyncLock()
@@ -1067,7 +1067,7 @@ func TestScriptsResizeAfterLayout(t *testing.T) {
 			window.addEventListener("resize", () => widths.push(box.getBoundingClientRect().width));
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.Eventually(t, func() bool {
 			v, _ := pg.scripts.engine.RunString(`widths[widths.length - 1]`)
 			w, _ := v.(float64)
@@ -1100,7 +1100,7 @@ func TestScriptsFloatOfFloats(t *testing.T) {
 			}, 10);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg); time.Sleep(200 * time.Millisecond); settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg); time.Sleep(200 * time.Millisecond); settle(pg) }, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		var nav, last, h image.Rectangle
@@ -1138,7 +1138,7 @@ func TestScriptsMediaOfLaterStyle(t *testing.T) {
 			}, 20);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg); time.Sleep(300 * time.Millisecond); settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg); time.Sleep(300 * time.Millisecond); settle(pg) }, func() {
 		assert.Eventually(t, func() bool {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
@@ -1168,7 +1168,7 @@ func TestScriptsElementFromPoint(t *testing.T) {
 <div id="hidden" style="position: absolute; top: 60px; left: 200px; width: 50px; height: 30px; visibility: hidden"></div>
 </body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		at := func(x, y int) string {
 			v, err := pg.scripts.engine.RunString(fmt.Sprintf(`(e => e ? e.id : "none")(document.elementFromPoint(%d, %d))`, x, y))
 			assert.NoError(t, err)
@@ -1190,7 +1190,7 @@ func TestScriptsComputedDisplayInline(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><p>some text <a id="l" href="#x">a link</a></p><div style="display: none"><span id="h">hidden</span></div></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		v, err := pg.scripts.engine.RunString(`[getComputedStyle(document.getElementById("l")).display, getComputedStyle(document.getElementById("h")).display].join(",")`)
 		assert.NoError(t, err)
 		assert.Equal(t, "inline,none", v)
@@ -1205,7 +1205,7 @@ func TestScriptsComputedDisplayRoot(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><div><span id="s">text</span></div></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		v, err := pg.scripts.engine.RunString(`[document.documentElement, document.body].map(e => getComputedStyle(e).display).join(",")`)
 		assert.NoError(t, err)
 		assert.Equal(t, "block,block", v)
@@ -1226,7 +1226,7 @@ func TestScriptsPreloadStyleSheet(t *testing.T) {
 			`<body><p class="hidden">not shown</p><p>shown</p></body></html>`,
 		"/style.css": `.hidden { display: none }`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
 		assert.Contains(t, pageTexts(b, pg), "shown")
 	})
@@ -1244,7 +1244,7 @@ func TestScriptsAdoptedStyleSheets(t *testing.T) {
 			document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		assert.True(t, eventually(func() bool { return !strings.Contains(pageTexts(b, pg), "not shown") }), pageTexts(b, pg))
 		_, err := pg.scripts.engine.RunString(`sheet.replaceSync("p { color: red }")`)
 		require.NoError(t, err)
@@ -1296,7 +1296,7 @@ func TestScriptsForcedRenderUnlocked(t *testing.T) {
 			</script></body></html>`,
 	})
 	body.Store(b)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			v, _ := pg.scripts.engine.RunString(`!!window.done`)
 			return v == true
@@ -1316,7 +1316,7 @@ func TestSaveDOM(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><p>static</p><script>document.body.append("made by script"); console.log("logged")</script></body></html>`,
 	})
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		pg.saveDOM()
 	})
@@ -1345,7 +1345,7 @@ func TestSaveDOMStopped(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><p>static</p><script>document.body.append("made by script")</script></body></html>`,
 	})
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		pg.scripts.engine.Close() // (as when they are stopped)
 		pg.saveDOM()
@@ -1363,7 +1363,7 @@ func TestSaveDOMStopped(t *testing.T) {
 // as it is once the page has been laid out, and that it is in no scene.
 func TestPreLayoutContent(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>page</p></body></html>`})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.NotNil(t, pg.preLayout.Load(), "the page has a pre-layout once laid out")
 		content := newPageContent()
 		tx := core.NewText(content).SetText("new content of the page, which wraps in its width")
@@ -1392,7 +1392,7 @@ func TestConsoleOpenedBy(t *testing.T) {
 		defer b.AsyncUnlock()
 		return strings.Join(pg.ScriptConsole(), "\n")
 	}
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		require.True(t, eventually(func() bool { return strings.Contains(console(), "opened by") }), console())
 		all := console()
@@ -1411,7 +1411,7 @@ func TestScriptsHoverFixedInPortal(t *testing.T) {
 			`<div id="portal"><div id="overlay" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5)"></div></div>` +
 			`<p id="log"></p><script>document.addEventListener("mouseover", e => { document.getElementById("log").textContent += " " + e.target.id; });</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		var grid *core.WidgetBase
 		pg.WalkDown(func(n tree.Node) bool {
@@ -1452,7 +1452,7 @@ func TestScriptsReleaseLock(t *testing.T) {
 			}, 50);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
 		}), "the task started")
@@ -1476,7 +1476,7 @@ func TestScriptsListenersAlreadyWired(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><p id="p">page</p><script>document.addEventListener("click", () => {});</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		before := ps.renders + ps.rereads + ps.restyles
@@ -1505,7 +1505,7 @@ func TestScriptsYieldLock(t *testing.T) {
 			}, 50);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
 		}), "the task started")
@@ -1539,7 +1539,7 @@ func TestScriptsMissingGlobalReleasesLock(t *testing.T) {
 			}, 50);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(strings.Join(pg.ScriptConsole(), "\n"), "started")
 		}), "the task started")
@@ -1573,7 +1573,7 @@ func TestScriptsIntersectionObserverBatch(t *testing.T) {
 			}, 50);
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.True(t, eventually(func() bool {
 			v, _ := ps.engine.RunString(`entries`)
@@ -1606,7 +1606,7 @@ func TestScriptsIntersectionObserverScroll(t *testing.T) {
 			s.Overflow.Set(styles.OverflowAuto)
 		})
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.True(t, eventually(func() bool {
 			v, _ := ps.engine.RunString(`log.join()`)
@@ -1631,7 +1631,7 @@ func TestScriptsTitle(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><head><title>Old</title></head><body><p>page</p></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		renders := ps.renders
@@ -1663,7 +1663,7 @@ func TestScriptsShadowDOM(t *testing.T) {
 				'<p>Votes</p><slot name="title"></slot><div><slot></slot></div><p>Share</p>';
 			</script></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		texts := pageTexts(b, pg)
 		assert.Regexp(t, `page.*Votes.*Title.*Body.*Share`, texts, "the shadow content, with the children in its slots")
 		assert.NotContains(t, texts, "hidden", "in no slot")

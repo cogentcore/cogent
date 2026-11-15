@@ -55,7 +55,7 @@ func TestCodeGoal(t *testing.T) {
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	cv.Settings.InlayHints = true
 	imagex.UpdateTestImagesFor(t) // the image is for looking at
-	b.AssertRender(t, "goal", func() {
+	core.AssertRender(t, b, "goal", func() {
 		b.AsyncLock()
 		tv, _, ok := cv.ViewFile(core.Filename(fpath))
 		b.AsyncUnlock()
