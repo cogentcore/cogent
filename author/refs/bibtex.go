@@ -67,11 +67,12 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 					if a == "" {
 						continue
 					}
-					cc, _ := refs[a]
-					cc++
-					refs[a] = cc
+					refs[a]++
 				}
 			}
+		}
+		if err := scan.Err(); err != nil {
+			fmt.Println(fn, err)
 		}
 		f.Close()
 	}
@@ -83,7 +84,7 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 	ob.Preambles = parsed.Preambles
 	ob.StringVar = parsed.StringVar
 
-	for r, _ := range refs {
+	for r := range refs {
 		be, has := parsed.Lookup(r)
 		if has {
 			ob.Entries = append(ob.Entries, be)

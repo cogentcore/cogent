@@ -98,7 +98,7 @@ func TestGameOver(t *testing.T) {
 	b, ch, start := newGame(t, ModePassAndPlay)
 	core.RenderImage(b, start, core.Locked(b, func() {
 		for _, m := range []string{"f3", "e5", "g4"} {
-			require.NoError(t, ch.game.PushMove(m, nil))
+			require.NoError(t, ch.game.PushNotationMove(m, chess.AlgebraicNotation{}, nil))
 		}
 		ch.Update()
 		sqs := squares(ch)
