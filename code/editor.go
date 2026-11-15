@@ -201,14 +201,9 @@ func (cv *Code) CommentOut() bool { //types:add
 	if tv.Lines == nil {
 		return false
 	}
-	sel := tv.Selection()
-	var stl, etl int
-	if sel == nil {
-		stl = tv.CursorPos.Line
-		etl = stl + 1
-	} else {
-		stl = sel.Region.Start.Line
-		etl = sel.Region.End.Line
+	stl, etl := tv.CursorPos.Line, tv.CursorPos.Line+1
+	if tv.HasSelection() {
+		stl, etl = selectedLines(tv)
 	}
 	tv.Lines.CommentRegion(stl, etl)
 	tv.SelectReset()
@@ -244,7 +239,7 @@ func (cv *Code) Indent() bool { //types:add
 		tv.SelectReset()
 		return true
 	}
-	tv.Lines.AutoIndentRegion(reg.Start.Line, reg.End.Line)
+	tv.Lines.AutoIndentRegion(selectedLines(tv))
 	tv.SelectReset()
 	return true
 }
@@ -280,11 +275,7 @@ func (cv *Code) TabsToSpaces() { //types:add
 	if tv.Lines == nil {
 		return
 	}
-	if tv.HasSelection() {
-		tv.Lines.TabsToSpaces(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
-	} else {
-		tv.Lines.TabsToSpaces(0, tv.NumLines()-1)
-	}
+	tv.Lines.TabsToSpaces(selectedLines(tv))
 }
 
 // SpacesToTabs converts spaces to tabs
@@ -294,11 +285,22 @@ func (cv *Code) SpacesToTabs() { //types:add
 	if tv.Lines == nil {
 		return
 	}
-	if tv.HasSelection() {
-		tv.Lines.SpacesToTabs(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
-	} else {
-		tv.Lines.SpacesToTabs(0, tv.NumLines()-1)
+	tv.Lines.SpacesToTabs(selectedLines(tv))
+}
+
+// selectedLines returns the lines of the selection of the given editor,
+// with an exclusive end, including the last line if any of it is
+// selected, or all of the lines if there is no selection.
+func selectedLines(tv *TextEditor) (start, end int) {
+	if !tv.HasSelection() {
+		return 0, tv.NumLines()
 	}
+	reg := tv.SelectRegion
+	end = reg.End.Line
+	if reg.End.Char > 0 || end == reg.Start.Line {
+		end++
+	}
+	return reg.Start.Line, end
 }
 
 // DiffFiles shows the differences between two given files

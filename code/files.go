@@ -397,9 +397,9 @@ func (cv *Code) NextViewFile(fnm string) (*TextEditor, int, bool) { //types:add
 		if ok {
 			fnm = string(fn.Filepath)
 			ln, nw = cv.RecycleFile(fnm)
-			if ln == nil {
-				return nil, -1, false
-			}
+		}
+		if ln == nil {
+			return nil, -1, false
 		}
 	}
 	nv, nidx := cv.NextViewLines(ln)

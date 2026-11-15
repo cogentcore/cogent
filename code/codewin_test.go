@@ -35,6 +35,8 @@ func newTestCode(t *testing.T, dir string) (*core.Body, *Code) {
 	cv.ProjectRoot = core.Filename(dir)
 	cv.Settings.ProjectRoot = core.Filename(dir)
 	imagex.UpdateTestImagesFor(t)
+	// the keys and projects of Code set GO111MODULE (see [SetGoMod])
+	t.Setenv("GO111MODULE", os.Getenv("GO111MODULE"))
 	t.Cleanup(core.TrackWindows()) // (after the close below)
 	t.Cleanup(func() { closeTestCode(b, cv) })
 	return b, cv

@@ -180,16 +180,16 @@ func SplitsView(pt *Splits) {
 				w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 					SetIcon(icons.Save).SetKey(keymap.Save).
 					FirstStyler(func(s *styles.Style) {
-						s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
+						s.SetEnabled(AvailableSplitsChanged && pt == &AvailableSplits)
 					})
 			})
 			tree.Add(p, func(w *core.FuncButton) {
 				w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-				w.Args[0].SetTag(`extension:".toml"`)
+				w.Args[0].SetTag(`extension:".json"`)
 			})
 			tree.Add(p, func(w *core.FuncButton) {
 				w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-				w.Args[0].SetTag(`extension:".toml"`)
+				w.Args[0].SetTag(`extension:".json"`)
 			})
 		})
 	})
