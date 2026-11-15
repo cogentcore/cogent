@@ -233,12 +233,11 @@ func (ls *Lists) Save() error {
 // in the [localFile], if they are changed.
 func (ls *Lists) saveLocal() error {
 	ld := &localData{ColumnWidths: map[string]map[string]float32{}}
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		if l := n.(*List); len(l.ColumnWidths) > 0 {
 			ld.ColumnWidths[l.ID] = l.ColumnWidths
 		}
-		return tree.Continue
-	})
+	}
 	fn := filepath.Join(ls.Dir, localFile)
 	b := marshal(ld)
 	if old, err := os.ReadFile(fn); err == nil && bytes.Equal(old, b) {
@@ -254,13 +253,12 @@ func (ls *Lists) loadLocal() {
 	if b, err := os.ReadFile(filepath.Join(ls.Dir, localFile)); err == nil {
 		json.Unmarshal(b, &ld)
 	}
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		l := n.(*List)
 		if w, ok := ld.ColumnWidths[l.ID]; ok {
 			l.ColumnWidths = w
 		}
-		return tree.Continue
-	})
+	}
 }
 
 // files returns the saved files of the lists by path, with the IDs of
@@ -268,12 +266,11 @@ func (ls *Lists) loadLocal() {
 func (ls *Lists) files() map[string][]byte {
 	ls.setIDs()
 	files := map[string][]byte{typesFile: marshal(ls.Types), treeFile: marshal(ls.Root.treeNode())}
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		if l := n.(*List); !l.IsGroup() {
 			files[listPath(l.ID)] = marshal(l.listFile())
 		}
-		return tree.Continue
-	})
+	}
 	return files
 }
 
@@ -281,15 +278,14 @@ func (ls *Lists) files() map[string][]byte {
 // lists, that do not have unique ones, as for new ones, and copies.
 func (ls *Lists) setIDs() {
 	seen := map[string]bool{}
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		l := n.(*List)
 		if l != ls.Root && (l.ID == "" || seen[l.ID]) {
 			l.ID = newID()
 		}
 		seen[l.ID] = true
 		setItemIDs(l.Items, map[string]bool{})
-		return tree.Continue
-	})
+	}
 }
 
 // setItemIDs sets the IDs of the given items, and those in them, that are

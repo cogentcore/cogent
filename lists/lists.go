@@ -148,10 +148,10 @@ func (ls *Lists) TypeOf(l *List) *ListType {
 // keepUsedTypes adds list types for the lists whose types are not in the
 // library, with the fields of their items, so that no values are lost.
 func (ls *Lists) keepUsedTypes() {
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		l := n.(*List)
 		if l.IsGroup() || ls.TypeOf(l) != nil {
-			return tree.Continue
+			continue
 		}
 		lt := &ListType{Name: l.TypeName}
 		seen := map[string]bool{}
@@ -172,8 +172,7 @@ func (ls *Lists) keepUsedTypes() {
 			lt.Fields = []*Field{{Name: "Item"}}
 		}
 		ls.Types = append(ls.Types, lt)
-		return tree.Continue
-	})
+	}
 }
 
 // values returns the pointer to the slice of pointers to the items of the
@@ -545,14 +544,13 @@ func (ls *Lists) newLists() bool {
 		typ = cur.TypeName
 	}
 	found := false
-	ls.Root.WalkDown(func(n tree.Node) bool {
+	for n := range ls.Root.All() {
 		if l := n.(*List); !l.IsGroup() && l.TypeName == "" {
 			l.TypeName = typ
 			setUniqueName(l, "New list")
 			found = true
 		}
-		return tree.Continue
-	})
+	}
 	return found
 }
 
