@@ -6,6 +6,7 @@
 // Copyright (c) 2016 emersion
 // The MIT License (MIT)
 
+// Package xoauth2 provides the XOAUTH2 SASL authentication of Gmail.
 package xoauth2
 
 import (

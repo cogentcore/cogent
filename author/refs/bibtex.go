@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package refs extracts the BibTeX references that markdown files cite, for
+// processing them with pandoc.
 package refs
 
 import (

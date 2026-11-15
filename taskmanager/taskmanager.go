@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command taskmanager is Cogent Task Manager, which shows the processes that
+// are running, and ends them.
 package main
 
 //go:generate core generate

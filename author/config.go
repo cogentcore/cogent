@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package author provides the configuration of Cogent Author, which makes
+// documents in standard formats (HTML, PDF, DOCX, ePUB, and LaTeX) from
+// markdown files with pandoc.
 package author
 
 import (

@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command marbles is Cogent Marbles, which drops marbles on the graphs of
+// equations, which they bounce off of.
 package main
 
 //go:generate core generate
