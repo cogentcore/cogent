@@ -166,8 +166,7 @@ func (a *App) Send() error { //types:add
 		to,
 		&b,
 	)
-	var se *smtp.SMTPError
-	if errors.As(err, &se) {
+	if se, ok := errors.AsType[*smtp.SMTPError](err); ok {
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}
 	return err

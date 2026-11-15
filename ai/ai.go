@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/exec"
@@ -203,7 +204,8 @@ func makeApp(b *core.Body) {
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
-			allTokens := "**Cogent AI:** "
+			var allTokens strings.Builder
+			allTokens.WriteString("**Cogent AI:** ")
 
 			for scanner.Scan() {
 				token, err := HandleToken(scanner.Text())
@@ -216,11 +218,11 @@ func makeApp(b *core.Body) {
 				if token == "" {
 					continue
 				}
-				allTokens += token
+				allTokens.WriteString(token)
 
 				answer.AsyncLock()
 				answer.DeleteChildren()
-				errors.Log(htmlcore.ReadMDString(htmlcore.NewContext(), answer, allTokens))
+				errors.Log(htmlcore.ReadMDString(htmlcore.NewContext(), answer, allTokens.String()))
 				answer.Update()
 				history.ScrollDimToContentEnd(math32.Y)
 				answer.AsyncUnlock()

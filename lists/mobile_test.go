@@ -65,8 +65,8 @@ func TestMobile(t *testing.T) {
 		tt := ls.table
 		require.NotNil(t, tt)
 		names := []string{}
-		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
-			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
+		for f := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().Fields() {
+			f := f
 			if ls.tableField(f) && f.Tag.Get("display") != "-" {
 				names = append(names, f.Name)
 			}
@@ -184,8 +184,8 @@ func TestDetailField(t *testing.T) {
 		b.AsyncLock()
 		tt := ls.table
 		require.NotNil(t, tt)
-		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
-			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
+		for f := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().Fields() {
+			f := f
 			if f.Name == "Notes" {
 				assert.Equal(t, "-", f.Tag.Get("table"), "not in the table")
 			}

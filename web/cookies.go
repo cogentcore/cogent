@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io/fs"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -60,7 +61,7 @@ type persistentJar struct {
 	// session are the session cookies (with no expiry), which are not
 	// saved, by domain, path, and name, to list them (see [ShowCookies]).
 	session map[string]savedCookie
-	timer  *time.Timer
+	timer   *time.Timer
 }
 
 // newPersistentJar returns a new [persistentJar], with the public suffix
@@ -188,9 +189,7 @@ func (pj *persistentJar) list() map[string]savedCookie {
 			all[k] = sc
 		}
 	}
-	for k, sc := range pj.session {
-		all[k] = sc
-	}
+	maps.Copy(all, pj.session)
 	return all
 }
 

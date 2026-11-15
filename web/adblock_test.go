@@ -53,7 +53,7 @@ func TestAdBlock(t *testing.T) {
 // of ads parse (a selector that does not drops its rule, as :has(> x),
 // with the others).
 func TestAdStyles(t *testing.T) {
-	for _, rule := range strings.Split(adStyles, "}") {
+	for rule := range strings.SplitSeq(adStyles, "}") {
 		sel, _, ok := strings.Cut(rule, "{")
 		if !ok {
 			continue

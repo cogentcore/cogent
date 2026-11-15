@@ -676,7 +676,7 @@ func TestFocusPanels(t *testing.T) {
 		}
 		slices.Sort(seqs) // the same order, for the same image
 		for _, seq := range seqs {
-			for _, ch := range strings.Fields(seq) {
+			for ch := range strings.FieldsSeq(seq) {
 				r, code, mods, err := key.Chord(ch).Decode()
 				require.NoError(t, err)
 				src.Key(events.KeyDown, r, code, mods)

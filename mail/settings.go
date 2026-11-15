@@ -19,10 +19,8 @@ func init() {
 
 // Settings is the currently active global Cogent Mail settings instance.
 var Settings = &SettingsData{
-	SettingsBase: core.SettingsBase{
-		Name: "Mail",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Mail", "settings.toml"),
-	},
+	Name: "Mail",
+	File: filepath.Join(core.TheApp.DataDir(), "Cogent Mail", "settings.toml"),
 }
 
 // SettingsData is the data type for the global Cogent Mail settings.

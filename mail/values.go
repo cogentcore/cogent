@@ -58,21 +58,21 @@ func (mi *MessageListItem) Init() {
 			s.SetTextWrap(false)
 		})
 		w.Updater(func() {
-			text := ""
+			var text strings.Builder
 			if !mi.Message.isRead() {
-				text += fmt.Sprintf(`<span color="%s">●</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+				fmt.Fprintf(&text, `<span color="%s">●</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
 			}
 			if len(mi.Message.replies) > 0 {
-				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
+				fmt.Fprintf(&text, `<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
 			}
 			for _, f := range mi.Message.From {
 				if f.Name != "" {
-					text += f.Name + " "
+					text.WriteString(f.Name + " ")
 				} else {
-					text += f.Addr() + " "
+					text.WriteString(f.Addr() + " ")
 				}
 			}
-			w.SetText(text)
+			w.SetText(text.String())
 		})
 	})
 	tree.AddChild(mi, func(w *core.Text) {

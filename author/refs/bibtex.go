@@ -58,8 +58,8 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 			cs := exp.FindAllString(string(scan.Bytes()), -1)
 			for _, c := range cs {
 				tc := c[1 : len(c)-1]
-				sp := strings.Split(tc, "@")
-				for _, ac := range sp {
+				sp := strings.SplitSeq(tc, "@")
+				for ac := range sp {
 					a := strings.TrimSpace(ac)
 					a = strings.TrimSuffix(a, ";")
 					if a == "" {

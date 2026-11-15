@@ -32,7 +32,7 @@ const (
 // [keymap.AvailableMaps], with the same names. Key sequences start with
 // a [keymap.MultiA] or [keymap.MultiB] chord, such as Control+X.
 var StandardKeyMaps = keymap.Maps{
-	{"MacStandard", "Standard Mac KeyMap", keymap.Map{
+	{Name: "MacStandard", Desc: "Standard Mac KeyMap", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+X o":         KeyNextPanel,
@@ -40,7 +40,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
 	}},
-	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
+	{Name: "MacEmacs", Desc: "Mac with emacs-style navigation -- emacs wins in conflicts", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+X o":         KeyNextPanel,
@@ -48,7 +48,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
 	}},
-	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
+	{Name: "LinuxEmacs", Desc: "Linux with emacs-style navigation -- emacs wins in conflicts", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+X o":         KeyNextPanel,
@@ -56,7 +56,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+X p":         KeyPrevPanel,
 		"Control+X Control+P": KeyPrevPanel,
 	}},
-	{"LinuxStandard", "Standard Linux key map", keymap.Map{
+	{Name: "LinuxStandard", Desc: "Standard Linux key map", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+E o":         KeyNextPanel,
@@ -64,7 +64,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E p":         KeyPrevPanel,
 		"Control+E Control+P": KeyPrevPanel,
 	}},
-	{"WindowsStandard", "Standard Windows key map", keymap.Map{
+	{Name: "WindowsStandard", Desc: "Standard Windows key map", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+E o":         KeyNextPanel,
@@ -72,7 +72,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+E p":         KeyPrevPanel,
 		"Control+E Control+P": KeyPrevPanel,
 	}},
-	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", keymap.Map{
+	{Name: "ChromeStd", Desc: "Standard chrome-browser and linux-under-chrome bindings", Map: keymap.Map{
 		"Control+Tab":         KeyNextPanel,
 		"Control+Shift+Tab":   KeyPrevPanel,
 		"Control+E o":         KeyNextPanel,

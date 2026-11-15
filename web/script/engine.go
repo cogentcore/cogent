@@ -1104,18 +1104,15 @@ func (e *Engine) reportError(err error) {
 	if err == nil {
 		return
 	}
-	var so *goja.StackOverflowError
-	if errors.As(err, &so) {
+	if so, ok := errors.AsType[*goja.StackOverflowError](err); ok {
 		e.logf(slog.LevelError, "RangeError: Maximum call stack size exceeded%s", so.String())
 		return
 	}
-	var ex *goja.Exception
-	if errors.As(err, &ex) {
+	if ex, ok := errors.AsType[*goja.Exception](err); ok {
 		e.logf(slog.LevelError, "%s", ex.String())
 		return
 	}
-	var ie *goja.InterruptedError
-	if errors.As(err, &ie) {
+	if ie, ok := errors.AsType[*goja.InterruptedError](err); ok {
 		if v, ok := ie.Value().(error); ok && errors.Is(v, errClosed) {
 			return
 		}

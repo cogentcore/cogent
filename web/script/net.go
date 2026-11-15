@@ -831,7 +831,7 @@ func isStyleLink(n *html.Node) bool {
 		return false
 	}
 	rel, _ := attr(n, "rel")
-	for _, r := range strings.Fields(strings.ToLower(rel)) {
+	for r := range strings.FieldsSeq(strings.ToLower(rel)) {
 		// (and the links that preload resources, whose load events pages
 		// use to make them style sheets, as the preloaded style sheets of
 		// trekbikes.com, with onload="this.rel='stylesheet'", which were
