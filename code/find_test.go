@@ -19,6 +19,6 @@ func TestFindUrl(t *testing.T) {
 	assert.Equal(t, spath, fpath)
 	assert.Equal(t, resultIndex, 2)
 	assert.Equal(t, matchIndex, 1)
-	assert.Equal(t, textpos.Pos{10, 13}, reg.Start)
-	assert.Equal(t, textpos.Pos{10, 24}, reg.End)
+	assert.Equal(t, textpos.Pos{Line: 10, Char: 13}, reg.Start)
+	assert.Equal(t, textpos.Pos{Line: 10, Char: 24}, reg.End)
 }

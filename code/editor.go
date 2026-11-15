@@ -57,7 +57,7 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GUIActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, txt, textpos.Pos{posLine, posChar})
+	ld = lp.Lang.Lookup(sfs, txt, textpos.Pos{Line: posLine, Char: posChar})
 	if len(ld.Text) > 0 {
 		textcore.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
 		return ld

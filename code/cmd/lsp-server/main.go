@@ -254,7 +254,7 @@ func (c *Config) goos() string {
 
 func (c *Config) exclude() []string {
 	var ps []string
-	for _, s := range strings.Split(c.Exclude, ",") {
+	for s := range strings.SplitSeq(c.Exclude, ",") {
 		if s = strings.TrimSpace(s); s != "" {
 			ps = append(ps, s)
 		}
