@@ -108,7 +108,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
 	var clVals [2][]math32.Vector2
-	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+	for ap := range BBoxPointsN {
 		pts := es.AlignPoints[ap]
 		dim := ap.Dim()
 		for _, pt := range pts {
@@ -138,7 +138,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 		}
 		snpt.SetDim(dim, sval)
 		mx := min(len(clVals[dim]), 4)
-		for i := 0; i < mx; i++ {
+		for i := range mx {
 			pt := clVals[dim][i]
 			rpt := image.Rectangle{}
 			rpt.Min = rawpt.ToPoint()
@@ -170,7 +170,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	var clPts [2][]BBoxPoints
 	var clVals [2][]math32.Vector2
 	var bbval [2]math32.Vector2
-	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+	for ap := range BBoxPointsN {
 		bbp := ap.PointBox(rawbb)
 		pts := es.AlignPoints[ap]
 		dim := ap.Dim()
@@ -202,7 +202,7 @@ func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 		}
 		clPts[dim][0].MoveDelta(&snapbb, sval-bv)
 		mx := min(len(clVals[dim]), 4)
-		for i := 0; i < mx; i++ {
+		for i := range mx {
 			pt := clVals[dim][i]
 			rpt := image.Rectangle{}
 			rpt.Min = bbval[dim].ToPoint()
@@ -254,7 +254,7 @@ func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 
 	mind := float32(math.MaxFloat32)
 	mini := 0
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		d := del.DistanceTo(cpts[i])
 		if d < mind {
 			mini = i
@@ -288,7 +288,7 @@ func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	sv.SpritesNoLock()
 	sz := min(len(pts), 8)
-	for i := 0; i < sz; i++ {
+	for i := range sz {
 		pt := pts[i].Canon()
 		lsz := pt.Max.Sub(pt.Min)
 		sp := sv.Sprite(SpAlignMatch, Sprites(typs[i]), i, lsz, nil)

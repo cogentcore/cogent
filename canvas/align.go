@@ -220,7 +220,7 @@ func (sv *SVG) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 // in selection group
 func (sv *SVG) GatherAlignPoints() {
 	es := sv.EditState()
-	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+	for ap := range BBoxPointsN {
 		es.AlignPoints[ap] = make([]math32.Vector2, 0)
 	}
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
@@ -230,7 +230,7 @@ func (sv *SVG) GatherAlignPoints() {
 		if _, issel := es.Selected[n]; issel {
 			return tree.Break // go no further into kids
 		}
-		for ap := BBLeft; ap < BBoxPointsN; ap++ {
+		for ap := range BBoxPointsN {
 			es.AlignPoints[ap] = append(es.AlignPoints[ap], ap.PointBox(nb.BBox))
 		}
 		return tree.Continue

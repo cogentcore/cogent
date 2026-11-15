@@ -309,7 +309,7 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	spt, _, dv := sv.DragDelta(e, true)
 
 	pointOnly := e.HasAnyModifier(key.Alt)
-	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
+	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{X: 1, Y: 1}, 0, spt)
 
 	for i, _ := range es.NodeSelect {
 		sv.PathNodeMove(i, pointOnly, dv, dxf)
@@ -347,7 +347,7 @@ func (sv *SVG) SpriteCtrlDrag(idx int, ctyp Sprites, e events.Event) {
 
 	es.ConstrainPoint = true
 	spt, _, dv := sv.DragDelta(e, true)
-	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{1, 1}, 0, spt)
+	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{X: 1, Y: 1}, 0, spt)
 
 	pos := sv.PathCtrlMove(idx, ctyp, dxf)
 	nwc := pos.Add(dv)

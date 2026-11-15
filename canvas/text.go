@@ -31,7 +31,7 @@ type TextStyle struct {
 	Stroke color.RGBA `new-window:"+"`
 
 	// Opacity is the overall opacity multiplier on the text, between 0-1.
-	Opacity float32 `min:"0" max:"1", step:"0.1"`
+	Opacity float32 `min:"0" max:"1" step:"0.1"`
 
 	// Font styling properties.
 	Font styles.Font `display:"add-fields"`
