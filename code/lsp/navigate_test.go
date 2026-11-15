@@ -125,3 +125,31 @@ func TestNavigationGopls(t *testing.T) {
 	assert.False(t, SameFile(ln.Filename(), srcPath+"x"))
 	assert.NotNil(t, b.AppliedEdits())
 }
+
+// TestShowDocumentGopls tests a code action of gopls that runs a command
+// which asks to show a document: the documentation of a package.
+func TestShowDocumentGopls(t *testing.T) {
+	shown := make(chan string, 4)
+	b, ln, _ := goplsSetupWith(t, navSrc, func(b *Backend) {
+		b.ShowDocument = func(uri string, loc *lang.Location) bool {
+			shown <- uri
+			return true
+		}
+	})
+	pos := srcPos(navSrc, "fmt.Println", 0, 1)
+	acts, err := b.CodeActions(ln, textpos.Region{Start: pos, End: pos}, nil)
+	require.NoError(t, err)
+	i := slices.IndexFunc(acts, func(ca CodeAction) bool { return ca.Kind == "source.doc" })
+	require.GreaterOrEqual(t, i, 0, "%v", acts)
+	_, err = b.RunCodeAction(ln, &acts[i])
+	require.NoError(t, err)
+	select {
+	case uri := <-shown:
+		assert.True(t, IsLocalURL(uri), uri)
+	case <-time.After(30 * time.Second):
+		t.Fatal("no document shown")
+	}
+
+	assert.Equal(t, "go", LanguageID(0, "x.go"), "by the extension")
+	assert.Equal(t, "", LanguageID(0, "x.unknownext"))
+}
