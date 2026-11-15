@@ -166,8 +166,8 @@ func activitySummary(prof []byte) string {
 func shortScript(u string) string {
 	pu, err := url.Parse(u)
 	if err != nil || pu.Host == "" {
-		if i := strings.LastIndexByte(u, '/'); i >= 0 {
-			return u[i+1:]
+		if _, after, ok := strings.CutLast(u, "/"); ok {
+			return after
 		}
 		return u
 	}

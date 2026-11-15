@@ -37,7 +37,7 @@ func TestCodePanelFocus(t *testing.T) {
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "panel-focus", func() {
+	core.AssertRender(t, b, "panel-focus", func() {
 		prevMap := keymap.ActiveMapName
 		keymap.SetActiveMapName("MacEmacs") // with Control+X key sequences
 		defer keymap.SetActiveMapName(prevMap)

@@ -624,16 +624,14 @@ func newBackend() *lsp.Backend {
 		case lsp.IsLocalURL(uri):
 			// must not block the server connection, which the server
 			// needs to serve the page:
-			pendingShows.Add(1)
-			go func() {
-				defer pendingShows.Done()
+			pendingShows.Go(func() {
 				title, text, err := lsp.DocumentText(uri)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
 					return
 				}
 				fmt.Printf("%s\n\n%s", title, text)
-			}()
+			})
 		default:
 			fmt.Println("open:", uri)
 		}

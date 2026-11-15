@@ -284,7 +284,8 @@ func (a *App) GetMail() {
 }
 
 // selectMailbox selects the given mailbox for the given email for the given client.
-// It does nothing if the given mailbox is already selected.
+// It does nothing if the given mailbox is already selected. It must be called
+// with the IMAP mutex of the account held, and not the lock of the window.
 func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) error {
 	if a.selectedMailbox[email] == mailbox {
 		return nil // already selected
@@ -294,7 +295,10 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 		return fmt.Errorf("selecting mailbox: %w", err)
 	}
 	a.selectedMailbox[email] = mailbox
+	// with the lock of the window, which shows the number of messages
+	a.AsyncLock()
 	a.totalMessages[email][mailbox] = int(sd.NumMessages)
+	a.AsyncUnlock()
 	return nil
 }
 

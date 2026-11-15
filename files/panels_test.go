@@ -32,7 +32,7 @@ func TestPanelFocus(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
 	fl := NewFiles(b).SetRoot(root)
 	prevOpenFile := openFile
-	b.AssertRender(t, "panel-focus", func() {
+	core.AssertRender(t, b, "panel-focus", func() {
 		prevMap := keymap.ActiveMapName
 		keymap.SetActiveMapName("MacEmacs") // with Control+X key sequences
 		defer keymap.SetActiveMapName(prevMap)
@@ -187,7 +187,7 @@ func TestSplitsKey(t *testing.T) {
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(fl.MakeToolbar)
 	})
-	b.AssertRender(t, "splits-key", func() {
+	core.AssertRender(t, b, "splits-key", func() {
 		prevMap := keymap.ActiveMapName
 		keymap.SetActiveMapName("MacEmacs")
 		defer keymap.SetActiveMapName(prevMap)

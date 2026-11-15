@@ -19,7 +19,7 @@ func TestSpellPanel(t *testing.T) {
 	ed := NewTextEditor(b)
 	ed.Lines.SetString("The wrold is “quite” nice.\nAnother speling error here.\n")
 	sv := NewSpellPanel(b)
-	b.AssertRender(t, "spell-panel", func() {
+	core.AssertRender(t, b, "spell-panel", core.Locked(b, func() {
 		sv.Config(nil, ed)
 		sv.Update()
 		sv.CheckNext()
@@ -43,5 +43,5 @@ func TestSpellPanel(t *testing.T) {
 		if sv.UnkWord != "" {
 			t.Errorf("unknown word at end: %q", sv.UnkWord)
 		}
-	})
+	}))
 }

@@ -117,7 +117,7 @@ func (cv *Canvas) SyncLayersFromSVG() {
 	cv.EditState.Layers.SyncLayersFromSVG(sv)
 }
 
-// Synchronizes layer list with current SVG structure: use the tree editor
+// SyncLayers synchronizes the layer list with the current SVG structure: use the tree editor
 // to rearrange layers, and then hit this button to update the layer list here.
 func (cv *Canvas) SyncLayers() { //types:add
 	sv := cv.SVG
@@ -138,12 +138,19 @@ func (cv *Canvas) UpdateLayers() {
 		return
 	}
 	ci := lys.LayerIndexByName(es.CurLayer)
-	if ci < 0 {
-		ci = nl - 1
-		es.CurLayer = (*lys)[ci].Name
+	if ci < 0 { // the last layer that can have new items
+		for i := nl - 1; i >= 0; i-- {
+			if l := (*lys)[i]; l.Vis && !l.Lock {
+				ci = i
+				es.CurLayer = l.Name
+				break
+			}
+		}
 	}
 	// lyv.ClearSelected() // todo
-	lyv.SelectIndex(ci)
+	if ci >= 0 {
+		lyv.SelectIndex(ci)
+	}
 	lyv.Update()
 	cv.tree.Resync()
 }

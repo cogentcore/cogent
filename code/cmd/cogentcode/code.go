@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command cogentcode is Cogent Code, an editor of code and text, with language
+// servers, a debugger, and version control.
 package main
 
 import (

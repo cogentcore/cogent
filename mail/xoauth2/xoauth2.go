@@ -6,6 +6,7 @@
 // Copyright (c) 2016 emersion
 // The MIT License (MIT)
 
+// Package xoauth2 provides the XOAUTH2 SASL authentication of Gmail.
 package xoauth2
 
 import (
@@ -15,17 +16,17 @@ import (
 	"github.com/emersion/go-sasl"
 )
 
-// The XOAUTH2 mechanism name.
+// Xoauth2 is the XOAUTH2 mechanism name.
 const Xoauth2 = "XOAUTH2"
 
-// An XOAUTH2 error.
+// Xoauth2Error is an XOAUTH2 error.
 type Xoauth2Error struct {
 	Status  string `json:"status"`
 	Schemes string `json:"schemes"`
 	Scope   string `json:"scope"`
 }
 
-// Implements error.
+// Error implements error.
 func (err *Xoauth2Error) Error() string {
 	return fmt.Sprintf("XOAUTH2 authentication error (%v)", err.Status)
 }
@@ -51,8 +52,8 @@ func (a *xoauth2Client) Next(challenge []byte) ([]byte, error) {
 	}
 }
 
-// An implementation of the XOAUTH2 authentication mechanism, as
-// described in https://developers.google.com/gmail/xoauth2_protocol.
+// NewXoauth2Client returns an implementation of the XOAUTH2 authentication
+// mechanism, as described in https://developers.google.com/gmail/xoauth2_protocol.
 func NewXoauth2Client(username, token string) sasl.Client {
 	return &xoauth2Client{username, token}
 }

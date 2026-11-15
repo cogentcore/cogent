@@ -73,13 +73,14 @@ func DashMatchArray(lwidth float64, dary []float64) (bool, string) {
 // AddNewDash adds new dash pattern to available list, creating name based on pattern,
 // which is returned.  the given array is copied before storing, just in case.
 func AddNewDash(dary []float64) string {
-	nm := "custom"
+	var nm strings.Builder
+	nm.WriteString("custom")
 	for i := range dary {
-		nm += fmt.Sprintf("-%g", dary[i])
+		fmt.Fprintf(&nm, "-%g", dary[i])
 	}
-	AllDashNames = append(AllDashNames, nm)
-	AllDashesMap[nm] = slices.Clone(dary)
-	return nm
+	AllDashNames = append(AllDashNames, nm.String())
+	AllDashesMap[nm.String()] = slices.Clone(dary)
+	return nm.String()
 }
 
 // StandardDashNames are standard dash patterns

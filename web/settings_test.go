@@ -5,6 +5,7 @@
 package web
 
 import (
+	"cogentcore.org/core/core"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,7 +41,7 @@ func TestSettingsUserAgent(t *testing.T) {
 	assert.Equal(t, "Test/1.0", <-got, "the header of requests")
 
 	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>page</p></body></html>`})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.NotNil(t, pg.scripts)
 		v, err := pg.scripts.engine.RunString(`navigator.userAgent`)
 		require.NoError(t, err)

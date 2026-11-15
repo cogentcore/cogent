@@ -400,9 +400,6 @@ func (fv *FindPanel) ReplaceAll() {
 	if !fv.CheckValidRegexp() {
 		return
 	}
-	wasGoMod := fv.Code.Settings.GoMod
-	fv.Code.Settings.GoMod = false
-	SetGoMod(false) // much faster without
 	go func() {
 		for {
 			sc := fv.Code.AsWidget().Scene
@@ -412,10 +409,6 @@ func (fv *FindPanel) ReplaceAll() {
 			if !ok {
 				break
 			}
-		}
-		if wasGoMod {
-			fv.Code.Settings.GoMod = true
-			SetGoMod(true)
 		}
 	}()
 }

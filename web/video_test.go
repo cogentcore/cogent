@@ -86,7 +86,7 @@ func TestPageVideo(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		// the autoplay video shows its frames, at the width of its box
 		var boxes map[string]*htmlcore.VideoBox
 		require.True(t, eventually(func() bool {
@@ -138,6 +138,12 @@ func TestPageVideo(t *testing.T) {
 		assert.True(t, click.IsMuted())
 		click.SetMuted(false)
 		assert.False(t, click.IsMuted())
+		// skipping and stepping frames
+		click.SkipBy(-200 * time.Millisecond)
+		require.True(t, eventually(func() bool { return click.CurrentTime() < 500*time.Millisecond }), "skips back")
+		click.StepFrame(1)
+		require.True(t, eventually(click.playback.IsPaused), "a step pauses")
+		click.StepFrame(-1)
 
 		mu.Lock()
 		require.NotEmpty(t, agents)
@@ -193,7 +199,7 @@ func TestPageVideoHLS(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		// it plays, shown in the box of the element, with the events
 		require.True(t, eventually(func() bool {
 			return strings.Contains(pageTexts(b, pg), "loadedmetadata,play,playing,timeupdate")
@@ -284,7 +290,7 @@ func TestPageVideoMSE(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(pageTexts(b, pg), "playing")
 		}), pageTexts(b, pg))
@@ -333,7 +339,7 @@ func TestPageVideoCovered(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		var pv *pageVideo
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()

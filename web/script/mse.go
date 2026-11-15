@@ -450,7 +450,7 @@ func (b *sourceBuffer) fragmentTimes(moof []byte) (start, end float64) {
 						per += 4
 					}
 				}
-				for i := uint32(0); i < count; i++ {
+				for range count {
 					d := uint64(defDur)
 					if flags&0x100 != 0 && len(body) >= off+4 {
 						d = uint64(binary.BigEndian.Uint32(body[off:]))

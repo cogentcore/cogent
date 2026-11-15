@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"strings"
@@ -236,9 +237,7 @@ func CheckArgs(name string, have []any, want ...string) error {
 // SetFunctionsTo sets the functions of the graph to another set of functions
 func (gr *Graph) SetFunctionsTo(functions Functions) {
 	gr.Functions = make(Functions)
-	for k, d := range functions {
-		gr.Functions[k] = d
-	}
+	maps.Copy(gr.Functions, functions)
 }
 
 // AddLineFunctions adds all of the line functions

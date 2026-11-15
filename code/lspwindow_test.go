@@ -40,17 +40,8 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.go")
 	os.WriteFile(fpath, []byte("package main\n\nfunc main() {\n\txy := 1\n\txy++\n\t_ = xy\n}\n"), 0644)
-	b := core.NewBody()
-	// (large enough for the lines that are clicked to be shown)
-	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
-	cv := NewCode(b)
-	cv.Defaults()
-	cv.ProjectRoot = core.Filename(tmp)
-	cv.Settings.ProjectRoot = core.Filename(tmp)
-	// the window is only used for its event handling, not its image,
-	// which varies with timing:
-	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "occurrences-click", func() {
+	b, cv := newTestCode(t, tmp)
+	core.AssertRender(t, b, "occurrences-click", func() {
 		jump := textpos.Region{Start: textpos.Pos{Line: 2, Char: 5}, End: textpos.Pos{Line: 2, Char: 9}}
 		b.AsyncLock()
 		tv, ok := cv.OpenFileAtRegion(fpath, jump)
@@ -129,7 +120,7 @@ func TestCodeSymbolsClick(t *testing.T) {
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	cv.Settings.Symbols.Scope = SymScopePackage
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "symbols-click", func() {
+	core.AssertRender(t, b, "symbols-click", func() {
 		b.AsyncLock()
 		tv, _, ok := cv.ViewFile(core.Filename(fpath))
 		b.AsyncUnlock()
@@ -201,7 +192,7 @@ func TestNextProblem(t *testing.T) {
 		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}, sev: "warning", msg: "problem"}
 	}
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "next-problem", func() {
+	core.AssertRender(t, b, "next-problem", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		ls := cv.LangSvc()
@@ -280,7 +271,7 @@ func TestLocationButtons(t *testing.T) {
 		return
 	}
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "location-buttons", func() {
+	core.AssertRender(t, b, "location-buttons", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		cv.ActiveEditor().SetFocus() // a focus that showing the tabs keeps

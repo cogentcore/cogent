@@ -54,7 +54,7 @@ func TestSync(t *testing.T) {
 	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
 	other := NewLists(b)
 	require.NoError(t, other.Open(t.TempDir()))
-	b.AssertRender(t, "sync", func() {
+	core.AssertRender(t, b, "sync", func() {
 		require.NoError(t, a.syncOnce())
 		files := s.Files("me/lists", "main")
 		assert.Contains(t, files, "README.md")
@@ -106,7 +106,7 @@ func TestSyncButton(t *testing.T) {
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(ls.MakeToolbar)
 	})
-	b.AssertRender(t, "sync-button", func() {
+	core.AssertRender(t, b, "sync-button", func() {
 		require.NotNil(t, ls.syncs.button)
 		b.AsyncLock()
 		icon, status := ls.syncStatus()
@@ -140,7 +140,7 @@ func TestSyncWaitsForEdits(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
 	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
-	b.AssertRender(t, "sync-waits", func() {
+	core.AssertRender(t, b, "sync-waits", func() {
 		require.NoError(t, ls.syncOnce())
 		// a change in the repository, by another device
 		c := s.Client()
@@ -224,7 +224,7 @@ func TestSyncFirstOldTypes(t *testing.T) {
 	a := testLists(t, b)
 	other := testLists(t, b)
 	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
-	b.AssertRender(t, "sync-first-old-types", func() {
+	core.AssertRender(t, b, "sync-first-old-types", func() {
 		require.NoError(t, a.syncOnce())
 		b.AsyncLock()
 		lt := other.TypeOf(findList(other, "Chores"))
@@ -257,7 +257,7 @@ func TestSyncMobileEdit(t *testing.T) {
 	ls := testLists(t, b)
 	ls.Mobile = true
 	Settings.Sync = SyncSettings{Repo: "me/lists", Branch: "main", Token: "token"}
-	b.AssertRender(t, "sync-mobile", func() {
+	core.AssertRender(t, b, "sync-mobile", func() {
 		require.NoError(t, ls.syncOnce())
 		ls.syncs.mu.Lock()
 		ls.syncs.auto = true

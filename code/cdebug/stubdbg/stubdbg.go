@@ -4,6 +4,8 @@
 
 //go:build js
 
+// Package stubdbg provides a debugger that does nothing, for the web, where
+// there is no debugger.
 package stubdbg
 
 import (
@@ -13,8 +15,7 @@ import (
 	"cogentcore.org/core/text/lines"
 )
 
-// GiDebug is the interface for all supported debuggers.
-// It is based directly on the Delve Client interface.
+// Stub is a debugger that does nothing.
 type Stub struct {
 }
 

@@ -45,7 +45,7 @@ func TestPageFile(t *testing.T) {
 		return http.Get(u)
 	}
 	pg.OpenURL(os.Getenv("WEB_URL"), nil)
-	img := b.RenderImage(pg.wait, func() {
+	img := core.RenderImage(b, pg.wait, func() {
 		n := 0
 		pg.WalkDown(func(nd tree.Node) bool {
 			if tx, ok := nd.(*core.Text); ok && n < 5 {
@@ -82,7 +82,7 @@ func TestOpenFile(t *testing.T) {
 	b := core.NewBody()
 	pg := NewPage(b)
 	pg.OpenURL(LocationURL(filepath.Join(dir, "a.html")), nil)
-	b.RenderImage(pg.wait, func() {
+	core.RenderImage(b, pg.wait, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		if assert.Len(t, pg.History, 1) {
@@ -125,7 +125,7 @@ func TestPageErrorStatusShown(t *testing.T) {
 		return &http.Response{StatusCode: 429, Status: "429 Too Many Requests", Header: h, Request: &http.Request{URL: pu}, Body: io.NopCloser(strings.NewReader(body))}, nil
 	}
 	pg.OpenURL("https://example.com/sorry", nil)
-	b.RenderImage(func() { pg.wait() }, func() {
+	core.RenderImage(b, func() { pg.wait() }, func() {
 		assert.Contains(t, pageTexts(b, pg), "unusual traffic")
 	})
 }

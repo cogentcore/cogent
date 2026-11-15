@@ -289,22 +289,21 @@ func (pg *Page) scrollToFragment(id string) bool {
 		return false
 	}
 	var target core.Widget
-	pg.WalkDown(func(n tree.Node) bool {
+	for n := range pg.All() {
 		w, ok := n.(core.Widget)
 		if !ok {
-			return tree.Continue
+			continue
 		}
 		wb := w.AsWidget()
 		if pid, _ := wb.Property("id").(string); pid == id {
 			target = w
-			return tree.Break
+			break
 		}
 		if name, _ := wb.Property("name").(string); name == id && wb.Property("tag") == "a" {
 			target = w
-			return tree.Break
+			break
 		}
-		return tree.Continue
-	})
+	}
 	if target == nil {
 		target = pg.fragmentContainer(id)
 	}
@@ -322,13 +321,12 @@ func (pg *Page) scrollToFragment(id string) bool {
 func (pg *Page) fragmentContainer(id string) core.Widget {
 	// the document, from the node of any widget
 	var root *html.Node
-	pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+	for _, cwb := range pg.AllWidgets() {
 		if n, ok := cwb.Property("node").(*html.Node); ok && n != nil {
 			root = n
-			return tree.Break
+			break
 		}
-		return tree.Continue
-	})
+	}
 	for root != nil && root.Parent != nil {
 		root = root.Parent
 	}

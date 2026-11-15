@@ -79,7 +79,7 @@ func TestPageZoom(t *testing.T) {
 				return w
 			}
 			var w1 float32
-			b.RenderImage(func() { settle(pg) }, func() {
+			core.RenderImage(b, func() { settle(pg) }, func() {
 				w1 = width()
 				assert.Greater(t, w1, float32(0))
 				b.AsyncLock()
@@ -112,7 +112,7 @@ func TestPageZoom(t *testing.T) {
 func TestPageFailedURL(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{"/": `<html><body><p>home</p></body></html>`})
 	fails := 0
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		pg.Context.GetURL = func(u string) (*http.Response, error) {
 			fails++

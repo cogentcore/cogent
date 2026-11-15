@@ -636,8 +636,43 @@ func (e *Engine) native(name string, f func(call goja.FunctionCall) goja.Value) 
 			e.lockMu.Unlock()
 			e.endLockUses(before)
 		}()
+		defer func() {
+			if r := recover(); r != nil {
+				panic(e.domError(r))
+			}
+		}()
 		return f(call)
 	}
+}
+
+// domError returns the given panic of a native function as the error that
+// the scripts get: a DOMException of the name of a [domException] (as a
+// SyntaxError of an invalid selector, which scripts check the name of, as
+// for the selectors that are not supported), instead of a GoError, or
+// else the panic as it is.
+func (e *Engine) domError(r any) any {
+	o, ok := r.(*goja.Object)
+	if !ok {
+		return r
+	}
+	v := o.Get("value") // (the error of a GoError)
+	if v == nil {
+		return r
+	}
+	err, ok := v.Export().(error)
+	var de *domException
+	if !ok || !errors.As(err, &de) {
+		return r
+	}
+	ctor, ok := goja.AssertConstructor(e.vm.Get("DOMException"))
+	if !ok {
+		return r
+	}
+	obj, cerr := ctor(nil, e.vm.ToValue(de.msg), e.vm.ToValue(de.name))
+	if cerr != nil {
+		return r
+	}
+	return obj
 }
 
 // longHold is how long the lock of a task is held for it to be in the
@@ -1104,18 +1139,15 @@ func (e *Engine) reportError(err error) {
 	if err == nil {
 		return
 	}
-	var so *goja.StackOverflowError
-	if errors.As(err, &so) {
+	if so, ok := errors.AsType[*goja.StackOverflowError](err); ok {
 		e.logf(slog.LevelError, "RangeError: Maximum call stack size exceeded%s", so.String())
 		return
 	}
-	var ex *goja.Exception
-	if errors.As(err, &ex) {
+	if ex, ok := errors.AsType[*goja.Exception](err); ok {
 		e.logf(slog.LevelError, "%s", ex.String())
 		return
 	}
-	var ie *goja.InterruptedError
-	if errors.As(err, &ie) {
+	if ie, ok := errors.AsType[*goja.InterruptedError](err); ok {
 		if v, ok := ie.Value().(error); ok && errors.Is(v, errClosed) {
 			return
 		}

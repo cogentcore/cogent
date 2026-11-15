@@ -97,7 +97,7 @@ const (
 
 // StandardKeyMaps are the standard extended maps for Code
 var StandardKeyMaps = keymap.Maps{
-	{"MacStandard", "Standard Mac KeyMap", keymap.Map{
+	{Name: "MacStandard", Desc: "Standard Mac KeyMap", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+X o":             KeyNextPanel,
@@ -146,7 +146,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
 	}},
-	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
+	{Name: "MacEmacs", Desc: "Mac with emacs-style navigation -- emacs wins in conflicts", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+X o":             KeyNextPanel,
@@ -195,7 +195,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
 	}},
-	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", keymap.Map{
+	{Name: "LinuxEmacs", Desc: "Linux with emacs-style navigation -- emacs wins in conflicts", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+X o":             KeyNextPanel,
@@ -244,7 +244,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
 	}},
-	{"LinuxStandard", "Standard Linux key map", keymap.Map{
+	{Name: "LinuxStandard", Desc: "Standard Linux key map", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+E o":             KeyNextPanel,
@@ -295,7 +295,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
 	}},
-	{"WindowsStandard", "Standard Windows key map", keymap.Map{
+	{Name: "WindowsStandard", Desc: "Standard Windows key map", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+E o":             KeyNextPanel,
@@ -346,7 +346,7 @@ var StandardKeyMaps = keymap.Maps{
 		"Control+Shift+UpArrow":   KeyExpandSelection,
 		"Control+Shift+DownArrow": KeyShrinkSelection,
 	}},
-	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", keymap.Map{
+	{Name: "ChromeStd", Desc: "Standard chrome-browser and linux-under-chrome bindings", Map: keymap.Map{
 		"Control+Tab":             KeyNextPanel,
 		"Control+Shift+Tab":       KeyPrevPanel,
 		"Control+E o":             KeyNextPanel,

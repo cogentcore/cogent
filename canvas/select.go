@@ -338,9 +338,7 @@ func (cv *Canvas) SelectUnGroup() { //types:add
 		}
 		np := gp.Parent
 		klist := make([]tree.Node, len(gp.Children)) // make a temp copy of list of kids
-		for i, k := range gp.Children {
-			klist[i] = k
-		}
+		copy(klist, gp.Children)
 		for _, k := range klist {
 			tree.MoveToParent(k, np)
 			se := k.(svg.Node)

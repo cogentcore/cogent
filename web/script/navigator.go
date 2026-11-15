@@ -39,7 +39,7 @@ func navigatorPlatform() string {
 // Accept-Language header: its languages, without their weights.
 func navigatorLanguages(header string) []any {
 	var langs []any
-	for _, l := range strings.Split(header, ",") {
+	for l := range strings.SplitSeq(header, ",") {
 		l, _, _ = strings.Cut(l, ";")
 		if l = strings.TrimSpace(l); l != "" {
 			langs = append(langs, l)

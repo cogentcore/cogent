@@ -46,7 +46,7 @@ var errBlocked = errors.New("blocked: a host of ads or tracking")
 var adHosts = map[string]bool{}
 
 func init() {
-	for _, h := range strings.Fields(`
+	for h := range strings.FieldsSeq(`
 		doubleclick.net googlesyndication.com googleadservices.com googletagservices.com
 		googletagmanager.com google-analytics.com adservice.google.com
 		amazon-adsystem.com media.net criteo.com criteo.net rubiconproject.com pubmatic.com

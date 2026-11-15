@@ -276,10 +276,10 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 	if cv.Files == nil {
 		return
 	}
-	cv.Files.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+	for cw := range cv.Files.AllWidgets() {
 		fn := filetree.AsNode(cw)
 		if fn == nil || fn.IsIrregular() {
-			return tree.Continue
+			continue
 		}
 		rpath := fn.RelativePath()
 		nmpath := fn.Name + ":" + rpath
@@ -310,8 +310,7 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 				},
 			})
 		}
-		return tree.Continue
-	})
+	}
 }
 
 func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
@@ -339,7 +338,7 @@ func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 	syms := NewSymNode()
 	syms.SetName("syms")
 	syms.OpenSyms(pkg, "", "")
-	syms.WalkDown(func(k tree.Node) bool {
+	for k := range syms.All() {
 		sn := k.(*SymNode)
 		*items = append(*items, core.ChooserItem{
 			Text: sn.Symbol.Label(),
@@ -348,6 +347,5 @@ func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
 				SelectSymbol(cv, sn.Symbol)
 			},
 		})
-		return tree.Continue
-	})
+	}
 }

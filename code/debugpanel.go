@@ -247,8 +247,9 @@ func (dv *DebugPanel) InitTabs() {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
-			vr := dv.State.Vars[w.SelectedIndex]
-			dv.ShowVar(vr.Name)
+			if idx := w.SelectedIndex; idx >= 0 && idx < len(dv.State.GlobalVars) {
+				dv.ShowVar(dv.State.GlobalVars[idx].Name)
+			}
 		})
 	})
 }
@@ -365,21 +366,30 @@ func (dv *DebugPanel) UpdateView() {
 }
 
 // Continue continues running from current point -- this MUST be called
-// in a separate goroutine!
+// in a separate goroutine, without the lock of the window, which it gets
+// to update the panel, except while the program is running.
 func (dv *DebugPanel) Continue() {
+	if !dv.AsyncLockIfShown() {
+		return
+	}
 	if !dv.DbgIsAvail() {
+		dv.AsyncUnlock()
 		return
 	}
 	dv.SetBreaks()
 	dv.State.State.Running = true
 	dv.SetStatus(cdebug.Running)
 	dsc := dv.Dbg.Continue(&dv.State)
+	dv.AsyncUnlock()
 	var ds *cdebug.State
-	for ds = range dsc { // get everything
-		if dv.This == nil {
-			return
+	if dsc != nil { // (nil if the debugger is not started)
+		for ds = range dsc { // get everything
 		}
 	}
+	if !dv.AsyncLockIfShown() {
+		return
+	}
+	defer dv.AsyncUnlock()
 	if dv.Code != nil {
 		dv.Code.Events().RenderWindow().Raise()
 	}

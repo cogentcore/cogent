@@ -459,7 +459,12 @@ func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	cv := pv.Canvas
 	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		cv.SetMarkerProperties(pv.MarkerProperties())
+		// on the node itself, not the selection, without saving an undo state
+		start, mid, end, sc, mc, ec := pv.MarkerProperties()
+		sv := cv.SVG.SVG
+		MarkerSetProp(sv, nd, "marker-start", start, sc)
+		MarkerSetProp(sv, nd, "marker-mid", mid, mc)
+		MarkerSetProp(sv, nd, "marker-end", end, ec)
 		pv.SetStrokeOthers(nd)
 	}
 	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())
@@ -571,8 +576,8 @@ func (cv *Canvas) UpdateMarkerColors(nd svg.Node) {
 	MarkerUpdateColorProp(sv.SVG, nd, "marker-end")
 }
 
-// SetDashNode sets the stroke-dasharray property of Node.
-// multiplies dash values by the line width in dots.
+// SetDashProperties sets the stroke-dasharray property of the selected nodes,
+// multiplying the dash values by the line width in dots.
 func (cv *Canvas) SetDashProperties(dary []float64) {
 	cv.setPropsOnSelected("SetDashProperties", "", func(nd svg.Node) {
 		g := nd.AsNodeBase()
@@ -774,7 +779,7 @@ func (pv *PaintSetter) StrokeProp() string {
 	return "none"
 }
 
-// MarkerProp returns the marker property string according to current settings
+// MarkerProperties returns the marker property strings according to current settings
 // along with color type to set.
 func (pv *PaintSetter) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
 	start = pv.markerStart.CurrentItem.Value.(string)

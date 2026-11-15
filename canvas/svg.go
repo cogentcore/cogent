@@ -200,11 +200,11 @@ func (sv *SVG) Init() {
 			es.ResetSelectedNodes()
 			sv.RemoveNodeSprites()
 			sv.UpdateSelect()
-		case sob != nil && isSelTool:
+		case isSelTool: // (sob != nil)
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
-		case sob != nil && es.Tool == NodeTool:
+		case es.Tool == NodeTool: // (sob != nil)
 			es.ResetSelectedNodes()
 			es.ActivePath = nil
 			es.SelectAction(sob, events.SelectOne, e.Pos())
@@ -259,7 +259,9 @@ func (sv *SVG) Init() {
 		}
 		// fmt.Println(sv.Styles.Cursor)
 		es.SelectNoDrag = false
-		es.DragStartPos = e.StartPos() // this is the operative start
+		if es.Action != NewElement { // a new element is reshaped from where it was made
+			es.DragStartPos = e.StartPos() // this is the operative start
+		}
 
 		if e.HasAnyModifier(key.Shift) {
 			e.SetHandled()

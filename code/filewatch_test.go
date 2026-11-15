@@ -31,14 +31,8 @@ func TestCodeFilesChanged(t *testing.T) {
 	for _, name := range []string{"a.txt", "b.txt", "c.txt", "d.txt"} {
 		os.WriteFile(path(name), []byte(name+"\n"), 0644)
 	}
-	b := core.NewBody()
-	cv := NewCode(b)
-	cv.Defaults()
-	cv.ProjectRoot = core.Filename(tmp)
-	cv.Settings.ProjectRoot = core.Filename(tmp)
-	// the window is only used for its event handling, not its image:
-	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "files-changed", func() {
+	b, cv := newTestCode(t, tmp)
+	core.AssertRender(t, b, "files-changed", func() {
 		b.AsyncLock()
 		ta, _, _ := cv.ViewFileInIndex(path("a.txt"), 0)
 		tb, _, _ := cv.ViewFileInIndex(path("b.txt"), 1)
@@ -115,7 +109,7 @@ func TestCodeBranchSwitch(t *testing.T) {
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "branch-switch", func() {
+	core.AssertRender(t, b, "branch-switch", func() {
 		b.AsyncLock()
 		ta, _, _ := cv.ViewFileInIndex(path("a.txt"), 0)
 		ln := ta.Lines

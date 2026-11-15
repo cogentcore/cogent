@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -46,9 +47,7 @@ var ZeroArgFunctions = []string{"rand", "nmarbles", "inf"}
 // PrepareExpr prepares an expression by looping both equation change slices
 func (ex *Expr) PrepareExpr(functionsArg map[string]govaluate.ExpressionFunction) (string, map[string]govaluate.ExpressionFunction) {
 	functions := make(map[string]govaluate.ExpressionFunction)
-	for name, function := range functionsArg {
-		functions[name] = function
-	}
+	maps.Copy(functions, functionsArg)
 	ex.LoopEquationChangeSlice()
 	params := []string{"π", "e", "x", "a", "t", "h", "y", "n"}
 	symbols := []string{"+", "-", "*", "/", "^", ">", "<", "=", "(", ")"}
@@ -83,9 +82,7 @@ func (ex *Expr) PrepareExpr(functionsArg map[string]govaluate.ExpressionFunction
 		isZeroArg[newName] = slices.Contains(ZeroArgFunctions, name)
 		i++
 	}
-	for name, function := range functionsToAdd {
-		functions[name] = function
-	}
+	maps.Copy(functions, functionsToAdd)
 	for _, name := range functionsToDelete {
 		delete(functions, name)
 	}
@@ -97,12 +94,12 @@ func (ex *Expr) PrepareExpr(functionsArg map[string]govaluate.ExpressionFunction
 		for _, pname := range params {
 			expr = strings.ReplaceAll(expr, fname+pname, fname+"("+pname+")")
 		}
-		for n := 0; n < 10; n++ {
+		for n := range 10 {
 			ns := strconv.Itoa(n)
 			expr = strings.ReplaceAll(expr, fname+ns, fname+"("+ns+")")
 		}
 	}
-	for n := 0; n < 10; n++ { // if the expression contains a number and then a parameter or a function right after, then change it to multiply the number and the parameter/function. Also ()number changes to ()*number
+	for n := range 10 { // if the expression contains a number and then a parameter or a function right after, then change it to multiply the number and the parameter/function. Also ()number changes to ()*number
 		ns := strconv.Itoa(n)
 		for _, pname := range params {
 			expr = strings.ReplaceAll(expr, ns+pname, ns+"*"+pname)

@@ -21,10 +21,8 @@ func init() {
 
 // Settings are the overall Code settings
 var Settings = &SettingsData{
-	SettingsBase: core.SettingsBase{
-		Name: "Canvas",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Canvas", "settings.toml"),
-	},
+	Name: "Canvas",
+	File: filepath.Join(core.TheApp.DataDir(), "Cogent Canvas", "settings.toml"),
 }
 
 // SettingsData is the overall Vector settings

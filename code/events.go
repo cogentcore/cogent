@@ -16,7 +16,6 @@ import (
 )
 
 func (cv *Code) codeKeys(e events.Event) {
-	SetGoMod(cv.Settings.GoMod)
 	if tv := cv.ActiveEditor(); tv != nil && tv.StateIs(states.Focused) {
 		cv.LangSvc().ScheduleSigHelp(tv) // after the editor handles the key
 	}

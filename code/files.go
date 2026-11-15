@@ -110,7 +110,7 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 		}
 		cnt, matches := ln.Search([]byte(find), ignoreCase, false)
 		if cnt > 0 {
-			res = append(res, search.Results{ln.Filename(), cnt, matches})
+			res = append(res, search.Results{Filepath: ln.Filename(), Count: cnt, Matches: matches})
 		}
 	}
 	return res
@@ -131,7 +131,7 @@ func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, lang
 		}
 		cnt, matches := ln.SearchRegexp(re)
 		if cnt > 0 {
-			res = append(res, search.Results{ln.Filename(), cnt, matches})
+			res = append(res, search.Results{Filepath: ln.Filename(), Count: cnt, Matches: matches})
 		}
 	}
 	return res
@@ -397,9 +397,9 @@ func (cv *Code) NextViewFile(fnm string) (*TextEditor, int, bool) { //types:add
 		if ok {
 			fnm = string(fn.Filepath)
 			ln, nw = cv.RecycleFile(fnm)
-			if ln == nil {
-				return nil, -1, false
-			}
+		}
+		if ln == nil {
+			return nil, -1, false
 		}
 	}
 	nv, nidx := cv.NextViewLines(ln)

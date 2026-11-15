@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package refs extracts the BibTeX references that markdown files cite, for
+// processing them with pandoc.
 package refs
 
 import (
@@ -58,18 +60,19 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 			cs := exp.FindAllString(string(scan.Bytes()), -1)
 			for _, c := range cs {
 				tc := c[1 : len(c)-1]
-				sp := strings.Split(tc, "@")
-				for _, ac := range sp {
+				sp := strings.SplitSeq(tc, "@")
+				for ac := range sp {
 					a := strings.TrimSpace(ac)
 					a = strings.TrimSuffix(a, ";")
 					if a == "" {
 						continue
 					}
-					cc, _ := refs[a]
-					cc++
-					refs[a] = cc
+					refs[a]++
 				}
 			}
+		}
+		if err := scan.Err(); err != nil {
+			fmt.Println(fn, err)
 		}
 		f.Close()
 	}
@@ -81,7 +84,7 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 	ob.Preambles = parsed.Preambles
 	ob.StringVar = parsed.StringVar
 
-	for r, _ := range refs {
+	for r := range refs {
 		be, has := parsed.Lookup(r)
 		if has {
 			ob.Entries = append(ob.Entries, be)

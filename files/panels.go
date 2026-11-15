@@ -10,7 +10,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/tree"
 )
 
 // panels returns the panels among which the keyboard focus moves, in
@@ -102,16 +101,12 @@ func focusPanel(w core.Widget) bool {
 // [core.Events.FocusNextFrom], which goes on to the widgets after it.
 func focusWithin(w core.Widget) bool {
 	var foc core.Widget
-	w.AsWidget().WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-		if foc != nil {
-			return tree.Break
-		}
+	for cw, cwb := range w.AsWidget().AllWidgets() {
 		if cwb.IsDisplayable() && !cwb.StateIs(states.Disabled) && cwb.AbilityIs(abilities.Focusable) {
 			foc = cw
-			return tree.Break
+			break
 		}
-		return tree.Continue
-	})
+	}
 	if foc == nil {
 		return false
 	}

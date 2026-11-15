@@ -49,7 +49,7 @@ func click(src *events.Source, w core.Widget) {
 func TestMobile(t *testing.T) {
 	b := core.NewBody()
 	ls := testMobile(t, b)
-	b.AssertRender(t, "mobile", func() {
+	core.AssertRender(t, b, "mobile", func() {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		b.AsyncLock()
 		assert.Nil(t, ls.splits(), "no splits")
@@ -65,8 +65,8 @@ func TestMobile(t *testing.T) {
 		tt := ls.table
 		require.NotNil(t, tt)
 		names := []string{}
-		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
-			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
+		for f := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().Fields() {
+			f := f
 			if ls.tableField(f) && f.Tag.Get("display") != "-" {
 				names = append(names, f.Name)
 			}
@@ -129,7 +129,7 @@ func openMobileItems(t *testing.T, b *core.Body, ls *Lists, name string) *core.B
 func TestMobileItems(t *testing.T) {
 	b := core.NewBody()
 	ls := testMobile(t, b)
-	b.AssertRender(t, "mobile-items", func() {
+	core.AssertRender(t, b, "mobile-items", func() {
 		openMobileItems(t, b, ls, "Groceries")
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -142,7 +142,7 @@ func TestMobileItems(t *testing.T) {
 func TestMobileForm(t *testing.T) {
 	b := core.NewBody()
 	ls := testMobile(t, b)
-	b.AssertRender(t, "mobile-form", func() {
+	core.AssertRender(t, b, "mobile-form", func() {
 		edit := openMobileItems(t, b, ls, "Chores")
 		click(b.Scene.RenderWindow().SystemWindow.Events(), edit)
 		b.AsyncLock()
@@ -162,7 +162,7 @@ func TestMobileLong(t *testing.T) {
 	gr.Items[0].Items[0].Values["Item"] = json.RawMessage(`"Apples, the green ones from the farmers market on Saturday"`)
 	gr.ColumnWidths = map[string]float32{"Item": 500}
 	gr.HideGroupValues = true // the first row is a group, without values
-	b.AssertRender(t, "mobile-long", func() {
+	core.AssertRender(t, b, "mobile-long", func() {
 		openMobileItems(t, b, ls, "Groceries")
 	})
 }
@@ -172,7 +172,7 @@ func TestMobileLong(t *testing.T) {
 func TestDetailField(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "detail-field", func() {
+	core.AssertRender(t, b, "detail-field", func() {
 		b.AsyncLock()
 		chores := findList(ls, "Chores")
 		lt := ls.TypeOf(chores)
@@ -184,8 +184,8 @@ func TestDetailField(t *testing.T) {
 		b.AsyncLock()
 		tt := ls.table
 		require.NotNil(t, tt)
-		for i := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().NumField() {
-			f := reflect.TypeOf(tt.Items).Elem().Elem().Elem().Field(i)
+		for f := range reflect.TypeOf(tt.Items).Elem().Elem().Elem().Fields() {
+			f := f
 			if f.Name == "Notes" {
 				assert.Equal(t, "-", f.Tag.Get("table"), "not in the table")
 			}
@@ -218,7 +218,7 @@ func TestMobileChecklist(t *testing.T) {
 	gr := findList(ls, "Groceries") // before the window, which needs no lock
 	gr.TypeName = "Checklist"
 	gr.values = reflect.Value{}
-	b.AssertRender(t, "mobile-checklist", func() {
+	core.AssertRender(t, b, "mobile-checklist", func() {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		b.AsyncLock()
 		tr := ls.tree.FindSyncNode(gr)

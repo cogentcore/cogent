@@ -15,7 +15,7 @@ import (
 // [core.AllSettings] (with [core.AddAppSettings]) before it makes its
 // first body, for them to be loaded and shown in the settings window.
 var Settings = &SettingsData{
-	SettingsBase: core.SettingsBase{Name: "Web"},
+	Name: "Web",
 }
 
 // SettingsData is the data type of the [Settings].

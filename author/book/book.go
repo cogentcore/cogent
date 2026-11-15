@@ -21,7 +21,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 
 	"cogentcore.org/cogent/author"
 	"cogentcore.org/cogent/author/refs"
@@ -54,8 +53,17 @@ func Book(c *author.Config) error { //types:add
 	if name == "" {
 		name = "book"
 	}
+	// The commands run in the current directory, which has the files of
+	// the book, and their errors are returned (goal skips the commands
+	// after an error until the errors are cleared).
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	goalrun.Config.Dir = dir
+	goalrun.Errors = nil
 	book := NewBookData(name)
-	err := book.getMetadata()
+	err = book.getMetadata()
 	if err != nil {
 		return err
 	}
@@ -95,6 +103,7 @@ func Book(c *author.Config) error { //types:add
 			}
 		}
 	}
+	errs = append(errs, goalrun.Errors...)
 	return errors.Join(errs...)
 }
 
@@ -227,13 +236,10 @@ func (bk *BookData) Markdown() string {
 	return fn
 }
 
+// GetFiles gets the names of the chapters and appendicies, in order.
 func (bk *BookData) GetFiles() {
-	bk.Chapters = goalib.SplitLines(`ls chapter-*.md`)
-	sort.Strings(bk.Chapters)
-	if goalib.FileExists("appendix-a.md") {
-		bk.Appendicies = goalib.SplitLines(`ls appendix-*.md`)
-		sort.Strings(bk.Appendicies)
-	}
+	bk.Chapters, _ = filepath.Glob("chapter-*.md") // (sorted)
+	bk.Appendicies, _ = filepath.Glob("appendix-*.md")
 }
 
 // metadataToMD outputs the medadata to book.md file

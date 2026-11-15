@@ -1031,6 +1031,13 @@ func TestSemanticProviderLegend(t *testing.T) {
 // with the file open and the server ready.
 func goplsSetup(t *testing.T, src string) (*Backend, *lines.Lines, string) {
 	t.Helper()
+	return goplsSetupWith(t, src, nil)
+}
+
+// goplsSetupWith is [goplsSetup], calling the given function, if any, to
+// configure the backend before its server is started.
+func goplsSetupWith(t *testing.T, src string, config func(b *Backend)) (*Backend, *lines.Lines, string) {
+	t.Helper()
 	if _, err := exec.LookPath("gopls"); err != nil {
 		t.Skip("gopls not found in PATH:", err)
 	}
@@ -1046,6 +1053,9 @@ func goplsSetup(t *testing.T, src string) (*Backend, *lines.Lines, string) {
 	b := NewBackend(nil)
 	b.RootFunc = func(fpath string) string { return tmp }
 	t.Cleanup(b.Stop)
+	if config != nil {
+		config(b)
+	}
 	ln := lines.NewLines()
 	ln.SetFilename(srcPath)
 	ln.SetText([]byte(src))

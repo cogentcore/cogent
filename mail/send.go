@@ -6,6 +6,7 @@ package mail
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -158,16 +159,21 @@ func (a *App) Send() error { //types:add
 		to[i] = t.Address
 	}
 
-	err = smtp.SendMail(
-		"smtp.gmail.com:587",
+	err = sendMail(
+		smtpAddress,
 		a.authClient[email],
 		email,
 		to,
 		&b,
 	)
-	if err != nil {
-		se := err.(*smtp.SMTPError)
+	if se, ok := errors.AsType[*smtp.SMTPError](err); ok {
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}
 	return err
 }
+
+// smtpAddress is the address of the SMTP server for sending messages.
+var smtpAddress = "smtp.gmail.com:587"
+
+// sendMail sends a message with SMTP, which tests replace.
+var sendMail = smtp.SendMail

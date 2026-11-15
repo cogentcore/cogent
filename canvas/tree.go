@@ -5,7 +5,6 @@
 package canvas
 
 import (
-	"fmt"
 	"image"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -94,7 +93,7 @@ func (tv *Tree) Init() {
 	})
 }
 
-// FileRoot returns the Root node as a [Tree].
+// CanvasRoot returns the Root node as a [Tree].
 func (tv *Tree) CanvasRoot() *Tree {
 	return tv.Root.(*Tree)
 }
@@ -333,7 +332,6 @@ func (cv *Canvas) PasteClip() { //types:add
 	tv := cv.tree
 	parent := sv.NewParent(false)
 	pn := tv.FindSyncNode(parent)
-	fmt.Println("c paste:", pn)
 	pn.PasteChildren(md, events.DropCopy)
 	cv.SetStatus("Pasted items from clipboard")
 	cv.ChangeMade()

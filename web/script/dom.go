@@ -850,8 +850,8 @@ func (e *Engine) defineDOM() {
 	e.defineNet()
 }
 
-// domException is an error of a DOM operation, which the prelude makes a
-// DOMException of its name.
+// domException is an error of a DOM operation, which the scripts get as a
+// DOMException of its name (see [Engine.domError]).
 type domException struct {
 	name, msg string
 }

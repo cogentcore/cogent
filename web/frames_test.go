@@ -69,7 +69,7 @@ func TestFrameCaptcha(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		// the captcha is shown in the frame of the page, which is told that
 		// it loaded
 		require.True(t, eventually(func() bool {
@@ -133,7 +133,7 @@ func TestFrameMouseEvents(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(outer.URL+"/", nil)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		var box *core.WidgetBase
 		require.True(t, eventually(func() bool {
@@ -185,7 +185,7 @@ func TestFrameNotNested(t *testing.T) {
 			Body: io.NopCloser(strings.NewReader(`<html><body><iframe name="f" src="` + inner.URL + `/f"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "frame") }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond) // (for a frame in the frame, if any)
 		b.AsyncLock()
@@ -220,7 +220,7 @@ func TestFrameViewportScrollbar(t *testing.T) {
 			Body: io.NopCloser(strings.NewReader(`<html><body><iframe src="` + inner.URL + `/f" width="300" height="100" frameborder="0"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "tall") }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond)
 		var fp *Page
@@ -270,7 +270,7 @@ func TestFrameScrollingNo(t *testing.T) {
 				`<iframe id="b" src="` + inner.URL + `/b" width="300" height="100" frameborder="0" scrolling="no"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Count(pageTexts(b, pg), "tall") == 2 }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond)
 	}, func() {
@@ -325,7 +325,7 @@ func TestFrameFormTarget(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(pageTexts(b, pg), "menu of POST 42")
 		}), pageTexts(b, pg))
@@ -358,7 +358,7 @@ func TestFrameLinkTarget(t *testing.T) {
 	var tabs []string
 	pg.OpenNewTab = func(u string) { tabs = append(tabs, u) }
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		var fp *Page
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()
@@ -390,6 +390,64 @@ func TestFrameLinkTarget(t *testing.T) {
 		b.AsyncLock()
 		assert.Equal(t, site.URL+"/account", pg.currentURL(), "in the top page")
 		assert.Equal(t, []string{site.URL + "/other"}, tabs)
+		b.AsyncUnlock()
+	})
+}
+
+// TestFrameTargets tests the pages that the targets of links and forms
+// are: the page itself, its parent and top pages, and the frames of
+// iframes by their names, in which a link of the top page opens.
+func TestFrameTargets(t *testing.T) {
+	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/menu":
+			io.WriteString(w, `<html><body><p>menu</p><iframe name="inner" src="/inner" width="100" height="50"></iframe><script>1</script></body></html>`)
+		case "/inner":
+			io.WriteString(w, `<html><body><p>inner</p><script>1</script></body></html>`)
+		case "/next":
+			io.WriteString(w, `<html><body><p>next in the frame</p><script>1</script></body></html>`)
+		default:
+			io.WriteString(w, `<html><body><a id="l" href="/next" target="menu">next</a><iframe name="menu" src="/menu" width="300" height="200"></iframe><script>1</script></body></html>`)
+		}
+	}))
+	defer site.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(site.URL+"/", nil)
+	core.RenderImage(b, func() { settle(pg) }, func() {
+		var menu, inner *Page
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			menu = pg.namedFrame("menu")
+			inner = pg.namedFrame("inner")
+			return menu != nil && inner != nil && menu.scripts != nil
+		}), "the frames")
+		b.AsyncLock()
+		assert.Equal(t, pg, pg.targetPage(""))
+		assert.Equal(t, pg, pg.targetPage("_parent"), "no parent")
+		assert.Nil(t, pg.targetPage("_blank"))
+		assert.Equal(t, menu, pg.targetPage("menu"))
+		assert.Equal(t, inner, menu.targetPage("inner"), "nested")
+		assert.Equal(t, pg, menu.targetPage("_parent"))
+		assert.Equal(t, menu, inner.targetPage("_parent"))
+		assert.Equal(t, pg, inner.targetPage("_top"))
+		assert.Equal(t, inner, inner.targetPage("unknown"), "itself")
+		assert.Nil(t, pg.namedFrame("none"))
+		var l *html.Node
+		for n := range pg.scripts.doc.Descendants() {
+			if htmlcore.GetAttr(n, "id") == "l" {
+				l = n
+			}
+		}
+		require.NotNil(t, l)
+		pg.scripts.openLink(l, "/next", nil)
+		b.AsyncUnlock()
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "next in the frame") }), pageTexts(b, pg))
+		b.AsyncLock()
+		assert.Equal(t, site.URL+"/", pg.currentURL(), "the top page stays")
 		b.AsyncUnlock()
 	})
 }

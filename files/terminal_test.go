@@ -85,7 +85,7 @@ func TestTerminalLabels(t *testing.T) {
 		}
 		t.Fatalf("labels: %v, want %v", got, want)
 	}
-	b.AssertRender(t, "terminals", func() {
+	core.AssertRender(t, b, "terminals", func() {
 		b.AsyncLock()
 		tm1 = fl.recycleTerminal(TerminalTabName, root)
 		fl.NewTerminal(root)

@@ -39,7 +39,7 @@ func TestConsole(t *testing.T) {
 	var ed *textcore.Editor
 	meta := key.Modifiers(0)
 	meta.SetFlag(true, key.Meta)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		fl.OpenConsoleTab()

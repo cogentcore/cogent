@@ -36,7 +36,7 @@ func terminalText(tm *terminal.Terminal) string {
 // hasOutputLine returns whether a line of the terminal text is s, allowing for
 // a leading prompt: dash (sh on Ubuntu) echoes typed-ahead input after the prompt.
 func hasOutputLine(tm *terminal.Terminal, s string) bool {
-	for _, ln := range strings.Split(terminalText(tm), "\n") {
+	for ln := range strings.SplitSeq(terminalText(tm), "\n") {
 		if strings.TrimPrefix(strings.TrimRight(ln, " "), "$ ") == s {
 			return true
 		}

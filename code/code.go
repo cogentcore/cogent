@@ -373,11 +373,16 @@ func (cv *Code) FocusOnTabs() bool {
 
 ////////  Main project API
 
-// UpdateFiles updates the list of files saved in project
+// UpdateFiles updates the list of files saved in project. The main language
+// and version control system, if not set, are guessed from them, as they are
+// not read when a project is first opened (see [Code.GuessMainLang]).
 func (cv *Code) UpdateFiles() { //types:add
 	if cv.Files != nil && cv.ProjectRoot != "" {
 		cv.Files.OpenPath(string(cv.ProjectRoot))
 		cv.Files.Open()
+		if cv.Settings.MainLang == fileinfo.Unknown {
+			cv.GuessMainLang()
+		}
 		cv.guessVersionControl()
 	}
 }
@@ -513,7 +518,6 @@ func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 	cv.Settings.ProjectRoot = core.Filename(root)
 	cv.Settings.ProjectFilename = filename // should already be set but..
 	if ok {
-		SetGoMod(cv.Settings.GoMod)
 		os.Chdir(string(cv.Settings.ProjectRoot))
 		cv.ProjectRoot = core.Filename(cv.Settings.ProjectRoot)
 		RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
