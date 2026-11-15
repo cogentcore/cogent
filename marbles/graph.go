@@ -297,7 +297,8 @@ func (gr *Graph) CompileExprs() {
 			ln.GraphIf.Expr = TheSettings.LineDefaults.GraphIf
 		}
 		if CheckCircular(ln.Expr.Expr, k) {
-			HandleError(errors.New("circular logic detected"))
+			gr.State.Error = errors.New("circular logic detected")
+			HandleError(gr.State.Error)
 			return
 		}
 		if CheckIfChanges(ln.Expr.Expr) || CheckIfChanges(ln.GraphIf.Expr) || CheckIfChanges(ln.Bounce.Expr) {
@@ -337,9 +338,6 @@ func CheckCircular(expr string, k int) bool {
 
 // CheckIfReferences checks if an expr references a given function
 func CheckIfReferences(expr string, k int) bool {
-	sort.Slice(BasicFunctionList, func(i, j int) bool {
-		return len(BasicFunctionList[i]) > len(BasicFunctionList[j])
-	})
 	for _, d := range BasicFunctionList {
 		expr = strings.ReplaceAll(expr, d, "")
 	}
@@ -369,12 +367,23 @@ func CheckIfChanges(expr string) bool {
 	return false
 }
 
-// InitBasicFunctionList adds all of the basic functions to a list
+func init() {
+	InitBasicFunctionList()
+}
+
+// InitBasicFunctionList sets the list of the names of the basic functions,
+// and the other names that are not references to lines (the suffixes of the
+// line functions), longest first, so that the names of the lines within them
+// (f in floor) are not taken as references.
 func InitBasicFunctionList() {
+	BasicFunctionList = BasicFunctionList[:0]
 	for k := range DefaultFunctions {
 		BasicFunctionList = append(BasicFunctionList, k)
 	}
-	BasicFunctionList = append(BasicFunctionList, "true", "false")
+	BasicFunctionList = append(BasicFunctionList, "true", "false", "pi", "int", "sum", "psum")
+	sort.Slice(BasicFunctionList, func(i, j int) bool {
+		return len(BasicFunctionList[i]) > len(BasicFunctionList[j])
+	})
 }
 
 // Compile compiles all of the expressions in a line

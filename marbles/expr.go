@@ -47,13 +47,13 @@ func (ex *Expr) Integrate(min, max float64, h int) float64 {
 func (ex *Expr) Compile() error {
 	expr, functions := ex.PrepareExpr(TheGraph.Functions)
 	var err error
+	if ex.Params == nil {
+		ex.Params = make(map[string]any, 2)
+	}
 	ex.Val, err = govaluate.NewEvaluableExpressionWithFunctions(expr, functions)
 	if HandleError(err) {
 		ex.Val = nil
 		return err
-	}
-	if ex.Params == nil {
-		ex.Params = make(map[string]any, 2)
 	}
 	ex.Params["π"] = math.Pi
 	ex.Params["e"] = math.E
@@ -62,7 +62,7 @@ func (ex *Expr) Compile() error {
 
 // Eval corees the y value of the function for given x, t and h value
 func (ex *Expr) Eval(x, t float64, h int) float64 {
-	if ex.Expr == "" {
+	if ex.Expr == "" || ex.Val == nil { // empty or invalid
 		return 0
 	}
 	ex.Params["x"] = x
@@ -85,13 +85,16 @@ func (ex *Expr) Eval(x, t float64, h int) float64 {
 
 // EvalWithY calls eval but with a y value set
 func (ex *Expr) EvalWithY(x, t float64, h int, y float64) float64 {
+	if ex.Params == nil { // not compiled
+		return 0
+	}
 	ex.Params["y"] = y
 	return ex.Eval(x, t, h)
 }
 
 // EvalBool checks if a statement is true based on the x, y, t and h values
 func (ex *Expr) EvalBool(x, y, t float64, h int) bool {
-	if ex.Expr == "" {
+	if ex.Expr == "" || ex.Val == nil { // empty or invalid
 		return true
 	}
 	ex.Params["x"] = x
