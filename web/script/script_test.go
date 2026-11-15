@@ -1663,7 +1663,8 @@ func TestScreenOrientation(t *testing.T) {
 func TestActivitySummary(t *testing.T) {
 	// the summary of the time of the scripts names those that ran
 	var buf bytes.Buffer
-	require.NoError(t, goja.StartProfile(&buf))
+	// (once the profiling of the engines of other tests that trace ends)
+	require.Eventually(t, func() bool { return goja.StartProfile(&buf) == nil }, activityWindow+2*time.Second, 10*time.Millisecond)
 	vm := goja.New()
 	prog, err := goja.Compile("https://example.com/js/busy.js?v=1", `const end = Date.now() + 400; let n = 0; while (Date.now() < end) n++;`, false)
 	require.NoError(t, err)
