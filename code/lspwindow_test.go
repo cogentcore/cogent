@@ -40,16 +40,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.go")
 	os.WriteFile(fpath, []byte("package main\n\nfunc main() {\n\txy := 1\n\txy++\n\t_ = xy\n}\n"), 0644)
-	b := core.NewBody()
-	// (large enough for the lines that are clicked to be shown)
-	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
-	cv := NewCode(b)
-	cv.Defaults()
-	cv.ProjectRoot = core.Filename(tmp)
-	cv.Settings.ProjectRoot = core.Filename(tmp)
-	// the window is only used for its event handling, not its image,
-	// which varies with timing:
-	imagex.UpdateTestImagesFor(t)
+	b, cv := newTestCode(t, tmp)
 	core.AssertRender(t, b, "occurrences-click", func() {
 		jump := textpos.Region{Start: textpos.Pos{Line: 2, Char: 5}, End: textpos.Pos{Line: 2, Char: 9}}
 		b.AsyncLock()
