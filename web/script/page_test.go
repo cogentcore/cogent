@@ -326,3 +326,50 @@ func TestNavigateStack(t *testing.T) {
 		return slices.Equal([]string{"https://example.com/pushed.html"}, fp.pushed)
 	}, 5*time.Second, 5*time.Millisecond)
 }
+
+// TestComposedTree tests that the page is rendered as its composed tree:
+// the content of a shadow root in place of the children of its host, with
+// the children of the host in the slots that they are assigned to, and the
+// document as it was after the render; and the scopes and composed parents
+// of the nodes of the last render.
+func TestComposedTree(t *testing.T) {
+	var mu sync.Mutex
+	var rendered string
+	var e *Engine
+	e, _ = testPageEngine(t, `<html><body><x-a id="a"><b slot="s" id="b">B</b><i id="i">I</i><!-- c --></x-a></body></html>`, nil, func(o *Options) {
+		o.Restyle, o.Reread = nil, nil
+		o.Render = func() func() {
+			var sb strings.Builder
+			html.Render(&sb, findByID(e.Document(), "a"))
+			mu.Lock()
+			rendered = sb.String()
+			mu.Unlock()
+			return nil
+		}
+	})
+	run(t, e, `
+		const r = document.getElementById("a").attachShadow({ mode: "open" });
+		r.innerHTML = '<p id="p">[<slot name="s">fallback</slot>]</p><slot></slot><slot name="none">none</slot>';`)
+	require.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return rendered != ""
+	}, 5*time.Second, 5*time.Millisecond)
+	mu.Lock()
+	assert.Equal(t, `<x-a id="a"><p id="p">[<slot name="s"><b id="b" slot="s">B</b></slot>]</p><slot><i id="i">I</i></slot><slot name="none">none</slot></x-a>`, rendered)
+	mu.Unlock()
+	assert.Equal(t, `<x-a id="a"><b id="b" slot="s">B</b><i id="i">I</i><!-- c --></x-a>`, run(t, e, `document.getElementById("a").outerHTML`), "the document after")
+
+	ch := make(chan []*html.Node, 1)
+	e.Post(func() {
+		a, b, p := findByID(e.Document(), "a"), findByID(e.Document(), "b"), e.shadowRoots[findByID(e.Document(), "a")].FirstChild
+		ch <- []*html.Node{e.ShadowScope(p), e.ShadowScope(b), e.ComposedParent(p), e.ComposedParent(b), e.ComposedParent(a), a}
+	})
+	got := <-ch
+	a := got[5]
+	assert.Equal(t, a, got[0], "the shadow tree of a")
+	assert.Nil(t, got[1], "in the document")
+	assert.Equal(t, a, got[2], "the host")
+	assert.Equal(t, "slot", got[3].Data, "the slot")
+	assert.Equal(t, a.Parent, got[4], "the parent in the document")
+}
