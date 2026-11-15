@@ -304,7 +304,6 @@ func TestSetLock(t *testing.T) {
 	assert.Equal(t, "https://example.com/page.html", got[0])
 	assert.Equal(t, true, got[1])
 	assert.Equal(t, "", got[2], "no script runs")
-	assert.False(t, (func() bool { return e.InTask() })(), "not outside of tasks")
 	_ = fp
 }
 

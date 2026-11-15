@@ -52,7 +52,20 @@ func testEngine(t *testing.T, page string, resources map[string]string) (*Engine
 	})
 	require.NoError(t, err)
 	t.Cleanup(e.Close)
+	logLocks.Store(&logs, &mu)
 	return e, &logs
+}
+
+// logLocks has the mutex of the logs of each engine of [testEngine].
+var logLocks sync.Map
+
+// logText returns the given logs of an engine of [testEngine], joined, with
+// their lock, for reading them while the engine logs (as in Eventually).
+func logText(logs *[]string) string {
+	mu, _ := logLocks.Load(logs)
+	mu.(*sync.Mutex).Lock()
+	defer mu.(*sync.Mutex).Unlock()
+	return strings.Join(*logs, "\n")
 }
 
 // run runs the given script in the engine, failing the test on an error.
@@ -393,8 +406,8 @@ func TestHistoryPolyfill(t *testing.T) {
 	e.Eval(`setTimeout(function g() { return g() + 1; }, 0)`) // reported
 	assert.Eventually(t, func() bool {
 		e.RunString("0") // after the logs of earlier tasks
-		return strings.Contains(strings.Join(*logs, "\n"), "Maximum call stack size exceeded")
-	}, 2*time.Second, 10*time.Millisecond, "%v", *logs)
+		return strings.Contains(logText(logs), "Maximum call stack size exceeded")
+	}, 2*time.Second, 10*time.Millisecond)
 }
 
 // TestNavigation tests the minimal Navigation API (window.navigation).
@@ -623,7 +636,7 @@ func TestPromisePolyfill(t *testing.T) {
 		window.done = 0;
 		queueMicrotask(() => { window.done++; });
 		Promise.resolve(1).then(() => { window.done++; });`)
-	assert.Eventually(t, func() bool { return run(t, e, `window.done`) == int64(2) }, 2*time.Second, 10*time.Millisecond, "%v", *logs)
+	assert.Eventually(t, func() bool { return run(t, e, `window.done`) == int64(2) }, 2*time.Second, 10*time.Millisecond)
 	assert.Empty(t, *logs)
 }
 
@@ -1400,15 +1413,9 @@ func TestEmptyBodyLogged(t *testing.T) {
 	e, logs := testEngine(t, `<html><body></body></html>`, map[string]string{"/api": "ok"})
 	run(t, e, `fetch("/api", { method: "POST", body: "data" }); var x = new XMLHttpRequest(); x.open("POST", "/api"); x.send(); fetch("/api", { method: "POST", body: new Uint8Array(0) });`)
 	assert.Eventually(t, func() bool {
-		n := 0
-		for _, l := range *logs {
-			if strings.Contains(l, "with an empty body") {
-				n++
-			}
-		}
-		return n == 2
+		return strings.Count(logText(logs), "with an empty body") == 2
 	}, 3*time.Second, 20*time.Millisecond)
-	all := strings.Join(*logs, "\n")
+	all := logText(logs)
 	assert.Contains(t, all, "(given: undefined)")
 	assert.Contains(t, all, "(given: Uint8Array)")
 }
@@ -1425,7 +1432,7 @@ func TestErrorBodyLogged(t *testing.T) {
 	e, logs := testEngine(t, `<html><body></body></html>`, nil)
 	run(t, e, `fetch("`+srv.URL+`/player", { method: "POST", body: "{}" })`)
 	assert.Eventually(t, func() bool {
-		return strings.Contains(strings.Join(*logs, "\n"), "400 Bad Request: {\"error\": {\"code\": 400, \"message\": \"Request contains an invalid argument.\"}}")
+		return strings.Contains(logText(logs), "400 Bad Request: {\"error\": {\"code\": 400, \"message\": \"Request contains an invalid argument.\"}}")
 	}, 3*time.Second, 20*time.Millisecond)
 }
 
@@ -1579,15 +1586,15 @@ func TestPostMessageCycles(t *testing.T) {
 // TestTraceHold tests that a long hold of the lock of the page by a task is
 // in the verbose console, with the native function that took it.
 func TestTraceHold(t *testing.T) {
-	e, logs := testEngine(t, `<html><body></body></html>`, nil)
+	e, fp := testPageEngine(t, `<html><body></body></html>`, nil) // (whose logs are read with their lock)
 	e.opts.Trace = func() bool { return true }
 	e.lockMu.Lock()
 	e.lockedAt, e.lockBy, e.lockBusy = time.Now().Add(-2*time.Second), "rect", 1500*time.Millisecond
 	e.traceHold()
 	e.lockMu.Unlock()
 	assert.Eventually(t, func() bool {
-		return strings.Contains(strings.Join(*logs, "\n"), "the page was held for 2s from rect, 1.5s of it in calls")
-	}, time.Second, 10*time.Millisecond, "%v", *logs)
+		return fp.logged("the page was held for 2s from rect, 1.5s of it in calls")
+	}, time.Second, 10*time.Millisecond)
 }
 
 // TestStructuredClone tests that structuredClone clones maps, sets, dates,
@@ -1663,8 +1670,14 @@ func TestScreenOrientation(t *testing.T) {
 func TestActivitySummary(t *testing.T) {
 	// the summary of the time of the scripts names those that ran
 	var buf bytes.Buffer
-	// (once the profiling of the engines of other tests that trace ends)
-	require.Eventually(t, func() bool { return goja.StartProfile(&buf) == nil }, activityWindow+2*time.Second, 10*time.Millisecond)
+	// once the profiling of the engines of other tests that traced has
+	// stopped (the profiler is global)
+	require.Eventually(t, func() bool {
+		activity.Lock()
+		defer activity.Unlock()
+		return !activity.running
+	}, activityWindow+2*time.Second, 10*time.Millisecond)
+	require.NoError(t, goja.StartProfile(&buf))
 	vm := goja.New()
 	prog, err := goja.Compile("https://example.com/js/busy.js?v=1", `const end = Date.now() + 400; let n = 0; while (Date.now() < end) n++;`, false)
 	require.NoError(t, err)

@@ -6,6 +6,7 @@ package web
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -78,7 +79,7 @@ func TestBookmarksBar(t *testing.T) {
 	}, func() {
 		pg.wait()
 		assert.Contains(t, opened, "example.com/three")
-		AddBookmark(nil, "Four", "https://example.com/four")
+		core.Locked(b, func() { AddBookmark(nil, "Four", "https://example.com/four") })() // (as from a menu)
 	}, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -142,7 +143,10 @@ func TestEditBookmarks(t *testing.T) {
 		bookmarksEditor.Unlock()
 		// bookmarks moved elsewhere (as by dragging them in the bookmarks
 		// bar, whose MoveFunc this is) are moved in it
+		// (with the lock of the editor, which shows them)
+		tt.AsyncLock()
 		Settings.Bookmarks[0], Settings.Bookmarks[1] = Settings.Bookmarks[1], Settings.Bookmarks[0]
+		tt.AsyncUnlock()
 		bookmarksChanged()
 		assert.Eventually(t, func() bool {
 			first := ""
@@ -183,10 +187,15 @@ func TestBookmarksBarMove(t *testing.T) {
 		bar.MoveFunc(0, 1) // (as by dragging News onto Three)
 	}, func() {
 		b.AsyncLock()
-		defer b.AsyncUnlock()
 		assert.Equal(t, "Three", Settings.Bookmarks[0].Name)
 		assert.Equal(t, "News", Settings.Bookmarks[1].Name)
-		texts, _ := barButtons(b)
-		assert.Equal(t, []string{"Three", "News"}, texts)
+		b.AsyncUnlock()
+		// (the bar is updated in another goroutine)
+		assert.Eventually(t, func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			texts, _ := barButtons(b)
+			return slices.Equal([]string{"Three", "News"}, texts)
+		}, 3*time.Second, 10*time.Millisecond)
 	})
 }
