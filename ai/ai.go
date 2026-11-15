@@ -41,6 +41,12 @@ import (
 
 func main() { // TODO(config)
 	b := core.NewBody("Cogent AI")
+	makeApp(b)
+	b.RunMainWindow()
+}
+
+// makeApp makes the app in the given body.
+func makeApp(b *core.Body) {
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
 			tree.Add(p, func(w *core.Button) {
@@ -182,13 +188,18 @@ func main() { // TODO(config)
 				Preprompt:   "",
 				ThreadID:    "",
 			}, "")
+			// (snackbars with the lock of the window, from this goroutine)
 			if err != nil {
+				b.AsyncLock()
 				core.ErrorSnackbar(b, err)
+				b.AsyncUnlock()
 				return
 			}
 			if resp.StatusCode != http.StatusOK {
 				body := errors.Log1(io.ReadAll(resp.Body))
+				b.AsyncLock()
 				core.MessageSnackbar(b, fmt.Sprintf("Error getting response (%s): %s", resp.Status, body))
+				b.AsyncUnlock()
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
@@ -197,7 +208,9 @@ func main() { // TODO(config)
 			for scanner.Scan() {
 				token, err := HandleToken(scanner.Text())
 				if err != nil {
+					b.AsyncLock()
 					core.ErrorSnackbar(b, err)
+					b.AsyncUnlock()
 					continue
 				}
 				if token == "" {
@@ -216,6 +229,4 @@ func main() { // TODO(config)
 			errors.Log(resp.Body.Close())
 		}()
 	})
-
-	b.RunMainWindow()
 }
