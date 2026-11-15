@@ -520,6 +520,10 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 				}
 			}
 			if err == nil {
+				// its resources, in parallel, as it is read
+				if doc, perr := html.Parse(bytes.NewReader(page)); perr == nil {
+					prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, canceled)
+				}
 				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
 			if err == nil && !canceled() {
@@ -758,8 +762,13 @@ func (pg *Page) checkMedia() {
 		pg.checkedHeight = h
 	}
 	pg.stopMediaTimer() // for an earlier size
+	// (with the styles of its context locked, which its scripts may be
+	// changing; see htmlcore.Context.PrepareReread)
+	m.ctx.LockStyles()
 	heightUsed := m.ctx.ViewportHeightUsed() && pg.checkedHeight > 0 && math32.Abs(pg.checkedHeight-m.ctx.MediaHeight) >= 1
-	if !m.ctx.MediaChanged(pg.checkedWidth) && !heightUsed {
+	changed := m.ctx.MediaChanged(pg.checkedWidth)
+	m.ctx.UnlockStyles()
+	if !changed && !heightUsed {
 		return
 	}
 	size := math32.Vec2(pg.checkedWidth, pg.checkedHeight)

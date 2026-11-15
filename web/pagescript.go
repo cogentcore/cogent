@@ -15,6 +15,7 @@ import (
 	neturl "net/url"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -222,6 +223,10 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	ctx.Hovered = func(n *html.Node) bool { return ps.hoverSet[n] }
 	// the children of shadow hosts that are in no slot are not rendered
 	ctx.Unrendered = ps.engine.Unassigned
+	// the page is read as its composed tree, with the content of the shadow
+	// roots of elements in their place, whose style sheets apply to them
+	ctx.ShadowScope = ps.engine.ShadowScope
+	ctx.ComposedParent = ps.engine.ComposedParent
 	// details are toggled in the document, which is read again
 	ctx.ToggleDetails = func(n *html.Node) bool {
 		if ps.engine.Closed() { // in place, as the scripts were stopped
@@ -243,6 +248,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// elements in them, as of font-size: 1cqw, not to be shown at the
 	// size of the viewport until the new widgets are laid out
 	ctx.KeepContainerSizes(ps.ctx)
+	ps.prefetch(ctx)
 	// the matches of the style rules of the elements that have not changed
 	// are those of the last read (the most of its time, as for the many
 	// times that npr.org was read again as it loaded)
@@ -380,18 +386,28 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 	if !ps.shown {
 		return nil // (rendered once it is shown)
 	}
+	if ps.ctx == nil {
+		return nil
+	}
+	// the declarations of the elements are found without the lock of the
+	// page (see htmlcore.Context.PrepareRestyle), and the widgets are
+	// styled again with it
+	start := time.Now()
+	apply := ps.ctx.PrepareRestyle(nodes)
+	prepared := time.Since(start)
 	return func() bool {
 		pg := ps.pg
 		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil {
 			return false
 		}
 		start := time.Now()
-		if !ps.ctx.Restyle(nodes) {
+		if apply == nil {
 			ps.logFallback("restyle", "reading the changed elements again")
 			return false
 		}
+		apply()
 		ps.restyles++
-		ps.renderTime += time.Since(start)
+		ps.renderTime += prepared + time.Since(start)
 		ps.laidOut = false // (laid out again for the boxes of the scripts)
 		return true
 	}
@@ -424,6 +440,21 @@ func restoreCursor(w core.Widget, cursor int) {
 	tf.SetCursorPos(cursor)
 }
 
+// applySafely calls the given function that puts the widgets of the
+// elements read again in the page, returning false if it panicked, for the
+// page to be read whole: it runs in the goroutine of the scripts, where a
+// panic stopped the app (as for a duplicate name of a widget on github.com).
+func (ps *pageScripts) applySafely(apply func()) (ok bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			ps.log(slog.LevelError, fmt.Sprintf("reading the changed elements again: %v\n%s", r, debug.Stack()))
+			ok = false
+		}
+	}()
+	apply()
+	return true
+}
+
 // testReadHook, if set, is called before a page is read again (for tests).
 var testReadHook func(ps *pageScripts)
 
@@ -440,6 +471,28 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		return nil // (rendered once it is shown)
 	}
 	ps.resizeIfNeeded()
+	if ps.ctx == nil {
+		return nil
+	}
+	// the elements are styled and read again into new widgets without the
+	// lock of the page (see htmlcore.Context.PrepareReread), which took as
+	// long as a second as the scripts of nytimes.com changed it, in which
+	// the app did not respond; they are put in the page with it
+	start := time.Now()
+	var applyStyled func()
+	if len(styled) > 0 {
+		if applyStyled = ps.ctx.PrepareRestyle(styled); applyStyled == nil {
+			// (as for a change of their display, for which they are read
+			// again as elements that have changed themselves)
+			ps.logFallback("restyle", "reading the changed elements again")
+			self = append(slices.Clip(self), styled...)
+		}
+	}
+	ps.ctx.LockStyles()
+	ps.prefetch(ps.ctx)
+	ps.ctx.UnlockStyles()
+	applyReread := ps.ctx.PrepareReread(self, children)
+	prepared := time.Since(start)
 	return func() bool {
 		pg := ps.pg
 		if pg.scripts != ps || ps.ctx == nil || pg.Scene == nil || pg.NumChildren() != 1 {
@@ -450,11 +503,8 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			return false
 		}
 		start := time.Now()
-		if len(styled) > 0 && !ps.ctx.Restyle(styled) {
-			// (as for a change of their display, for which they are read
-			// again as elements that have changed themselves)
-			ps.logFallback("restyle", "reading the changed elements again")
-			self = append(slices.Clip(self), styled...)
+		if applyStyled != nil {
+			applyStyled()
 		}
 		// the element that has the focus, and the scroll positions, for
 		// the widgets that are made new; the pages of the frames are kept
@@ -484,7 +534,10 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 				tree.MoveToParent(fp, hold)
 			}
 		}
-		ok = ps.ctx.Reread(self, children)
+		ok = applyReread != nil
+		if ok {
+			ok = ps.applySafely(applyReread)
+		}
 		opens := pg.attachFrames(content)
 		pg.attachVideos(content) // (as a script sets the source of a video)
 		for _, fp := range pg.frames {
@@ -493,6 +546,11 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		if !ok {
 			ps.logFallback("reread", "reading the page whole")
 			return false
+		}
+		if t := ps.ctx.Title; t != pg.Title && pg.frame == nil {
+			// the title that the scripts set (see htmlcore.Context.Reread)
+			pg.Title = t
+			pg.opened(pg.currentURL())
 		}
 		if pg.media != nil && pg.media.ctx == ps.ctx {
 			// the width is checked again for the media queries of the
@@ -516,7 +574,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			})
 		}
 		ps.rereads++
-		ps.renderTime += time.Since(start)
+		ps.renderTime += prepared + time.Since(start)
 		ps.widgets = nil
 		ps.laidOut = false
 		return true
@@ -1466,11 +1524,28 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	if Settings.BlockAds && !strings.Contains(ctx.Style, adStyles) {
 		ctx.Style += adStyles // (the slots of the ads that are blocked)
 	}
+	// the images of the noscripts of lazy images are set as they are
+	// gotten, with the lock of the page, once it is shown
+	ctx.AsyncImages = func(f func()) {
+		for range 300 {
+			if canceled() {
+				return
+			}
+			if pg.AsyncLockIfShown() {
+				defer pg.AsyncUnlock()
+				f()
+				return
+			}
+			time.Sleep(100 * time.Millisecond) // (not shown yet)
+		}
+	}
 	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
 		return false
 	}
+	// its resources, in parallel, as it is read
+	prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, canceled)
 	parsed := time.Since(lt.start)
 	ps, err := pg.newPageScripts(ctx, doc, final, openedBy, lt.start)
 	if err != nil {
@@ -1793,4 +1868,12 @@ func (ps *pageScripts) logFallback(kind, instead string) {
 		why = "unknown"
 	}
 	ps.log(slog.LevelDebug, fmt.Sprintf("%s of the page not possible (%s): %s", kind, why, instead))
+}
+
+// prefetch gets the resources of the document that the given context
+// reads that are not in the cache of the page yet in parallel (see
+// [prefetch]), as it is read: the images that scripts add (as the
+// slideshows of npr.org) were gotten one at a time as it was read (8s).
+func (ps *pageScripts) prefetch(ctx *htmlcore.Context) {
+	prefetch(ctx.PrefetchURLs(ps.doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, ps.engine.Closed)
 }

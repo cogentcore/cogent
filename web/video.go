@@ -37,7 +37,16 @@ import (
 // video are decoded before its box is laid out.
 const maxVideoWidth = 1280
 
-// pageVideo is the video of a video element of a page.
+// Audio elements are played the same way, as videos without frames: those
+// with controls are boxes of htmlcore (VideoBox.Audio) with the controls of
+// an audio player over them (see [video.Controls.SetAudio]); the others
+// (without controls, not displayed, as those that the scripts of pages make
+// with new Audio(url), not in the document) are played by the scripts. The
+// audio of an element is kept while the page is open (as browsers play an
+// audio element that is not in the document), until its source changes.
+
+// pageVideo is the video of a video element of a page, or the audio of an
+// audio element.
 type pageVideo struct {
 	// page is the page of the video, whose lock is that of its widgets
 	// (which are added to the scene of the page after they are made).
@@ -119,11 +128,16 @@ func (pg *Page) attachVideos(content *core.Frame) {
 		return tree.Break // (its image and controls)
 	})
 	for n, pv := range pg.videos {
-		if !seen[n] {
+		if !seen[n] && !pv.audio() {
 			pv.close()
 			delete(pg.videos, n)
 		}
 	}
+}
+
+// audio returns whether it is the audio of an audio element.
+func (pv *pageVideo) audio() bool {
+	return pv.node.Data == "audio"
 }
 
 // closeVideos closes all of the videos of the page.
@@ -149,6 +163,7 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 		Muted:   htmlcore.HasAttr(n, "muted"),
 		Loop:    htmlcore.HasAttr(n, "loop"),
 		OnFrame: func(f video.Frame) { pv.show(f.Image, f.Time) },
+		OnTime:  pv.timeUpdate, // (of audio)
 		OnEnd: func() {
 			pv.refreshControls()
 			pv.notify("timeupdate", "pause", "ended")
@@ -195,7 +210,7 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 			}
 			pv.mu.Unlock()
 			pv.refreshControls()
-		case !poster: // its first frame, until it plays
+		case !poster && m.HasVideo: // its first frame, until it plays
 			if img, err := m.FirstFrame(pb.Width, 0); err == nil {
 				pv.show(img, 0)
 			}
@@ -236,7 +251,7 @@ func (pv *pageVideo) opening(m *video.Media) {
 	pv.size = image.Pt(m.Width, m.Height)
 	box := pv.box
 	pv.mu.Unlock()
-	if box == nil || !pv.page.AsyncLockIfShown() {
+	if box == nil || box.Audio || !pv.page.AsyncLockIfShown() {
 		return
 	}
 	defer pv.page.AsyncUnlock()
@@ -278,13 +293,16 @@ func (pv *pageVideo) attach(box *htmlcore.VideoBox) {
 	pv.box = box
 	frame, size := pv.frame, pv.size
 	pv.mu.Unlock()
-	if size.X > 0 {
+	if size.X > 0 && !box.Audio {
 		box.SetVideoSize(size.X, size.Y)
 	}
-	if frame != nil {
+	if frame != nil && box.Image != nil {
 		box.Image.SetImage(frame)
 	}
 	c := video.NewControls(box)
+	if box.Audio {
+		c.SetAudio()
+	}
 	c.SetPlayer(box, pv)
 	pv.mu.Lock()
 	pv.controls = c
@@ -298,7 +316,11 @@ func (pv *pageVideo) show(frame *image.RGBA, t time.Duration) {
 	box, closed, c := pv.box, pv.closed, pv.controls
 	pv.frame = frame
 	pv.mu.Unlock()
-	if closed || box == nil || !pv.page.AsyncLockIfShown() {
+	if closed {
+		return
+	}
+	if box == nil || box.Image == nil || !pv.page.AsyncLockIfShown() {
+		pv.scriptTime() // (as of a video that is not shown)
 		return
 	}
 	defer pv.page.AsyncUnlock()
@@ -323,7 +345,27 @@ func (pv *pageVideo) show(frame *image.RGBA, t time.Duration) {
 	if c != nil {
 		c.SetTime(t)
 	}
-	// the time for the scripts, four times a second, as browsers do
+	pv.scriptTime()
+}
+
+// timeUpdate shows the given current time of audio as it plays (in the
+// goroutine of the playback), in its controls, if any, and for the scripts.
+func (pv *pageVideo) timeUpdate(t time.Duration) {
+	pv.mu.Lock()
+	box, closed, c := pv.box, pv.closed, pv.controls
+	pv.mu.Unlock()
+	if !closed && box != nil && c != nil && pv.page.AsyncLockIfShown() {
+		if box.This != nil {
+			c.SetTime(t)
+		}
+		pv.page.AsyncUnlock()
+	}
+	pv.scriptTime()
+}
+
+// scriptTime sends the timeupdate event to the scripts of the page, four
+// times a second, as browsers do.
+func (pv *pageVideo) scriptTime() {
 	pv.mu.Lock()
 	update := time.Since(pv.lastTimeUpdate) >= 250*time.Millisecond
 	if update {

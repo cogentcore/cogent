@@ -1731,10 +1731,11 @@
 		}
 		close() { this._closed = true; broadcastChannels.delete(this); }
 	}
-	// Media elements (video and audio): the video elements are played by
-	// the player of the app (D.hasMediaPlayer, see MediaPlayer in Go), which
-	// sends the events of their playing (D.mediaEvents) with its state. The
-	// others (and all without a player) are not played, but the metadata
+	// Media elements (video and audio): they are played by the player of
+	// the app (D.hasMediaPlayer, see MediaPlayer in Go), which sends the
+	// events of their playing (D.mediaEvents) with its state, also those of
+	// audio elements that are not in the document (as new Audio(url)).
+	// Without a player, they are not played, but the metadata
 	// (duration and size) of their source is loaded (D.mediaMetadata) when
 	// a script first uses their state or listens to their events, and when
 	// their source changes, as browsers do for preload="metadata": pages
@@ -1777,7 +1778,7 @@
 		reflectURL(cls, ["src"]);
 		reflect(cls, ["preload", "crossOrigin"], ["autoplay", "controls", "loop", "playsInline"]);
 		// played by the player of the app
-		cls.prototype._played = function () { return mediaPlayer && this.localName === "video"; };
+		cls.prototype._played = function () { return mediaPlayer; };
 		Object.assign(cls, mediaStates);
 		Object.assign(cls.prototype, mediaStates);
 		const srcDesc = Object.getOwnPropertyDescriptor(cls.prototype, "src");
@@ -1931,7 +1932,7 @@
 			t = String(t).toLowerCase();
 			if (/^(video|audio)\/mp4\b/.test(t)) return "maybe";
 			if (!this._played()) return "";
-			return /^(video\/(webm|quicktime|ogg)|audio\/(webm|ogg|mpeg|mp3|aac|wav)|application\/(vnd\.apple\.mpegurl|x-mpegurl)|audio\/(x-)?mpegurl)\b/.test(t) ? "maybe" : "";
+			return /^(video\/(webm|quicktime|ogg)|audio\/(webm|ogg|mpeg|mp3|aac|wav|wave|x-wav|flac|x-flac|opus|x-m4a|mp4a-latm)|application\/(vnd\.apple\.mpegurl|x-mpegurl)|audio\/(x-)?mpegurl)\b/.test(t) ? "maybe" : "";
 		};
 		cls.prototype.fastSeek = function (t) { this.currentTime = t; };
 		// the lists of tracks of the media (text tracks, as of captions, are
@@ -4130,7 +4131,13 @@
 		CSS: { supports() { return false; }, escape: cssEscape },
 		Image: function Image(w, h) { const i = document.createElement("img"); if (w !== undefined) i.width = w; if (h !== undefined) i.height = h; return i; },
 		Option: function Option(text, value, def, sel) { const o = document.createElement("option"); if (text !== undefined) o.text = text; if (value !== undefined) o.value = value; if (sel) o.selected = true; return o; },
-		Audio: function Audio() { return document.createElement("audio"); },
+		// (an audio element with the given source, preloaded, as in browsers)
+		Audio: function Audio(src) {
+			const a = document.createElement("audio");
+			a.setAttribute("preload", "auto");
+			if (src !== undefined) a.src = src;
+			return a;
+		},
 		setTimeout(fn, ms, ...args) { return setTimer(fn, ms, args, false); },
 		setInterval(fn, ms, ...args) { return setTimer(fn, ms, args, true); },
 		clearTimeout: clearTimer,
@@ -4422,6 +4429,16 @@
 		g.dispatchEvent(new Event("resize"));
 	};
 
+	// the audio elements of the page that have autoplay (and no controls,
+	// without which they have no box that the page plays as it is read)
+	// are loaded as the page is parsed, so that the player plays them, as
+	// browsers do (scripts load the others as they use them)
+	if (mediaPlayer && !D.isWorker() && document) {
+		document.addEventListener("DOMContentLoaded", () => {
+			for (const a of document.querySelectorAll("audio[autoplay]:not([controls])")) a._mediaLoad();
+		});
+	}
+
 	// scrolled dispatches the scroll event of the page, and checks the
 	// intersections of the targets of the IntersectionObservers.
 	D.scrolled = scrolled;
@@ -4465,7 +4482,12 @@
 		});
 		for (const t of types) {
 			switch (t) {
-				case "loadedmetadata": m.readyState = Math.max(m.readyState, 1); m.networkState = 1; break;
+				case "loadedmetadata":
+					m.readyState = Math.max(m.readyState, 1);
+					m.networkState = 1;
+					// (a stream of an unknown length, as live radio, as in browsers)
+					if (!(st.duration > 0)) m.duration = Infinity;
+					break;
 				case "loadeddata": case "canplay": case "canplaythrough": case "playing": m.readyState = 4; break;
 				case "error":
 					m.networkState = 3;

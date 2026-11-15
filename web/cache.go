@@ -32,6 +32,10 @@ type resourceCache struct {
 	mu    sync.Mutex
 	items map[string]*cachedResource
 
+	// pending has the resources that are being gotten, with a channel
+	// that is closed when they have been.
+	pending map[string]chan struct{}
+
 	// trace, if set, is called with each resource that is gotten (not
 	// from the cache), with how long getting it took, for the verbose
 	// console.
@@ -47,53 +51,39 @@ type cachedResource struct {
 	err    error // the error getting it, if any
 }
 
-// Get returns the response for the given URL, from the cache if it is in it.
+// Get returns the response for the given URL, from the cache if it is in it,
+// or once it has been gotten, if it is being gotten (as by [prefetch]).
 func (rc *resourceCache) Get(url string) (*http.Response, error) {
 	rc.mu.Lock()
 	r := rc.items[url]
-	rc.mu.Unlock()
 	if r == nil {
-		start := time.Now()
-		resp, err := rc.get(url)
-		traced := func(status, size int, typ string, err error) {
-			if t := rc.trace.Load(); t != nil {
-				(*t)(url, status, size, time.Since(start), typ, err)
-			}
+		if wait := rc.pending[url]; wait != nil {
+			rc.mu.Unlock()
+			<-wait
+			return rc.Get(url)
 		}
-		if err != nil {
-			if !errors.Is(err, errStopped) {
-				traced(0, 0, "", err)
-			}
-			if errors.Is(err, errStopped) {
-				return nil, err
-			}
-			// a resource that can not be gotten is not tried again for the
-			// page (each of the reads of the page that its scripts make
-			// got all of those of nytimes.com again, for seconds)
-			rc.mu.Lock()
+		if rc.pending == nil {
+			rc.pending = map[string]chan struct{}{}
+		}
+		done := make(chan struct{})
+		rc.pending[url] = done
+		rc.mu.Unlock()
+		var err error
+		r, err = rc.fetch(url)
+		rc.mu.Lock()
+		delete(rc.pending, url)
+		if r != nil {
 			if rc.items == nil {
 				rc.items = map[string]*cachedResource{}
 			}
-			rc.items[url] = &cachedResource{err: err}
-			rc.mu.Unlock()
+			rc.items[url] = r
+		}
+		rc.mu.Unlock()
+		close(done)
+		if r == nil {
 			return nil, err
 		}
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		traced(resp.StatusCode, len(body), resp.Header.Get("Content-Type"), err)
-		if err != nil {
-			return nil, err
-		}
-		// (also those of an error status, which are not gotten again)
-		r = &cachedResource{status: resp.StatusCode, header: resp.Header, body: body}
-		if resp.Request != nil {
-			r.url = resp.Request.URL
-		}
-		rc.mu.Lock()
-		if rc.items == nil {
-			rc.items = map[string]*cachedResource{}
-		}
-		rc.items[url] = r
+	} else {
 		rc.mu.Unlock()
 	}
 	if r.err != nil {
@@ -105,6 +95,41 @@ func (rc *resourceCache) Get(url string) (*http.Response, error) {
 		resp.Request = &http.Request{URL: r.url}
 	}
 	return resp, nil
+}
+
+// fetch gets the resource at the given URL, which is not in the cache,
+// returning it to cache, or nil and the error if it is not to be cached
+// (as when the page is stopped).
+func (rc *resourceCache) fetch(url string) (*cachedResource, error) {
+	start := time.Now()
+	resp, err := rc.get(url)
+	traced := func(status, size int, typ string, err error) {
+		if t := rc.trace.Load(); t != nil {
+			(*t)(url, status, size, time.Since(start), typ, err)
+		}
+	}
+	if err != nil {
+		if errors.Is(err, errStopped) {
+			return nil, err
+		}
+		traced(0, 0, "", err)
+		// a resource that can not be gotten is not tried again for the
+		// page (each of the reads of the page that its scripts make got
+		// all of those of nytimes.com again, for seconds)
+		return &cachedResource{err: err}, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	traced(resp.StatusCode, len(body), resp.Header.Get("Content-Type"), err)
+	if err != nil {
+		return nil, err
+	}
+	// (also those of an error status, which are not gotten again)
+	r := &cachedResource{status: resp.StatusCode, header: resp.Header, body: body}
+	if resp.Request != nil {
+		r.url = resp.Request.URL
+	}
+	return r, nil
 }
 
 // save writes the cached resources to the given directory, with an index
