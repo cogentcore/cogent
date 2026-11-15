@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,6 +120,21 @@ func TestCodeDebug(t *testing.T) {
 			assert.Equal(t, "main.main", dv.State.StackFrame(dv.State.CurFrame).Func)
 			dv.StepInto()
 			dv.SingleStep()
+
+			// the breakpoints and variables in the editor
+			tv := cv.EditorByIndex(0)
+			cv.ViewFileInIndex(path("main.go"), 0)
+			assert.False(t, tv.HasBreakpoint(12))
+			tv.LineNumberDoubleClick(textpos.Pos{Line: 12})
+			assert.True(t, tv.HasBreakpoint(12))
+			_, bi := dv.State.BreakByFile(path("main.go"), 13)
+			assert.GreaterOrEqual(t, bi, 0, "a break in the debugger")
+			tv.ToggleBreakpoint(12)
+			assert.False(t, tv.HasBreakpoint(12))
+			tv.FindFrames(12)
+			dbg, has := tv.CurDebug()
+			assert.True(t, has)
+			assert.Same(t, dv, dbg)
 
 			dv.AddBreak(path("main.go"), 14)
 			dv.DeleteBreak(path("main.go"), 14)
