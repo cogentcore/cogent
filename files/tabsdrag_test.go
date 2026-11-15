@@ -46,7 +46,7 @@ func TestTerminalNewTab(t *testing.T) {
 	t.Cleanup(func() { Settings.Terminal = "" })
 	b := core.NewBody()
 	fl := NewFiles(b).SetRoot(root)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		ts := fl.Tabs()
@@ -174,7 +174,7 @@ func TestFilesDragToWindow(t *testing.T) {
 		nf, ok := ParentFiles(nt)
 		require.True(t, ok)
 		assert.Equal(t, fl.Root, nf.Root)
-		nb.RenderImage(func() {}, func() {
+		core.RenderImage(nb, func() {}, func() {
 			nb.AsyncLock()
 			defer nb.AsyncUnlock()
 			assert.Nil(t, nf.Tabs().TabByName(TerminalTabName), "no default terminal in a new window that a tab is dragged into")
@@ -189,7 +189,7 @@ func TestDirTableMultiSelect(t *testing.T) {
 	testSettings(t)
 	b := core.NewBody()
 	dt := NewDirTable(b).SetDir(root)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.True(t, dt.table.ReadOnlyMultiSelect)
@@ -212,7 +212,7 @@ func TestDirTableSort(t *testing.T) {
 	require.NoError(t, dirsort.Set(root, dirsort.Sort{Down: true}))
 	b := core.NewBody()
 	dt := NewDirTable(b).SetDir(root)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.Equal(t, "Name:down", dt.table.SortFieldName())

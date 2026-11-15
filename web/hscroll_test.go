@@ -44,7 +44,7 @@ func TestBrowserNoHorizontalScroll(t *testing.T) {
 			}
 		}
 		pg := br.NewTab("https://example.com/")
-		b.RenderImage(pg.wait, func() {
+		core.RenderImage(b, pg.wait, func() {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
 			vertical := false
@@ -89,7 +89,7 @@ func TestBrowserFullHeightNoScroll(t *testing.T) {
 		}
 	}
 	pg := br.NewTab("https://example.com/")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		pg.wait()
 		time.Sleep(2 * mediaDelay) // (read again for the height of its viewport)
 		pg.wait()

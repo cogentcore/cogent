@@ -166,7 +166,7 @@ func TestLists(t *testing.T) {
 	ls := testLists(t, b)
 	ls.Current = findList(ls, "Groceries")
 	ls.Current.ColumnWidths = map[string]float32{"Item": 160}
-	b.AssertRender(t, "lists", func() {
+	core.AssertRender(t, b, "lists", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.Equal(t, ls.Current.ColumnWidths, ls.table.ColumnWidths, "the widths of the list")
@@ -178,7 +178,7 @@ func TestLists(t *testing.T) {
 func TestEditItems(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "edit-items", func() {
+	core.AssertRender(t, b, "edit-items", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		tr := ls.tree.FindSyncNode(findList(ls, "Chores"))
@@ -202,7 +202,7 @@ func TestEditItems(t *testing.T) {
 func TestTreeInsert(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "tree-insert", func() {
+	core.AssertRender(t, b, "tree-insert", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		gr := findList(ls, "Groceries")
@@ -224,7 +224,7 @@ func TestTreeInsert(t *testing.T) {
 func TestUndo(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "undo", func() {
+	core.AssertRender(t, b, "undo", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		gr := findList(ls, "Groceries")
@@ -268,7 +268,7 @@ func TestUndo(t *testing.T) {
 func TestDeleteField(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "delete-field", func() {
+	core.AssertRender(t, b, "delete-field", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		chores := findList(ls, "Chores")
@@ -287,7 +287,7 @@ func TestDeleteField(t *testing.T) {
 func TestUndoFocus(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "undo-focus", func() {
+	core.AssertRender(t, b, "undo-focus", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		ls.SetCurrent(findList(ls, "Groceries"))
@@ -310,7 +310,7 @@ func TestUndoFocus(t *testing.T) {
 func TestUniqueNames(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "unique-names", func() {
+	core.AssertRender(t, b, "unique-names", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		gr := findList(ls, "Groceries")
@@ -338,7 +338,7 @@ func TestUniqueNames(t *testing.T) {
 func TestNewListFocus(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "new-list-focus", func() {
+	core.AssertRender(t, b, "new-list-focus", func() {
 		b.AsyncLock()
 		gr := findList(ls, "Groceries")
 		ls.SetCurrent(gr)
@@ -374,7 +374,7 @@ func TestNewListFocus(t *testing.T) {
 func TestSortSaved(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "sort-saved", func() {
+	core.AssertRender(t, b, "sort-saved", func() {
 		b.AsyncLock()
 		gr := findList(ls, "Groceries")
 		ls.SetCurrent(gr)
@@ -411,7 +411,7 @@ func TestSortSaved(t *testing.T) {
 func TestHideGroupValues(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "hide-group-values", func() {
+	core.AssertRender(t, b, "hide-group-values", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		rel := ls.Root.FindPath("Work/Release").(*List)
@@ -448,7 +448,7 @@ func TestUndoKeys(t *testing.T) {
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(ls.MakeToolbar)
 	})
-	b.AssertRender(t, "undo-keys", func() {
+	core.AssertRender(t, b, "undo-keys", func() {
 		b.AsyncLock()
 		ls.SetCurrent(findList(ls, "Chores"))
 		b.AsyncUnlock()
@@ -502,7 +502,7 @@ func TestUndoKeys(t *testing.T) {
 func TestTreeKeysFocusTable(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "tree-keys-focus", func() {
+	core.AssertRender(t, b, "tree-keys-focus", func() {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		for _, code := range []key.Codes{key.CodeRightArrow, key.CodeReturnEnter} {
 			b.AsyncLock()
@@ -535,7 +535,7 @@ func TestTreeKeysFocusTable(t *testing.T) {
 func TestSetBy(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "set-by", func() {
+	core.AssertRender(t, b, "set-by", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		chores := findList(ls, "Chores")
@@ -571,7 +571,7 @@ func TestFieldTooltips(t *testing.T) {
 	b := core.NewBody()
 	lt := standardTypes()[0]
 	tb := core.NewTable(b).SetSlice(&lt.Fields).SetShowIndexes(true)
-	b.AssertRender(t, "field-tooltips", func() {
+	core.AssertRender(t, b, "field-tooltips", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		var tips []string
@@ -603,7 +603,7 @@ func TestTypeMoved(t *testing.T) {
 func TestFilter(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "filter", func() {
+	core.AssertRender(t, b, "filter", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		chores := findList(ls, "Chores")
@@ -641,7 +641,7 @@ func TestSettingsSplits(t *testing.T) {
 	defer func() { Settings.File = file }()
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "settings-splits", func() {
+	core.AssertRender(t, b, "settings-splits", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		ls.splits().SetSplits(0.35, 0.65)
@@ -660,7 +660,7 @@ func TestSettingsSplits(t *testing.T) {
 func TestFocusPanels(t *testing.T) {
 	b := core.NewBody()
 	ls := testLists(t, b)
-	b.AssertRender(t, "focus-panels", func() {
+	core.AssertRender(t, b, "focus-panels", func() {
 		src := b.Scene.RenderWindow().SystemWindow.Events()
 		b.AsyncLock()
 		chores := findList(ls, "Chores")

@@ -88,7 +88,7 @@ func TestFiles(t *testing.T) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
 	fl := NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "wide", func() {
+	core.AssertRender(t, b, "wide", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.Equal(t, 3, fl.Splits().NumChildren())
@@ -143,7 +143,7 @@ func TestFiles(t *testing.T) {
 	b = core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1000), units.Dp(700)) })
 	fl = NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "compact")
+	core.AssertRender(t, b, "compact")
 }
 
 // TestFavorites tests that selecting a favorite path makes it the root
@@ -155,7 +155,7 @@ func TestFavorites(t *testing.T) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
 	fl := NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "favorites", func() {
+	core.AssertRender(t, b, "favorites", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		fv := fl.Favorites()
@@ -210,7 +210,7 @@ func TestFavorites(t *testing.T) {
 	d := core.NewBody("Favorite paths")
 	d.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(600), units.Dp(400)) })
 	fl.makeFavoritesEditor(d)
-	d.AssertRender(t, "favorites-editor")
+	core.AssertRender(t, d, "favorites-editor")
 }
 
 // TestSplitsSettings tests that the proportions of the splits are saved
@@ -221,7 +221,7 @@ func TestSplitsSettings(t *testing.T) {
 	testSettings(t)
 	b := core.NewBody()
 	fl := NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "splits-moved", func() {
+	core.AssertRender(t, b, "splits-moved", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		fl.Splits().SetSplits(.3, .4, .3) // as when moved
@@ -237,7 +237,7 @@ func TestSplitsSettings(t *testing.T) {
 	require.NoError(t, tomlx.Open(Settings, Settings.File))
 	b = core.NewBody()
 	fl = NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "splits-restored", func() {
+	core.AssertRender(t, b, "splits-restored", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.InDeltaSlice(t, []float32{.3, .4, .3}, fl.Splits().Splits(), .01)
@@ -270,7 +270,7 @@ func TestContextMenus(t *testing.T) {
 	testSettings(t)
 	b := core.NewBody()
 	fl := NewFiles(b).SetRoot(root)
-	b.AssertRender(t, "menus", func() {
+	core.AssertRender(t, b, "menus", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		dt := fl.CurrentDirTable()

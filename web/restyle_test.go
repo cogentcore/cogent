@@ -56,7 +56,7 @@ func TestScriptsRestyle(t *testing.T) {
 			<div id="menu"><div class="sub">sub item</div></div>
 			</body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		b.AsyncLock()
@@ -117,7 +117,7 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 			})
 		})
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		// (a style sheet changed other than by an addition to it, for
@@ -149,7 +149,7 @@ func TestScriptsReread(t *testing.T) {
 			<div id="box"><iframe src="` + frame.URL + `/frame" width="300" height="100"></iframe></div></div>
 			<p id="other">other</p></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "in the frame") }), pageTexts(b, pg))
 		ps := pg.scripts
 		require.NotNil(t, ps)
@@ -213,7 +213,7 @@ func TestScriptsTransitionEnd(t *testing.T) {
 			.view.away { transform: translateX(-100px) }
 			</style></head><body><div id="v" class="view">view</div></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		_, err := ps.engine.RunString(`window.ended = "";
@@ -238,7 +238,7 @@ func TestScriptsStyleRulesAdded(t *testing.T) {
 		"/": `<html><head><style id="css">.box { width: 100px; height: 20px; background: blue }</style></head><body>
 			<div id="box" class="box">box</div></body></html>`,
 	})
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		ps := pg.scripts
 		require.NotNil(t, ps)
 		b.AsyncLock()

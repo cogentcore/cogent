@@ -50,7 +50,7 @@ func TestConsolePanel(t *testing.T) {
 	}
 	one := br.NewTab("https://example.com/one")
 	br.NewTab("https://example.com/two")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		for _, pg := range br.Pages() {
 			settle(pg)
 		}
@@ -98,7 +98,7 @@ func TestConsoleVerbose(t *testing.T) {
 				</script></body></html>`,
 			"/data.json": `{"a": 1}`,
 		})
-		b.RenderImage(func() { settle(pg) }, func() {
+		core.RenderImage(b, func() { settle(pg) }, func() {
 			var all string
 			ok := eventually(func() bool {
 				all = strings.Join(pg.ScriptConsole(), "\n")
@@ -143,7 +143,7 @@ func TestConsolePanelVerbose(t *testing.T) {
 		}
 	}
 	br.NewTab("https://example.com/one")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		for _, pg := range br.Pages() {
 			settle(pg)
 		}
@@ -168,7 +168,7 @@ func TestConsoleCopyAll(t *testing.T) {
 		}
 	}
 	br.NewTab("https://example.com/one")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		for _, pg := range br.Pages() {
 			settle(pg)
 		}
@@ -204,7 +204,7 @@ func TestConsoleShownBySplitter(t *testing.T) {
 		}
 	}
 	br.NewTab("https://example.com/")
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		for _, pg := range br.Pages() {
 			settle(pg)
 		}

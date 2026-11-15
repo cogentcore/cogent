@@ -35,7 +35,7 @@ func TestToolbar(t *testing.T) {
 	pg.OpenURL("https://example.com/", nil)
 	var back, forward, reload *core.Button
 	var addr *core.TextField
-	b.RenderImage(pg.wait, func() {
+	core.RenderImage(b, pg.wait, func() {
 		b.Scene.WalkDown(func(n tree.Node) bool {
 			switch w := n.(type) {
 			case *core.Button:
@@ -94,7 +94,7 @@ func TestHistory(t *testing.T) {
 		}
 	}
 	n := 0
-	b.RenderImage(pg.wait, locked(func() {
+	core.RenderImage(b, pg.wait, locked(func() {
 		pg.OpenURL("https://example.com/two", nil)
 	}), pg.wait, locked(func() {
 		assert.Equal(t, []string{"https://example.com/one", "https://example.com/two"}, pg.History)
@@ -147,7 +147,7 @@ func TestFragment(t *testing.T) {
 		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(r)}, nil
 	}
 	pg.OpenURL("https://example.com/page", nil)
-	b.RenderImage(pg.wait, func() {
+	core.RenderImage(b, pg.wait, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		assert.True(t, pg.scrollToFragment("sec"))
@@ -181,7 +181,7 @@ func TestToolbarLongURL(t *testing.T) {
 	long := "https://www.google.com/search?hl=nl&source=hp&biw=&bih=&q=ebikes&iflsig=" + strings.Repeat("AHSINFcAAAAAavL9Etj4wy55EX7LBKYo1QOS3rvbcsNP", 4) + "&gbv=2&btnG=Google+Zoeken"
 	pg.OpenURL(long, nil)
 	var addr *core.TextField
-	b.RenderImage(pg.wait, func() {
+	core.RenderImage(b, pg.wait, func() {
 		b.Scene.WalkDown(func(n tree.Node) bool {
 			if w, ok := n.(*core.TextField); ok && w.Name == "url" {
 				addr = w

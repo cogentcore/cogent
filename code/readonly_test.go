@@ -35,7 +35,7 @@ func TestCodeGeneratedReadOnly(t *testing.T) {
 	cv.ProjectRoot = core.Filename(tmp)
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "generated-read-only", func() {
+	core.AssertRender(t, b, "generated-read-only", func() {
 		b.AsyncLock()
 		cv.ViewFileInIndex(path("b.txt"), 1)
 		cv.ViewFileInIndex(path("gen.go"), 0)

@@ -305,7 +305,7 @@ func ourList(t *testing.T, u string) (*auditList, []auditFinding, error) {
 	var list *auditList
 	var typing []auditFinding
 	var lerr error
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		pg.wait()
 		settle(pg)
 		time.Sleep(auditSettle)

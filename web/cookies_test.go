@@ -114,5 +114,5 @@ func TestCookieEditor(t *testing.T) {
 
 	b := core.NewBody()
 	makeCookieEditor(b, pj, "google")
-	b.AssertRender(t, "cookie-editor")
+	core.AssertRender(t, b, "cookie-editor")
 }

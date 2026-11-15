@@ -50,7 +50,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	// the window is only used for its event handling, not its image,
 	// which varies with timing:
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "occurrences-click", func() {
+	core.AssertRender(t, b, "occurrences-click", func() {
 		jump := textpos.Region{Start: textpos.Pos{Line: 2, Char: 5}, End: textpos.Pos{Line: 2, Char: 9}}
 		b.AsyncLock()
 		tv, ok := cv.OpenFileAtRegion(fpath, jump)
@@ -129,7 +129,7 @@ func TestCodeSymbolsClick(t *testing.T) {
 	cv.Settings.ProjectRoot = core.Filename(tmp)
 	cv.Settings.Symbols.Scope = SymScopePackage
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "symbols-click", func() {
+	core.AssertRender(t, b, "symbols-click", func() {
 		b.AsyncLock()
 		tv, _, ok := cv.ViewFile(core.Filename(fpath))
 		b.AsyncUnlock()
@@ -201,7 +201,7 @@ func TestNextProblem(t *testing.T) {
 		return locationItem{loc: lang.Location{Filename: fpath, Region: textpos.Region{Start: textpos.Pos{Line: line}}}, sev: "warning", msg: "problem"}
 	}
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "next-problem", func() {
+	core.AssertRender(t, b, "next-problem", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		ls := cv.LangSvc()
@@ -280,7 +280,7 @@ func TestLocationButtons(t *testing.T) {
 		return
 	}
 	imagex.UpdateTestImagesFor(t)
-	b.AssertRender(t, "location-buttons", func() {
+	core.AssertRender(t, b, "location-buttons", func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		cv.ActiveEditor().SetFocus() // a focus that showing the tabs keeps

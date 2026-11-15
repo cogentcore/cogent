@@ -50,7 +50,7 @@ func openAudioPage(t *testing.T, srv *httptest.Server, test func(b *core.Body, p
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(srv.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		eval := func(src string) any {
 			v, err := pg.scripts.engine.RunString(src)
 			require.NoError(t, err)

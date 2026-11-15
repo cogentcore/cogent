@@ -50,7 +50,7 @@ func TestDirTableDeleteKey(t *testing.T) {
 	dt := NewDirTable(b).SetDir(root)
 	meta := key.Modifiers(0)
 	meta.SetFlag(true, key.Meta)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		idx := slices.IndexFunc(dt.files, func(fi *fileinfo.FileInfo) bool { return fi.Name == "b.txt" })
@@ -83,7 +83,7 @@ func TestDirTabDoubleClick(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(700)) })
 	fl := InitBody(b, root)
 	n := 0
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		fl.OpenDir(filepath.Join(root, "docs"))
@@ -125,7 +125,7 @@ func TestDirTableOpenApp(t *testing.T) {
 	openFile = func(path string) { opened = append(opened, path) }
 	b := core.NewBody()
 	dt := NewDirTable(b).SetDir(root)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		selectApp := func() {
@@ -153,7 +153,7 @@ func TestDirTableDeleteShortcut(t *testing.T) {
 	testSettings(t)
 	b := core.NewBody()
 	dt := NewDirTable(b).SetDir(root)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		idx := slices.IndexFunc(dt.files, func(fi *fileinfo.FileInfo) bool { return fi.Name == "b.txt" })
@@ -213,7 +213,7 @@ func TestTabKeys(t *testing.T) {
 		_, idx := ts.CurrentTab()
 		return idx
 	}
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		fl.OpenDir(filepath.Join(root, "docs"))

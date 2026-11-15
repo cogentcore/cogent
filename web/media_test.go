@@ -61,7 +61,7 @@ func TestPageMediaResize(t *testing.T) {
 		}
 		var wide, after string
 		var readWidth float32
-		b.RenderImage(func() {
+		core.RenderImage(b, func() {
 			pg.OpenURL("https://example.com/", nil)
 			pg.wait()
 		}, func() {

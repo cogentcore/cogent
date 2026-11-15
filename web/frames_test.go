@@ -69,7 +69,7 @@ func TestFrameCaptcha(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		// the captcha is shown in the frame of the page, which is told that
 		// it loaded
 		require.True(t, eventually(func() bool {
@@ -133,7 +133,7 @@ func TestFrameMouseEvents(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(outer.URL+"/", nil)
-	b.RenderImage(func() {
+	core.RenderImage(b, func() {
 		settle(pg)
 		var box *core.WidgetBase
 		require.True(t, eventually(func() bool {
@@ -185,7 +185,7 @@ func TestFrameNotNested(t *testing.T) {
 			Body: io.NopCloser(strings.NewReader(`<html><body><iframe name="f" src="` + inner.URL + `/f"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "frame") }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond) // (for a frame in the frame, if any)
 		b.AsyncLock()
@@ -220,7 +220,7 @@ func TestFrameViewportScrollbar(t *testing.T) {
 			Body: io.NopCloser(strings.NewReader(`<html><body><iframe src="` + inner.URL + `/f" width="300" height="100" frameborder="0"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "tall") }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond)
 		var fp *Page
@@ -270,7 +270,7 @@ func TestFrameScrollingNo(t *testing.T) {
 				`<iframe id="b" src="` + inner.URL + `/b" width="300" height="100" frameborder="0" scrolling="no"></iframe></body></html>`))}, nil
 	}
 	pg.OpenURL("https://example.com/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool { return strings.Count(pageTexts(b, pg), "tall") == 2 }), pageTexts(b, pg))
 		time.Sleep(300 * time.Millisecond)
 	}, func() {
@@ -325,7 +325,7 @@ func TestFrameFormTarget(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
 	pg := NewPage(b)
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		require.True(t, eventually(func() bool {
 			return strings.Contains(pageTexts(b, pg), "menu of POST 42")
 		}), pageTexts(b, pg))
@@ -358,7 +358,7 @@ func TestFrameLinkTarget(t *testing.T) {
 	var tabs []string
 	pg.OpenNewTab = func(u string) { tabs = append(tabs, u) }
 	pg.OpenURL(site.URL+"/", nil)
-	b.RenderImage(func() { settle(pg) }, func() {
+	core.RenderImage(b, func() { settle(pg) }, func() {
 		var fp *Page
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()
