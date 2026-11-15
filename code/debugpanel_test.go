@@ -9,6 +9,7 @@ package code
 import (
 	"os/exec"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -144,8 +145,9 @@ func TestCodeDebug(t *testing.T) {
 
 		go dv.Continue()
 		waitCode(t, time.Minute, "the program finished", func() bool { return status() == cdebug.Finished })
+		// the output is added to the buffer in batches, after the status
+		waitCode(t, 10*time.Second, "the output of the program", func() bool { return strings.Contains(dv.OutputBuffer.String(), "x 3 3") })
 		locked(b, func() {
-			assert.Contains(t, dv.OutputBuffer.String(), "x 3 3", "the output of the program")
 			dv.DeleteBreakIndex(0)
 			dv.DeleteBreakIndex(5)
 			// (stopping and detaching kill the delve process of this test)

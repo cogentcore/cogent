@@ -96,6 +96,11 @@ func TestRunCommandLine(t *testing.T) {
 			}
 			time.Sleep(20 * time.Millisecond)
 		}
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		for _, tm := range cv.Terminals() {
+			t.Logf("%s (running %v) text:\n%s", tm.Name, tm.IsRunning(), terminalText(tm))
+		}
 		t.Fatalf("timeout waiting for %s", what)
 	}
 
@@ -118,7 +123,11 @@ func TestRunCommandLine(t *testing.T) {
 	require.NotNil(t, ct)
 	assert.Equal(t, "pwd", ct.AsTree().Name, "its tab is shown")
 
-	// in the terminal that has the focus
+	// in the terminal that has the focus (opened first: a terminal in a
+	// tab that is not shown has no size, and may not start)
+	b.AsyncLock()
+	cv.OpenTerminal()
+	b.AsyncUnlock()
 	var tm *terminal.Terminal
 	waitFor("the default terminal", func() bool {
 		if tms := cv.Terminals(); len(tms) > 0 {
