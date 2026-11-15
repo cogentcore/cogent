@@ -64,6 +64,7 @@ func runCanvasFile(t *testing.T, fn string, funs ...func(cv *Canvas)) {
 	for _, f := range funs {
 		lf = append(lf, core.Locked(b, func() { f(cv) }))
 	}
+	lf = append(lf, core.Locked(b, func() { closeSaved(cv) }))
 	core.RenderImage(b, lf...)
 }
 

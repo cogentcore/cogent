@@ -581,7 +581,8 @@ func NewWindow(fnm string) *Canvas {
 	appnm := "Cogent Canvas • "
 	winm := appnm + dfnm
 
-	if w := core.AllRenderWindows.FindName(winm); w != nil {
+	// a new drawing (no file) always gets a new window
+	if w := core.AllRenderWindows.FindName(winm); w != nil && path != "" {
 		sc := w.MainScene()
 		if cv := tree.ChildByType[*Canvas](sc.Body); cv != nil {
 			if string(cv.Filename) == path {

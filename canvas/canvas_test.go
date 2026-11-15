@@ -73,8 +73,15 @@ func runCanvas(t *testing.T, name string, funs ...any) *Canvas {
 			t.Fatalf("runCanvas: invalid function type %T", f)
 		}
 	}
+	lf = append(lf, core.Locked(b, func() { closeSaved(cv) }))
 	core.RenderImage(b, lf...)
 	return cv
+}
+
+// closeSaved marks the drawing of the canvas as saved, so that its window
+// closes without the dialog for unsaved changes, which would keep it open.
+func closeSaved(cv *Canvas) {
+	cv.EditState.Changed = false
 }
 
 // events returns the source of the system events of the window of the body.
@@ -116,7 +123,13 @@ func count[T any](cv *Canvas) int {
 func node(t *testing.T, cv *Canvas, name string) svg.Node {
 	t.Helper()
 	n := cv.SSVG().FindNamedElement(name)
-	require.NotNil(t, n, name)
+	if n == nil {
+		var names []string
+		for k := range cv.SVG.Root().All() {
+			names = append(names, k.AsTree().Name)
+		}
+		require.NotNil(t, n, "%s not in %v", name, names)
+	}
 	return n
 }
 
@@ -148,20 +161,22 @@ func TestCanvasRender(t *testing.T) {
 func TestOpenAll(t *testing.T) {
 	fs, err := filepath.Glob("testdata/*.svg")
 	require.NoError(t, err)
+	var opens []any
 	for _, f := range fs {
 		name := filepath.Base(f)
 		if name[0] == '#' || name == "tmp.svg" {
 			continue
 		}
-		t.Run(name, func(t *testing.T) {
-			runCanvas(t, name, func(cv *Canvas) {
-				assert.Equal(t, name, filepath.Base(string(cv.Filename)))
-				assert.NotEmpty(t, cv.SVG.Root().Children)
-				cv.SVG.ResizeToContents(true)
-				cv.UpdateAll()
-			})
+		fn := copyTestdata(t, name)
+		opens = append(opens, func(cv *Canvas) {
+			openDrawing(t, cv, fn)
+			assert.Equal(t, name, filepath.Base(string(cv.Filename)))
+			assert.NotEmpty(t, cv.SVG.Root().Children, name)
+			cv.SVG.ResizeToContents(true)
+			cv.UpdateAll()
 		})
 	}
+	runCanvas(t, "shapes.svg", opens...)
 }
 
 // TestSelectArrange tests grouping, ungrouping, and changing the order of
