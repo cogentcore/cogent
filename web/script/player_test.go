@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -51,12 +52,7 @@ func (p *fakePlayer) MediaVolume(n *html.Node, v float64, m bool) {
 func (p *fakePlayer) has(call string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	for _, c := range p.calls {
-		if c == call {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p.calls, call)
 }
 
 // TestMediaPlayer tests that the video elements of the page are played by
