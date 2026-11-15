@@ -109,7 +109,7 @@ func TestPathDrag(t *testing.T) {
 		cp = cv.EditState.PathNodes[2].TCp2.ToPoint()
 		orig = p.Data.Clone()
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, cp, cp.Add(image.Pt(30, 30)))
+		dragMods(b, cp, cp.Add(image.Pt(30, 30)))
 	}), func(cv *Canvas) {
 		assert.NotEqual(t, orig, []float32(p.Data), "the control point moved")
 		pn := cv.EditState.PathNodes[2]
@@ -118,7 +118,7 @@ func TestPathDrag(t *testing.T) {
 		cv.EditState.ResetSelectedNodes()
 		cv.SVG.UpdateView()
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, end, end.Add(image.Pt(40, 0)))
+		dragMods(b, end, end.Add(image.Pt(40, 0)))
 	}), func(cv *Canvas) {
 		pn := cv.EditState.PathNodes[1]
 		assert.InDelta(t, float32(end.X+40), pn.TEnd.X, 10, "the node moved")

@@ -40,7 +40,7 @@ func TestDrawShapes(t *testing.T) {
 		from, to := from, to
 		return []any{
 			func(cv *Canvas) { cv.SetTool(tool) },
-			unlocked(func(b *core.Body, cv *Canvas) { core.DragMouse(b, from, to) }),
+			unlocked(func(b *core.Body, cv *Canvas) { dragMods(b, from, to) }),
 		}
 	}
 	fs := []any{func(cv *Canvas) { nrect, ntext = count[*svg.Rect](cv), count[*svg.Text](cv) }}
@@ -129,25 +129,25 @@ func TestSelectMouse(t *testing.T) {
 	}), func(cv *Canvas) {
 		assert.False(t, cv.EditState.HasSelected())
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, image.Pt(850, 700), image.Pt(600, 290)) // rubber band
+		dragMods(b, image.Pt(850, 700), image.Pt(600, 290)) // rubber band
 	}), func(cv *Canvas) {
 		assert.Contains(t, cv.EditState.SelectedNames(), "rect318", "box selected")
 		cv.SetTool(SelBoxTool)
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, image.Pt(850, 700), image.Pt(600, 290))
+		dragMods(b, image.Pt(850, 700), image.Pt(600, 290))
 	}), func(cv *Canvas) {
 		assert.Contains(t, cv.EditState.SelectedNames(), "rect318", "box tool selected")
 		cv.SetTool(SelectTool)
 		selectNodes(t, cv, "rect318")
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, p318, p318.Add(image.Pt(100, 0)))
+		dragMods(b, p318, p318.Add(image.Pt(100, 0)))
 	}), func(cv *Canvas) {
 		bb := node(t, cv, "rect318").AsNodeBase().BBox.ToRect()
 		assert.InDelta(t, bb318.Min.X+100, bb.Min.X, 15, "moved")
 		bb318 = bb
 	}, unlocked(func(b *core.Body, cv *Canvas) {
 		pt := bb318.Max.Add(image.Pt(4, 4)) // the reshape handle at the lower right
-		core.DragMouse(b, pt, pt.Add(image.Pt(50, 50)))
+		dragMods(b, pt, pt.Add(image.Pt(50, 50)))
 	}), func(cv *Canvas) {
 		bb := node(t, cv, "rect318").AsNodeBase().BBox.ToRect()
 		assert.Greater(t, bb.Dx(), bb318.Dx()+20, "resized")

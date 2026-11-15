@@ -19,7 +19,10 @@ import (
 )
 
 // dragMods drags the mouse as [core.DragMouse] does, with the given
-// modifier keys held down.
+// modifier keys held down, and longer waits, so that the event loop has
+// started the drag and handled each move on a slow machine (as in CI or
+// with -race), where the moves are otherwise merged before the drag
+// starts, and the canvas gets no drag move.
 func dragMods(b *core.Body, from, to image.Point, mods ...key.Modifiers) {
 	var m key.Modifiers
 	for _, mod := range mods {
@@ -29,11 +32,24 @@ func dragMods(b *core.Body, from, to image.Point, mods ...key.Modifiers) {
 	ev.MouseMove(from)
 	ev.MouseButton(events.MouseDown, events.Left, from, m)
 	time.Sleep(max(core.TimingSettings.DragStartTime, core.TimingSettings.SlideStartTime) + 20*time.Millisecond)
-	for i := 1; i <= 10; i++ {
-		ev.MouseMove(from.Add(to.Sub(from).Mul(i).Div(10)))
-		time.Sleep(10 * time.Millisecond)
+	waitHandled(b)
+	for i := 1; i <= 5; i++ {
+		ev.MouseMove(from.Add(to.Sub(from).Mul(i).Div(5)))
+		waitHandled(b) // (each one, before the next: not merged)
 	}
 	ev.MouseButton(events.MouseUp, events.Left, to, m)
+}
+
+// waitHandled waits for the event loop of the window of the given body to
+// handle the events sent to it, as best it can from outside: the loop holds
+// the lock of the window while it handles an event and renders, so taking
+// the lock, after the time for the loop to get the event, waits for those.
+func waitHandled(b *core.Body) {
+	for range 3 {
+		time.Sleep(15 * time.Millisecond)
+		b.AsyncLock()
+		b.AsyncUnlock()
+	}
 }
 
 // handle returns the center of the given reshape handle of the selection.
@@ -80,7 +96,7 @@ func TestReshape(t *testing.T) {
 	}, func(cv *Canvas) { // after the handles are rendered
 		from = handle(t, cv, SpDnR)
 	}, unlocked(func(b *core.Body, cv *Canvas) {
-		core.DragMouse(b, from, from.Add(dirs[SpDnR]))
+		dragMods(b, from, from.Add(dirs[SpDnR]))
 	}), func(cv *Canvas) {
 		assert.True(t, checks[SpDnR](orig, bbox(cv)), "dragged: %v -> %v", orig, bbox(cv))
 		assert.Equal(t, "Reshape", cv.Undo())
