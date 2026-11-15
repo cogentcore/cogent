@@ -393,3 +393,61 @@ func TestFrameLinkTarget(t *testing.T) {
 		b.AsyncUnlock()
 	})
 }
+
+// TestFrameTargets tests the pages that the targets of links and forms
+// are: the page itself, its parent and top pages, and the frames of
+// iframes by their names, in which a link of the top page opens.
+func TestFrameTargets(t *testing.T) {
+	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/menu":
+			io.WriteString(w, `<html><body><p>menu</p><iframe name="inner" src="/inner" width="100" height="50"></iframe><script>1</script></body></html>`)
+		case "/inner":
+			io.WriteString(w, `<html><body><p>inner</p><script>1</script></body></html>`)
+		case "/next":
+			io.WriteString(w, `<html><body><p>next in the frame</p><script>1</script></body></html>`)
+		default:
+			io.WriteString(w, `<html><body><a id="l" href="/next" target="menu">next</a><iframe name="menu" src="/menu" width="300" height="200"></iframe><script>1</script></body></html>`)
+		}
+	}))
+	defer site.Close()
+
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.X.Dp(800); s.Min.Y.Dp(600) })
+	pg := NewPage(b)
+	pg.OpenURL(site.URL+"/", nil)
+	core.RenderImage(b, func() { settle(pg) }, func() {
+		var menu, inner *Page
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			menu = pg.namedFrame("menu")
+			inner = pg.namedFrame("inner")
+			return menu != nil && inner != nil && menu.scripts != nil
+		}), "the frames")
+		b.AsyncLock()
+		assert.Equal(t, pg, pg.targetPage(""))
+		assert.Equal(t, pg, pg.targetPage("_parent"), "no parent")
+		assert.Nil(t, pg.targetPage("_blank"))
+		assert.Equal(t, menu, pg.targetPage("menu"))
+		assert.Equal(t, inner, menu.targetPage("inner"), "nested")
+		assert.Equal(t, pg, menu.targetPage("_parent"))
+		assert.Equal(t, menu, inner.targetPage("_parent"))
+		assert.Equal(t, pg, inner.targetPage("_top"))
+		assert.Equal(t, inner, inner.targetPage("unknown"), "itself")
+		assert.Nil(t, pg.namedFrame("none"))
+		var l *html.Node
+		for n := range pg.scripts.doc.Descendants() {
+			if htmlcore.GetAttr(n, "id") == "l" {
+				l = n
+			}
+		}
+		require.NotNil(t, l)
+		pg.scripts.openLink(l, "/next", nil)
+		b.AsyncUnlock()
+		require.True(t, eventually(func() bool { return strings.Contains(pageTexts(b, pg), "next in the frame") }), pageTexts(b, pg))
+		b.AsyncLock()
+		assert.Equal(t, site.URL+"/", pg.currentURL(), "the top page stays")
+		b.AsyncUnlock()
+	})
+}

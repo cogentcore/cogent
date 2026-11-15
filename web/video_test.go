@@ -138,6 +138,12 @@ func TestPageVideo(t *testing.T) {
 		assert.True(t, click.IsMuted())
 		click.SetMuted(false)
 		assert.False(t, click.IsMuted())
+		// skipping and stepping frames
+		click.SkipBy(-200 * time.Millisecond)
+		require.True(t, eventually(func() bool { return click.CurrentTime() < 500*time.Millisecond }), "skips back")
+		click.StepFrame(1)
+		require.True(t, eventually(click.playback.IsPaused), "a step pauses")
+		click.StepFrame(-1)
 
 		mu.Lock()
 		require.NotEmpty(t, agents)
