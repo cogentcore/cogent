@@ -158,7 +158,7 @@ func TestCodeEdits(t *testing.T) {
 			assert.True(t, cv.Indent())
 			cv.Settings.LangBackend = LangBackendLSP
 
-			tv, ln = view("rc.txt")
+			tv, _ = view("rc.txt")
 			tv.SelectRegion = region(0, 0, 0, 11)
 			assert.Equal(t, "HELLO WORLD", cv.ReCase(strcase.UpperCase))
 

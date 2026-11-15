@@ -116,7 +116,7 @@ func (gr *Gradient) Validate() {
 	}
 }
 
-// Updates our gradient from svg gradient
+// UpdateFromGrad updates our gradient from the given svg gradient.
 func (gr *Gradient) UpdateFromGrad(g *svg.Gradient) {
 	_, id := svg.SplitNameIDDig(g.Name)
 	gr.ID = fmt.Sprintf("%d", id)

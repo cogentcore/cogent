@@ -276,7 +276,7 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 	if cv.Files == nil {
 		return
 	}
-	for cw, _ := range cv.Files.AllWidgets() {
+	for cw := range cv.Files.AllWidgets() {
 		fn := filetree.AsNode(cw)
 		if fn == nil || fn.IsIrregular() {
 			continue

@@ -117,7 +117,7 @@ func (cv *Canvas) SyncLayersFromSVG() {
 	cv.EditState.Layers.SyncLayersFromSVG(sv)
 }
 
-// Synchronizes layer list with current SVG structure: use the tree editor
+// SyncLayers synchronizes the layer list with the current SVG structure: use the tree editor
 // to rearrange layers, and then hit this button to update the layer list here.
 func (cv *Canvas) SyncLayers() { //types:add
 	sv := cv.SVG

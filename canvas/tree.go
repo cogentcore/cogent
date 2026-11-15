@@ -93,7 +93,7 @@ func (tv *Tree) Init() {
 	})
 }
 
-// FileRoot returns the Root node as a [Tree].
+// CanvasRoot returns the Root node as a [Tree].
 func (tv *Tree) CanvasRoot() *Tree {
 	return tv.Root.(*Tree)
 }

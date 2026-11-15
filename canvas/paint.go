@@ -576,8 +576,8 @@ func (cv *Canvas) UpdateMarkerColors(nd svg.Node) {
 	MarkerUpdateColorProp(sv.SVG, nd, "marker-end")
 }
 
-// SetDashNode sets the stroke-dasharray property of Node.
-// multiplies dash values by the line width in dots.
+// SetDashProperties sets the stroke-dasharray property of the selected nodes,
+// multiplying the dash values by the line width in dots.
 func (cv *Canvas) SetDashProperties(dary []float64) {
 	cv.setPropsOnSelected("SetDashProperties", "", func(nd svg.Node) {
 		g := nd.AsNodeBase()
@@ -779,7 +779,7 @@ func (pv *PaintSetter) StrokeProp() string {
 	return "none"
 }
 
-// MarkerProp returns the marker property string according to current settings
+// MarkerProperties returns the marker property strings according to current settings
 // along with color type to set.
 func (pv *PaintSetter) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
 	start = pv.markerStart.CurrentItem.Value.(string)

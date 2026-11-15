@@ -200,11 +200,11 @@ func (sv *SVG) Init() {
 			es.ResetSelectedNodes()
 			sv.RemoveNodeSprites()
 			sv.UpdateSelect()
-		case sob != nil && isSelTool:
+		case isSelTool: // (sob != nil)
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
-		case sob != nil && es.Tool == NodeTool:
+		case es.Tool == NodeTool: // (sob != nil)
 			es.ResetSelectedNodes()
 			es.ActivePath = nil
 			es.SelectAction(sob, events.SelectOne, e.Pos())

@@ -311,7 +311,7 @@ func (sv *SVG) SpriteNodeDrag(idx int, e events.Event) {
 	pointOnly := e.HasAnyModifier(key.Alt)
 	dxf := es.ActivePath.DeltaTransform(dv, math32.Vector2{X: 1, Y: 1}, 0, spt)
 
-	for i, _ := range es.NodeSelect {
+	for i := range es.NodeSelect {
 		sv.PathNodeMove(i, pointOnly, dv, dxf)
 		pn := es.PathNodes[i]
 		nwc := pn.TEnd.Add(dv).ToPoint()
