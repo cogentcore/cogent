@@ -50,11 +50,15 @@ jobs:
         echo "LD_LIBRARY_PATH=$FFMPEG_PATH/lib" >> $GITHUB_ENV
         sudo apt-get install -y libasound2-dev
 
+    # the tests of the LSP client of Cogent Code use gopls
+    - name: Install gopls
+      run: go install golang.org/x/tools/gopls@v0.24.0
+
     - name: Build
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./... -coverprofile cover.out -timeout 30s
+      run: go test -v ./... -coverprofile cover.out -timeout 10m
 
     - name: Update coverage report
       uses: cogentcore/goal-coverage-report@v0
