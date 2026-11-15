@@ -122,6 +122,10 @@ func (sv *SVG) alignAnchorBBox(aa AlignAnchors) (math32.Box2, svg.Node) {
 		sl := es.SelectedList(true) // descending
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
+	case AlignDrawing: // the page, in the coordinates of the bounding boxes
+		root := sv.Root()
+		vb := root.ViewBox
+		bb = math32.Box2{Min: vb.Min, Max: vb.Min.Add(vb.Size)}.MulMatrix2(root.Paint.Transform)
 	case AlignSelectBox:
 		bb = es.DragBBox
 	}

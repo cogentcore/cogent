@@ -89,7 +89,9 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 
 	es.SelectAction(sn, events.SelectOne, end)
 	sv.UpdateView()
-	es.DragSelStart(start)
+	// the element already has the size of the drag to the end, so the
+	// reshaping of the rest of the drag starts there
+	es.DragSelStart(end)
 	return n
 }
 
@@ -138,7 +140,6 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	xfi := sv.Root().Paint.Transform.Inverse()
 	pos := xfi.MulPoint(math32.FromPoint(start))
 	sz := xfi.MulVector(dv)
-	fmt.Println(n.Data)
 	n.Data = nil
 	n.Data.MoveTo(pos.X, pos.Y)
 	n.Data.LineTo(pos.X+sz.X, pos.Y+sz.Y)

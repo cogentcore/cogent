@@ -459,7 +459,12 @@ func (pv *PaintSetter) SetProperties(nd svg.Node) {
 	cv := pv.Canvas
 	pv.SetColorNode(nd, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		cv.SetMarkerProperties(pv.MarkerProperties())
+		// on the node itself, not the selection, without saving an undo state
+		start, mid, end, sc, mc, ec := pv.MarkerProperties()
+		sv := cv.SVG.SVG
+		MarkerSetProp(sv, nd, "marker-start", start, sc)
+		MarkerSetProp(sv, nd, "marker-mid", mid, mc)
+		MarkerSetProp(sv, nd, "marker-end", end, ec)
 		pv.SetStrokeOthers(nd)
 	}
 	pv.SetColorNode(nd, "fill", pv.FillType, pv.FillType, pv.FillProp())

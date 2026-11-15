@@ -5,7 +5,6 @@
 package canvas
 
 import (
-	"fmt"
 	"image"
 	"slices"
 
@@ -576,7 +575,6 @@ func (sv *SVG) NodeAdd(ntyp Sprites, p ppath.Path, end, start math32.Vector2) pp
 	del := lend.Sub(lstart)
 	switch ntyp {
 	case SpClose:
-		fmt.Println("add close")
 		p.Close()
 	case SpMoveTo:
 		p.MoveTo(lend.X, lend.Y)

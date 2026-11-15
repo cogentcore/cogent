@@ -259,7 +259,9 @@ func (sv *SVG) Init() {
 		}
 		// fmt.Println(sv.Styles.Cursor)
 		es.SelectNoDrag = false
-		es.DragStartPos = e.StartPos() // this is the operative start
+		if es.Action != NewElement { // a new element is reshaped from where it was made
+			es.DragStartPos = e.StartPos() // this is the operative start
+		}
 
 		if e.HasAnyModifier(key.Shift) {
 			e.SetHandled()

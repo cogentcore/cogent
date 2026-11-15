@@ -138,12 +138,19 @@ func (cv *Canvas) UpdateLayers() {
 		return
 	}
 	ci := lys.LayerIndexByName(es.CurLayer)
-	if ci < 0 {
-		ci = nl - 1
-		es.CurLayer = (*lys)[ci].Name
+	if ci < 0 { // the last layer that can have new items
+		for i := nl - 1; i >= 0; i-- {
+			if l := (*lys)[i]; l.Vis && !l.Lock {
+				ci = i
+				es.CurLayer = l.Name
+				break
+			}
+		}
 	}
 	// lyv.ClearSelected() // todo
-	lyv.SelectIndex(ci)
+	if ci >= 0 {
+		lyv.SelectIndex(ci)
+	}
 	lyv.Update()
 	cv.tree.Resync()
 }
