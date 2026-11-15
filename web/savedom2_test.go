@@ -5,11 +5,17 @@
 package web
 
 import (
+	"bytes"
+	"errors"
+	"image"
+	"image/png"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"cogentcore.org/core/core"
@@ -82,4 +88,42 @@ func TestKeyProps(t *testing.T) {
 	assert.Equal(t, "€", p["key"])
 	assert.Equal(t, 0, p["keyCode"])
 	assert.NotContains(t, keyProps(events.NewKey(events.KeyDown, 0, 0, 0)), "key")
+}
+
+// TestScriptsBlockAdsVerbose tests a page with scripts with the ads
+// blocked and the verbose console: the requests that fail and those of
+// typed resources are in the console, and the images of noscripts (as of
+// lazy images) are set once the page is shown.
+func TestScriptsBlockAdsVerbose(t *testing.T) {
+	savedAds, savedVerbose := Settings.BlockAds, Settings.VerboseConsole
+	Settings.BlockAds, Settings.VerboseConsole = true, true
+	t.Cleanup(func() { Settings.BlockAds, Settings.VerboseConsole = savedAds, savedVerbose })
+	b := core.NewBody()
+	pg := NewPage(b)
+	pg.Context.GetURL = func(u string) (*http.Response, error) {
+		pu, _ := url.Parse(u)
+		switch pu.Path {
+		case "/fail.css":
+			return nil, errors.New("no network")
+		case "/s.css":
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Header: http.Header{"Content-Type": {"text/css"}},
+				Body: io.NopCloser(strings.NewReader("p { color: red }"))}, nil
+		case "/i.png":
+			var buf bytes.Buffer
+			png.Encode(&buf, image.NewRGBA(image.Rect(0, 0, 4, 4)))
+			return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Header: http.Header{"Content-Type": {"image/png"}},
+				Body: io.NopCloser(&buf)}, nil
+		}
+		return &http.Response{StatusCode: 200, Status: "200 OK", Request: &http.Request{URL: pu}, Body: io.NopCloser(strings.NewReader(
+			`<html><head><link rel="stylesheet" href="/s.css"><link rel="stylesheet" href="/fail.css"></head><body><p>page</p><noscript><img src="/i.png"></noscript><script>1</script></body></html>`))}, nil
+	}
+	pg.OpenURL("https://example.com/", nil)
+	core.RenderImage(b, func() { settle(pg) }, func() {
+		require.True(t, eventually(func() bool {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			all := strings.Join(pg.ScriptConsole(), "\n")
+			return strings.Contains(all, "fail.css") && strings.Contains(all, "s.css")
+		}), "the console")
+	})
 }
