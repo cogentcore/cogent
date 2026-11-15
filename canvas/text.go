@@ -113,10 +113,7 @@ func (cv *Canvas) SetText(txt string) {
 		return
 	}
 	if tn.IsParText() {
-		tn, ok = tn.Child(0).(*svg.Text)
-	}
-	if !ok {
-		return
+		tn = textSpan(tn)
 	}
 	sv := cv.SVG
 	sv.UndoSave("SetText", "")
@@ -129,8 +126,7 @@ func (cv *Canvas) SetText(txt string) {
 func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Defaults() // always start fresh
 	if txt.IsParText() {
-		tspan := txt.Children[0].(*svg.Text)
-		ts.String = tspan.Text
+		ts.String = textSpan(txt).Text
 	} else {
 		ts.String = txt.Text
 	}
@@ -141,6 +137,18 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 		ts.Stroke = colors.AsRGBA(sc)
 	}
 	ts.Canvas.UpdateText()
+}
+
+// textSpan returns the first span of the given parent text that has
+// text, or else its first child: the spans of a text that is read from
+// a file include empty ones for the white space between the spans.
+func textSpan(txt *svg.Text) *svg.Text {
+	for _, k := range txt.Children {
+		if kt, ok := k.(*svg.Text); ok && kt.Text != "" {
+			return kt
+		}
+	}
+	return txt.Child(0).(*svg.Text)
 }
 
 //////// Toolbar
