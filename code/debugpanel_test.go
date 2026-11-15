@@ -131,6 +131,8 @@ func TestCodeDebug(t *testing.T) {
 			assert.Contains(t, dv.OutputBuffer.String(), "x 3 3", "the output of the program")
 			dv.DeleteBreakIndex(0)
 			dv.DeleteBreakIndex(5)
+			// (stopping and detaching kill the delve process of this test)
+			require.Equal(t, path("prog"), dv.ExePath)
 			dv.Stop()
 			dv.Detach()
 			assert.False(t, dv.DbgIsActive())
