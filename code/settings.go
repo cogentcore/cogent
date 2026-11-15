@@ -5,7 +5,6 @@
 package code
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -128,15 +127,6 @@ func (se *SettingsData) Open() error {
 func (se *SettingsData) Apply() { //types:add
 }
 
-// SetGoMod applies the given gomod setting, setting the GO111MODULE env var
-func SetGoMod(gomod bool) {
-	if gomod {
-		os.Setenv("GO111MODULE", "on")
-	} else {
-		os.Setenv("GO111MODULE", "off")
-	}
-}
-
 func (se *SettingsData) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
@@ -217,9 +207,6 @@ type ProjectSettings struct { //types:add
 	// a top-level root directory, with all the files therein constituting
 	// the scope of the project. By default it is the path for ProjectFilename
 	ProjectRoot core.Filename
-
-	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
-	GoMod bool
 
 	// BuildCommand is the command line that the Build button runs, in the
 	// directory of the file of the active editor (or the project root),

@@ -177,10 +177,10 @@ func TestBuildRunCommands(t *testing.T) {
 
 // TestOpenOldProjectSettings tests that the project settings of a project
 // file from before the build and run command lines open, without the old
-// names of commands.
+// names of commands, or the removed GoMod setting.
 func TestOpenOldProjectSettings(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "old.code")
-	old := "ProjectRoot = \"/proj\"\nBuildCmds = [\"Go: Build Dir\"]\nBuildTarg = \"/proj\"\nBuildDir = \"/proj/cmd/x\"\nRunCmds = [\"Core: Run\"]\nRunExec = \"/proj/x\"\n"
+	old := "ProjectRoot = \"/proj\"\nBuildCmds = [\"Go: Build Dir\"]\nBuildTarg = \"/proj\"\nBuildDir = \"/proj/cmd/x\"\nRunCmds = [\"Core: Run\"]\nRunExec = \"/proj/x\"\nGoMod = true\n"
 	require.NoError(t, os.WriteFile(file, []byte(old), 0o644))
 	se := &ProjectSettings{}
 	require.NoError(t, se.Open(core.Filename(file)))

@@ -54,7 +54,6 @@ func TestCodeDebug(t *testing.T) {
 		"main.go": debugProgram,
 	})
 	b, cv := newTestCode(t, tmp)
-	t.Setenv("GO111MODULE", "on")
 	cv.Settings.RunExec = core.Filename(path("prog"))
 	cv.Settings.MainLang = fileinfo.Go
 	core.AssertRender(t, b, "debug", func() {

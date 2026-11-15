@@ -74,7 +74,6 @@ func startDelve(t *testing.T, mode cdebug.Modes) (*GiDelve, string, *lines.Lines
 		t.Skip("dlv not found in PATH:", err)
 	}
 	t.Setenv("GOWORK", "off")
-	t.Setenv("GO111MODULE", "on")
 	dir, err := filepath.EvalSymlinks(t.TempDir())
 	require.NoError(t, err)
 	for name, text := range map[string]string{"go.mod": "module prog\n\ngo 1.21\n", "main.go": program, "main_test.go": programTest} {

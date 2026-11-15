@@ -518,7 +518,6 @@ func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 	cv.Settings.ProjectRoot = core.Filename(root)
 	cv.Settings.ProjectFilename = filename // should already be set but..
 	if ok {
-		SetGoMod(cv.Settings.GoMod)
 		os.Chdir(string(cv.Settings.ProjectRoot))
 		cv.ProjectRoot = core.Filename(cv.Settings.ProjectRoot)
 		RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
