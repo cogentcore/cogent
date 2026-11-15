@@ -23,6 +23,9 @@ type Response struct {
 	} `json:"choices"`
 }
 
+// ollamaURL is the URL of the chat completions of the local ollama server.
+var ollamaURL = "http://localhost:11434/v1/chat/completions"
+
 func NewRequest(input string, params structs.Params, prevMessages string) (r *http.Response, err error) {
 	client, err := NewClient()
 	if errors.Log(err) != nil {
@@ -66,7 +69,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	}
 	`, prevMessages, string(safeInput), model, temperature, topP))
 
-	req, err := http.NewRequest("POST", "http://localhost:11434/v1/chat/completions", data)
+	req, err := http.NewRequest("POST", ollamaURL, data)
 	if errors.Log(err) != nil {
 		return
 	}
@@ -99,7 +102,7 @@ func HandleToken(respBody string) (string, error) {
 		return "", err
 	}
 
-	if d.Choices != nil {
+	if len(d.Choices) > 0 {
 		token := d.Choices[0].Delta.Content
 		return token, nil
 	}
