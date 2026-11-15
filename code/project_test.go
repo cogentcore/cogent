@@ -143,12 +143,7 @@ func TestCodeSettings(t *testing.T) {
 
 		// the editor of the splits can save them to the settings when changed
 		var save *core.Button
-		var sv *core.Body
-		for _, w := range core.AllRenderWindows {
-			if sc := w.MainScene(); sc != nil && sc.Body != nil && sc.Body.Title == "Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one" {
-				sv = sc.Body
-			}
-		}
+		sv := windowBody("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one")
 		require.NotNil(t, sv)
 		locked(sv, func() {
 			save = core.ButtonByText(sv.Scene, "Save to settings")

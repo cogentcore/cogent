@@ -90,3 +90,14 @@ func tempDir(t *testing.T) string {
 	require.NoError(t, err)
 	return dir
 }
+
+// windowBody returns the body of the open window with the given title,
+// or nil if there is none.
+func windowBody(title string) *core.Body {
+	for _, w := range core.AllRenderWindows {
+		if sc := w.MainScene(); sc != nil && sc.Body != nil && sc.Body.Title == title {
+			return sc.Body
+		}
+	}
+	return nil
+}
