@@ -373,3 +373,41 @@ func TestComposedTree(t *testing.T) {
 	assert.Equal(t, "slot", got[3].Data, "the slot")
 	assert.Equal(t, a.Parent, got[4], "the parent in the document")
 }
+
+// TestClassicScriptModules tests that a classic script with the syntax of
+// modules (imports) is run as a bundled module, with the modules, JSON,
+// and CSS that it imports, and import.meta.url; that one with syntax that
+// goja does not support is lowered; and that the errors of bundling are
+// reported.
+func TestClassicScriptModules(t *testing.T) {
+	e, fp := testPageEngine(t, `<html><body>
+		<script>
+			import { x } from "./m.js";
+			import data from "./d.json";
+			import "./s.css";
+			window.got = [x, data.n, import.meta.url].join("|");
+		</script>
+		<script>
+			async function* gen() { yield 1; yield 2 }
+			(async () => { let s = 0; for await (const v of gen()) s += v; window.sum = s })();
+		</script>
+		<script>import { y } from "./missing.js"; window.bad = 1;</script>
+	</body></html>`, map[string]string{
+		"/m.js":   `export const x = "mod " + new URL(import.meta.url).pathname;`,
+		"/d.json": `{"n": 7}`,
+		"/s.css":  `p { color: red }`,
+	})
+	e.Load(nil)
+	e.Wait()
+	require.Eventually(t, func() bool {
+		v, _ := e.RunString(`window.got + " " + window.sum`)
+		return v == "mod /m.js|7|https://example.com/page.html 3"
+	}, 5*time.Second, 10*time.Millisecond, "%v", func() any { v, _ := e.RunString(`window.got + " " + window.sum`); return v }())
+	assert.Equal(t, "undefined", run(t, e, `typeof window.bad`))
+	assert.True(t, fp.logged("SyntaxError") || fp.logged("missing"), fp.allLogs())
+
+	_, err := lower("let = = 1", "bad.js")
+	assert.Error(t, err)
+	_, err = e.bundleModule(`import { a } from "./none.js"; import "./none2.js"; import "./none3.js"; import "./none4.js";`, "x.js")
+	assert.Error(t, err)
+}

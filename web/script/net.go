@@ -599,10 +599,7 @@ func attr(n *html.Node, key string) (string, bool) {
 func (e *Engine) Load(done func()) {
 	var scripts []*html.Node
 	var links []*html.Node
-	walk(e.doc, func(n *html.Node) bool {
-		if n.Type == html.ElementNode && (n.Data == "template" || n.Data == "noscript") {
-			return true // their content is not scripts (it is text with scripting)
-		}
+	walkLive(e.doc, func(n *html.Node) bool {
 		if isScript(n) {
 			scripts = append(scripts, n)
 		}
@@ -775,7 +772,7 @@ func (e *Engine) runInserted(n *html.Node, sync bool) {
 	if !connected(n, e.doc) {
 		return
 	}
-	walk(n, func(c *html.Node) bool {
+	walkLive(n, func(c *html.Node) bool {
 		if c.Type == html.ElementNode && c.Data == "iframe" && e.tracing() && !e.ran[c] {
 			// (once, as its parents are inserted again)
 			if e.ran == nil {
@@ -823,6 +820,26 @@ func (e *Engine) runInserted(n *html.Node, sync bool) {
 		})
 		return true
 	})
+}
+
+// walkLive calls the given function for the given node and its
+// descendants, as [walk], except for the content of template and noscript
+// elements, which is inert: its scripts do not run, and its links are not
+// loaded, as in browsers (the content of a template was walked, as the
+// function could not skip it).
+func walkLive(n *html.Node, f func(n *html.Node) bool) bool {
+	if !f(n) {
+		return false
+	}
+	if n.Type == html.ElementNode && (n.Data == "template" || n.Data == "noscript") {
+		return true
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if !walkLive(c, f) {
+			return false
+		}
+	}
+	return true
 }
 
 // isStyleLink returns whether the given node is a link to a style sheet.
