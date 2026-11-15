@@ -50,9 +50,9 @@ jobs:
         echo "LD_LIBRARY_PATH=$FFMPEG_PATH/lib" >> $GITHUB_ENV
         sudo apt-get install -y libasound2-dev
 
-    # the tests of the LSP client of Cogent Code use gopls
-    - name: Install gopls
-      run: go install golang.org/x/tools/gopls@v0.24.0
+    # the tests of the LSP client and the debugger of Cogent Code use gopls and delve
+    - name: Install gopls and delve
+      run: go install golang.org/x/tools/gopls@v0.24.0 && go install github.com/go-delve/delve/cmd/dlv@v1.27.2
 
     - name: Build
       run: go build -v ./...
