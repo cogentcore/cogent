@@ -69,23 +69,19 @@ func TestCodeCommands(t *testing.T) {
 		waitCode(t, 10*time.Second, "the output of the run", hasOutput("echo ran", "ran"))
 
 		// a running command is killed when its tab is deleted
+		const sleepCmd = "echo sleeping; sleep 30"
 		var name string
 		locked(b, func() {
-			cv.Settings.RunCommand = "sleep 30"
+			cv.Settings.RunCommand = sleepCmd
 			cv.Run()
-			name = commandTabName("sleep 30")
+			name = commandTabName(sleepCmd)
+		})
+		waitCode(t, 10*time.Second, "the sleep started", hasOutput(sleepCmd, "sleeping"))
+		locked(b, func() {
+			// (the process is this test's own sleep)
 			cm, _ := cv.RunningCmds.ByName(name)
 			require.NotNil(t, cm)
-			// (the process is this test's own sleep)
-			require.Equal(t, "sleep 30", cm.CmdStr)
-		})
-		waitCode(t, 5*time.Second, "the sleep started", func() bool {
-			b.AsyncLock()
-			defer b.AsyncUnlock()
-			cm, _ := cv.RunningCmds.ByName(name)
-			return cm != nil && cm.Exec.Process != nil
-		})
-		locked(b, func() {
+			require.Equal(t, sleepCmd, cm.CmdStr)
 			cv.TabDeleted(name)
 			_, i := cv.RunningCmds.ByName(name)
 			assert.Equal(t, -1, i)

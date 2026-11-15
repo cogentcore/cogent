@@ -20,11 +20,10 @@ import (
 // newTestCode returns a new body with a [Code] for the given project
 // directory, to be run with [core.AssertRender] or [core.RenderImage],
 // whose window is only used for its event handling, not its image.
-// At the end of the test, before the directory is removed, the window
-// is closed without saving its open files, which stops watching its
-// files: an edited file prompts to save instead, which keeps the window
-// open, and its file tree logs errors for the removed files during the
-// later tests.
+// Its window closes without prompting to save its edited files, which
+// would keep it open, with its file tree logging errors for the removed
+// files during the later tests; and it is closed at the end of the test,
+// if it is still open, before the directory is removed.
 func newTestCode(t *testing.T, dir string) (*core.Body, *Code) {
 	t.Helper()
 	b := core.NewBody()
@@ -34,31 +33,23 @@ func newTestCode(t *testing.T, dir string) (*core.Body, *Code) {
 	cv.Defaults()
 	cv.ProjectRoot = core.Filename(dir)
 	cv.Settings.ProjectRoot = core.Filename(dir)
+	// (before the listener of the close dialog: the last added is first)
+	cv.OnClose(func(e events.Event) {
+		for _, ln := range cv.OpenFiles.Values {
+			ln.ClearNotSaved()
+		}
+	})
 	imagex.UpdateTestImagesFor(t)
 	// the keys and projects of Code set GO111MODULE (see [SetGoMod])
 	t.Setenv("GO111MODULE", os.Getenv("GO111MODULE"))
 	t.Cleanup(core.TrackWindows()) // (after the close below)
-	t.Cleanup(func() { closeTestCode(b, cv) })
+	t.Cleanup(func() {
+		if b.AsyncLockIfShown() {
+			b.Close()
+			b.AsyncUnlock()
+		}
+	})
 	return b, cv
-}
-
-// closeTestCode closes the window of the given [Code], if it is still
-// open, without saving its open files. The close at the end of
-// [core.AssertRender] opens a dialog to save the edited files instead,
-// which ignores further closes until one of its buttons is clicked.
-func closeTestCode(b *core.Body, cv *Code) {
-	if !b.AsyncLockIfShown() {
-		return
-	}
-	defer b.AsyncUnlock()
-	if bt := core.ButtonByText(core.TopScene(b), "Close without saving"); bt != nil {
-		bt.Send(events.Click)
-		return
-	}
-	for _, ln := range cv.OpenFiles.Values {
-		ln.ClearNotSaved()
-	}
-	b.Close()
 }
 
 // writeFiles writes the given files, by relative path, in the given

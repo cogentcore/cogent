@@ -613,13 +613,19 @@ func (ls *LangService) receiveDiags(fd lang.FileDiags) {
 	}
 	shown := filterIgnored(fd.Diags, ls.ignore)
 	ls.mu.Unlock()
-	ln := ls.cv.GetOpenFile(fd.Filename)
-	if ln == nil { // only for the Problems tab
-		if ls.cv.Scene != nil {
-			ls.cv.AsyncLock()
+	// the open files are changed by the event loop, under the lock of the window
+	var ln *lines.Lines
+	if ls.cv.Scene != nil {
+		ls.cv.AsyncLock()
+		ln = ls.cv.GetOpenFile(fd.Filename)
+		if ln == nil { // only for the Problems tab
 			ls.updateProblems(false)
-			ls.cv.AsyncUnlock()
 		}
+		ls.cv.AsyncUnlock()
+	} else {
+		ln = ls.cv.GetOpenFile(fd.Filename)
+	}
+	if ln == nil {
 		return
 	}
 	// applyDiags only uses self-locking Lines methods, which is safe from

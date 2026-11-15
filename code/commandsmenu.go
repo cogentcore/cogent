@@ -161,16 +161,18 @@ func (cv *Code) runCommandOutput(cmdline, dir string, done func()) {
 		lexer = "diff"
 	}
 	markup := func(buf *lines.Lines, out []rune) rich.Text { return MarkupCmdOutput(buf, out, lexer) }
+	// started here, as it can be killed by the event loop (see [Code.TabDeleted])
+	stdout, err := cmd.StdoutPipe()
+	if err == nil {
+		cmd.Stderr = cmd.Stdout
+		err = cmd.Start()
+	}
 	go func() {
-		stdout, err := cmd.StdoutPipe()
 		if err == nil {
-			cmd.Stderr = cmd.Stdout
-			if err = cmd.Start(); err == nil {
-				obuf := textcore.OutputBuffer{}
-				obuf.SetOutput(stdout).SetLines(buf).SetMarkupFunc(markup)
-				obuf.MonitorOutput()
-				err = cmd.Wait()
-			}
+			obuf := textcore.OutputBuffer{}
+			obuf.SetOutput(stdout).SetLines(buf).SetMarkupFunc(markup)
+			obuf.MonitorOutput()
+			err = cmd.Wait()
 		}
 		if !cv.AsyncLockIfShown() {
 			return
