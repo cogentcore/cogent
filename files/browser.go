@@ -104,7 +104,6 @@ func (fl *Files) Init() {
 					w.FilterFunc = func(path string, info fs.FileInfo) bool {
 						return Settings.ShowHidden || !strings.HasPrefix(info.Name(), ".")
 					}
-					w.AppsAsDirs = Settings.ShowHidden // (see opensAsApp)
 				})
 			})
 			tree.AddChildAt(w, "favorites", fl.initFavorites)
