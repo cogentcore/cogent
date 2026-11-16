@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/types"
@@ -144,6 +146,36 @@ func TestFiles(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1000), units.Dp(700)) })
 	fl = NewFiles(b).SetRoot(root)
 	core.AssertRender(t, b, "compact")
+}
+
+// TestFavoritesScrollTop tests that choosing a favorite shows its files
+// from the top of the file tree, which was scrolled down.
+func TestFavoritesScrollTop(t *testing.T) {
+	root := testRoot(t)
+	docs := filepath.Join(root, "docs")
+	for i := range 60 {
+		for _, dir := range []string{root, docs} {
+			require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("f%02d.txt", i)), nil, 0644))
+		}
+	}
+	testSettings(t, root, docs)
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1000), units.Dp(500)) })
+	fl := NewFiles(b).SetRoot(root)
+	frame := func() *core.Frame { return fl.Tree.Parent.(*core.Frame) }
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.True(t, frame().ScrollDimToContentEnd(math32.Y), "scrolls")
+		require.Less(t, frame().Geom.Scroll.Y, float32(0))
+		fl.Favorites().SelectIndexEvent(1, events.SelectOne)
+		assert.Equal(t, docs, fl.Root)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.True(t, frame().HasScroll[math32.Y], "docs has many files too")
+		assert.Equal(t, float32(0), frame().Geom.Scroll.Y)
+	})
 }
 
 // TestFavorites tests that selecting a favorite path makes it the root

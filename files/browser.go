@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/text/terminal"
@@ -135,11 +136,18 @@ func (fl *Files) Destroy() {
 	fl.Frame.Destroy()
 }
 
-// SetRoot sets the root directory of the file tree.
+// SetRoot sets the root directory of the file tree. A new root, as from
+// the favorites, is shown from its top: the tree looked blank when it was
+// scrolled down for the previous one, which had more files.
 func (fl *Files) SetRoot(root string) *Files {
 	root = cleanDir(root)
+	changed := root != fl.Root
 	fl.Root = root
 	if fl.Tree != nil && fl.IsVisible() {
+		if fr, ok := fl.Tree.Parent.(*core.Frame); ok && changed {
+			fr.ScrollDimToContentStart(math32.X)
+			fr.ScrollDimToContentStart(math32.Y)
+		}
 		fl.Tree.OpenPath(root)
 	}
 	return fl
