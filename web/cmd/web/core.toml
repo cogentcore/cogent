@@ -1,0 +1,4 @@
+Name = "Cogent Web"
+
+# the ID that the app had in the lists directory, before cmd/lists
+ID = "com.cogent.web"
