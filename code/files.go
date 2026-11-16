@@ -190,7 +190,11 @@ func (cv *Code) OpenLines(fpath string) *lines.Lines {
 // InRootPath returns true if the given path, which must be an absolute path,
 // is under the current file browser root path.
 func (cv *Code) InRootPath(fpath string) bool {
-	return strings.HasPrefix(fpath, string(cv.Files.Filepath))
+	root := string(cv.Files.Filepath)
+	if root == "" {
+		return false
+	}
+	return fpath == root || strings.HasPrefix(fpath, strings.TrimSuffix(root, string(filepath.Separator))+string(filepath.Separator))
 }
 
 // RecycleFile either opens given file or returns already open one.
@@ -198,7 +202,7 @@ func (cv *Code) InRootPath(fpath string) bool {
 // If file is outside the current root path, it is also added to
 // external files in the file browser. Can return nil if not openable.
 func (cv *Code) RecycleFile(fpath string) (*lines.Lines, bool) {
-	fpath, _ = filepath.Abs(fpath)
+	fpath = cv.canonicalPath(fpath)
 	ln := cv.OpenFiles.At(fpath)
 	if ln == nil {
 		return cv.OpenLines(fpath), true
@@ -206,9 +210,32 @@ func (cv *Code) RecycleFile(fpath string) (*lines.Lines, bool) {
 	return cv.OpenFiles.Add(ln), false // moves to top
 }
 
-// GetOpenFile either returns the Lines for a file in OpenFiles.
+// GetOpenFile returns the Lines of the given file if it is in OpenFiles,
+// also by another path to it through symbolic links (see
+// [Code.canonicalPath]), or nil.
 func (cv *Code) GetOpenFile(fpath string) *lines.Lines {
-	return cv.OpenFiles.At(fpath)
+	if ln := cv.OpenFiles.At(fpath); ln != nil {
+		return ln
+	}
+	if cp := cv.canonicalPath(fpath); cp != fpath {
+		return cv.OpenFiles.At(cp)
+	}
+	return nil
+}
+
+// canonicalPath returns the absolute path by which the given file is
+// opened, so that it is opened once whatever the path it is opened by:
+// a path under the root of the file tree is kept as it is, as the paths
+// of the tree, and the symbolic links of the directory of any other path
+// are evaluated, as the tree evaluates those of its root. A file of the
+// project opened by a path through a symbolic link, as ~/proj for
+// ~/src/proj, was opened a second time, and found twice by Find.
+func (cv *Code) canonicalPath(fpath string) string {
+	fpath, _ = filepath.Abs(fpath)
+	if cv.Files != nil && cv.InRootPath(fpath) {
+		return fpath
+	}
+	return realPath(fpath)
 }
 
 // SaveActiveView saves the contents of the currently active texteditor.
@@ -605,7 +632,7 @@ func (cv *Code) CloseOpenFiles(fnames []string) {
 
 // CloseOpenFile closes given file if it is open.
 func (cv *Code) CloseOpenFile(fname string) {
-	ln := cv.OpenFiles.At(fname)
+	ln := cv.GetOpenFile(fname)
 	if ln == nil {
 		return
 	}

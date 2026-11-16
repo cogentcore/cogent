@@ -133,7 +133,7 @@ func TestCodeOutputRelativeLink(t *testing.T) {
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
 	cv := NewCode(b)
 	cv.Defaults()
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	sub := filepath.Join(tmp, "sub")
 	require.NoError(t, os.Mkdir(sub, 0o755))
 	file := filepath.Join(sub, "x.go")
