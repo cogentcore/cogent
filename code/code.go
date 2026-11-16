@@ -763,7 +763,13 @@ func OpenCodeProject(projfile string) *Code {
 	return NewCodeWindow(projfile, projnm, root, false)
 }
 
+// CodeInScene returns the Code in the given scene, or nil if there is
+// none, including for a nil scene: a new window has no main scene until
+// its stage is pushed.
 func CodeInScene(sc *core.Scene) *Code {
+	if sc == nil || sc.Body == nil {
+		return nil
+	}
 	return tree.ChildByType[*Code](sc.Body)
 }
 

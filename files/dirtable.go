@@ -213,7 +213,7 @@ func (dt *DirTable) openSelected() {
 	if fi == nil {
 		return
 	}
-	if fi.IsDir() && !opensAsApp(fi.Path, true) {
+	if fi.IsDir() && !isApp(fi.Path, true) {
 		dt.SetDir(fi.Path)
 		return
 	}
@@ -234,6 +234,9 @@ func (dt *DirTable) readFiles() {
 		}
 		fi, err := fileinfo.NewFileInfo(filepath.Join(dt.Dir, ent.Name()))
 		if err == nil {
+			if isApp(fi.Path, fi.IsDir()) {
+				fi.Ic = icons.Apps // as in the file tree
+			}
 			dt.files = append(dt.files, fi)
 		}
 	}
@@ -296,7 +299,12 @@ func (dt *DirTable) contextMenu(m *core.Scene, pos image.Point) {
 		core.OpenWithMenuItems(m, fi.Path)
 	}
 	if fi != nil && isApp(fi.Path, fi.IsDir()) {
-		openAppMenuItem(m, fi.Path)
+		// (Open opens it as an app)
+		core.NewButton(m).SetText("View").SetIcon(icons.FolderOpen).
+			SetTooltip("View the files of this app").
+			OnClick(func(e events.Event) {
+				dt.SetDir(fi.Path)
+			})
 	}
 	if fi == nil || fi.IsDir() { // the selected directory, or this one
 		dir := dt.Dir

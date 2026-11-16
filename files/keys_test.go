@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -111,8 +112,8 @@ func TestDirTabDoubleClick(t *testing.T) {
 }
 
 // TestDirTableOpenApp tests that opening an app bundle (a directory named
-// *.app, on macOS) in the table of the files opens it as an app, unless
-// hidden files are shown, in which case its files are shown.
+// *.app, on macOS) in the table of the files opens it as an app, also when
+// hidden files are shown, and that View in its context menu shows its files.
 func TestDirTableOpenApp(t *testing.T) {
 	root := testRoot(t)
 	testSettings(t)
@@ -134,6 +135,7 @@ func TestDirTableOpenApp(t *testing.T) {
 			dt.table.SelectIndexEvent(idx, events.SelectOne)
 		}
 		selectApp()
+		assert.Equal(t, icons.Apps, dt.SelectedFile().Ic, "the icon of an app")
 		dt.openSelected()
 		assert.Equal(t, []string{app}, opened)
 		assert.Equal(t, root, dt.Dir)
@@ -141,7 +143,22 @@ func TestDirTableOpenApp(t *testing.T) {
 		Settings.ShowHidden = true
 		selectApp()
 		dt.openSelected()
-		assert.Len(t, opened, 1)
+		assert.Equal(t, []string{app, app}, opened)
+		assert.Equal(t, root, dt.Dir)
+
+		selectApp()
+		m := core.NewScene()
+		dt.contextMenu(m, image.Point{})
+		var view *core.Button
+		m.WalkDown(func(n tree.Node) bool {
+			if bt, ok := n.(*core.Button); ok && bt.Text == "View" {
+				view = bt
+			}
+			return tree.Continue
+		})
+		require.NotNil(t, view)
+		view.Send(events.Click)
+		assert.Len(t, opened, 2)
 		assert.Equal(t, app, dt.Dir)
 	})
 }

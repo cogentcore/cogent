@@ -219,6 +219,7 @@ func (cv *Code) SaveActiveView() { //types:add
 	}
 	cv.LastSaveTStamp = time.Now()
 	if tv.Lines.Filename() != "" {
+		cv.fixImports(tv.Lines)
 		if tv.Save() != nil || tv.Lines.IsNotSaved() { // error reported, or prompting
 			return
 		}
@@ -302,8 +303,30 @@ func (cv *Code) CloseActiveView() { //types:add
 	})
 }
 
+// fixImports fixes the imports of a Go file and formats it with the
+// language server, as goimports does, before it is saved: gopls adds
+// missing imports and removes unused ones (source.organizeImports).
+// Goal files are formatted by goalfmt after they are saved (see
+// [Code.RunPostCmds]).
+func (cv *Code) fixImports(ln *lines.Lines) {
+	if ln == nil || ln.FileInfo().Known != fileinfo.Go || isGoalFile(ln) {
+		return
+	}
+	ls := cv.LangSvc()
+	if !ls.LSPActive(ln) {
+		return
+	}
+	imps, err := ls.lspB.OrganizeImports(ln)
+	if err != nil {
+		cv.SetStatus("Organizing imports of " + filepath.Base(ln.Filename()) + ": " + err.Error())
+	}
+	if ls.lspB.Format(ln) || imps {
+		ls.Change(ln)
+	}
+}
+
 // RunPostCmds formats a Goal file and fixes its imports with goalfmt after
-// it is saved (the imports of Go files are fixed by the language server),
+// it is saved (the imports of Go files are fixed before, see [Code.fixImports]),
 // returning true if it was changed, and reverted after that.
 func (cv *Code) RunPostCmds(ln *lines.Lines) bool {
 	if ln == nil || !isGoalFile(ln) {
@@ -550,6 +573,7 @@ func (cv *Code) CloneActiveView() (*TextEditor, int) { //types:add
 func (cv *Code) SaveAllOpenFiles() {
 	for _, ln := range cv.OpenFiles.Values {
 		if ln.IsNotSaved() {
+			cv.fixImports(ln)
 			textcore.Save(cv.Scene, ln)
 			cv.RunPostCmds(ln)
 		}

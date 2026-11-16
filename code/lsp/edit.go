@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/textpos"
@@ -36,6 +37,48 @@ func (b *Backend) Format(ln *lines.Lines) bool {
 		return false
 	}
 	return applyTextEdits(ln, edits)
+}
+
+// organizeImportsTimeout is the timeout of [Backend.OrganizeImports], which
+// runs as files are saved.
+const organizeImportsTimeout = 5 * time.Second
+
+// OrganizeImports applies the source.organizeImports code action of the
+// server to the buffer, as goimports does for Go: adding missing imports
+// and removing unused ones. It returns whether any edits were applied.
+func (b *Backend) OrganizeImports(ln *lines.Lines) (bool, error) {
+	srv, ok := b.readyServer(ln)
+	if !ok || !srv.supportsCodeAction() {
+		return false, nil
+	}
+	uri := docID(ln).URI
+	srv.DidChange(uri, currentText(ln))
+	end := textpos.Pos{Line: max(ln.NumLines()-1, 0)}
+	end.Char = len(ln.Line(end.Line))
+	acts, err := srv.codeAction(&CodeActionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Range:        toLSPRange(ln, textpos.Region{End: end}),
+		Context: CodeActionContext{
+			Diagnostics: []Diagnostic{},
+			TriggerKind: CodeActionTriggerInvoked,
+			Only:        []string{"source.organizeImports"},
+		},
+	}, organizeImportsTimeout)
+	if err != nil {
+		return false, err
+	}
+	changed := false
+	for i := range acts {
+		ca := &acts[i]
+		if !strings.HasPrefix(ca.Kind, "source.organizeImports") || ca.Disabled != nil {
+			continue
+		}
+		// (an error without edits: the imports are already organized)
+		if edits, _ := b.RunCodeAction(ln, ca); len(edits) > 0 {
+			changed = true
+		}
+	}
+	return changed, nil
 }
 
 // FormatRegion formats the given lines (inclusive) of the buffer with the

@@ -75,7 +75,7 @@ func initNode(fn *filetree.Node) {
 			return
 		}
 		switch kf := keymap.Of(e.KeyChord()); {
-		case kf == keymap.Enter && (!fn.IsDir() || opensAsApp(string(fn.Filepath), true)):
+		case kf == keymap.Enter && (!fn.IsDir() || isApp(string(fn.Filepath), true)):
 			// opens the file, as double-clicking does (directories toggle)
 			e.SetHandled()
 			openFile(string(fn.Filepath))
@@ -91,7 +91,7 @@ func initNode(fn *filetree.Node) {
 	})
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
-		if fn.IsDir() && !opensAsApp(string(fn.Filepath), true) {
+		if fn.IsDir() && !isApp(string(fn.Filepath), true) {
 			if fl, ok := ParentFiles(fn.This); ok {
 				fl.OpenDir(string(fn.Filepath))
 			}
@@ -116,18 +116,12 @@ func isFocus(fn *filetree.Node) bool {
 }
 
 // isApp returns whether the given directory is an app bundle (on macOS,
-// see [filetree.IsAppBundle]), which is opened as an app by double-clicking,
-// as in the Finder, unless hidden files are shown, in which case it is a
-// directory, whose contents can be viewed and edited (it can still be
-// opened from its context menu).
+// see [filetree.IsAppBundle]), which is opened as an app by double-clicking
+// and Enter, as in the Finder. Its files are shown by opening it in the
+// tree with its arrow (or the right arrow key), and by View in its
+// context menu, in the tree and in the table of the files.
 func isApp(path string, isDir bool) bool {
 	return filetree.IsAppBundle(path, isDir)
-}
-
-// opensAsApp returns whether double-clicking the given directory opens it
-// as an app (see [isApp]).
-func opensAsApp(path string, isDir bool) bool {
-	return isApp(path, isDir) && !Settings.ShowHidden
 }
 
 // openAppMenuItem adds the context menu item for opening the given app
