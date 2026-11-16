@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -134,6 +135,7 @@ func TestDirTableOpenApp(t *testing.T) {
 			dt.table.SelectIndexEvent(idx, events.SelectOne)
 		}
 		selectApp()
+		assert.Equal(t, icons.Apps, dt.SelectedFile().Ic, "the icon of an app")
 		dt.openSelected()
 		assert.Equal(t, []string{app}, opened)
 		assert.Equal(t, root, dt.Dir)

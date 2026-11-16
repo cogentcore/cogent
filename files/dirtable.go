@@ -234,6 +234,9 @@ func (dt *DirTable) readFiles() {
 		}
 		fi, err := fileinfo.NewFileInfo(filepath.Join(dt.Dir, ent.Name()))
 		if err == nil {
+			if isApp(fi.Path, fi.IsDir()) {
+				fi.Ic = icons.Apps // as in the file tree
+			}
 			dt.files = append(dt.files, fi)
 		}
 	}
