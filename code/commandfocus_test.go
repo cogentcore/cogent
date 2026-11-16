@@ -79,7 +79,11 @@ func TestCommandKeepsEditorFocus(t *testing.T) {
 		defer b.AsyncUnlock()
 		return cv.CmdBufs["ls"] != nil
 	})
-	locked(b, func() { assert.True(t, tv.StateIs(states.Focused)) })
+	locked(b, func() {
+		assert.True(t, tv.StateIs(states.Focused))
+		// the title of the menu search is not left on the window
+		assert.Equal(t, b.Scene.Stage.Title, b.Scene.RenderWindow().SystemWindow.Title())
+	})
 	typeText(src, "y")
 	waitCode(t, 5*time.Second, "y typed in the editor", func() bool {
 		b.AsyncLock()

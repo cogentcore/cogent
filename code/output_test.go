@@ -6,6 +6,8 @@ package code
 
 import (
 	"image"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -121,4 +123,44 @@ func TestCodeOutputClear(t *testing.T) {
 	}
 	assert.Equal(t, keymap.Copy.Chord(), shortcuts["Copy"])
 	assert.Equal(t, terminal.ShortcutChord(keymap.Kill), shortcuts["Clear"])
+}
+
+// TestCodeOutputRelativeLink tests opening a file from a link in the
+// output of a command, with a path relative to the directory in which the
+// command ran, as in the errors of go build in a subdirectory of the project.
+func TestCodeOutputRelativeLink(t *testing.T) {
+	b := core.NewBody()
+	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1200), units.Dp(800)) })
+	cv := NewCode(b)
+	cv.Defaults()
+	tmp := t.TempDir()
+	sub := filepath.Join(tmp, "sub")
+	require.NoError(t, os.Mkdir(sub, 0o755))
+	file := filepath.Join(sub, "x.go")
+	require.NoError(t, os.WriteFile(file, []byte("package sub\n\nfunc f() {}\n"), 0o644))
+	cv.ProjectRoot = core.Filename(tmp)
+	cv.Settings.ProjectRoot = core.Filename(tmp)
+	showed := make(chan struct{})
+	b.OnFinal(events.Show, func(e events.Event) { showed <- struct{}{} })
+	b.RunWindow()
+	<-showed
+	defer func() {
+		b.AsyncLock()
+		b.Close()
+		b.AsyncUnlock()
+	}()
+
+	b.AsyncLock()
+	defer b.AsyncUnlock()
+	buf, _, _ := cv.RecycleCmdTab("go build")
+	commandHeader(buf, "go build", sub)
+	assert.Equal(t, sub, commandOutputDir(buf))
+	// a recycled tab: the header follows the empty line of the cleared buffer
+	buf, ed, _ := cv.RecycleCmdTab("go build")
+	commandHeader(buf, "go build", sub)
+	assert.Equal(t, sub, commandOutputDir(buf))
+	for _, rel := range []string{"./x.go", "x.go", "../sub/x.go"} {
+		assert.True(t, cv.OpenFileURL("file:///"+rel+"#L3C6", ed), rel)
+		assert.Equal(t, file, string(cv.ActiveEditor().Lines.Filename()), rel)
+	}
 }

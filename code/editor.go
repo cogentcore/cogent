@@ -367,6 +367,22 @@ func (cv *Code) CountWordsRegion() string { //types:add
 
 ////////   Links
 
+// commandOutputDir returns the directory in which the command whose output
+// is in the given buffer ran, from its header line, "/a/dir$ go build"
+// (see [commandHeader]), or "" if there is none.
+func commandOutputDir(buf *lines.Lines) string {
+	if buf == nil {
+		return ""
+	}
+	// the header follows the empty line of a cleared buffer
+	for ln := range min(buf.NumLines(), 2) {
+		if dir, _, ok := strings.Cut(string(buf.Line(ln)), "$ "); ok && filepath.IsAbs(dir) {
+			return dir
+		}
+	}
+	return ""
+}
+
 // OpenFileURL is the link handler for command editors: opens given file:/// url
 func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	up, err := url.Parse(ur)
@@ -378,18 +394,10 @@ func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	if strings.HasPrefix(fpath, "a/") || strings.HasPrefix(fpath, "b/") { // diff output, skip
 		fpath = fpath[2:]
 	}
-	cdpath := ""
-	if ftv != nil && ftv.Lines != nil {
-		cdln := ftv.Lines.String()
-		if strings.HasPrefix(cdln, "cd ") { // get cd path for non-pathed fnames
-			fmidx := strings.Index(cdln, " (from: ")
-			if fmidx > 0 {
-				cdpath = cdln[3:fmidx]
-				dr, _ := filepath.Split(fpath)
-				if dr == "" || !filepath.IsAbs(dr) {
-					fpath = filepath.Join(cdpath, fpath)
-				}
-			}
+	if !filepath.IsAbs(fpath) && ftv != nil {
+		// relative paths are relative to the directory the command ran in
+		if dir := commandOutputDir(ftv.Lines); dir != "" {
+			fpath = filepath.Join(dir, fpath)
 		}
 	}
 	pos := up.Fragment
