@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/highlighting"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,4 +31,12 @@ func TestParserLanguages(t *testing.T) {
 	AvailableLanguages[fileinfo.Go].Parser = false
 	updateParserLangs()
 	assert.Nil(t, highlighting.ParseLanguage(fileinfo.Go))
+}
+
+// TestCodeInSceneNil tests that a window with no main scene, as one
+// that is opening or closing, has no Code, rather than panicking in
+// [UpdateParserUse].
+func TestCodeInSceneNil(t *testing.T) {
+	assert.Nil(t, CodeInScene(nil))
+	assert.Nil(t, CodeInScene(&core.Scene{}))
 }
