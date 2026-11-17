@@ -784,6 +784,7 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 			tt.DeleteSelected()
 		}))
 	})
+	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.FormatIndentIncrease).SetShortcut(key.Chord("Command+]").PlatformChord()).
 			SetTooltip("Indent: move the selected items into the item before them")
