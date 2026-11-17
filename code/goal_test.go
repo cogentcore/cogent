@@ -41,7 +41,7 @@ func TestCodeGoal(t *testing.T) {
 	Settings.LSExecs = map[string]string{"goalls": bin}
 	defer func() { Settings.LSExecs = prev }()
 
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	t.Setenv("GOWORK", "off")
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.goal")

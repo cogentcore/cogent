@@ -1,9 +1,9 @@
 codeberg.org/go-pdf/fpdf v0.12.0 h1:g8E/1VqGqB2lZUUaqQrrTnA0IEJLPTTX1DZ0qS/ZmhU=
 codeberg.org/go-pdf/fpdf v0.12.0/go.mod h1:WJNJ2bvCj81rZBdhOf7lKOGoSl+OKMXcIcXqDcP8r5Y=
-cogentcore.org/core v0.5.41 h1:iRozOPsDPjJAy2iihzKXlFU3vHYLQyg8sJdYmjHpGRE=
-cogentcore.org/core v0.5.41/go.mod h1:UBL5a8xXnSCCjbH8SX6CY4JvMqoP7M3QMFoC22Q6rd4=
-cogentcore.org/lab v0.2.18 h1:Ac0n5LRsxFnzxklyGxZWPay5Cuk5uLKORBHKsFSLXlI=
-cogentcore.org/lab v0.2.18/go.mod h1:7mE1114IKqsDDUHrM7bNd4MZ6GfhggZvwkSQwKCQGus=
+cogentcore.org/core v0.5.42 h1:W9OWT+1UHSklBsv5rHUzRBB2humfyI7urewDLqdT9+E=
+cogentcore.org/core v0.5.42/go.mod h1:UBL5a8xXnSCCjbH8SX6CY4JvMqoP7M3QMFoC22Q6rd4=
+cogentcore.org/lab v0.2.19 h1:7CieOavjwEAHuvcEhos+ym+5nOCKhbdzFU9WIVlCTGo=
+cogentcore.org/lab v0.2.19/go.mod h1:VRvNgKXlRfuLAZ+hndCJ6g1ooxwHJJy3SCWuGAHlHoU=
 git.sr.ht/~sbinet/overlayfs v0.1.1 h1:HvCHXT1cs8RMSjNLQXxPPosB2hgR3tRC8RniH0f3ESg=
 git.sr.ht/~sbinet/overlayfs v0.1.1/go.mod h1:TmrIWKlxyPJJ7vchTqk85DUcW6IDsIa7ONLvSGIw438=
 github.com/Bios-Marcel/wastebasket/v2 v2.0.3 h1:TkoDPcSqluhLGE+EssHu7UGmLgUEkWg7kNyHyyJ3Q9g=

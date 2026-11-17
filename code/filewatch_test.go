@@ -24,7 +24,8 @@ import (
 // Code window: the file tree watcher reloads files that have not been
 // edited and closes them if deleted, and prompts for edited files.
 // The temporary directory is a symbolic link on macOS, which the file
-// tree evaluates but the file names of the open buffers do not.
+// tree evaluates, as Code does for the files opened by it (see
+// [Code.canonicalPath]).
 func TestCodeFilesChanged(t *testing.T) {
 	tmp := t.TempDir()
 	path := func(name string) string { return filepath.Join(tmp, name) }
@@ -61,7 +62,7 @@ func TestCodeFilesChanged(t *testing.T) {
 		waitCode(t, 5*time.Second, "c.txt closed", func() bool {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
-			return cv.OpenFiles.IndexByKey(path("c.txt")) < 0
+			return cv.GetOpenFile(path("c.txt")) == nil
 		})
 		assert.Equal(t, "", lnc.Filename())
 
@@ -73,7 +74,7 @@ func TestCodeFilesChanged(t *testing.T) {
 			return cv.deletedAsked[lnd]
 		})
 		b.AsyncLock()
-		assert.GreaterOrEqual(t, cv.OpenFiles.IndexByKey(path("d.txt")), 0)
+		assert.NotNil(t, cv.GetOpenFile(path("d.txt")))
 		b.AsyncUnlock()
 	})
 }

@@ -35,7 +35,7 @@ func TestCodeOccurrencesClick(t *testing.T) {
 	if _, err := exec.LookPath("gopls"); err != nil {
 		t.Skip("gopls not found in PATH:", err)
 	}
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	t.Setenv("GOWORK", "off")
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.go")
@@ -106,7 +106,7 @@ func TestCodeSymbolsClick(t *testing.T) {
 	if _, err := exec.LookPath("gopls"); err != nil {
 		t.Skip("gopls not found in PATH:", err)
 	}
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	t.Setenv("GOWORK", "off")
 	os.WriteFile(filepath.Join(tmp, "go.mod"), []byte("module demo\n\ngo 1.21\n"), 0644)
 	fpath := filepath.Join(tmp, "main.go")
@@ -180,7 +180,7 @@ func TestCodeSymbolsClick(t *testing.T) {
 // and that the next problem becomes current when the current one goes
 // away, as after applying a fix for it.
 func TestNextProblem(t *testing.T) {
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	fpath := filepath.Join(tmp, "a.txt")
 	os.WriteFile(fpath, []byte("one\ntwo\nthree\nfour\n"), 0644)
 	b := core.NewBody()
@@ -238,7 +238,7 @@ func TestNextProblem(t *testing.T) {
 // tabs, which go to the locations from the keyboard, wrapping around, and
 // keep the focus, in the References tab and the Problems tab.
 func TestLocationButtons(t *testing.T) {
-	tmp := t.TempDir()
+	tmp := tempDir(t)
 	fpath := filepath.Join(tmp, "a.txt")
 	os.WriteFile(fpath, []byte("one\ntwo\nthree\nfour\n"), 0644)
 	b := core.NewBody()

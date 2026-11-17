@@ -759,7 +759,7 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 		}
 	}
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Add item").SetIcon(icons.Add).SetKey(keymap.InsertAfter).
+		w.SetIcon(icons.Add).SetKey(keymap.InsertAfter).
 			SetTooltip("Add an item after the selected one, or at the end")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
 			if idx < 0 {
@@ -770,12 +770,21 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 		}))
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Add sub-item").SetIcon(icons.SubdirectoryArrowRight).SetKey(keymap.InsertChild).
-			SetTooltip("Add an item in the selected one, such as an item in a category")
+		w.SetText("sub").SetIcon(icons.Add).SetKey(keymap.InsertChild).
+			SetTooltip("Add a sub-item in the selected item, such as an item in a category")
 		w.OnClick(table(func(tt *core.TreeTable, idx int) {
 			tt.AddChild(idx)
 		}))
 	})
+	tree.Add(p, func(w *core.Button) {
+		// no key: the delete key edits the text of an item
+		w.SetIcon(icons.Delete).
+			SetTooltip("Delete the selected items, with the items in them")
+		w.OnClick(table(func(tt *core.TreeTable, idx int) {
+			tt.DeleteSelected()
+		}))
+	})
+	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.FormatIndentIncrease).SetShortcut(key.Chord("Command+]").PlatformChord()).
 			SetTooltip("Indent: move the selected items into the item before them")
