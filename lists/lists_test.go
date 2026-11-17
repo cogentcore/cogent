@@ -694,3 +694,46 @@ func TestFocusPanels(t *testing.T) {
 		assert.Equal(t, 6, n)
 	})
 }
+
+// TestToolbarItemButtons tests the buttons of the toolbar for the items:
+// add has only its icon, add sub-item says "sub", and the delete button
+// deletes the selected item, which undo brings back.
+func TestToolbarItemButtons(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	tb := core.NewToolbar(b)
+	tb.Maker(ls.MakeToolbar)
+	core.AssertRender(t, b, "toolbar-item-buttons", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		gr := findList(ls, "Groceries")
+		ls.SetCurrent(gr)
+		tb.Update()
+		buttons := map[string]*core.Button{}
+		tb.ForWidgetChildren(func(i int, cw core.Widget, cwb *core.WidgetBase) bool {
+			if bt, ok := cw.(*core.Button); ok {
+				buttons[bt.Tooltip] = bt
+			}
+			return true
+		})
+		add := buttons["Add an item after the selected one, or at the end"]
+		sub := buttons["Add a sub-item in the selected item, such as an item in a category"]
+		del := buttons["Delete the selected items, with the items in them"]
+		require.NotNil(t, add)
+		require.NotNil(t, sub)
+		require.NotNil(t, del)
+		assert.Empty(t, add.Text)
+		assert.Equal(t, "sub", sub.Text)
+		assert.Empty(t, del.Text)
+
+		n := len(gr.Items)
+		first := string(gr.Items[0].Values["Item"])
+		ls.table.SelectIndexEvent(0, events.SelectOne)
+		del.Send(events.Click)
+		require.Len(t, gr.Items, n-1)
+		assert.NotEqual(t, first, string(gr.Items[0].Values["Item"]))
+		ls.Undo()
+		require.Len(t, gr.Items, n)
+		assert.Equal(t, first, string(gr.Items[0].Values["Item"]), "undo the delete")
+	})
+}
