@@ -421,16 +421,19 @@ func TestScriptsStyleLinkLoad(t *testing.T) {
 	b, pg := newScriptPage(t, map[string]string{
 		"/": `<html><body><p id="out" class="hidden">waiting</p>
 			<script>
+				// the two loads end in either order
 				const p = document.getElementById("out");
+				let loaded = false, failed = false;
+				const show = () => { p.textContent = (loaded ? "loaded" : "waiting") + (failed ? " and failed" : ""); };
 				const ok = document.createElement("link");
 				ok.rel = "stylesheet";
 				ok.href = "/style.css";
-				ok.onload = () => { p.textContent = "loaded"; p.className = ""; };
+				ok.onload = () => { loaded = true; p.className = ""; show(); };
 				document.head.appendChild(ok);
 				const bad = document.createElement("link");
 				bad.rel = "stylesheet";
 				bad.href = "/missing.css";
-				bad.addEventListener("error", () => { p.textContent += " and failed"; });
+				bad.addEventListener("error", () => { failed = true; show(); });
 				document.head.appendChild(bad);
 			</script></body></html>`,
 		"/style.css": `.hidden { display: none }`,
