@@ -112,7 +112,7 @@ func (sv *SpellPanel) Init() {
 					if tv == nil || tv.Lines == nil {
 						return
 					}
-					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Text(), false)
+					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Text(), textpos.AnyText)
 					tv.QReplaceReplaceAll(0)
 					sv.LastAction = w
 					sv.Errs = tv.Lines.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags

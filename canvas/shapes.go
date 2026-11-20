@@ -9,6 +9,7 @@ import (
 	"image"
 	"maps"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
@@ -34,7 +35,7 @@ func (sv *SVG) NewParent(useTree bool) tree.Node {
 	if useTree {
 		sl = cv.AnySelectedNodes()
 	} else {
-		sl = cv.EditState.SelectedList(false)
+		sl = cv.EditState.SelectedList(reflectx.Ascending)
 	}
 	if len(sl) == 1 {
 		if gp, isgp := sl[0].(*svg.Group); isgp {

@@ -231,7 +231,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene, pos image.Point) {
 	core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
 		SetKey(keymap.Copy).SetState(!ed.HasSelection(), states.Disabled).
 		OnClick(func(e events.Event) {
-			ed.Copy(true)
+			ed.Copy(core.SelectReset)
 		})
 	if ed.IsReadOnly() {
 		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).SetKey(keymap.Kill).

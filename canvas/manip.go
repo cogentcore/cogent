@@ -9,6 +9,7 @@ import (
 	"image"
 	"math"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -427,7 +428,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	if diag {
 		sq := false
 		if len(es.Selected) == 1 {
-			so := es.SelectedList(false)[0]
+			so := es.SelectedList(reflectx.Ascending)[0]
 			switch so.(type) {
 			case *svg.Rect:
 				sq = true

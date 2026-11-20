@@ -9,6 +9,7 @@ import (
 	"image"
 
 	"cogentcore.org/cogent/canvas/cicons"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/base/slicesx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -208,7 +209,7 @@ func (sv *SVG) setSelSpritePos() {
 	es.NSelectSprites = 0
 	if len(es.Selected) > 1 {
 		nbox := 0
-		sl := es.SelectedList(false)
+		sl := es.SelectedList(reflectx.Ascending)
 		for si, sii := range sl {
 			sn := sii.AsNodeBase()
 			if sn.BBox.Size() == (math32.Vector2{}) {
@@ -300,7 +301,7 @@ func (cv *Canvas) SelectGroup() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("Group", es.SelectedNamesString())
 
-	sl := es.SelectedListDepth(sv, false) // ascending depth order
+	sl := es.SelectedListDepth(sv, reflectx.Ascending) // ascending depth order
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
 
@@ -330,7 +331,7 @@ func (cv *Canvas) SelectUnGroup() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("UnGroup", es.SelectedNamesString())
 
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedList(reflectx.Descending)
 	for _, se := range sl {
 		gp, isgp := se.(*svg.Group)
 		if !isgp {
@@ -422,7 +423,7 @@ func (cv *Canvas) SelectRaiseTop() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("RaiseTop", es.SelectedNamesString())
 
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedList(reflectx.Descending)
 	for _, se := range sl {
 		parent := se.AsTree().Parent
 		ci := se.AsTree().IndexInParent()
@@ -443,7 +444,7 @@ func (cv *Canvas) SelectRaise() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("Raise", es.SelectedNamesString())
 
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedList(reflectx.Descending)
 	for _, se := range sl {
 		parent := se.AsTree().Parent
 		ci := se.AsTree().IndexInParent()
@@ -466,7 +467,7 @@ func (cv *Canvas) SelectLowerBottom() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("LowerBottom", es.SelectedNamesString())
 
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedList(reflectx.Descending)
 	for _, se := range sl {
 		parent := se.AsTree().Parent
 		ci := se.AsTree().IndexInParent()
@@ -487,7 +488,7 @@ func (cv *Canvas) SelectLower() { //types:add
 	sv := cv.SVG
 	sv.UndoSave("Lower", es.SelectedNamesString())
 
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedList(reflectx.Descending)
 	for _, se := range sl {
 		parent := se.AsTree().Parent
 		ci := se.AsTree().IndexInParent()

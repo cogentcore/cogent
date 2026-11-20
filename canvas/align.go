@@ -6,6 +6,7 @@ package canvas
 
 import (
 	"cogentcore.org/cogent/canvas/cicons"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -115,11 +116,11 @@ func (sv *SVG) alignAnchorBBox(aa AlignAnchors) (math32.Box2, svg.Node) {
 	var bb math32.Box2
 	switch aa {
 	case AlignFirst:
-		sl := es.SelectedList(false)
+		sl := es.SelectedList(reflectx.Ascending)
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
 	case AlignLast:
-		sl := es.SelectedList(true) // descending
+		sl := es.SelectedList(reflectx.Descending)
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
 	case AlignDrawing: // the page, in the coordinates of the bounding boxes

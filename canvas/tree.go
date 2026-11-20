@@ -8,6 +8,7 @@ import (
 	"image"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -244,13 +245,13 @@ func (cv *Canvas) AnySelectedNodes() []svg.Node {
 		}
 		return nl
 	}
-	return cv.EditState.SelectedList(false)
+	return cv.EditState.SelectedList(reflectx.Ascending)
 }
 
 // SelectedAsTrees returns the currently selected items from SVG as Tree nodes.
 func (cv *Canvas) SelectedAsTrees() []core.Treer {
 	es := &cv.EditState
-	sl := es.SelectedList(false)
+	sl := es.SelectedList(reflectx.Ascending)
 	if len(sl) == 0 {
 		return nil
 	}

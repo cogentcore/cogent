@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
@@ -213,7 +214,7 @@ func (es *EditState) NewSelected() {
 
 // SelectedList returns list of selected items, sorted either ascending or descending
 // according to order of selection
-func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
+func (es *EditState) SelectedList(order reflectx.SortOrder) []svg.Node {
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
 		if it == nil || it.AsTree().This == nil {
@@ -222,7 +223,7 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 		}
 		sls = append(sls, it)
 	}
-	if descendingSort {
+	if order == reflectx.Descending {
 		sort.Slice(sls, func(i, j int) bool {
 			return es.Selected[sls[i]].Order > es.Selected[sls[j]].Order
 		})
@@ -251,7 +252,7 @@ func (sv *SVG) DepthMap() map[tree.Node]int {
 // SelectedListDepth returns list of selected items, sorted either
 // ascending or descending according to depth:
 // ascending = deepest first, descending = highest first
-func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node {
+func (es *EditState) SelectedListDepth(sv *SVG, order reflectx.SortOrder) []svg.Node {
 	dm := sv.DepthMap()
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
@@ -261,7 +262,7 @@ func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node 
 		}
 		sls = append(sls, it)
 	}
-	if descendingSort {
+	if order == reflectx.Descending {
 		sort.Slice(sls, func(i, j int) bool { // TODO: use slices.SortFunc
 			return dm[sls[i]] > dm[sls[j]]
 		})
@@ -281,7 +282,7 @@ func (es *EditState) FirstSelected() svg.Node {
 	if !es.HasSelected() {
 		return nil
 	}
-	sls := es.SelectedList(true)
+	sls := es.SelectedList(reflectx.Descending)
 	return sls[0]
 }
 
@@ -294,7 +295,7 @@ func (es *EditState) FirstSelectedNode() svg.Node {
 	if !es.HasSelected() {
 		return nil
 	}
-	sls := es.SelectedList(true)
+	sls := es.SelectedList(reflectx.Descending)
 	for _, sl := range sls {
 		fsl := svg.FirstNonGroupNode(sl)
 		if fsl != nil {
@@ -354,7 +355,7 @@ func (es *EditState) SanitizeSelected() {
 
 // SelectedNames returns names of selected items, in order selected
 func (es *EditState) SelectedNames() []string {
-	sl := es.SelectedList(false)
+	sl := es.SelectedList(reflectx.Ascending)
 	ns := len(sl)
 	if ns == 0 {
 		return nil

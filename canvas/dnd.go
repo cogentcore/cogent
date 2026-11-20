@@ -9,6 +9,7 @@ import (
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fileinfo/mimedata"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
@@ -26,7 +27,7 @@ func (sv *SVG) dragOut(e events.Event) bool {
 		return false
 	}
 	es := sv.EditState()
-	sl := es.SelectedList(false)
+	sl := es.SelectedList(reflectx.Ascending)
 	tvl := sv.Canvas.ItemsAsTrees(sl...)
 	if len(tvl) == 0 {
 		return false

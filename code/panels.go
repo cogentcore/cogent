@@ -178,7 +178,7 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Ed
 		core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
 			SetKey(keymap.Copy).SetState(!txv.HasSelection(), states.Disabled).
 			OnClick(func(e events.Event) {
-				txv.Copy(true)
+				txv.Copy(core.SelectReset)
 			})
 		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
 			SetShortcut(terminal.ShortcutChord(keymap.Kill)).

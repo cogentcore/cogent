@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/base/dirsort"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -164,7 +165,7 @@ func (dt *DirTable) SelectedFiles() []*fileinfo.FileInfo {
 		return nil
 	}
 	var fis []*fileinfo.FileInfo
-	for _, idx := range dt.table.SelectedIndexesList(false) {
+	for _, idx := range dt.table.SelectedIndexesList(reflectx.Ascending) {
 		if idx >= 0 && idx < len(dt.files) {
 			fis = append(fis, dt.files[idx])
 		}
