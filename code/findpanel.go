@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/runes"
 	"cogentcore.org/core/text/search"
@@ -235,7 +236,7 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	fbuf.AppendTextMarkup(outlns, outmus)
 	ftv.CursorStartDoc()
 	fv.Update()
-	ok := ftv.CursorNextLink(false) // no wrap
+	ok := ftv.CursorNextLink(textcore.NoWraparound)
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
 	}
@@ -252,7 +253,7 @@ func (fv *FindPanel) FindAction() {
 	if !fv.CompileRegexp() {
 		return
 	}
-	fv.Code.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Languages)
+	fv.Code.Find(fp.Find, fp.Replace, textpos.CaseSensitive(!fp.IgnoreCase), textpos.MatchSyntax(fp.Regexp), fp.Loc, fp.Languages)
 }
 
 // CheckValidRegexp returns false if using regexp and it is not valid
@@ -277,7 +278,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 	ftv := fv.TextEditor()
 	tl, _ := ftv.OpenLinkAt(ftv.CursorPos)
 	if tl == nil {
-		ok := ftv.CursorNextLink(false) // no wrap
+		ok := ftv.CursorNextLink(textcore.NoWraparound)
 		if !ok {
 			return false
 		}
@@ -291,7 +292,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		return false
 	}
 	if reg.IsNil() {
-		ok := ftv.CursorNextLink(false) // no wrap
+		ok := ftv.CursorNextLink(textcore.NoWraparound)
 		if !ok {
 			return false
 		}
@@ -312,10 +313,10 @@ func (fv *FindPanel) ReplaceAction() bool {
 			rg := tv.Lines.Region(reg.Start, reg.End)
 			b := rg.ToBytes()
 			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
-			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), false)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), lines.ReplaceNoMatchCase)
 		} else {
 			// MatchCase only if doing IgnoreCase
-			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, fp.IgnoreCase)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, lines.MatchCase(fp.IgnoreCase))
 		}
 		replaced = true
 
@@ -337,7 +338,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 
 	tv.HighlightsReset()
 
-	ok = ftv.CursorNextLink(false) // no wrap
+	ok = ftv.CursorNextLink(textcore.NoWraparound)
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	} else if fv.Renaming {
@@ -416,7 +417,7 @@ func (fv *FindPanel) ReplaceAll() {
 // NextFind shows next find result
 func (fv *FindPanel) NextFind() {
 	ftv := fv.TextEditor()
-	ok := ftv.CursorNextLink(true) // wrap
+	ok := ftv.CursorNextLink(textcore.Wraparound)
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
 	}
@@ -425,7 +426,7 @@ func (fv *FindPanel) NextFind() {
 // PrevFind shows previous find result
 func (fv *FindPanel) PrevFind() {
 	ftv := fv.TextEditor()
-	ok := ftv.CursorPrevLink(true) // wrap
+	ok := ftv.CursorPrevLink(textcore.Wraparound)
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
 	}
@@ -612,12 +613,12 @@ func (cv *Code) CallFind(ctx core.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc Locations, langs []fileinfo.Known) { //types:add
+func (cv *Code) Find(find, repl string, useCase textpos.CaseSensitive, regExp textpos.MatchSyntax, loc Locations, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
-	cv.Settings.Find.IgnoreCase = ignoreCase
-	cv.Settings.Find.Regexp = regExp
+	cv.Settings.Find.IgnoreCase = useCase == textpos.IgnoreCase
+	cv.Settings.Find.Regexp = bool(regExp)
 	cv.Settings.Find.Languages = langs
 	cv.Settings.Find.Loc = loc
 	cv.Settings.Find.Find = find
@@ -663,12 +664,12 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	switch loc {
 	case Open:
 		openFilesPaths = cv.Files.OpenPaths()
-		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
+		res, err = search.Paths(openFilesPaths, find, useCase, regExp, langs, excludeOpen...)
 	case All:
-		res, err = search.All(root, find, ignoreCase, regExp, langs, excludeOpen...)
+		res, err = search.All(root, find, useCase, regExp, langs, excludeOpen...)
 	case Dir:
 		openFilesPaths = []string{adir}
-		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
+		res, err = search.Paths(openFilesPaths, find, useCase, regExp, langs, excludeOpen...)
 	case File:
 		if atv.Lines == nil {
 			core.MessageSnackbar(cv, "No buffer for active editor")
@@ -678,7 +679,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 			cnt, matches := atv.Lines.SearchRegexp(re)
 			res = append(res, search.Results{Filepath: atv.Lines.Filename(), Count: cnt, Matches: matches})
 		} else {
-			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
+			cnt, matches := atv.Lines.Search([]byte(find), useCase, textpos.AnyText)
 			res = append(res, search.Results{Filepath: atv.Lines.Filename(), Count: cnt, Matches: matches})
 		}
 	}
@@ -687,7 +688,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 			ores := cv.OpenFiles.SearchRegexpInPaths(openFilesPaths, re, langs)
 			res = append(ores, res...)
 		} else {
-			ores := cv.OpenFiles.SearchInPaths(openFilesPaths, find, ignoreCase, langs)
+			ores := cv.OpenFiles.SearchInPaths(openFilesPaths, find, useCase, langs)
 			res = append(ores, res...)
 		}
 	}

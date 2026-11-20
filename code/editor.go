@@ -140,7 +140,7 @@ func (cv *Code) CopyRect() { //types:add
 	if tv.Lines == nil {
 		return
 	}
-	tv.CopyRect(true)
+	tv.CopyRect(core.SelectReset)
 }
 
 // PasteRect cuts rectangle in active text view

@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/text/search"
+	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +44,7 @@ func TestFindReplace(t *testing.T) {
 					cv.ViewFileInIndex(path("a.txt"), 0)
 					cv.SetActiveEditorIndex(0)
 				}
-				cv.Find(find, repl, ignoreCase, re, loc, langs)
+				cv.Find(find, repl, textpos.CaseSensitive(!ignoreCase), textpos.MatchSyntax(re), loc, langs)
 				fv = cv.Tabs().TabByName("Find").Child(0).(*FindPanel)
 			})
 			return findResults(fv)

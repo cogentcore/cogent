@@ -634,7 +634,7 @@ func (sv *SVG) UndoSave(action, data string) {
 	}
 	es.Changed = true
 	b := &bytes.Buffer{}
-	errors.Log(sv.SVG.WriteXML(b, false))
+	errors.Log(sv.SVG.WriteXML(b, svg.NoIndentXML))
 	bs := strings.Split(b.String(), "\n")
 	es.Undos.Save(action, data, bs)
 }
@@ -643,7 +643,7 @@ func (sv *SVG) UndoSave(action, data string) {
 func (sv *SVG) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	errors.Log(sv.SVG.WriteXML(b, false))
+	errors.Log(sv.SVG.WriteXML(b, svg.NoIndentXML))
 	bs := strings.Split(b.String(), "\n")
 	es.Undos.SaveReplace(action, data, bs)
 }
@@ -655,7 +655,7 @@ func (sv *SVG) Undo() string {
 	es.ResetSelectedNodes()
 	if es.Undos.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		errors.Log(sv.SVG.WriteXML(b, false))
+		errors.Log(sv.SVG.WriteXML(b, svg.NoIndentXML))
 		bs := strings.Split(b.String(), "\n")
 		es.Undos.SaveUndoStart(bs)
 	}

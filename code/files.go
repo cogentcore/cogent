@@ -95,10 +95,10 @@ func (of *OpenFiles) NChanged() int {
 	return cnt
 }
 
-// SearchInPaths returns search results for given string literal with ignoreCase
+// SearchInPaths returns search results for given string literal with useCase
 // setting, in all open files contained directly in given paths. If paths is nil
 // then all open files are searched.
-func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool, langs []fileinfo.Known) []search.Results {
+func (of *OpenFiles) SearchInPaths(paths []string, find string, useCase textpos.CaseSensitive, langs []fileinfo.Known) []search.Results {
 	var res []search.Results
 	for _, ln := range of.Values {
 		path := filepath.Dir(ln.Filename())
@@ -108,7 +108,7 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 		if !search.LangCheck(ln.FileInfo(), langs) {
 			continue
 		}
-		cnt, matches := ln.Search([]byte(find), ignoreCase, false)
+		cnt, matches := ln.Search([]byte(find), useCase, textpos.AnyText)
 		if cnt > 0 {
 			res = append(res, search.Results{Filepath: ln.Filename(), Count: cnt, Matches: matches})
 		}

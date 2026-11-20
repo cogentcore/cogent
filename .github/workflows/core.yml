@@ -39,8 +39,10 @@ jobs:
         with:
           go-version: '1.27.2'
 
-      - name: Install Core
-        run: go install cogentcore.org/core@main && core setup
+      - name: Set up Core
+        uses: cogentcore/core/.github/actions/setup-core@main
+        with:
+          tools: true
 
       - name: Copy landing page
         run: mkdir -p static && cp -r docs/. static/ && cp docs/index.html static/404.html

@@ -360,7 +360,7 @@ func typesTree(b []byte) *mergeTree {
 	json.Unmarshal(b, &types)
 	mt := newMergeTree()
 	for _, lt := range types {
-		mt.add(lt.Name, "", setProps(&ListType{Name: lt.Name}))
+		mt.add(lt.Name, "", setProps(&ListType{Name: lt.Name, Reminder: lt.Reminder}))
 		for _, f := range lt.Fields {
 			mt.add(lt.Name+fieldSep+f.Name, lt.Name, setProps(f))
 		}

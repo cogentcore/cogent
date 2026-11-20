@@ -7,6 +7,7 @@ package canvas
 import (
 	"image/color"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -108,7 +109,7 @@ func (cv *Canvas) SetText(txt string) {
 	if len(es.Selected) != 1 { // only if exactly one selected
 		return
 	}
-	tn, ok := es.SelectedList(false)[0].(*svg.Text)
+	tn, ok := es.SelectedList(reflectx.Ascending)[0].(*svg.Text)
 	if !ok {
 		return
 	}

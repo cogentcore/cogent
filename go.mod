@@ -3,8 +3,8 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.44
-	cogentcore.org/lab v0.2.21
+	cogentcore.org/core v0.5.47
+	cogentcore.org/lab v0.2.22
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v3 v3.0.0-alpha.5.0.20261015230651-e17ffc9bfce4
@@ -53,7 +53,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
-	github.com/cogentcore/mvm v0.0.0-20261026193832-5ebd19c3fa21 // indirect
+	github.com/cogentcore/mvm v0.0.0-20261120030535-e3f31e8a9ab5 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

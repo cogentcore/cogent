@@ -33,6 +33,11 @@ type SettingsData struct { //types:add
 	// repository, which makes them the same on all of the devices,
 	// with the history of all of the changes in the repository.
 	Sync SyncSettings
+
+	// Reminders has the settings for reminders, which are notifications
+	// for the dates of the items, such as due dates, in the date fields of
+	// the list types with the Remind flag.
+	Reminders ReminderSettings
 }
 
 // Apply applies the settings, after they are edited.
@@ -50,6 +55,11 @@ var theLists *Lists
 func (ls *Lists) settingsApplied() {
 	ls.Scene.Update() // for the sync button in the toolbar
 	ls.Sync()
+	if Settings.Reminders.On && !ls.remind.on {
+		ls.requestReminders()
+	}
+	ls.remind.on = Settings.Reminders.On
+	ls.syncReminders()
 }
 
 // splits returns the [core.Splits] of the tree of lists and the current list.

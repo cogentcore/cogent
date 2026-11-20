@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"cogentcore.org/core/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,4 +30,26 @@ func TestTypesRoundTrip(t *testing.T) {
 		}
 	}
 	assert.Equal(t, string(b), string(marshal(back)), "the same file")
+}
+
+// TestFieldsDragMoves tests that the fields of the list types, in the
+// table of the list types, are reordered by dragging them, which moves
+// them, as their drag-moves struct tag sets.
+func TestFieldsDragMoves(t *testing.T) {
+	b := core.NewBody()
+	types := standardTypes()
+	tb := core.NewTable(b).SetSlice(&types)
+	core.AssertRender(t, b, "fields-drag-moves", func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		var lb *core.ListButton
+		tb.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if x, ok := cw.(*core.ListButton); ok && lb == nil {
+				lb = x
+			}
+			return lb == nil
+		})
+		require.NotNil(t, lb, "the button of the fields")
+		assert.True(t, lb.DragMoves)
+	})
 }

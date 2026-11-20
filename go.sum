@@ -1,9 +1,9 @@
 codeberg.org/go-pdf/fpdf v0.12.0 h1:g8E/1VqGqB2lZUUaqQrrTnA0IEJLPTTX1DZ0qS/ZmhU=
 codeberg.org/go-pdf/fpdf v0.12.0/go.mod h1:WJNJ2bvCj81rZBdhOf7lKOGoSl+OKMXcIcXqDcP8r5Y=
-cogentcore.org/core v0.5.44 h1:vRRPKYAWrVkXDu2NNmaT5PmaY+kGhgA9h2B0PEOcw78=
-cogentcore.org/core v0.5.44/go.mod h1:UBL5a8xXnSCCjbH8SX6CY4JvMqoP7M3QMFoC22Q6rd4=
-cogentcore.org/lab v0.2.21 h1:feII4rMx8CGOwXrF9pPwemmmX8V2+4Jgy6u/m6TN/3g=
-cogentcore.org/lab v0.2.21/go.mod h1:U8DMeZHQSv9E4qhXYQSMWACPUrKvD23uf3QyaLefZxU=
+cogentcore.org/core v0.5.47 h1:Ku8iLiTdwLyQpEMXdPXrOXgEyemLZzYkPmE5XQnZySY=
+cogentcore.org/core v0.5.47/go.mod h1:1B5wZItgU/vx2JXACHQ21kGXSiKR8JqVBIJbEXPWKLk=
+cogentcore.org/lab v0.2.22 h1:QzWGLmHCmV/vwa3ruJvougJ26cGTZQgTsbqHPkYGGrc=
+cogentcore.org/lab v0.2.22/go.mod h1:xgm7skn8rcxPMIjOrR92S4EbMOmjbHqqT8OycwSVGKg=
 git.sr.ht/~sbinet/overlayfs v0.1.1 h1:HvCHXT1cs8RMSjNLQXxPPosB2hgR3tRC8RniH0f3ESg=
 git.sr.ht/~sbinet/overlayfs v0.1.1/go.mod h1:TmrIWKlxyPJJ7vchTqk85DUcW6IDsIa7ONLvSGIw438=
 github.com/Bios-Marcel/wastebasket/v2 v2.0.3 h1:TkoDPcSqluhLGE+EssHu7UGmLgUEkWg7kNyHyyJ3Q9g=
@@ -65,8 +65,8 @@ github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJ
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vcU=
 github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBSc8r4zxgA=
-github.com/cogentcore/mvm v0.0.0-20261026193832-5ebd19c3fa21 h1:wqFj9c1Qc7f38QKuouoGnWOx2W3T5uNWJCec52TCpv4=
-github.com/cogentcore/mvm v0.0.0-20261026193832-5ebd19c3fa21/go.mod h1:K/Zh/ATxZT2WBuvu5pkyP1s11+9MwFu4whU6fXET0ew=
+github.com/cogentcore/mvm v0.0.0-20261120030535-e3f31e8a9ab5 h1:+8inEpwi0WhT+V2sGqRxN8tSCTU5iJgUiOQ8ZW2T/BY=
+github.com/cogentcore/mvm v0.0.0-20261120030535-e3f31e8a9ab5/go.mod h1:K/Zh/ATxZT2WBuvu5pkyP1s11+9MwFu4whU6fXET0ew=
 github.com/cogentcore/star-tex v0.7.2-0.20260625151004-a16970c7d698 h1:GsehCn/Dw8hhYAonDQO48EJz63sAAF4wxEhHmHt/xKA=
 github.com/cogentcore/star-tex v0.7.2-0.20260625151004-a16970c7d698/go.mod h1:pdlQowLCSMiGfeOM6M7yz09OmR2fzlmFYcvR/u6QaRQ=
 github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e h1:seoKVtXIRWYZrY3vlwaos/PifRWJsKi48xroc9cGXis=

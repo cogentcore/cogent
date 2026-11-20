@@ -48,3 +48,85 @@ func (i FieldTypes) MarshalText() ([]byte, error) { return []byte(i.String()), n
 func (i *FieldTypes) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "FieldTypes")
 }
+
+var _FieldFlagsValues = []FieldFlags{0, 1}
+
+// FieldFlagsN is the highest valid value for type FieldFlags, plus one.
+const FieldFlagsN FieldFlags = 2
+
+var _FieldFlagsValueMap = map[string]FieldFlags{`Detail`: 0, `Remind`: 1}
+
+var _FieldFlagsDescMap = map[FieldFlags]string{0: `Detail is for a field that is only in the form of an item, which its edit button opens, and not in the table, as for notes.`, 1: `Remind is for a date field whose dates have reminders, which are notifications of the operating system, as for due dates (see [ListType.Reminder]), for the items that are not done (that are hidden when the list is filtered: see [Field.Filter]).`}
+
+var _FieldFlagsMap = map[FieldFlags]string{0: `Detail`, 1: `Remind`}
+
+// String returns the string representation of this FieldFlags value.
+func (i FieldFlags) String() string { return enums.BitFlagString(i, _FieldFlagsValues) }
+
+// BitIndexString returns the string representation of this FieldFlags value
+// if it is a bit index value (typically an enum constant), and
+// not an actual bit flag value.
+func (i FieldFlags) BitIndexString() string { return enums.String(i, _FieldFlagsMap) }
+
+// SetString sets the FieldFlags value from its string representation,
+// and returns an error if the string is invalid.
+func (i *FieldFlags) SetString(s string) error { *i = 0; return i.SetStringOr(s) }
+
+// SetStringOr sets the FieldFlags value from its string representation
+// while preserving any bit flags already set, and returns an
+// error if the string is invalid.
+func (i *FieldFlags) SetStringOr(s string) error {
+	return enums.SetStringOr(i, s, _FieldFlagsValueMap, "FieldFlags")
+}
+
+// Int64 returns the FieldFlags value as an int64.
+func (i FieldFlags) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the FieldFlags value from an int64.
+func (i *FieldFlags) SetInt64(in int64) { *i = FieldFlags(in) }
+
+// Desc returns the description of the FieldFlags value.
+func (i FieldFlags) Desc() string { return enums.Desc(i, _FieldFlagsDescMap) }
+
+// FieldFlagsValues returns all possible values for the type FieldFlags.
+func FieldFlagsValues() []FieldFlags { return _FieldFlagsValues }
+
+// Values returns all possible values for the type FieldFlags.
+func (i FieldFlags) Values() []enums.Enum { return enums.Values(_FieldFlagsValues) }
+
+// HasFlag returns whether these bit flags have the given bit flag set.
+func (i *FieldFlags) HasFlag(f enums.BitFlag) bool {
+	if enums.FlagTypeAssert {
+		if b, ok := f.(FieldFlags); ok {
+			return *i&(1<<uint32(b)) != 0
+		}
+	}
+	return *i&(1<<uint32(f.Int64())) != 0
+}
+
+// SetFlag sets the value of the given flags in these flags to the given value.
+func (i *FieldFlags) SetFlag(on bool, f ...enums.BitFlag) {
+	var mask FieldFlags
+	for _, v := range f {
+		if enums.FlagTypeAssert {
+			if b, ok := v.(FieldFlags); ok {
+				mask |= 1 << uint32(b)
+				continue
+			}
+		}
+		mask |= 1 << v.Int64()
+	}
+	if on {
+		*i |= mask
+	} else {
+		*i &^= mask
+	}
+}
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i FieldFlags) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *FieldFlags) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "FieldFlags")
+}
