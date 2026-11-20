@@ -13,6 +13,8 @@ import (
 	"os"
 	"strings"
 
+	"cogentcore.org/cogent/files/docs"
+	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
@@ -27,6 +29,7 @@ var appIcon string
 func main() {
 	TheConsole.Init()
 	core.AppIcon = appIcon
+	content.SetAppHelp(docs.FS)
 	root, err := os.UserHomeDir()
 	if err != nil {
 		root = "."

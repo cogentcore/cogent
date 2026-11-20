@@ -12,6 +12,7 @@ package lists
 
 import (
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 )
@@ -19,11 +20,13 @@ import (
 // NewApp makes the app in the given body, with the lists in the given
 // directory, or the app data directory if it is empty, with the toolbar
 // in the top bar, and syncing once the body is shown, with the mobile
-// layout if mobile is true (see [Lists.Mobile]).
+// layout if mobile is true (see [Lists.Mobile]), and the help of the app
+// menu opening the [Docs].
 func NewApp(b *core.Body, dir string, mobile bool) *Lists {
 	if dir == "" {
 		dir = core.TheApp.AppDataDir()
 	}
+	content.SetAppHelp(Docs)
 	ls := NewLists(b)
 	ls.Mobile = mobile
 	theLists = ls

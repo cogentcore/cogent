@@ -15,6 +15,7 @@ import (
 
 	"cogentcore.org/cogent/code"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/system"
 	_ "cogentcore.org/core/text/highlighting/alllexers"
@@ -28,6 +29,7 @@ var appIcon string
 
 func main() {
 	core.AppIcon = appIcon
+	content.SetAppHelp(code.Docs)
 	pdir := core.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
 	_ = lfnm

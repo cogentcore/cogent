@@ -44,8 +44,10 @@ jobs:
         with:
           tools: true
 
-      - name: Copy landing page
-        run: mkdir -p static && cp -r docs/. static/ && cp docs/index.html static/404.html
+      # the website of the apps, with their docs, at the root, with its 404.html
+      # fallback; the vanity URL keeps go get cogentcore.org/cogent/... working
+      - name: Build Site
+        run: core build js -dir site -o static -vanity-url cogentcore.org/cogent -github-vanity-repository cogentcore/cogent
 
       - name: Build Code
         run: core build js -dir code/cmd/cogentcode -o static/code
@@ -58,6 +60,12 @@ jobs:
 
       - name: Build Marbles
         run: core build js -dir marbles -o static/marbles
+
+      - name: Build Lists
+        run: core build js -dir lists/cmd/mobile -o static/lists
+
+      - name: Build Files
+        run: core build js -dir files -o static/files
 
       - name: Setup Pages
         id: pages
