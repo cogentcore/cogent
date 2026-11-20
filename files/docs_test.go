@@ -7,6 +7,7 @@ package main
 import (
 	"testing"
 
+	"cogentcore.org/cogent/files/docs"
 	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
@@ -18,6 +19,6 @@ import (
 func TestDocs(t *testing.T) {
 	b := core.NewBody()
 	b.Styler(func(s *styles.Style) { s.Min.Set(units.Dp(1000), units.Dp(800)) })
-	content.NewContent(b).SetSource(docs)
+	content.NewContent(b).SetSource(docs.FS)
 	core.AssertRender(t, b, "docs")
 }

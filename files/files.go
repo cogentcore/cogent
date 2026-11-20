@@ -9,11 +9,11 @@ package main
 //go:generate core generate
 
 import (
-	"embed"
+	_ "embed"
 	"os"
 	"strings"
 
-	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/cogent/files/docs"
 	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
@@ -26,17 +26,10 @@ import (
 //go:embed icon.svg
 var appIcon string
 
-//go:embed docs
-var docsFS embed.FS
-
-// docs is the documentation of the app, whose home page is home.md,
-// which the Help of the app menu opens.
-var docs = fsx.Sub(docsFS, "docs")
-
 func main() {
 	TheConsole.Init()
 	core.AppIcon = appIcon
-	content.SetAppHelp(docs)
+	content.SetAppHelp(docs.FS)
 	root, err := os.UserHomeDir()
 	if err != nil {
 		root = "."
