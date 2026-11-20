@@ -330,7 +330,6 @@ func (ls *Lists) load(files map[string][]byte) {
 	ls.Root.ID = ""
 	ls.setIDs()
 	ls.loadLocal()
-	ls.migrateTypes()
 	ls.keepUsedTypes()
 }
 
@@ -353,7 +352,6 @@ func (ls *Lists) loadOld(files map[string][]byte, root *listData) {
 	ls.Root = newList(root)
 	ls.Root.Group = true
 	ls.setIDs()
-	ls.migrateTypes()
 	ls.keepUsedTypes()
 }
 

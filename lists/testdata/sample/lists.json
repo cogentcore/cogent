@@ -62,7 +62,7 @@
     },
     {
      "Name": "Chores",
-     "Type": "To do",
+     "Type": "Todo",
      "Items": [
       {
        "Values": {

@@ -26,7 +26,7 @@ func item(id, name, done string, items ...*Item) *Item {
 
 // listJSON returns the file of a list with the given items.
 func listJSON(items ...*Item) []byte {
-	return marshal(&listFile{Name: "L", Type: "To do", Items: items})
+	return marshal(&listFile{Name: "L", Type: todoType, Items: items})
 }
 
 // itemsOf returns the items of the given file of a list, as text: the
@@ -116,14 +116,14 @@ func TestMergeItems(t *testing.T) {
 
 func TestMergeListSettings(t *testing.T) {
 	file := func(sort string, widths map[string]float32, filtered bool) []byte {
-		return marshal(&listFile{Name: "L", Type: "To do", Sort: sort, ColumnWidths: widths, Filtered: filtered, Items: []*Item{item("a", "A", "")}})
+		return marshal(&listFile{Name: "L", Type: todoType, Sort: sort, ColumnWidths: widths, Filtered: filtered, Items: []*Item{item("a", "A", "")}})
 	}
 	lf := mergeList(file("", nil, false), file("Item", nil, false), file("", map[string]float32{"Item": 90}, true), "New name", false)
 	assert.Equal(t, "Item", lf.Sort)
 	assert.Equal(t, map[string]float32{"Item": 90}, lf.ColumnWidths)
 	assert.True(t, lf.Filtered)
 	assert.Equal(t, "New name", lf.Name)
-	assert.Equal(t, "To do", lf.Type)
+	assert.Equal(t, todoType, lf.Type)
 	assert.Len(t, lf.Items, 1)
 }
 
@@ -135,7 +135,7 @@ func listsFiles(lists []*treeNode, items map[string][]*Item, types ...*ListType)
 	add = func(tns []*treeNode) {
 		for _, tn := range tns {
 			if !tn.Group {
-				files[listPath(tn.ID)] = marshal(&listFile{Name: tn.Name, Type: "To do", Items: items[tn.ID]})
+				files[listPath(tn.ID)] = marshal(&listFile{Name: tn.Name, Type: todoType, Items: items[tn.ID]})
 			}
 			add(tn.Lists)
 		}
@@ -167,7 +167,7 @@ func TestMergeFiles(t *testing.T) {
 	home := func(lists ...*treeNode) *treeNode { return &treeNode{ID: "h", Name: "Home", Group: true, Lists: lists} }
 	gr := &treeNode{ID: "g", Name: "Groceries"}
 	ch := &treeNode{ID: "c", Name: "Chores"}
-	todo := &ListType{Name: "To do", Fields: []*Field{{Name: "Item"}}}
+	todo := &ListType{Name: todoType, Fields: []*Field{{Name: "Item"}}}
 	shop := &ListType{Name: "Shopping", Fields: []*Field{{Name: "Item"}}}
 	books := &ListType{Name: "Books", Fields: []*Field{{Name: "Title"}}}
 	items := map[string][]*Item{"g": {item("a", "Apples", "")}, "c": {item("l", "Laundry", "")}}
@@ -203,8 +203,8 @@ func TestMergeFiles(t *testing.T) {
 // settings of the fields, also without a base, as on the first sync of
 // a device whose types do not have the newer settings.
 func TestMergeTypes(t *testing.T) {
-	old := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check}, {Name: "Done on", Type: Date}}}}
-	newer := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}}
+	old := []*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check}, {Name: "Done on", Type: Date}}}}
+	newer := []*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}}
 	typesOf := func(b []byte) []*ListType {
 		var types []*ListType
 		assert.NoError(t, json.Unmarshal(b, &types))
@@ -214,9 +214,9 @@ func TestMergeTypes(t *testing.T) {
 	assert.Equal(t, newer, typesOf(merged[typesFile]), "the settings that are set win")
 
 	// different settings of a field, and a field added, on each side
-	ours := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}}
-	theirs := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Default: "New"}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
+	ours := []*ListType{{Name: todoType, Fields: []*Field{{Name: "Task", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "true"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}}
+	theirs := []*ListType{{Name: todoType, Fields: []*Field{{Name: "Task", Default: "New"}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
 	merged = mergeFiles(map[string][]byte{typesFile: marshal(newer)}, map[string][]byte{typesFile: marshal(ours)}, map[string][]byte{typesFile: marshal(theirs)}, false)
-	want := []*ListType{{Name: "To do", Fields: []*Field{{Name: "Task", Default: "New", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
+	want := []*ListType{{Name: todoType, Fields: []*Field{{Name: "Task", Default: "New", Tags: `width:"30"`}, {Name: "Done", Type: Check, Filter: "false"}, {Name: "Done on", Type: Date, SetBy: "Done"}, {Name: "Notes"}}}, {Name: "Books", Fields: []*Field{{Name: "Title"}}}}
 	assert.Equal(t, want, typesOf(merged[typesFile]))
 }

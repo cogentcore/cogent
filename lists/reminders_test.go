@@ -15,23 +15,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestOldDetail tests that the Detail bool of the fields in older files
-// becomes the Detail flag, also in a merge of the list types.
-func TestOldDetail(t *testing.T) {
+// TestFieldFlags tests the flags of fields in files, as text, also in a
+// merge of the list types.
+func TestFieldFlags(t *testing.T) {
 	var f Field
-	require.NoError(t, json.Unmarshal([]byte(`{"Name": "Notes", "Detail": true}`), &f))
-	assert.Equal(t, "Notes", f.Name)
-	assert.True(t, f.Flags.HasFlag(Detail))
-	assert.False(t, f.Flags.HasFlag(Remind))
-	assert.Contains(t, string(marshal(&f)), `"Flags": "Detail"`)
-
 	require.NoError(t, json.Unmarshal([]byte(`{"Name": "Due", "Flags": "Detail|Remind"}`), &f))
 	assert.True(t, f.Flags.HasFlag(Detail) && f.Flags.HasFlag(Remind))
+	f.Flags = detail
+	assert.Contains(t, string(marshal(&f)), `"Flags": "Detail"`)
 
-	// an old base and theirs, with the reminder time changed in ours
-	old := []byte(`[{"Name": "To do", "Fields": [{"Name": "Task"}, {"Name": "Notes", "Detail": true}]}]`)
-	ours := marshal([]*ListType{{Name: "To do", Reminder: "8:00", Fields: []*Field{{Name: "Task"}, {Name: "Notes", Flags: detail}}}})
-	merged := mergeFiles(map[string][]byte{typesFile: old}, map[string][]byte{typesFile: ours}, map[string][]byte{typesFile: old}, false)
+	// the reminder time changed in ours, and the Detail flag in theirs
+	base := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
+	ours := marshal([]*ListType{{Name: todoType, Reminder: "8:00", Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
+	theirs := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes", Flags: detail}}}})
+	merged := mergeFiles(map[string][]byte{typesFile: base}, map[string][]byte{typesFile: ours}, map[string][]byte{typesFile: theirs}, false)
 	var types []*ListType
 	require.NoError(t, json.Unmarshal(merged[typesFile], &types))
 	require.Len(t, types, 1)
@@ -116,36 +113,4 @@ func TestReminderClicked(t *testing.T) {
 		assert.Same(t, l, ls.Current)
 		b.AsyncUnlock()
 	})
-}
-
-// TestMigrateTodo tests the migration of the "To do" list type of older
-// libraries to "Todo", with reminders for its Due field, and of its lists.
-func TestMigrateTodo(t *testing.T) {
-	ls := NewLists(core.NewBody())
-	types := standardTypes()
-	types[0].Name = oldTodoType
-	types[0].Fields[2].Flags = 0 // Due without Remind, as before
-	files := map[string][]byte{
-		typesFile: marshal(types),
-		treeFile:  marshal(&treeNode{Name: "Lists", Group: true, Lists: []*treeNode{{ID: "l1", Name: "Chores"}}}),
-	}
-	files[listPath("l1")] = marshal(&listFile{Name: "Chores", Type: oldTodoType})
-	ls.load(files)
-	assert.Equal(t, todoType, ls.Types[0].Name)
-	assert.True(t, ls.Types[0].Fields[2].Flags.HasFlag(Remind), "Due")
-	assert.Equal(t, todoType, ls.Root.Child(0).(*List).TypeName)
-	assert.Len(t, ls.Types, 5, "no type kept for the old name")
-
-	// once: Remind turned off stays off
-	ls.Types[0].Fields[2].Flags = 0
-	ls.load(ls.files())
-	assert.False(t, ls.Types[0].Fields[2].Flags.HasFlag(Remind))
-
-	// a type named Todo by the user, with To do, stays as it is
-	types[0].Name = oldTodoType
-	both := append(types, &ListType{Name: todoType, Fields: []*Field{{Name: "Item"}}})
-	files[typesFile] = marshal(both)
-	ls.load(files)
-	assert.Equal(t, oldTodoType, ls.Types[0].Name)
-	assert.Equal(t, oldTodoType, ls.Root.Child(0).(*List).TypeName)
 }
