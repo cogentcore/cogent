@@ -22,8 +22,13 @@ jobs:
       with:
         go-version: '1.27.2'
 
+    # the system packages (plus the audio dependencies of video), the core command,
+    # and its Go tools (goimports, goalimports, goalls)
     - name: Set up Core
-      run: go install cogentcore.org/core@main && core setup
+      uses: cogentcore/core/.github/actions/setup-core@main
+      with:
+        extra-packages: libasound2-dev
+        tools: true
 
     # apt does not have the FFmpeg version that go-astiav requires, so it is
     # built from source, as in the CI of go-astiav and of core, and cached
@@ -46,9 +51,8 @@ jobs:
 
     - name: Set FFmpeg environment variables
       run: |
-        echo "PKG_CONFIG_PATH=$FFMPEG_PATH/lib/pkgconfig" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$FFMPEG_PATH/lib" >> $GITHUB_ENV
-        sudo apt-get install -y libasound2-dev
+        echo "PKG_CONFIG_PATH=$FFMPEG_PATH/lib/pkgconfig" >> "$GITHUB_ENV"
+        echo "LD_LIBRARY_PATH=$FFMPEG_PATH/lib" >> "$GITHUB_ENV"
 
     # the tests of the LSP client and the debugger of Cogent Code use gopls and delve
     - name: Install gopls and delve
