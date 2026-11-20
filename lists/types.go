@@ -88,9 +88,42 @@ type Field struct { //types:add
 	// like Done, for which the items are hidden when the list is filtered.
 	Filter string
 
-	// Detail is whether the field is only in the form of an item, which
+	// Flags are options for the field: Detail for a field that is only in
+	// the form of an item, as for notes, and Remind for a date field
+	// whose dates have reminders, as for due dates.
+	Flags FieldFlags `width:"22"`
+}
+
+// FieldFlags are options for a field of a list type ([Field.Flags]).
+type FieldFlags int64 //enums:bitflag
+
+const (
+	// Detail is for a field that is only in the form of an item, which
 	// its edit button opens, and not in the table, as for notes.
-	Detail bool
+	Detail FieldFlags = iota
+
+	// Remind is for a date field whose dates have reminders, which are
+	// notifications of the operating system, as for due dates
+	// (see [ListType.Reminder]), for the items that are not done
+	// (that are hidden when the list is filtered: see [Field.Filter]).
+	Remind
+)
+
+// UnmarshalJSON reads a field, converting the Detail bool of older files
+// to the [Detail] flag.
+func (f *Field) UnmarshalJSON(b []byte) error {
+	type field Field // without this method
+	old := struct {
+		*field
+		Detail bool
+	}{field: (*field)(f)}
+	if err := json.Unmarshal(b, &old); err != nil {
+		return err
+	}
+	if old.Detail {
+		f.Flags.SetFlag(true, Detail)
+	}
+	return nil
 }
 
 // ListType is a type of list, with the fields of its items.
@@ -101,6 +134,12 @@ type ListType struct { //types:add
 
 	// Name is the name of the list type.
 	Name string
+
+	// Reminder is the time of day of the reminders of the items of the
+	// lists, such as 9:00 or 5:30pm, for the date fields with the Remind
+	// flag (see [Field.Flags]) that have dates without times. If it is
+	// empty, the time in the reminder settings is used.
+	Reminder string
 
 	// Fields are the fields of the items, the columns of the lists.
 	Fields []*Field
@@ -133,7 +172,7 @@ func (lt *ListType) StructType() reflect.Type {
 		if f.Default != "" {
 			tags += fmt.Sprintf(" default:%q", f.Default)
 		}
-		if f.Detail && len(fields) > 0 { // the first field is the tree
+		if f.Flags.HasFlag(Detail) && len(fields) > 0 { // the first field is the tree
 			tags += ` table:"-"`
 		}
 		tags += " " + f.Tags
@@ -380,15 +419,21 @@ func renameField(items []*Item, old, new string) {
 	}
 }
 
+// The flags of the standard list types.
+const (
+	detail = FieldFlags(1) << Detail
+	remind = FieldFlags(1) << Remind
+)
+
 // standardTypes returns the list types of a new library.
 func standardTypes() []*ListType {
 	return []*ListType{
 		{Name: "To do", Fields: []*Field{
 			{Name: "Task"},
 			{Name: "Done", Type: Check, Filter: "true"},
-			{Name: "Due", Type: Date},
+			{Name: "Due", Type: Date, Flags: remind},
 			{Name: "Priority", Type: Integer, Default: "3", Tags: `min:"1" max:"5"`},
-			{Name: "Notes", Detail: true},
+			{Name: "Notes", Flags: detail},
 			{Name: "Done on", Type: Date, SetBy: "Done"},
 		}},
 		{Name: "Shopping", Fields: []*Field{
@@ -396,13 +441,13 @@ func standardTypes() []*ListType {
 			{Name: "Got", Type: Check, Filter: "true"},
 			{Name: "Quantity", Type: Integer, Default: "1", Tags: `min:"0"`},
 			{Name: "Store"},
-			{Name: "Notes", Detail: true},
+			{Name: "Notes", Flags: detail},
 		}},
 		{Name: "Project", Fields: []*Field{
 			{Name: "Task"},
 			{Name: "Done", Type: Check, Filter: "true"},
 			{Name: "Owner"},
-			{Name: "Due", Type: Date},
+			{Name: "Due", Type: Date, Flags: remind},
 			{Name: "Hours", Type: Number, Tags: `min:"0" step:"0.5"`},
 			{Name: "Done on", Type: Date, SetBy: "Done"},
 		}},

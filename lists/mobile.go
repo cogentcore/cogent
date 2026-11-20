@@ -84,14 +84,14 @@ func (ls *Lists) tableField(field reflect.StructField) bool {
 // inTable returns whether the field with the given index is in the table
 // of the items, in the mobile layout if mobile is true: the first field,
 // which has the tree of the items, and the others that are not detail
-// fields (see [Field.Detail]), and in the mobile layout, only the first
+// fields (see [Detail]), and in the mobile layout, only the first
 // check field, such as Done. The others are only in the form of an item
 // (see [Lists.editItem]).
 func (lt *ListType) inTable(i int, mobile bool) bool {
 	switch {
 	case i == 0:
 		return true
-	case lt.Fields[i].Detail:
+	case lt.Fields[i].Flags.HasFlag(Detail):
 		return false
 	}
 	return !mobile || i == lt.firstCheck()

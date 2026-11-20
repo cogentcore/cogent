@@ -176,7 +176,7 @@ func TestDetailField(t *testing.T) {
 		b.AsyncLock()
 		chores := findList(ls, "Chores")
 		lt := ls.TypeOf(chores)
-		require.True(t, lt.Fields[4].Detail, "Notes")
+		require.True(t, lt.Fields[4].Flags.HasFlag(Detail), "Notes")
 		ls.SetCurrent(chores)
 		b.AsyncUnlock()
 		time.Sleep(200 * time.Millisecond)

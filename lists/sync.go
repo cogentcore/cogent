@@ -508,6 +508,7 @@ func (ls *Lists) reload(local, files map[string][]byte) {
 	}
 	ls.tableList = nil // for the column widths and sort of the current list
 	ls.Update()
+	ls.syncReminders()
 	ls.updateItems()
 	if ls.Current != nil {
 		if tn := ls.tree.FindSyncNode(ls.Current); tn != nil {

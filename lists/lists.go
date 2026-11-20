@@ -119,6 +119,9 @@ type Lists struct {
 	// syncs is the state of the syncing of the lists (see [Lists.Sync]).
 	syncs syncer
 
+	// remind is the state of the reminders (see [Lists.syncReminders]).
+	remind reminderState
+
 	// keySeq1 is the first key of a key sequence being entered,
 	// such as Control+X (see [Lists.listsKeys]).
 	keySeq1 key.Chord
@@ -129,6 +132,7 @@ func (ls *Lists) saveChanges() {
 	if err := ls.Save(); err != nil {
 		core.ErrorSnackbar(ls, err, "Error saving lists")
 	}
+	ls.syncReminders()
 	ls.edited()
 }
 

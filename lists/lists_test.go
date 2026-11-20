@@ -582,7 +582,7 @@ func TestFieldTooltips(t *testing.T) {
 		}
 		require.Len(t, tips, 7)
 		assert.Contains(t, tips[4], "Set by is, for a date field, the name of a check field")
-		assert.Contains(t, tips[6], "Detail is whether the field is only in the form of an item")
+		assert.Contains(t, tips[6], "Flags are options for the field")
 	})
 }
 

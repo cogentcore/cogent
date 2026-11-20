@@ -152,6 +152,7 @@ func (ls *Lists) Open(dir string) error {
 	ls.load(files)
 	ls.Current = nil
 	ls.Update()
+	ls.syncReminders()
 	return nil
 }
 
