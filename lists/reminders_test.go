@@ -74,7 +74,7 @@ func TestReminders(t *testing.T) {
 
 	l := findList(ls, "Chores")
 	lt := ls.TypeOf(l)
-	require.Equal(t, "To do", lt.Name)
+	require.Equal(t, todoType, lt.Name)
 	l.Items = []*Item{
 		reminderItem(t, "a", map[string]any{"Task": "Today", "Due": day(20)}), // past 9:00
 		reminderItem(t, "b", map[string]any{"Task": "Tomorrow", "Due": day(21)}),
@@ -116,4 +116,36 @@ func TestReminderClicked(t *testing.T) {
 		assert.Same(t, l, ls.Current)
 		b.AsyncUnlock()
 	})
+}
+
+// TestMigrateTodo tests the migration of the "To do" list type of older
+// libraries to "Todo", with reminders for its Due field, and of its lists.
+func TestMigrateTodo(t *testing.T) {
+	ls := NewLists(core.NewBody())
+	types := standardTypes()
+	types[0].Name = oldTodoType
+	types[0].Fields[2].Flags = 0 // Due without Remind, as before
+	files := map[string][]byte{
+		typesFile: marshal(types),
+		treeFile:  marshal(&treeNode{Name: "Lists", Group: true, Lists: []*treeNode{{ID: "l1", Name: "Chores"}}}),
+	}
+	files[listPath("l1")] = marshal(&listFile{Name: "Chores", Type: oldTodoType})
+	ls.load(files)
+	assert.Equal(t, todoType, ls.Types[0].Name)
+	assert.True(t, ls.Types[0].Fields[2].Flags.HasFlag(Remind), "Due")
+	assert.Equal(t, todoType, ls.Root.Child(0).(*List).TypeName)
+	assert.Len(t, ls.Types, 5, "no type kept for the old name")
+
+	// once: Remind turned off stays off
+	ls.Types[0].Fields[2].Flags = 0
+	ls.load(ls.files())
+	assert.False(t, ls.Types[0].Fields[2].Flags.HasFlag(Remind))
+
+	// a type named Todo by the user, with To do, stays as it is
+	types[0].Name = oldTodoType
+	both := append(types, &ListType{Name: todoType, Fields: []*Field{{Name: "Item"}}})
+	files[typesFile] = marshal(both)
+	ls.load(files)
+	assert.Equal(t, oldTodoType, ls.Types[0].Name)
+	assert.Equal(t, oldTodoType, ls.Root.Child(0).(*List).TypeName)
 }

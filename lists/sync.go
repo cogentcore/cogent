@@ -339,13 +339,13 @@ func (ls *Lists) syncOnce() error {
 }
 
 // isDefault returns whether the lists are those of a new device,
-// which has only the standard empty list.
+// which has only the standard empty list (named "To do" before).
 func (ls *Lists) isDefault() bool {
 	if ls.Root.NumChildren() != 1 {
 		return false
 	}
 	l := ls.Root.Child(0).(*List)
-	return !l.IsGroup() && l.Name == "To do" && len(l.Items) == 0
+	return !l.IsGroup() && (l.Name == todoType || l.Name == oldTodoType) && len(l.Items) == 0
 }
 
 // syncError returns the given error of a request of the GitHub API, with

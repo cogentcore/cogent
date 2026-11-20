@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -420,6 +421,48 @@ func renameField(items []*Item, old, new string) {
 	}
 }
 
+// The names of the standard list type for to-do lists, which is also the
+// type and name of the list of a new library, and its old name, which
+// is renamed by [Lists.migrateTypes].
+const (
+	todoType    = "Todo"
+	oldTodoType = "To do"
+)
+
+// migrateTypes updates the list types of older libraries, once: the type
+// named "To do", the standard type for to-do lists before, is renamed to
+// [todoType] (unless there is one), with the [Remind] flag on its Due date
+// field, and the lists of that type, also those of a type that is not in
+// the library, as in the oldest files, which have the standard types, get
+// the new name.
+func (ls *Lists) migrateTypes() {
+	has := func(name string) bool {
+		return slices.ContainsFunc(ls.Types, func(lt *ListType) bool { return lt.Name == name })
+	}
+	if has(todoType) && has(oldTodoType) {
+		return // both, as named by the user
+	}
+	for _, lt := range ls.Types {
+		if lt.Name != oldTodoType {
+			continue
+		}
+		lt.Name = todoType
+		for _, f := range lt.Fields {
+			if f.Name == "Due" && (f.Type == Date || f.Type == DateTime) {
+				f.Flags.SetFlag(true, Remind)
+			}
+		}
+	}
+	if !has(todoType) {
+		return
+	}
+	for n := range ls.Root.All() {
+		if l := n.(*List); !l.IsGroup() && l.TypeName == oldTodoType {
+			l.TypeName = todoType
+		}
+	}
+}
+
 // The flags of the standard list types.
 const (
 	detail = FieldFlags(1) << Detail
@@ -429,7 +472,7 @@ const (
 // standardTypes returns the list types of a new library.
 func standardTypes() []*ListType {
 	return []*ListType{
-		{Name: "To do", Fields: []*Field{
+		{Name: todoType, Fields: []*Field{
 			{Name: "Task"},
 			{Name: "Done", Type: Check, Filter: "true"},
 			{Name: "Due", Type: Date, Flags: remind},

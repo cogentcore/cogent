@@ -240,7 +240,7 @@ func TestUndo(t *testing.T) {
 		ls.table.InsertAfter(0) // after Produce, as its sibling
 		assert.Len(t, gr.Items, 4)
 		ls.SetType(ls.Types[0]) // to do
-		assert.Equal(t, "To do", gr.TypeName)
+		assert.Equal(t, todoType, gr.TypeName)
 
 		ls.Undo()
 		assert.Equal(t, "Shopping", gr.TypeName, "undo the type change")
@@ -252,7 +252,7 @@ func TestUndo(t *testing.T) {
 		ls.Redo()
 		assert.Len(t, gr.Items, 4, "redo the insert")
 		ls.Redo()
-		assert.Equal(t, "To do", gr.TypeName, "redo the type change")
+		assert.Equal(t, todoType, gr.TypeName, "redo the type change")
 		ls.Redo() // nothing more
 		ls.Undo()
 		assert.Equal(t, "Shopping", gr.TypeName)

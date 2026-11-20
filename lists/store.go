@@ -322,7 +322,7 @@ func (ls *Lists) load(files map[string][]byte) {
 	ls.loadTypes(files)
 	var root treeNode
 	if b, ok := files[treeFile]; !ok || json.Unmarshal(b, &root) != nil {
-		ls.Root = newList(&listData{Name: "Lists", Lists: []*listData{{Name: "To do", Type: "To do"}}})
+		ls.Root = newList(&listData{Name: "Lists", Lists: []*listData{{Name: todoType, Type: todoType}}})
 	} else {
 		ls.Root = ls.listFromFiles(&root, files)
 	}
@@ -330,6 +330,7 @@ func (ls *Lists) load(files map[string][]byte) {
 	ls.Root.ID = ""
 	ls.setIDs()
 	ls.loadLocal()
+	ls.migrateTypes()
 	ls.keepUsedTypes()
 }
 
@@ -352,6 +353,7 @@ func (ls *Lists) loadOld(files map[string][]byte, root *listData) {
 	ls.Root = newList(root)
 	ls.Root.Group = true
 	ls.setIDs()
+	ls.migrateTypes()
 	ls.keepUsedTypes()
 }
 
