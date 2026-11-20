@@ -141,8 +141,9 @@ type ListType struct { //types:add
 	// empty, the time in the reminder settings is used.
 	Reminder string
 
-	// Fields are the fields of the items, the columns of the lists.
-	Fields []*Field
+	// Fields are the fields of the items, the columns of the lists,
+	// which are reordered by dragging them.
+	Fields []*Field `drag-moves:"+"`
 }
 
 func (lt *ListType) Label() string { return lt.Name }
