@@ -5,7 +5,7 @@ Title = "Cogent Lists"
 
 <img src="icon.svg" alt="Cogent Lists icon" width="128">
 
-**Cogent Lists** is an app for all of your lists: to-do lists, shopping lists, projects, reading lists, and anything else. The lists are in groups, in a tree on the left, and the items of the current list are in a table, where they can be in categories, such as the aisles of a store in a shopping list. Each list has a *type*, which gives the fields of its items, the columns of the table, such as Done, Due, and Priority for a to-do list; you can change the types and make new ones. To-do items with due dates can remind you with the notifications of your device, and the lists can be synced with a GitHub repository, so that they are the same on all of your devices, with the history of all of the changes.
+**Cogent Lists** is an app for all of your lists: to-do lists, shopping lists, projects, reading lists, and anything else. The lists are in groups, in a tree on the left, and the items of the current list are in a table, where they can be in categories, such as the aisles of a store in a shopping list. Each list has a *type*, which gives the fields of its items, the columns of the table, such as Done, Due, and Priority for a to-do list; you can change the types and make new ones. To-do items with due dates can remind you with the notifications of your device, and the lists can be synced with a [[#Syncing with GitHub|GitHub]] repository, so that they are the same on all of your devices, with the history of all of the changes.
 
 Cogent Lists runs on macOS, Windows, Linux, iOS, Android, and the web. On phones, the tree of lists, the items of a list, and the form of an item are each in a full window, in turn, with back buttons.
 
