@@ -126,6 +126,10 @@ func NewSite(b *core.Body) *content.Content {
 				ct.Context.LinkButton(w, "https://cogentcore.org/core")
 				w.SetText("Cogent Core").SetIcon(icons.Home)
 			})
+			tree.Add(p, func(w *core.Button) {
+				ct.Context.LinkButton(w, "https://cogentcore.org")
+				w.SetText("CogentCore.org").SetIcon(icons.CogentCore)
+			})
 		})
 	})
 	return ct
