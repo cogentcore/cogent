@@ -15,15 +15,15 @@ import (
 
 	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/video"
 	"golang.org/x/net/html"
 )
 
 // The videos of a page: htmlcore makes each video element a box
-// ([htmlcore.VideoBox]) with an image of its poster, with the URL of its
-// video (see htmlcore.VideoSourceOf), and the page plays the video in the
+// ([htmlengine.VideoBox]) with an image of its poster, with the URL of its
+// video (see htmlengine.VideoSourceOf), and the page plays the video in the
 // image with a [video.Playback], which FFmpeg decodes (from its URL, with
 // the cookies and user agent of the page), with the standard controls of
 // players over it ([video.Controls], for which a video of a page is a
@@ -66,7 +66,7 @@ type pageVideo struct {
 	// box is the current box of the video element, in whose image the
 	// frames are shown (a new one after each reading of the page), and
 	// controls are its controls.
-	box      *htmlcore.VideoBox
+	box      *htmlengine.VideoBox
 	controls *video.Controls
 
 	// frame is the last frame shown, to show in a new box.
@@ -106,12 +106,12 @@ type pageVideo struct {
 func (pg *Page) attachVideos(content *core.Frame) {
 	seen := map[*html.Node]bool{}
 	content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-		box, ok := cw.(*htmlcore.VideoBox)
+		box, ok := cw.(*htmlengine.VideoBox)
 		if !ok {
 			return tree.Continue
 		}
-		src := htmlcore.VideoSourceOf(box)
-		n := htmlcore.NodeOf(box)
+		src := htmlengine.VideoSourceOf(box)
+		n := htmlengine.NodeOf(box)
 		if src == "" || n == nil {
 			return tree.Break
 		}
@@ -157,11 +157,11 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 	}
 	pg.videos[n] = pv
 	options := mediaOptions(src, pg.Context.PageURL)
-	autoplay := htmlcore.HasAttr(n, "autoplay")
-	poster := htmlcore.HasAttr(n, "poster")
+	autoplay := htmlengine.HasAttr(n, "autoplay")
+	poster := htmlengine.HasAttr(n, "poster")
 	pb := &video.Playback{
-		Muted:   htmlcore.HasAttr(n, "muted"),
-		Loop:    htmlcore.HasAttr(n, "loop"),
+		Muted:   htmlengine.HasAttr(n, "muted"),
+		Loop:    htmlengine.HasAttr(n, "loop"),
 		OnFrame: func(f video.Frame) { pv.show(f.Image, f.Time) },
 		OnTime:  pv.timeUpdate, // (of audio)
 		OnEnd: func() {
@@ -223,7 +223,7 @@ func (pg *Page) newVideo(n *html.Node, src string) *pageVideo {
 // given URL of a page at the given URL: the user agent of the pages, their
 // cookies for it, and the page as the referer.
 func mediaOptions(src, pageURL string) map[string]string {
-	opts := map[string]string{"user_agent": htmlcore.UserAgent}
+	opts := map[string]string{"user_agent": htmlengine.UserAgent}
 	var headers strings.Builder
 	if u, err := url.Parse(src); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
 		var cs []string
@@ -284,7 +284,7 @@ func (pv *pageVideo) frameWidth(m *video.Media) int {
 
 // attach makes the given box the box of the video, showing the last frame
 // in its image, if any, with the controls of the video over it.
-func (pv *pageVideo) attach(box *htmlcore.VideoBox) {
+func (pv *pageVideo) attach(box *htmlengine.VideoBox) {
 	pv.mu.Lock()
 	if pv.box == box { // (kept by a reading of a part of the page)
 		pv.mu.Unlock()
@@ -561,7 +561,7 @@ func (pv *pageVideo) IsMuted() bool {
 		_, muted := pb.Audio()
 		return muted
 	}
-	return htmlcore.HasAttr(pv.node, "muted")
+	return htmlengine.HasAttr(pv.node, "muted")
 }
 
 // SetMuted sets whether the audio is not heard.

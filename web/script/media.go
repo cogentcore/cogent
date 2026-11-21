@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"github.com/dop251/goja"
 )
 
@@ -203,7 +203,7 @@ func (e *Engine) rangeRequest(u string, from, n int64) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	htmlcore.SetRequestHeaders(req)
+	htmlengine.SetRequestHeaders(req)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", from, from+n-1))
 	client := &http.Client{Timeout: 30 * time.Second, Transport: Transport}

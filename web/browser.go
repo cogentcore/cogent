@@ -42,7 +42,7 @@ type Browser struct {
 	OnOpen func() `set:"-" display:"-"`
 
 	// PageFunc, if set, is called with the page of each new tab,
-	// as for setting its [htmlcore.Context].
+	// as for setting its [htmlengine.Context].
 	PageFunc func(pg *Page) `set:"-" display:"-"`
 
 	// pages are the pages of the tabs, in their order.

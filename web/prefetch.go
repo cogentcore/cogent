@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 )
 
 // prefetchWorkers is the number of resources of a page that are gotten at
@@ -18,9 +18,9 @@ import (
 const prefetchWorkers = 24
 
 // prefetch gets the given resources of a page (see
-// [htmlcore.Context.PrefetchURLs]) in parallel with the given function of
+// [htmlengine.Context.PrefetchURLs]) in parallel with the given function of
 // its cache, in which they are as the page is read, and the web fonts and
-// imports of the style sheets that it gets (see [htmlcore.StyleSheetURLs]),
+// imports of the style sheets that it gets (see [htmlengine.StyleSheetURLs]),
 // until the page is canceled: as the preload scanners of browsers, as
 // reading a page gets its resources one at a time (the first read of
 // volkskrant.nl got 255 of them in 8s, each in 20-100ms, before it was
@@ -29,7 +29,7 @@ const prefetchWorkers = 24
 //
 // The images that it gets are decoded into the given cache (if not nil),
 // in parallel, as they would be one at a time as the page is read.
-func prefetch(urls []string, get func(url string) (*http.Response, error), webFonts bool, images *htmlcore.ImageCache, canceled func() bool) {
+func prefetch(urls []string, get func(url string) (*http.Response, error), webFonts bool, images *htmlengine.ImageCache, canceled func() bool) {
 	if len(urls) == 0 {
 		return
 	}
@@ -82,7 +82,7 @@ func prefetch(urls []string, get func(url string) (*http.Response, error), webFo
 				// its imports and web fonts, as it is added to the page
 				b, err := io.ReadAll(resp.Body)
 				if err == nil {
-					more := htmlcore.StyleSheetURLs(string(b), u, webFonts)
+					more := htmlengine.StyleSheetURLs(string(b), u, webFonts)
 					add(more)
 					// (more workers, if the others have stopped)
 					for range min(len(more), prefetchWorkers) {

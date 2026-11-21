@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 )
 
 // Settings are the settings of the web browser, which an app adds to
@@ -50,7 +50,7 @@ type SettingsData struct { //types:add
 }
 
 // defaultUserAgent is the default User-Agent of the requests of pages.
-var defaultUserAgent = htmlcore.UserAgent
+var defaultUserAgent = htmlengine.UserAgent
 
 func (se *SettingsData) Defaults() {
 	se.UserAgent = defaultUserAgent
@@ -63,5 +63,5 @@ func (se *SettingsData) Apply() {
 	if se.UserAgent == "" {
 		se.UserAgent = defaultUserAgent
 	}
-	htmlcore.UserAgent = se.UserAgent
+	htmlengine.UserAgent = se.UserAgent
 }

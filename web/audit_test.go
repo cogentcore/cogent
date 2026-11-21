@@ -24,7 +24,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -335,11 +335,11 @@ func ourList(t *testing.T, u string) (*auditList, []auditFinding, error) {
 		b.AsyncLock()
 		loaded := map[string]bool{}
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-			n := htmlcore.NodeOf(cw)
+			n := htmlengine.NodeOf(cw)
 			if n == nil {
 				return true
 			}
-			k := htmlcore.GetAttr(n, "data-audit")
+			k := htmlengine.GetAttr(n, "data-audit")
 			if k == "" {
 				return true
 			}

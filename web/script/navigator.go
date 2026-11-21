@@ -8,16 +8,16 @@ import (
 	"runtime"
 	"strings"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 )
 
 // defineNavigator defines the values of navigator that come from Go:
 // the user agent and languages of the requests of the page (sites check
 // that they match), and the platform.
 func (e *Engine) defineNavigator() {
-	e.jsDOM.Set("userAgent", htmlcore.UserAgent)
+	e.jsDOM.Set("userAgent", htmlengine.UserAgent)
 	e.jsDOM.Set("platform", navigatorPlatform())
-	e.jsDOM.Set("languages", navigatorLanguages(htmlcore.AcceptLanguage))
+	e.jsDOM.Set("languages", navigatorLanguages(htmlengine.AcceptLanguage))
 }
 
 // navigatorPlatform returns navigator.platform for the platform that the

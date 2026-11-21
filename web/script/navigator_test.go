@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
@@ -29,8 +29,8 @@ import (
 func TestNavigatorUserAgent(t *testing.T) {
 	assert.Equal(t, []any{"fr-CA", "fr", "en"}, navigatorLanguages("fr-CA,fr;q=0.9,en;q=0.8"))
 	e, logs := testEngine(t, `<html><body></body></html>`, nil)
-	assert.Equal(t, htmlcore.UserAgent, run(t, e, `navigator.userAgent`))
-	assert.Equal(t, navigatorLanguages(htmlcore.AcceptLanguage)[0], run(t, e, `navigator.language`))
+	assert.Equal(t, htmlengine.UserAgent, run(t, e, `navigator.userAgent`))
+	assert.Equal(t, navigatorLanguages(htmlengine.AcceptLanguage)[0], run(t, e, `navigator.language`))
 	assert.Equal(t, navigatorPlatform(), run(t, e, `navigator.platform`))
 
 	var mu sync.Mutex
@@ -48,8 +48,8 @@ func TestNavigatorUserAgent(t *testing.T) {
 	}, 3*time.Second, 20*time.Millisecond)
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Equal(t, htmlcore.UserAgent, got.Get("User-Agent"))
-	assert.Equal(t, htmlcore.AcceptLanguage, got.Get("Accept-Language"))
+	assert.Equal(t, htmlengine.UserAgent, got.Get("User-Agent"))
+	assert.Equal(t, htmlengine.AcceptLanguage, got.Get("Accept-Language"))
 	assert.Equal(t, []string{"application/json"}, got.Values("Accept"))
 	assert.Equal(t, "1", got.Get("X-A"))
 	assert.Empty(t, *logs)
@@ -152,7 +152,7 @@ func TestHasListenerInterrupted(t *testing.T) {
 }
 
 // TestDialogModal tests showModal, which marks the dialog for the :modal
-// selector of the style sheets (htmlcore.ModalAttr, as the jump dialog of
+// selector of the style sheets (css.ModalAttr, as the jump dialog of
 // pkg.go.dev, centered over the page), and close, which unmarks it.
 func TestDialogModal(t *testing.T) {
 	e, logs := testEngine(t, `<html><body><dialog id="d"><p>x</p></dialog></body></html>`, nil)

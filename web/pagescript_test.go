@@ -23,7 +23,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
@@ -920,7 +920,7 @@ func TestScriptsPointerCapture(t *testing.T) {
 	core.RenderImage(b, func() { settle(pg) }, func() {
 		b.AsyncLock()
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-			if n := htmlcore.NodeOf(cw); n != nil && htmlcore.GetAttr(n, "id") == "split" {
+			if n := htmlengine.NodeOf(cw); n != nil && htmlengine.GetAttr(n, "id") == "split" {
 				split = cwb.Geom.TotalBBox
 			}
 			return tree.Continue

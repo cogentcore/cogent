@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 )
 
 // cookies are the cookies of the pages of the app, shared by its pages:
@@ -44,7 +44,7 @@ func withCookies(get func(url string) (*http.Response, error)) func(url string) 
 }
 
 // doRequest makes the given request with the [httpClient], with the
-// headers of browsers ([htmlcore.SetRequestHeaders]), and with the given body, if not nil.
+// headers of browsers ([htmlengine.SetRequestHeaders]), and with the given body, if not nil.
 func doRequest(method, url string, post *postRequest) (*http.Response, error) {
 	var body *bytes.Reader
 	if post != nil {
@@ -56,7 +56,7 @@ func doRequest(method, url string, post *postRequest) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	htmlcore.SetRequestHeaders(req)
+	htmlengine.SetRequestHeaders(req)
 	if post != nil {
 		req.Header.Set("Content-Type", post.contentType)
 	}
@@ -70,10 +70,10 @@ func postPage(url string, post *postRequest) (*http.Response, error) {
 }
 
 // getPage gets the page of the given URL with the given context (see
-// [pageResponse]), and other URLs (as data: URLs) as [htmlcore.Get] does.
-func getPage(ctx *htmlcore.Context, url string) (*http.Response, error) {
+// [pageResponse]), and other URLs (as data: URLs) as [htmlengine.Get] does.
+func getPage(ctx *htmlengine.Context, url string) (*http.Response, error) {
 	if !strings.HasPrefix(url, "http:") && !strings.HasPrefix(url, "https:") {
-		return htmlcore.Get(ctx, url)
+		return htmlengine.Get(ctx, url)
 	}
 	return pageResponse(ctx.GetURL(url))
 }

@@ -29,7 +29,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
@@ -49,9 +49,9 @@ type Page struct {
 	// which is before the end of it after going back.
 	Current int `set:"-"`
 
-	// Context has the settings of the [htmlcore.Context] that each page is
-	// read with (a new one for each page, made by [htmlcore.Context.NewPage]).
-	Context *htmlcore.Context `set:"-"`
+	// Context has the settings of the [htmlengine.Context] that each page is
+	// read with (a new one for each page, made by [htmlengine.Context.NewPage]).
+	Context *htmlengine.Context `set:"-"`
 
 	// OpenNewTab, if set, opens the given (absolute) URL in a new tab, for
 	// links that are clicked with the meta or control key.
@@ -100,7 +100,7 @@ type Page struct {
 	checkedWidth float32
 
 	// checkedHeight is the last height of the viewport that was checked,
-	// for pages that use it (see [htmlcore.Context.ViewportHeightUsed]).
+	// for pages that use it (see [htmlengine.Context.ViewportHeightUsed]).
 	checkedHeight float32
 	mediaTimer    *time.Timer
 
@@ -165,7 +165,7 @@ type Page struct {
 // pageMedia is what is needed to read a page that is shown again for
 // another width of its viewport: its context, HTML and resources.
 type pageMedia struct {
-	ctx   *htmlcore.Context
+	ctx   *htmlengine.Context
 	html  []byte
 	url   string // the final URL of the page
 	cache *resourceCache
@@ -191,7 +191,7 @@ func (pg *Page) ScrollChanged(d math32.Dims, sb *core.Slider) {
 
 func (pg *Page) Init() {
 	pg.Frame.Init()
-	pg.Context = htmlcore.NewContext()
+	pg.Context = htmlengine.NewContext()
 	pg.Context.GetURL = withCookies(pg.Context.GetURL)
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Context.PostURL = pg.postURL
@@ -259,7 +259,7 @@ func (pg *Page) OpenURL(url string, e events.Event) {
 	// as in browsers
 	if e != nil && pg.OpenNewTab != nil && e.HasAnyModifier(key.Meta, key.Control) {
 		if cur := pg.currentURL(); cur != "" {
-			if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil {
+			if u, err := htmlengine.ParseRelativeURL(url, cur); err == nil {
 				url = u.String()
 			}
 		}
@@ -268,7 +268,7 @@ func (pg *Page) OpenURL(url string, e events.Event) {
 	}
 	// a link to a fragment of the page that is shown scrolls to it
 	if cur := pg.currentURL(); cur != "" && pg.loading == "" {
-		if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil && u.Fragment != "" {
+		if u, err := htmlengine.ParseRelativeURL(url, cur); err == nil && u.Fragment != "" {
 			c, err := neturl.Parse(cur)
 			if err == nil && u.Scheme == c.Scheme && u.Host == c.Host && u.Path == c.Path && u.RawQuery == c.RawQuery {
 				pg.History = append(pg.History[:min(pg.Current+1, len(pg.History))], u.String())
@@ -459,7 +459,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	// resolved first, for the settings of its site (as its zoom, which the
 	// pages of lobste.rs opened from its links did not have) and history
 	if cur := pg.currentURL(); cur != "" {
-		if u, err := htmlcore.ParseRelativeURL(url, cur); err == nil {
+		if u, err := htmlengine.ParseRelativeURL(url, cur); err == nil {
 			url = u.String()
 		}
 	}
@@ -480,7 +480,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 	ctx.MediaHeight = pg.viewportHeight()
 	ctx.MediaWidth = pg.viewportWidth()
 	if ctx.MediaWidth <= 0 { // before the page has a size, as it is read in another goroutine
-		ctx.MediaWidth = htmlcore.ScreenMediaWidth() / pg.zoomFactor()
+		ctx.MediaWidth = htmlengine.ScreenMediaWidth() / pg.zoomFactor()
 	}
 	scripts := pg.Scripts
 	cache := &resourceCache{get: ctx.GetURL}
@@ -522,7 +522,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 				if doc, perr := html.Parse(bytes.NewReader(page)); perr == nil {
 					prefetch(ctx.PrefetchURLs(doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, canceled)
 				}
-				err = htmlcore.ReadHTML(ctx, content, bytes.NewReader(page))
+				err = htmlengine.ReadHTML(ctx, content, bytes.NewReader(page))
 			}
 			if err == nil && !canceled() {
 				pg.preLayoutContent(content)
@@ -551,7 +551,7 @@ func (pg *Page) openPost(url string, post *postRequest, mode historyMode, index,
 		// a page that redirects (as to a version for browsers without
 		// JavaScript) is replaced by the page that it redirects to
 		if ref := ctx.RefreshURL; ref != "" && redirects < maxRedirects {
-			if u, err := htmlcore.ParseRelativeURL(ref, final); err == nil && u.String() != final {
+			if u, err := htmlengine.ParseRelativeURL(ref, final); err == nil && u.String() != final {
 				pg.open(u.String(), mode, index, redirects+1)
 				return
 			}
@@ -761,7 +761,7 @@ func (pg *Page) checkMedia() {
 	}
 	pg.stopMediaTimer() // for an earlier size
 	// (with the styles of its context locked, which its scripts may be
-	// changing; see htmlcore.Context.PrepareReread)
+	// changing; see htmlengine.Context.PrepareReread)
 	m.ctx.LockStyles()
 	heightUsed := m.ctx.ViewportHeightUsed() && pg.checkedHeight > 0 && math32.Abs(pg.checkedHeight-m.ctx.MediaHeight) >= 1
 	changed := m.ctx.MediaChanged(pg.checkedWidth)
@@ -857,7 +857,7 @@ func (pg *Page) readMedia(m *pageMedia, width float32) {
 	go func() {
 		defer pg.loads.Done()
 		content := newPageContent()
-		err := htmlcore.ReadHTML(ctx, content, bytes.NewReader(m.html))
+		err := htmlengine.ReadHTML(ctx, content, bytes.NewReader(m.html))
 		if canceled() || err != nil {
 			return
 		}
@@ -1131,7 +1131,7 @@ func LocationURL(loc string) string {
 // viewportHeight returns the height of the viewport of the page in CSS
 // px: of the frame that it scrolls in (as the tab of a browser, or the box
 // of an iframe), or 0 if it does not have one yet, as for the percentage
-// heights of the viewport and vh lengths ([htmlcore.Context.MediaHeight]),
+// heights of the viewport and vh lengths ([htmlengine.Context.MediaHeight]),
 // which were otherwise of the window, with the toolbar and tabs, so that
 // the footer of google.com was below the bottom of the page, which
 // always had a scrollbar.
@@ -1165,10 +1165,10 @@ func (pg *Page) viewportWidth() float32 {
 				return w / dp
 			}
 		}
-		if w, err := strconv.Atoi(strings.TrimSpace(htmlcore.GetAttr(pg.frame.node, "width"))); err == nil && w > 0 {
+		if w, err := strconv.Atoi(strings.TrimSpace(htmlengine.GetAttr(pg.frame.node, "width"))); err == nil && w > 0 {
 			return float32(w)
 		}
-		return htmlcore.IframeDefaultWidth
+		return htmlengine.IframeDefaultWidth
 	}
 	if w := pg.Geom.Size.Alloc.Content.X; w > 0 && dp > 0 {
 		if fr := core.AsFrame(pg.Parent); fr != nil && fr.HasScroll[math32.Y] {

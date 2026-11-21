@@ -29,7 +29,8 @@ import (
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/css"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
@@ -61,10 +62,10 @@ type pageScripts struct {
 
 	// base is the context that the page was first read with, whose
 	// settings each reading of the document starts from.
-	base *htmlcore.Context
+	base *htmlengine.Context
 
 	// ctx is the context that the document was last read with.
-	ctx *htmlcore.Context
+	ctx *htmlengine.Context
 
 	// width is the width of the viewport that the document is read for.
 	width float32
@@ -87,7 +88,7 @@ type pageScripts struct {
 
 	// hoverSet has the elements that the mouse is over (the hovered
 	// element and those it is in) for the :hover selectors of the page
-	// (see [htmlcore.Context.Hovered]), only used in the tasks of the
+	// (see [htmlengine.Context.Hovered]), only used in the tasks of the
 	// engine (as the reading of the page).
 	hoverSet map[*html.Node]bool
 
@@ -133,7 +134,7 @@ type loadTimes struct {
 
 // newPageScripts returns the scripts of the given parsed document of the
 // page, which was gotten with the given context, for the given final URL.
-func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, openedBy string, start time.Time) (*pageScripts, error) {
+func (pg *Page) newPageScripts(ctx *htmlengine.Context, doc *html.Node, final, openedBy string, start time.Time) (*pageScripts, error) {
 	ps := &pageScripts{pg: pg, doc: doc, base: ctx, width: ctx.MediaWidth, height: ctx.MediaHeight, start: start}
 	e, err := script.New(doc, script.Options{
 		PageURL:       final,
@@ -180,7 +181,7 @@ func (pg *Page) newPageScripts(ctx *htmlcore.Context, doc *html.Node, final, ope
 }
 
 // context returns the context that the document was last read with.
-func (ps *pageScripts) context() *htmlcore.Context {
+func (ps *pageScripts) context() *htmlengine.Context {
 	if ps.ctx != nil {
 		return ps.ctx
 	}
@@ -218,7 +219,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 		if _, _, checked, ok := ps.engine.ControlState(n); ok {
 			return checked
 		}
-		return htmlcore.HasAttr(n, "checked")
+		return htmlengine.HasAttr(n, "checked")
 	}
 	ctx.Hovered = func(n *html.Node) bool { return ps.hoverSet[n] }
 	// the children of shadow hosts that are in no slot are not rendered
@@ -254,7 +255,7 @@ func (ps *pageScripts) read() (*core.Frame, error) {
 	// times that npr.org was read again as it loaded)
 	ctx.ReuseStyles(ps.ctx)
 	content := newPageContent()
-	err := htmlcore.ReadDocument(ctx, content, ps.doc)
+	err := htmlengine.ReadDocument(ctx, content, ps.doc)
 	ps.ctx = ctx
 	ps.widgets = nil
 	ps.laidOut = false
@@ -316,11 +317,11 @@ func (ps *pageScripts) render() func() {
 		scrolls := map[*html.Node]math32.Vector2{}
 		for cw, cwb := range pg.AllWidgets() {
 			if cwb.StateIs(states.Focused) {
-				focused = htmlcore.NodeOf(cw)
+				focused = htmlengine.NodeOf(cw)
 				cursor = focusedCursor(cw)
 			}
 			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
-				if n := htmlcore.NodeOf(cw); n != nil {
+				if n := htmlengine.NodeOf(cw); n != nil {
 					scrolls[n] = fr.Geom.Scroll
 				}
 			}
@@ -389,7 +390,7 @@ func (ps *pageScripts) restyle(nodes []*html.Node) func() bool {
 		return nil
 	}
 	// the declarations of the elements are found without the lock of the
-	// page (see htmlcore.Context.PrepareRestyle), and the widgets are
+	// page (see htmlengine.Context.PrepareRestyle), and the widgets are
 	// styled again with it
 	start := time.Now()
 	apply := ps.ctx.PrepareRestyle(nodes)
@@ -474,7 +475,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		return nil
 	}
 	// the elements are styled and read again into new widgets without the
-	// lock of the page (see htmlcore.Context.PrepareReread), which took as
+	// lock of the page (see htmlengine.Context.PrepareReread), which took as
 	// long as a second as the scripts of nytimes.com changed it, in which
 	// the app did not respond; they are put in the page with it
 	start := time.Now()
@@ -514,11 +515,11 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		scrolls := map[*html.Node]math32.Vector2{}
 		content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if cwb.StateIs(states.Focused) {
-				focused, focusedWidget = htmlcore.NodeOf(cw), cw
+				focused, focusedWidget = htmlengine.NodeOf(cw), cw
 				cursor = focusedCursor(cw)
 			}
 			if fr := core.AsFrame(cw); fr != nil && (fr.HasScroll[math32.X] || fr.HasScroll[math32.Y]) && fr.Geom.Scroll != (math32.Vector2{}) {
-				if n := htmlcore.NodeOf(cw); n != nil {
+				if n := htmlengine.NodeOf(cw); n != nil {
 					scrolls[n] = fr.Geom.Scroll
 				}
 			}
@@ -547,7 +548,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 			return false
 		}
 		if t := ps.ctx.Title; t != pg.Title && pg.frame == nil {
-			// the title that the scripts set (see htmlcore.Context.Reread)
+			// the title that the scripts set (see htmlengine.Context.Reread)
 			pg.Title = t
 			pg.opened(pg.currentURL())
 		}
@@ -564,7 +565,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 		restoreScrolls(content, scrolls)
 		if focused != nil && focusedWidget.AsTree().This == nil { // (made new)
 			content.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-				if htmlcore.NodeOf(cw) == focused {
+				if htmlengine.NodeOf(cw) == focused {
 					cwb.SetFocus()
 					restoreCursor(cw, cursor)
 					return tree.Break
@@ -588,7 +589,7 @@ func (ps *pageScripts) reread(self, children, styled []*html.Node) func() bool {
 // document), as those that close the menus of Wikipedia on clicks outside
 // of them. Its links open as they do.
 func (ps *pageScripts) handleTextClicks(tx *core.Text) {
-	n := htmlcore.NodeOf(tx)
+	n := htmlengine.NodeOf(tx)
 	if n == nil || n.Type != html.ElementNode {
 		return
 	}
@@ -597,7 +598,7 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	inLabel := false
 	for p := n; p != nil; p = p.Parent {
 		if p.Type == html.ElementNode && p.Data == "label" {
-			inLabel = htmlcore.HasAttr(p, "for") || hasDescendant(p, "input")
+			inLabel = htmlengine.HasAttr(p, "for") || hasDescendant(p, "input")
 			break
 		}
 	}
@@ -608,8 +609,8 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 	// link of a text and an i element): the click is dispatched to it, and
 	// then the link is followed, unless it is prevented
 	for a := n; a != nil; a = a.Parent {
-		if a.Type == html.ElementNode && a.Data == "a" && htmlcore.HasAttr(a, "href") {
-			href, link := htmlcore.GetAttr(a, "href"), a
+		if a.Type == html.ElementNode && a.Data == "a" && htmlengine.HasAttr(a, "href") {
+			href, link := htmlengine.GetAttr(a, "href"), a
 			tx.OnClick(func(ev events.Event) {
 				ev.SetHandled()
 				ps.openLink(link, href, ev)
@@ -622,7 +623,7 @@ func (ps *pageScripts) handleTextClicks(tx *core.Text) {
 		if ps.engine.Closed() {
 			if details != nil { // the summary opens its details in place
 				for p := core.AsWidget(tx.Parent); p != nil; p = core.AsWidget(p.Parent) {
-					if pn := htmlcore.NodeOf(p.This.(core.Widget)); pn != nil && pn.Data == "summary" {
+					if pn := htmlengine.NodeOf(p.This.(core.Widget)); pn != nil && pn.Data == "summary" {
 						p.Send(events.Click, ev)
 						break
 					}
@@ -693,7 +694,7 @@ func (ps *pageScripts) nodeAt(pos image.Point) (deepest *html.Node, framed bool)
 		if _, isFrame := wb.This.(*Page); isFrame {
 			return deepest, true // (of the iframe that it is in)
 		}
-		if n := htmlcore.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlcore.PseudoElement(n) == "" {
+		if n := htmlengine.NodeOf(wb.This.(core.Widget)); n != nil && n.Type == html.ElementNode && htmlengine.PseudoElement(n) == "" {
 			deepest = n
 		}
 	}
@@ -808,7 +809,7 @@ func restoreScrolls(content *core.Frame, scrolls map[*html.Node]math32.Vector2) 
 		if fr == nil {
 			continue
 		}
-		pos, ok := scrolls[htmlcore.NodeOf(cw)]
+		pos, ok := scrolls[htmlengine.NodeOf(cw)]
 		if !ok {
 			continue
 		}
@@ -851,7 +852,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	if !ok || n == nil || n.Type != html.ElementNode {
 		return
 	}
-	if htmlcore.PseudoElement(n) != "" {
+	if htmlengine.PseudoElement(n) != "" {
 		// the clicks on a pseudo-element are those of its element (as the
 		// chevrons of the sidebar of MDN, which took the clicks)
 		return
@@ -929,7 +930,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 				// CSS menus of Wikipedia, which show when a checkbox is
 				// checked); the page is read again for the radio buttons
 				// that are unchecked with it
-				if strings.EqualFold(htmlcore.GetAttr(n, "type"), "checkbox") {
+				if strings.EqualFold(htmlengine.GetAttr(n, "type"), "checkbox") {
 					e.StateChanged(n)
 				} else {
 					e.Changed()
@@ -951,7 +952,7 @@ func (ps *pageScripts) handleWidget(w core.Widget) {
 	}
 	// a label of a control has the default action of clicking it (as the
 	// [-] labels of the comments of lobste.rs, of hidden checkboxes)
-	label := n.Data == "label" && (htmlcore.HasAttr(n, "for") || hasDescendant(n, "input"))
+	label := n.Data == "label" && (htmlengine.HasAttr(n, "for") || hasDescendant(n, "input"))
 	if n.Data == "a" || n.Data == "summary" || (!label && !e.HasListener(n, "click")) {
 		// links open through openURL, and summaries dispatch their clicks
 		// through Context.ToggleDetails (once)
@@ -1127,7 +1128,7 @@ func (ps *pageScripts) openURL(url string, ev events.Event) {
 // openLink dispatches a click to the given link element, and then opens
 // the given URL of it (or runs it, for javascript:), unless the click is
 // prevented. It is used for the clicks on links (see
-// [htmlcore.Context.OpenLink]), whose own element gets the click (as the
+// [htmlengine.Context.OpenLink]), whose own element gets the click (as the
 // items of the jump dialog of pkg.go.dev, which close it on their click,
 // not the first link to the same URL in the page).
 func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
@@ -1152,7 +1153,7 @@ func (ps *pageScripts) openLink(link *html.Node, url string, ev events.Event) {
 			return
 		}
 		// (the attributes in the task, which the scripts may change)
-		href, target := htmlcore.GetAttr(link, "href"), htmlcore.GetAttr(link, "target")
+		href, target := htmlengine.GetAttr(link, "href"), htmlengine.GetAttr(link, "target")
 		ps.onPage(func() { ps.openLinkURL(url, href, target, ev) })
 	})
 }
@@ -1166,7 +1167,7 @@ func (ps *pageScripts) openLinkURL(url, href, target string, ev events.Event) {
 	// in the page of its target (as _top, of the links of the account
 	// menu of Google in a frame)
 	if target != "" {
-		if u, err := htmlcore.ParseRelativeURL(url, pg.currentURL()); err == nil {
+		if u, err := htmlengine.ParseRelativeURL(url, pg.currentURL()); err == nil {
 			url = u.String()
 		}
 		tp := pg.targetPage(target)
@@ -1223,7 +1224,7 @@ func (ps *pageScripts) anchorFor(url string) *html.Node {
 					found = n
 					return false
 				}
-				if u, err := htmlcore.ParseRelativeURL(a.Val, base); err == nil && u.String() == url {
+				if u, err := htmlengine.ParseRelativeURL(a.Val, base); err == nil && u.String() == url {
 					found = n
 					return false
 				}
@@ -1513,11 +1514,11 @@ func (ps *pageScripts) widgetOf(n *html.Node) *core.WidgetBase {
 // load), and then runs its scripts, after which (and as they change it)
 // it is rendered again, with the given change to the history. It returns
 // false if its scripts cannot be run, for the page to be read without them.
-func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string, lt loadTimes) bool {
+func (pg *Page) openScripts(ctx *htmlengine.Context, page []byte, final string, mode historyMode, index int, cache *resourceCache, canceled func() bool, openedBy string, lt loadTimes) bool {
 	ctx.Scripting = true
 	// (as the photos of the front page of nytimes.com, which are read
 	// again with the page as its scripts change it)
-	ctx.ImageCache = htmlcore.NewImageCache(256 << 20)
+	ctx.ImageCache = htmlengine.NewImageCache(256 << 20)
 	if Settings.BlockAds && !strings.Contains(ctx.Style, adStyles) {
 		ctx.Style += adStyles // (the slots of the ads that are blocked)
 	}
@@ -1536,7 +1537,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 			time.Sleep(100 * time.Millisecond) // (not shown yet)
 		}
 	}
-	doc, err := htmlcore.ParseHTML(ctx, bytes.NewReader(page))
+	doc, err := htmlengine.ParseHTML(ctx, bytes.NewReader(page))
 	if err != nil {
 		ctx.Scripting = false
 		return false
@@ -1593,7 +1594,7 @@ func (pg *Page) openScripts(ctx *htmlcore.Context, page []byte, final string, mo
 	}
 	// a page that redirects is replaced by the page that it redirects to
 	if ref := ps.ctx.RefreshURL; ref != "" {
-		if u, err := htmlcore.ParseRelativeURL(ref, final); err == nil && u.String() != final {
+		if u, err := htmlengine.ParseRelativeURL(ref, final); err == nil && u.String() != final {
 			ps.engine.Close()
 			pg.open(u.String(), mode, index, 1)
 			return true
@@ -1839,7 +1840,7 @@ func hostOf(u string) string {
 // new styles at once): transitionrun and transitionstart now, and
 // transitionend when they would end, as pages wait for it (as Google
 // sign-in, to show its next step).
-func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
+func (ps *pageScripts) transitions(ts []css.Transition) {
 	e := ps.engine
 	for _, t := range ts {
 		props := map[string]any{"propertyName": t.Property, "elapsedTime": 0.0}
@@ -1853,7 +1854,7 @@ func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
 
 // logFallback logs to the verbose console why the given kind of update of
 // the page (a restyle or reread) could not be made, as recorded by the
-// context ([htmlcore.Context.Fallback]), and what is done instead, as
+// context ([htmlengine.Context.Fallback]), and what is done instead, as
 // pages read whole often (as nytimes.com, about 20 times as it loads,
 // whose elements were resized each time) are slow and jumpy.
 func (ps *pageScripts) logFallback(kind, instead string) {
@@ -1871,6 +1872,6 @@ func (ps *pageScripts) logFallback(kind, instead string) {
 // reads that are not in the cache of the page yet in parallel (see
 // [prefetch]), as it is read: the images that scripts add (as the
 // slideshows of npr.org) were gotten one at a time as it was read (8s).
-func (ps *pageScripts) prefetch(ctx *htmlcore.Context) {
+func (ps *pageScripts) prefetch(ctx *htmlengine.Context) {
 	prefetch(ctx.PrefetchURLs(ps.doc), ctx.GetURL, ctx.WebFonts, ctx.ImageCache, ps.engine.Closed)
 }

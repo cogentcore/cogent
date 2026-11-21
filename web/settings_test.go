@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestSettingsUserAgent(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	resp, err := htmlcore.NewContext().GetURL(srv.URL)
+	resp, err := htmlengine.NewContext().GetURL(srv.URL)
 	require.NoError(t, err)
 	resp.Body.Close()
 	assert.Equal(t, "Test/1.0", <-got, "the header of requests")
@@ -51,5 +51,5 @@ func TestSettingsUserAgent(t *testing.T) {
 	Settings.UserAgent = ""
 	Settings.Apply()
 	assert.Equal(t, defaultUserAgent, Settings.UserAgent, "the default when it is cleared")
-	assert.Equal(t, defaultUserAgent, htmlcore.UserAgent)
+	assert.Equal(t, defaultUserAgent, htmlengine.UserAgent)
 }

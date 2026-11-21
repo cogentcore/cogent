@@ -109,10 +109,10 @@ func Source() fs.FS {
 // NewSite makes the website in the given body, and returns its content.
 func NewSite(b *core.Body) *content.Content {
 	ct := content.NewContent(b)
-	ct.Context.ElementHandlers["cogent-apps"] = func(ctx *htmlcore.Context) bool {
+	ct.Context.AddElementHandler("cogent-apps", func(ctx *htmlcore.Context) bool {
 		appsGrid(ctx)
 		return true
-	}
+	})
 	ct.SetSource(Source())
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
@@ -139,7 +139,7 @@ func NewSite(b *core.Body) *content.Content {
 // the home page: for each app, its icon and name, which link to the app on
 // the web, its description, and a link to its documentation, if it has any.
 func appsGrid(ctx *htmlcore.Context) {
-	grid := core.NewFrame(ctx.BlockParent)
+	grid := core.NewFrame(ctx.BlockParent())
 	grid.Styler(func(s *styles.Style) {
 		s.Wrap = true
 		s.Grow.Set(1, 0)
