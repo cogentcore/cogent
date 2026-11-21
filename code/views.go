@@ -17,7 +17,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/text/spell"
-	"cogentcore.org/core/text/textpos"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
@@ -26,7 +25,7 @@ func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[0].SetTag(`width:"80"`)
 	fb.Args[1].SetValue(cv.Settings.Find.Replace)
 	fb.Args[1].SetTag(`width:"80"`)
-	fb.Args[2].SetValue(textpos.CaseSensitive(!cv.Settings.Find.IgnoreCase))
+	fb.Args[2].SetValue(cv.Settings.Find.IgnoreCase)
 	fb.Args[3].SetValue(cv.Settings.Find.Regexp)
 	fb.Args[4].SetValue(cv.Settings.Find.Loc)
 	fb.Args[5].SetValue(cv.Settings.Find.Languages)
