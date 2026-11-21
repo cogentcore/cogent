@@ -514,6 +514,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 		w.SetText("Ignore case")
 		w.OnChange(func(e events.Event) {
 			fv.Params().IgnoreCase = w.StateIs(states.Checked)
+			fv.FindAction() // the results with or without the case
 		})
 		w.Updater(func() {
 			w.SetChecked(fv.Params().IgnoreCase)
