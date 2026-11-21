@@ -13,7 +13,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/text/search"
-	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +43,7 @@ func TestFindReplace(t *testing.T) {
 					cv.ViewFileInIndex(path("a.txt"), 0)
 					cv.SetActiveEditorIndex(0)
 				}
-				cv.Find(find, repl, textpos.CaseSensitive(!ignoreCase), textpos.MatchSyntax(re), loc, langs)
+				cv.Find(find, repl, ignoreCase, re, loc, langs)
 				fv = cv.Tabs().TabByName("Find").Child(0).(*FindPanel)
 			})
 			return findResults(fv)
@@ -120,5 +119,63 @@ func TestFindReplace(t *testing.T) {
 		// a link to a file outside of the project
 		locked(b, func() { assert.False(t, fv.OpenFindURL(findURL("/no/such/file", 0, 0, 1, 0, 1), fv.TextEditor())) })
 		locked(b, func() { assert.False(t, fv.OpenFindURL("find:///x", fv.TextEditor())) })
+	})
+}
+
+// TestConfigFindButton tests that the Find dialog shows the options of the
+// last find (the settings), as the arguments of Find: its Ignore case was
+// the opposite (from when it was Use case), which flipped the setting each
+// time Find was done with the dialog.
+func TestConfigFindButton(t *testing.T) {
+	for _, ignore := range []bool{false, true} {
+		cv := &Code{}
+		cv.Settings.Find.Find = "apple"
+		cv.Settings.Find.IgnoreCase = ignore
+		cv.Settings.Find.Regexp = !ignore
+		fb := cv.ConfigFindButton(core.NewFuncButton(core.NewBody()).SetFunc(cv.Find))
+		assert.Equal(t, "apple", fb.Args[0].Value)
+		assert.Equal(t, ignore, fb.Args[2].Value, "ignore case")
+		assert.Equal(t, !ignore, fb.Args[3].Value, "regexp")
+	}
+}
+
+// TestFindIgnoreCaseSwitch tests that the Ignore case switch of the find
+// panel updates the results of the find when it is changed.
+func TestFindIgnoreCaseSwitch(t *testing.T) {
+	tmp := tempDir(t)
+	writeFiles(t, tmp, map[string]string{"a.txt": "apple pie\nApple cider\n"})
+	b, cv := newTestCode(t, tmp)
+	count := func(fv *FindPanel) int {
+		n := 0
+		for _, r := range findResults(fv) {
+			n += r.Count
+		}
+		return n
+	}
+	core.AssertRender(t, b, "find-ignore-case", func() {
+		var fv *FindPanel
+		var sw *core.Switch
+		locked(b, func() {
+			cv.Find("apple", "", false, false, All, nil)
+			fv = cv.Tabs().TabByName("Find").Child(0).(*FindPanel)
+			fv.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+				if s, ok := cw.(*core.Switch); ok && cwb.Name == "ignore-case" {
+					sw = s
+				}
+				return sw == nil
+			})
+		})
+		require.NotNil(t, sw)
+		locked(b, func() { assert.Equal(t, 1, count(fv), "case sensitive") })
+		locked(b, func() {
+			sw.SetChecked(true)
+			sw.SendChange()
+		})
+		time.Sleep(200 * time.Millisecond)
+		locked(b, func() {
+			fv = cv.Tabs().TabByName("Find").Child(0).(*FindPanel)
+			assert.True(t, cv.Settings.Find.IgnoreCase)
+			assert.Equal(t, 2, count(fv), "ignoring the case, after the switch changed")
+		})
 	})
 }
