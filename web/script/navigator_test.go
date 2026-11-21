@@ -152,7 +152,7 @@ func TestHasListenerInterrupted(t *testing.T) {
 }
 
 // TestDialogModal tests showModal, which marks the dialog for the :modal
-// selector of the style sheets (htmlcore.ModalAttr, as the jump dialog of
+// selector of the style sheets (css.ModalAttr, as the jump dialog of
 // pkg.go.dev, centered over the page), and close, which unmarks it.
 func TestDialogModal(t *testing.T) {
 	e, logs := testEngine(t, `<html><body><dialog id="d"><p>x</p></dialog></body></html>`, nil)

@@ -30,6 +30,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/css"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
@@ -1839,7 +1840,7 @@ func hostOf(u string) string {
 // new styles at once): transitionrun and transitionstart now, and
 // transitionend when they would end, as pages wait for it (as Google
 // sign-in, to show its next step).
-func (ps *pageScripts) transitions(ts []htmlcore.Transition) {
+func (ps *pageScripts) transitions(ts []css.Transition) {
 	e := ps.engine
 	for _, t := range ts {
 		props := map[string]any{"propertyName": t.Property, "elapsedTime": 0.0}
