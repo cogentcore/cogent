@@ -17,7 +17,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
@@ -278,7 +278,7 @@ func TestFrameScrollingNo(t *testing.T) {
 		defer b.AsyncUnlock()
 		require.Len(t, pg.frames, 2)
 		for n, fp := range pg.frames {
-			if htmlcore.GetAttr(n, "id") == "a" {
+			if htmlengine.GetAttr(n, "id") == "a" {
 				assert.True(t, fp.HasScroll[math32.Y], "the frame scrolls")
 			} else {
 				assert.False(t, fp.HasScroll[math32.Y], "scrolling=no")
@@ -372,7 +372,7 @@ func TestFrameLinkTarget(t *testing.T) {
 			var found *html.Node
 			var walk func(n *html.Node)
 			walk = func(n *html.Node) {
-				if htmlcore.GetAttr(n, "id") == id {
+				if htmlengine.GetAttr(n, "id") == id {
 					found = n
 				}
 				for k := n.FirstChild; k != nil; k = k.NextSibling {
@@ -438,7 +438,7 @@ func TestFrameTargets(t *testing.T) {
 		assert.Nil(t, pg.namedFrame("none"))
 		var l *html.Node
 		for n := range pg.scripts.doc.Descendants() {
-			if htmlcore.GetAttr(n, "id") == "l" {
+			if htmlengine.GetAttr(n, "id") == "l" {
 				l = n
 			}
 		}

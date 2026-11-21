@@ -26,7 +26,7 @@ import (
 // are blocked (as the gray boxes of the ads of nytimes.com, for 20s, until
 // its scripts collapsed them), and the elements that only have them, as
 // the cosmetic filters of content blockers: they are styles of the pages
-// (see htmlcore.Context.Style) with BlockAds. (:haschild is that of
+// (see htmlengine.Context.Style) with BlockAds. (:haschild is that of
 // cascadia, as it has no relative :has, as :has(> x), whose rule would
 // be dropped with the others.)
 const adStyles = `[data-testid="StandardAd"], .place-ad, [id^="dfp-ad-"], [id^="div-gpt-ad"],

@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/video"
 	"github.com/stretchr/testify/assert"
@@ -150,7 +150,7 @@ func TestPageAudioControls(t *testing.T) {
 		<script>const a = document.getElementById("a"); `+audioLog+`</script></body></html>`)
 	defer srv.Close()
 	openAudioPage(t, srv, func(b *core.Body, pg *Page, eval func(src string) any) {
-		var box *htmlcore.VideoBox
+		var box *htmlengine.VideoBox
 		var c *video.Controls
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()
@@ -168,7 +168,7 @@ func TestPageAudioControls(t *testing.T) {
 		}), "the bar of the audio, with its controls")
 		assert.True(t, box.Audio)
 		b.AsyncLock()
-		pv := pg.videos[htmlcore.NodeOf(box)]
+		pv := pg.videos[htmlengine.NodeOf(box)]
 		assert.True(t, c.IsShown())
 		b.AsyncUnlock()
 		require.NotNil(t, pv)

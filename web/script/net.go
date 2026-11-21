@@ -20,7 +20,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"github.com/dop251/goja"
 	"golang.org/x/net/html"
 )
@@ -487,7 +487,7 @@ func (e *Engine) request(u, method string, headers []string, body []byte, hasBod
 		return nil, err
 	}
 	// the headers of browsers, unless the script sets them
-	htmlcore.SetRequestHeaders(req)
+	htmlengine.SetRequestHeaders(req)
 	req.Header.Set("Accept", "*/*")
 	set := map[string]bool{}
 	for i := 0; i+1 < len(headers); i += 2 {

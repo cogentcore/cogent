@@ -16,7 +16,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
@@ -28,11 +28,11 @@ import (
 
 // videoBoxes returns the boxes of the video elements of the page,
 // by the id of their elements.
-func videoBoxes(pg *Page) map[string]*htmlcore.VideoBox {
-	boxes := map[string]*htmlcore.VideoBox{}
+func videoBoxes(pg *Page) map[string]*htmlengine.VideoBox {
+	boxes := map[string]*htmlengine.VideoBox{}
 	pg.WalkDown(func(n tree.Node) bool {
-		if box, ok := n.(*htmlcore.VideoBox); ok && htmlcore.VideoSourceOf(box) != "" {
-			boxes[htmlcore.GetAttr(htmlcore.NodeOf(box), "id")] = box
+		if box, ok := n.(*htmlengine.VideoBox); ok && htmlengine.VideoSourceOf(box) != "" {
+			boxes[htmlengine.GetAttr(htmlengine.NodeOf(box), "id")] = box
 		}
 		return tree.Continue
 	})
@@ -88,7 +88,7 @@ func TestPageVideo(t *testing.T) {
 	pg.OpenURL(srv.URL+"/", nil)
 	core.RenderImage(b, func() { settle(pg) }, func() {
 		// the autoplay video shows its frames, at the width of its box
-		var boxes map[string]*htmlcore.VideoBox
+		var boxes map[string]*htmlengine.VideoBox
 		require.True(t, eventually(func() bool {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
@@ -96,7 +96,7 @@ func TestPageVideo(t *testing.T) {
 			return len(boxes) == 2 && colorful(boxes["auto"].Image.Image) && colorful(boxes["click"].Image.Image)
 		}), "frames shown")
 		b.AsyncLock()
-		auto, click := pg.videos[htmlcore.NodeOf(boxes["auto"])], pg.videos[htmlcore.NodeOf(boxes["click"])]
+		auto, click := pg.videos[htmlengine.NodeOf(boxes["auto"])], pg.videos[htmlengine.NodeOf(boxes["click"])]
 		require.NotNil(t, auto)
 		require.NotNil(t, click)
 		assert.True(t, auto.playback.IsPlaying())
@@ -147,7 +147,7 @@ func TestPageVideo(t *testing.T) {
 
 		mu.Lock()
 		require.NotEmpty(t, agents)
-		assert.Equal(t, htmlcore.UserAgent, agents[0])
+		assert.Equal(t, htmlengine.UserAgent, agents[0])
 		assert.Contains(t, cookies[0], "session=abc") // (with those of other tests)
 		mu.Unlock()
 
@@ -237,7 +237,7 @@ func TestPageVideoHLS(t *testing.T) {
 		eval("v.pause()")
 		assert.Equal(t, true, eval("v.paused"))
 		b.AsyncLock()
-		pv := pg.videos[htmlcore.NodeOf(videoBoxes(pg)["v"])]
+		pv := pg.videos[htmlengine.NodeOf(videoBoxes(pg)["v"])]
 		b.AsyncUnlock()
 		require.True(t, eventually(func() bool { return !pv.IsPlaying() }), "paused")
 
@@ -345,7 +345,7 @@ func TestPageVideoCovered(t *testing.T) {
 			b.AsyncLock()
 			defer b.AsyncUnlock()
 			if box := videoBoxes(pg)["v"]; box != nil {
-				pv = pg.videos[htmlcore.NodeOf(box)]
+				pv = pg.videos[htmlengine.NodeOf(box)]
 			}
 			return pv != nil && pv.playback != nil && pv.playback.IsPlaying()
 		}), "playing")
@@ -359,7 +359,7 @@ func TestPageVideoCovered(t *testing.T) {
 		// once the dialog is gone, its frames are rendered again
 		b.AsyncLock()
 		pg.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-			if htmlcore.NodeOf(cw) != nil && htmlcore.GetAttr(htmlcore.NodeOf(cw), "id") == "dialog" {
+			if htmlengine.NodeOf(cw) != nil && htmlengine.GetAttr(htmlengine.NodeOf(cw), "id") == "dialog" {
 				cwb.SetState(true, states.Invisible)
 				cwb.NeedsRender()
 			}

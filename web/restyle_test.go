@@ -15,7 +15,7 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/stretchr/testify/assert"
@@ -92,7 +92,7 @@ func TestScriptsRestyle(t *testing.T) {
 // TestScriptsKeepContainerSizes tests that the elements in containers of a
 // page that is read again after its scripts change it are styled for the
 // sizes of the containers from the start (see
-// [htmlcore.Context.KeepContainerSizes]), not for the viewport, as the
+// [htmlengine.Context.KeepContainerSizes]), not for the viewport, as the
 // panels of repositories of github.com, of font-size: 1cqw, which were
 // shown much larger for a moment each time that the page was read again.
 func TestScriptsKeepContainerSizes(t *testing.T) {
@@ -103,7 +103,7 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 			`<div id="text" style="font-size: 10cqw">text</div></div><div id="other">other</div></body></html>`,
 	}, func(pg *Page) {
 		pg.Context.WidgetHandlers = append(pg.Context.WidgetHandlers, func(w core.Widget) {
-			if htmlcore.GetAttr(htmlcore.NodeOf(w), "id") != "text" {
+			if htmlengine.GetAttr(htmlengine.NodeOf(w), "id") != "text" {
 				return
 			}
 			first := true
@@ -136,7 +136,7 @@ func TestScriptsKeepContainerSizes(t *testing.T) {
 // TestScriptsReread tests that changes of the document by scripts (of the
 // text of an element, of the children of another, and of an attribute of
 // another) are made by reading only the changed elements again, keeping
-// the widgets of the others (see [htmlcore.Context.Reread]), without
+// the widgets of the others (see [htmlengine.Context.Reread]), without
 // reading the page again, and that the page of a frame whose box is made
 // new is kept, in its new box.
 func TestScriptsReread(t *testing.T) {
@@ -183,7 +183,7 @@ func TestScriptsReread(t *testing.T) {
 		assert.Same(t, other, widgetWithID(pg, "other"), "the widget of an element that has not changed is kept")
 		assert.Same(t, a, widgetWithID(pg, "a"), "the widget of an item of the list that has not changed is kept")
 		assert.Len(t, pg.frames, 1)
-		assert.Same(t, fp, pg.frames[htmlcore.NodeOf(fp.Parent.(core.Widget))], "the page of the frame is kept")
+		assert.Same(t, fp, pg.frames[htmlengine.NodeOf(fp.Parent.(core.Widget))], "the page of the frame is kept")
 		assert.Equal(t, "a new box", widgetWithID(pg, "box").Property("title"), "the box is made new")
 		assert.Contains(t, pageTextsLocked(pg), "in the frame")
 	})

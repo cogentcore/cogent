@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,7 +53,7 @@ func TestPrefetch(t *testing.T) {
 		urls = append(urls, fmt.Sprintf("https://example.com/img%d.png", i))
 	}
 	start := time.Now()
-	images := htmlcore.NewImageCache(1 << 20)
+	images := htmlengine.NewImageCache(1 << 20)
 	prefetch(urls, rc.Get, true, images, func() bool { return false })
 	// (as the page is read, while it is being gotten)
 	resp, err := rc.Get("https://example.com/img19.png")

@@ -53,7 +53,7 @@ type Options struct {
 	PageURL string
 
 	// GetURL gets the resources of the page (scripts and the requests of
-	// its scripts), as [htmlcore.Context.GetURL].
+	// its scripts), as [htmlengine.Context.GetURL].
 	GetURL func(url string) (*http.Response, error)
 
 	// Lock and Unlock, if set, lock and unlock the widgets of the page

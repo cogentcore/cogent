@@ -7,7 +7,7 @@ package web
 import (
 	"cogentcore.org/cogent/web/script"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/htmlcore/htmlengine"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"golang.org/x/net/html"
@@ -124,11 +124,11 @@ func (pg *Page) attachFrames(content *core.Frame) (opens []func()) {
 // frameSource returns the absolute URL of the page of the given iframe
 // element, or "" for none (as about:blank).
 func (pg *Page) frameSource(n *html.Node) string {
-	src := htmlcore.GetAttr(n, "src")
+	src := htmlengine.GetAttr(n, "src")
 	if src == "" || src == "about:blank" {
 		return ""
 	}
-	u, err := htmlcore.ParseRelativeURL(src, pg.Context.PageURL)
+	u, err := htmlengine.ParseRelativeURL(src, pg.Context.PageURL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
 		return "" // (javascript: and data: URLs are not opened)
 	}
@@ -142,7 +142,7 @@ func (pg *Page) newFrame(n *html.Node) *Page {
 	fp.frame = &frame{parent: pg, node: n}
 	fp.Styler(func(s *styles.Style) {
 		s.Overflow.Set(styles.OverflowAuto) // it scrolls in its frame
-		if strings.EqualFold(strings.TrimSpace(htmlcore.GetAttr(n, "scrolling")), "no") {
+		if strings.EqualFold(strings.TrimSpace(htmlengine.GetAttr(n, "scrolling")), "no") {
 			s.Overflow.Set(styles.OverflowHidden)
 		}
 	})
@@ -278,5 +278,5 @@ func (pg *Page) namedFrame(name string) *Page {
 
 // nameAttr returns the name attribute of the given element.
 func nameAttr(n *html.Node) string {
-	return htmlcore.GetAttr(n, "name")
+	return htmlengine.GetAttr(n, "name")
 }
