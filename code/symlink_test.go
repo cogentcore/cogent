@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +43,7 @@ func TestCodeSymlinkPaths(t *testing.T) {
 			assert.ElementsMatch(t, []string{path("a.txt"), path("b.txt")}, names)
 			assert.NotNil(t, cv.GetOpenFile(filepath.Join(link, "a.txt")))
 
-			cv.Find("apple", "", textpos.UseCase, textpos.Literal, All, nil)
+			cv.Find("apple", "", false, false, All, nil)
 			fv := cv.Tabs().TabByName("Find").Child(0).(*FindPanel)
 			var found []string
 			for _, r := range findResults(fv) {

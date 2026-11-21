@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
-	"regexp"
+	goregexp "regexp" // (Code.Find has a regexp argument)
 	"strings"
 	"time"
 
@@ -89,7 +89,7 @@ type FindPanel struct {
 	Time time.Time
 
 	// compiled regexp
-	Re *regexp.Regexp
+	Re *goregexp.Regexp
 
 	// Renaming indicates this panel is showing proposed symbol rename
 	// edits from a language server, instead of search results:
@@ -253,7 +253,7 @@ func (fv *FindPanel) FindAction() {
 	if !fv.CompileRegexp() {
 		return
 	}
-	fv.Code.Find(fp.Find, fp.Replace, textpos.CaseSensitive(!fp.IgnoreCase), textpos.MatchSyntax(fp.Regexp), fp.Loc, fp.Languages)
+	fv.Code.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Languages)
 }
 
 // CheckValidRegexp returns false if using regexp and it is not valid
@@ -388,7 +388,7 @@ func (fv *FindPanel) CompileRegexp() bool {
 		return true
 	}
 	var err error
-	fv.Re, err = regexp.Compile(fp.Find)
+	fv.Re, err = goregexp.Compile(fp.Find)
 	if err != nil {
 		core.ErrorSnackbar(fv, err, "The regular expression was invalid")
 		return false
@@ -511,7 +511,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 	})
 
 	tree.AddAt(p, "ignore-case", func(w *core.Switch) {
-		w.SetText("Ignore Case")
+		w.SetText("Ignore case")
 		w.OnChange(func(e events.Event) {
 			fv.Params().IgnoreCase = w.StateIs(states.Checked)
 		})
@@ -612,17 +612,21 @@ func (cv *Code) CallFind(ctx core.Widget) {
 }
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
-// main tab with the results and further controls.
-func (cv *Code) Find(find, repl string, useCase textpos.CaseSensitive, regExp textpos.MatchSyntax, loc Locations, langs []fileinfo.Known) { //types:add
+// main tab with the results and further controls. Its arguments have the
+// names of the options of the find panel (see [FindParams]), as the find
+// dialog shows them.
+func (cv *Code) Find(find, replace string, ignoreCase, regexp bool, loc Locations, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
-	cv.Settings.Find.IgnoreCase = useCase == textpos.IgnoreCase
-	cv.Settings.Find.Regexp = bool(regExp)
+	useCase := textpos.CaseSensitive(!ignoreCase)
+	regExp := textpos.MatchSyntax(regexp)
+	cv.Settings.Find.IgnoreCase = ignoreCase
+	cv.Settings.Find.Regexp = regexp
 	cv.Settings.Find.Languages = langs
 	cv.Settings.Find.Loc = loc
 	cv.Settings.Find.Find = find
-	cv.Settings.Find.Replace = repl
+	cv.Settings.Find.Replace = replace
 
 	tv := cv.Tabs()
 	if tv == nil {
@@ -630,9 +634,9 @@ func (cv *Code) Find(find, repl string, useCase textpos.CaseSensitive, regExp te
 	}
 	var err error
 
-	var re *regexp.Regexp
+	var re *goregexp.Regexp
 	if regExp {
-		re, err = regexp.Compile(find)
+		re, err = goregexp.Compile(find)
 		if err != nil {
 			core.ErrorSnackbar(cv, err)
 			return
