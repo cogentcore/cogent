@@ -31,8 +31,9 @@ func (a *App) readMessages() []*CacheMessage {
 // action executes the given function for each of the messages being read
 // ([App.readMessages]) in a goroutine with proper locking. This should be
 // used for any user action that interacts with messages in IMAP. It also
-// automatically saves the cache after the action is completed.
-func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error) {
+// automatically saves the cache after the action is completed. Any then
+// function is called after the app is updated, with the lock of the window.
+func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
 	email := a.currentEmail
 	msgs := a.readMessages()
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
@@ -53,6 +54,9 @@ func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error) {
 		mu.Unlock()
 		a.AsyncLock()
 		a.Update()
+		for _, f := range then {
+			f()
+		}
 		a.AsyncUnlock()
 	}()
 }
@@ -135,8 +139,9 @@ func (a *App) label(newLabels []string) {
 }
 
 // setLabels changes the labels of each of the messages being read
-// to those that the given function returns for it.
-func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string) {
+// to those that the given function returns for it. Any then function
+// is called after, as for [App.action].
+func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string, then ...func()) {
 	email := a.currentEmail
 	targets := map[*CacheMessage][]string{}
 	for _, cm := range a.readMessages() {
@@ -198,7 +203,7 @@ func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string) {
 		cm.Labels = resultantLabels
 		a.AsyncUnlock()
 		return nil
-	})
+	}, then...)
 }
 
 // Delete moves the current message to the trash.
@@ -208,7 +213,7 @@ func (a *App) Delete() { //types:add
 		core.ErrorSnackbar(a, fmt.Errorf("no trash mailbox for %s", a.currentEmail))
 		return
 	}
-	a.setLabels(func(cm *CacheMessage) []string { return []string{trash} })
+	a.setLabels(func(cm *CacheMessage) []string { return []string{trash} }, a.selectNext())
 }
 
 // Reply opens a dialog to reply to the current message.

@@ -6,18 +6,22 @@ package mail
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base32"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/textcore"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-smtp"
@@ -51,7 +55,16 @@ func (a *App) compose(title string) {
 		from = Settings.Accounts[0]
 	}
 	a.composeMessage.From = []*mail.Address{{Address: from}}
-	b := core.NewBody(title)
+	if sig := signatureText(from); sig != "" {
+		// above any quoted message, as usual
+		a.composeMessage.body = "\n\n" + sig + a.composeMessage.body
+	}
+	// All of the compose windows have the same size, which is remembered
+	// by the part of the title before the colon.
+	b := core.NewBody("Message: " + title)
+	b.Styler(func(s *styles.Style) {
+		s.Min.Set(units.Ch(80), units.Ch(80))
+	})
 	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := textcore.NewEditor(b)
 	core.Bind(&a.composeMessage.body, ed)
@@ -83,8 +96,13 @@ func (a *App) Send() error { //types:add
 	h.SetAddressList("From", a.composeMessage.From)
 	h.SetAddressList("To", a.composeMessage.To)
 	h.SetSubject(a.composeMessage.Subject)
-	h.SetMsgIDList("In-Reply-To", []string{a.composeMessage.inReplyTo})
-	h.SetMsgIDList("References", a.composeMessage.references)
+	h.SetMessageID(newMessageID(email))
+	if a.composeMessage.inReplyTo != "" {
+		h.SetMsgIDList("In-Reply-To", []string{a.composeMessage.inReplyTo})
+	}
+	if len(a.composeMessage.references) > 0 {
+		h.SetMsgIDList("References", a.composeMessage.references)
+	}
 
 	mw, err := mail.CreateWriter(&b, h)
 	if err != nil {
@@ -171,6 +189,19 @@ func (a *App) Send() error { //types:add
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}
 	return err
+}
+
+// newMessageID returns a new unique Message-ID (without angle brackets)
+// for a message from the given address, with its domain, so that the ID
+// does not include the name of this computer.
+func newMessageID(from string) string {
+	domain := "localhost"
+	if _, d, ok := strings.Cut(from, "@"); ok && d != "" {
+		domain = d
+	}
+	b := make([]byte, 16)
+	rand.Read(b)
+	return fmt.Sprintf("%d.%s@%s", time.Now().UnixNano(), base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b), domain)
 }
 
 // smtpAddress is the address of the SMTP server for sending messages.

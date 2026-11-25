@@ -190,6 +190,9 @@ func (a *App) updateList() {
 // initList initializes the tree table of the list of messages.
 func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
+	w.ReadOnlyKeyNav = true
+	w.ContextMenus = nil // only that of the messages
+	w.AddContextMenu(a.messageMenu)
 	w.SetItems(&a.listRows)
 	w.SetSortFieldName("Date:down")
 	w.Styler(func(s *styles.Style) {
@@ -232,4 +235,27 @@ func (a *App) rowAt(idx int) *messageRow {
 		return nil
 	}
 	return rows[idx]
+}
+
+// selectNext returns a function that selects the row of the list of
+// messages that is at the index of the one selected now, which is the next
+// one after it once the selected one is gone, as after filing or deleting
+// it, reading it, or nothing if there are no rows.
+func (a *App) selectNext() func() {
+	idx := -1
+	if a.list != nil {
+		idx = a.list.SelectedIndex
+	}
+	return func() {
+		if a.list == nil || idx < 0 {
+			return
+		}
+		n := len(*a.list.Slice.(*[]*messageRow))
+		if n == 0 {
+			a.readMessage = nil
+			a.Update()
+			return
+		}
+		a.list.SelectIndexEvent(min(idx, n-1), events.SelectOne)
+	}
 }

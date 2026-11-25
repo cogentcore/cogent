@@ -52,6 +52,9 @@ type readMessageParsed struct {
 type Attachment struct {
 	Filename string
 	Data     []byte
+
+	// openedFile is the temporary file it was last opened from, if any.
+	openedFile string
 }
 
 // DisplayMessageFrame is a frame that displays the metadata and contents of a message.

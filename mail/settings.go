@@ -33,6 +33,50 @@ type SettingsData struct { //types:add
 	// FlatList shows each message on its own in the list of messages,
 	// instead of grouped into conversations.
 	FlatList bool
+
+	// Signatures are the signatures that can be added to the end of the
+	// messages, in markdown.
+	Signatures []Signature
+
+	// DefaultSignatures are the names of the signatures added to new
+	// messages from each account, by its email address.
+	DefaultSignatures map[string]string
+}
+
+// Signature is a signature that can be added to the end of messages.
+type Signature struct {
+
+	// Name is the name of the signature, by which the accounts
+	// choose it (see [SettingsData.DefaultSignatures]).
+	Name string
+
+	// Text is the text of the signature, in markdown, where each line
+	// is on its own line.
+	Text SignatureText
+}
+
+// SignatureText is the markdown text of a [Signature], which is edited
+// in a multi-line editor (see [SignatureButton]).
+type SignatureText string
+
+// signatureText returns the text of the default signature of the given
+// account, after the standard "-- " separator line, with a line break at
+// the end of each line, or "" if it has none.
+func signatureText(email string) string {
+	name := Settings.DefaultSignatures[email]
+	if name == "" {
+		return ""
+	}
+	for _, sig := range Settings.Signatures {
+		text := string(sig.Text)
+		if sig.Name != name || strings.TrimSpace(text) == "" {
+			continue
+		}
+		lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
+		// two spaces at the end of a line are a line break in markdown
+		return "--  \n" + strings.Join(lines, "  \n") + "\n"
+	}
+	return ""
 }
 
 // friendlyLabelName converts the given label name to a user-friendly version.

@@ -204,6 +204,7 @@ func (s *Server) Append(account string, mailboxes []string, msg []byte, flags []
 // sender if it is an account. Other recipients get a bounce message back.
 func (s *Server) Deliver(from string, to []string, msg []byte) error {
 	from = strings.ToLower(from)
+	msg = s.addMessageID(msg)
 	var got, unknown []string
 	toSelf := false
 	for _, r := range to {
@@ -262,6 +263,18 @@ func (s *Server) bounce(to string, unknown []string, msg []byte) []byte {
 		b.Write(hdr)
 	}
 	return b.Bytes()
+}
+
+// addMessageID returns the given message with a new Message-ID header
+// if it does not have one, as Gmail adds.
+func (s *Server) addMessageID(msg []byte) []byte {
+	hdr, _, _ := bytes.Cut(msg, []byte("\r\n\r\n"))
+	for line := range strings.SplitSeq(string(hdr), "\r\n") {
+		if strings.HasPrefix(strings.ToLower(line), "message-id:") {
+			return msg
+		}
+	}
+	return append([]byte("Message-ID: "+s.newMessageID()+"\r\n"), msg...)
 }
 
 // newMessageID returns a new unique Message-ID with angle brackets.

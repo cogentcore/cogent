@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
@@ -92,6 +92,19 @@ type App struct {
 	// list is the tree table of the list of messages.
 	list *core.TreeTable
 
+	// splits are the splits of the panels.
+	splits *core.Splits
+
+	// keySeq1 is the first key of a key sequence being entered,
+	// such as Control+X (see [App.mailKeys]).
+	keySeq1 key.Chord
+
+	// mailboxes is the tree of the accounts and their mailboxes.
+	mailboxes *core.Tree
+
+	// unread is the number of unread messages in each mailbox of each account.
+	unread map[string]map[string]int
+
 	// currentEmail is the current email account.
 	currentEmail string
 
@@ -158,22 +171,12 @@ func (a *App) Init() {
 		s.Grow.Set(1, 1)
 	})
 
+	a.OnFirst(events.KeyChord, a.mailKeys)
+
 	tree.AddChild(a, func(w *core.Splits) {
+		a.splits = w
 		w.SetSplits(0.15, 0.4, 0.45)
-		tree.AddChild(w, func(w *core.Tree) {
-			w.SetText("Accounts")
-			w.Maker(func(p *tree.Plan) {
-				for _, email := range Settings.Accounts {
-					tree.AddAt(p, email, func(w *core.Tree) {
-						w.SetText(email)
-						a.makeLabelTree(w, email, "")
-						w.OnSelect(func(e events.Event) {
-							a.showMailbox(email, "INBOX")
-						})
-					})
-				}
-			})
-		})
+		tree.AddChild(w, a.initMailboxes)
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
@@ -244,43 +247,6 @@ func (a *App) Init() {
 				add(a.readMessage)
 			})
 		})
-	})
-}
-
-// makeLabelTree recursively adds a Maker to the given tree to form a nested tree of labels.
-func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
-	w.Maker(func(p *tree.Plan) {
-		friendlyParentLabel := friendlyLabelName(parentLabel)
-		for _, label := range a.labels[email] {
-			if skipLabels[label] {
-				continue
-			}
-			friendlyLabel := friendlyLabelName(label)
-			// Skip labels that are not directly nested under the parent label.
-			if parentLabel == "" && strings.Contains(friendlyLabel, "/") {
-				continue
-			} else if parentLabel != "" {
-				if !strings.HasPrefix(friendlyLabel, friendlyParentLabel+"/") ||
-					strings.Count(friendlyLabel, "/") > strings.Count(friendlyParentLabel, "/")+1 {
-					continue
-				}
-			}
-			tree.AddAt(p, label, func(w *core.Tree) {
-				a.makeLabelTree(w, email, label)
-				w.Updater(func() {
-					// Recompute the friendly labels in case they have changed.
-					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyLabelName(parentLabel)+"/"))
-					if ic, ok := labelIcons[w.Text]; ok {
-						w.SetIcon(ic)
-					} else {
-						w.SetIcon(icons.Label)
-					}
-				})
-				w.OnSelect(func(e events.Event) {
-					a.showMailbox(email, label)
-				})
-			})
-		}
 	})
 }
 

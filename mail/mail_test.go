@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -17,6 +18,11 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/tree"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-imap/v2/imapserver"
@@ -548,5 +554,239 @@ func TestList(t *testing.T) {
 		assert.Empty(t, a.listRows, "the INBOX is empty")
 		a.showMailbox(testEmail, "Work")
 		require.Len(t, a.listRows, 2, "the conversation and the report")
+	}))
+}
+
+// TestSendBetweenAccounts tests that messages sent between the accounts of
+// the test server each arrive, with their own Message-ID with the domain
+// of the sender, as messages without one were all cached as one.
+func TestSendBetweenAccounts(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	oldFile, oldAccounts := Settings.File, Settings.Accounts
+	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	you, bob := Settings.Accounts[0], Settings.Accounts[2]
+	syncAll := func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.cacheMessages())
+			if !a.syncMore {
+				return
+			}
+		}
+	}
+	send := func(from, to, subject string) {
+		a.showMailbox(from, "INBOX")
+		a.Compose()
+		a.composeMessage.To[0].Address = to
+		a.composeMessage.Subject = subject
+		require.NoError(t, a.Send())
+	}
+	core.RenderImage(b, syncAll, core.Locked(b, func() {
+		send(you, bob, "one")
+		send(bob, you, "two")
+		send(bob, you, "three")
+	}), func() {
+		syncAll()
+		for _, subject := range []string{"two", "three"} {
+			cm := findSubject(a, you, subject, "INBOX")
+			require.NotNil(t, cm, subject)
+			assert.True(t, strings.HasSuffix(cm.MessageID, "@mail.test"), cm.MessageID)
+			assert.NotNil(t, findSubject(a, bob, subject, "[Gmail]/Sent Mail"), subject)
+		}
+		assert.NotNil(t, findSubject(a, you, "one", "[Gmail]/Sent Mail"))
+		assert.NotNil(t, findSubject(a, bob, "one", "INBOX"))
+		assert.NotEqual(t, cacheKey(&imap.Envelope{Subject: "a"}), cacheKey(&imap.Envelope{Subject: "b"}), "no Message-ID")
+	})
+}
+
+// TestMailboxes tests the tree of mailboxes: the order, icons, and unread
+// counts of the mailboxes, the selection of the mailbox being shown, and
+// moving to the next mailbox with the keyboard.
+func TestMailboxes(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	oldFile, oldAccounts := Settings.File, Settings.Accounts
+	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	you := Settings.Accounts[0]
+	node := func(parent tree.Node, name string) *core.Tree {
+		t.Helper()
+		n := parent.AsTree().ChildByName(name)
+		require.NotNil(t, n, name)
+		return n.(*core.Tree)
+	}
+	var inbox *core.Tree
+	core.RenderImage(b, func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.cacheMessages())
+			if !a.syncMore {
+				break
+			}
+		}
+	}, core.Locked(b, func() {
+		a.Update()
+	}), core.Locked(b, func() {
+		acct := node(a.mailboxes, you)
+		var names []string
+		for _, c := range acct.Children {
+			names = append(names, c.AsTree().Name)
+		}
+		assert.Equal(t, []string{"INBOX", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
+			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names)
+		inbox = node(acct, "INBOX")
+		assert.True(t, inbox.StateIs(states.Selected), "the mailbox shown")
+		assert.Equal(t, fmt.Sprintf("Inbox (%d)", a.unread[you]["INBOX"]), inbox.Text)
+		assert.NotZero(t, a.unread[you]["INBOX"])
+		assert.Contains(t, acct.Text, "you@mail.test (")
+		assert.Equal(t, icons.Inbox, inbox.Icon)
+		projects := node(acct, "Projects")
+		assert.Equal(t, icons.Folder, projects.Icon, "with subfolders")
+		assert.Equal(t, icons.Label, node(projects, "Projects/Alpha").Icon, "a leaf")
+		inbox.SetFocus()
+	}), func() {
+		b.Scene.RenderWindow().SystemWindow.Events().KeyChord(0, key.CodeDownArrow, 0)
+	}, core.Locked(b, func() {
+		assert.Equal(t, "[Gmail]/Drafts", a.showLabel, "moved with the keyboard")
+		assert.False(t, inbox.StateIs(states.Selected))
+		a.showMailbox(Settings.Accounts[1], "INBOX")
+	}), core.Locked(b, func() {
+		assert.True(t, node(node(a.mailboxes, Settings.Accounts[1]), "INBOX").StateIs(states.Selected))
+		assert.False(t, node(node(a.mailboxes, you), "[Gmail]/Drafts").StateIs(states.Selected))
+	}))
+}
+
+// TestFileKeys tests filing a message with Control+O, which selects the
+// next message, tagging one with Control+T, and moving among the panels
+// with Control+X Control+O.
+func TestFileKeys(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var hello, report *CacheMessage
+	keys := func(chords ...key.Chord) func() {
+		return func() {
+			src := b.Scene.RenderWindow().SystemWindow.Events()
+			for _, c := range chords {
+				r, code, mods, err := c.Decode()
+				require.NoError(t, err)
+				src.KeyChord(r, code, mods)
+			}
+		}
+	}
+	choose := func(label string) func() {
+		return core.Locked(b, func() {
+			d := core.TopScene(b)
+			require.NotNil(t, d)
+			var ch *core.Chooser
+			for w := range d.AllWidgets() {
+				if c, ok := w.(*core.Chooser); ok {
+					ch = c
+				}
+			}
+			require.NotNil(t, ch, "the dialog of mailboxes")
+			ch.SetCurrentValue(label)
+			ch.SendChange()
+		})
+	}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+		report = messageBySubject(a, "Report")
+	}, core.Locked(b, func() {
+		a.showMailbox(testEmail, "Work")
+		require.Len(t, a.listRows, 2)
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		require.Equal(t, report, a.readMessage, "the newest")
+		a.list.SetFocus()
+	}), keys("Control+T"), choose("[Gmail]/Trash"), func() {
+		require.Eventually(t, func() bool {
+			a.imapMu[testEmail].Lock()
+			defer a.imapMu[testEmail].Unlock()
+			return slices.Equal([]string{"Work", "[Gmail]/Trash"}, labelNames(report))
+		}, 5*time.Second, 10*time.Millisecond, "tagged, still in Work")
+	}, keys("Control+O"), choose("INBOX"), func() {
+		require.Eventually(t, func() bool {
+			a.imapMu[testEmail].Lock()
+			defer a.imapMu[testEmail].Unlock()
+			return slices.Equal([]string{"INBOX", "[Gmail]/Trash"}, labelNames(report))
+		}, 5*time.Second, 10*time.Millisecond, "filed out of Work")
+	}, core.Locked(b, func() {
+		require.Len(t, a.listRows, 1)
+		assert.Equal(t, hello, a.readMessage, "the next one is selected")
+		a.list.SetFocus()
+	}), func() { keys(seqStart(t), "Control+P")() }, core.Locked(b, func() {
+		assert.True(t, a.mailboxes.ContainsFocus(), "the previous panel")
+		work := a.mailboxes.ChildByName(testEmail).AsTree().ChildByName("Work").(*core.Tree)
+		assert.True(t, work.StateIs(states.Focused), "the mailbox shown")
+	}), func() { keys(seqStart(t), "Control+O")() }, core.Locked(b, func() {
+		assert.True(t, a.list.ContainsFocus(), "the next panel")
+	}), keys("Control+Shift+Tab"), core.Locked(b, func() {
+		assert.True(t, a.mailboxes.ContainsFocus(), "the previous panel, again")
+	}), keys("Control+Tab"), core.Locked(b, func() {
+		assert.True(t, a.list.ContainsFocus(), "the next panel, again")
+	}))
+}
+
+// seqStart returns the first chord of the key sequences of the active key
+// map, which differs by platform (Control+X on the Mac).
+func seqStart(t *testing.T) key.Chord {
+	for c, f := range *keymap.ActiveMap {
+		if f == keymap.MultiA {
+			return c
+		}
+	}
+	t.Fatal("no key sequences in the key map")
+	return ""
+}
+
+// TestAttachmentOpen tests opening attachments in their default apps,
+// each from its own temporary file.
+func TestAttachmentOpen(t *testing.T) {
+	var opened []string
+	old := openURL
+	openURL = func(url string) { opened = append(opened, url) }
+	t.Cleanup(func() { openURL = old })
+	a1 := &Attachment{Filename: "notes.txt", Data: []byte("one")}
+	a2 := &Attachment{Filename: "../notes.txt", Data: []byte("two")}
+	require.NoError(t, a1.Open())
+	require.NoError(t, a2.Open())
+	require.Len(t, opened, 2)
+	assert.NotEqual(t, a1.openedFile, a2.openedFile, "the same name, in different directories")
+	assert.Equal(t, "notes.txt", filepath.Base(a2.openedFile))
+	assert.True(t, strings.HasPrefix(a2.openedFile, attachmentsDir), "not outside of it")
+	data, err := os.ReadFile(a2.openedFile)
+	require.NoError(t, err)
+	assert.Equal(t, "two", string(data))
+	assert.True(t, strings.HasPrefix(opened[0], "file://"), opened[0])
+}
+
+// TestSignature tests adding the default signature of the account to new
+// messages, above the quoted message of a reply.
+func TestSignature(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	Settings.Signatures = []Signature{{Name: "Work", Text: "Me\nThe Lab\n"}, {Name: "Home", Text: "me"}}
+	Settings.DefaultSignatures = map[string]string{testEmail: "Work"}
+	t.Cleanup(func() { Settings.Signatures, Settings.DefaultSignatures = nil, nil })
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Compose()
+		assert.Equal(t, "\n\n--  \nMe  \nThe Lab\n", a.composeMessage.body)
+		a.readMessage = messageBySubject(a, "Report")
+		a.readSingle = true
+		a.Update()
+	}), core.Locked(b, func() {
+		a.Reply()
+		assert.True(t, strings.HasPrefix(a.composeMessage.body, "\n\n--  \nMe  \nThe Lab\n\n\n> On "), a.composeMessage.body)
+		Settings.DefaultSignatures = nil
+		a.Compose()
+		assert.NotContains(t, a.composeMessage.body, "--", "no default")
 	}))
 }

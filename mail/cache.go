@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -150,19 +151,11 @@ func (a *App) cacheMessagesForAccount(email string) error {
 	}
 
 	a.imapMu[email].Lock()
-	mailboxes, err := c.List("", "*", nil).Collect()
+	mailboxes, err := a.listMailboxes(c, email)
 	a.imapMu[email].Unlock()
 	if err != nil {
-		return fmt.Errorf("getting mailboxes: %w", err)
+		return err
 	}
-
-	a.AsyncLock()
-	a.labels[email] = []string{}
-	for _, mailbox := range mailboxes {
-		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
-	}
-	a.trash[email] = findTrash(mailboxes)
-	a.AsyncUnlock()
 
 	for _, mailbox := range mailboxes {
 		if skipLabels[mailbox.Mailbox] {
@@ -174,6 +167,24 @@ func (a *App) cacheMessagesForAccount(email string) error {
 		}
 	}
 	return nil
+}
+
+// listMailboxes gets the mailboxes of the given account from the server,
+// setting its labels and trash mailbox. It must be called with the IMAP
+// mutex of the account held, and not the lock of the window.
+func (a *App) listMailboxes(c *imapclient.Client, email string) ([]*imap.ListData, error) {
+	mailboxes, err := c.List("", "*", nil).Collect()
+	if err != nil {
+		return nil, fmt.Errorf("getting mailboxes: %w", err)
+	}
+	a.AsyncLock()
+	a.labels[email] = []string{}
+	for _, mailbox := range mailboxes {
+		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
+	}
+	a.trash[email] = findTrash(mailboxes)
+	a.AsyncUnlock()
+	return mailboxes, nil
 }
 
 // cacheMessagesForMailbox caches all of the messages from the server
@@ -305,8 +316,9 @@ func (a *App) cacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			// If the message is already cached (likely in another mailbox),
 			// we update its labels to include this mailbox if it doesn't already.
-			if _, already := cached[mdata.Envelope.MessageID]; already {
-				cm := cached[mdata.Envelope.MessageID]
+			key := cacheKey(mdata.Envelope)
+			if _, already := cached[key]; already {
+				cm := cached[key]
 				if !slices.ContainsFunc(cm.Labels, func(label Label) bool {
 					return label.Name == mailbox
 				}) {
@@ -316,7 +328,7 @@ func (a *App) cacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				// Otherwise, we add it as a new entry to the cache
 				// and save the content to a file.
 				filename := messageFilename()
-				cached[mdata.Envelope.MessageID] = &CacheMessage{
+				cached[key] = &CacheMessage{
 					Envelope: *mdata.Envelope,
 					Filename: filename,
 					Flags:    mdata.Flags,
@@ -374,6 +386,18 @@ func (a *App) cacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 		}
 	}
 	return nil
+}
+
+// cacheKey returns the key of the message with the given envelope in the
+// cache: its Message-ID, or, for a message without one, a hash of its
+// envelope, which is the same for its copies in other mailboxes.
+func cacheKey(env *imap.Envelope) string {
+	if env.MessageID != "" {
+		return env.MessageID
+	}
+	h := sha256.New()
+	fmt.Fprintf(h, "%d\n%s\n%v\n%v\n%v", env.Date.UnixNano(), env.Subject, env.From, env.To, env.Cc)
+	return fmt.Sprintf("no-message-id-%x", h.Sum(nil)[:16])
 }
 
 var messageFilenameCounter uint64
