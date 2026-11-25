@@ -895,18 +895,24 @@ func TestBcc(t *testing.T) {
 		require.NoError(t, a.cacheMessages())
 	}, core.Locked(b, func() {
 		a.Compose()
+		require.Len(t, a.composeMessage.Bcc, 1, "the sender, shown")
+		assert.Equal(t, testEmail, a.composeMessage.Bcc[0].Address)
 		a.composeMessage.To[0].Address = "dan@example.com"
 		a.composeMessage.Cc = []*gomail.Address{{Address: "erin@example.com"}, {}}
-		a.composeMessage.Bcc = []*gomail.Address{{Address: "frank@example.com"}, {Address: "DAN@example.com"}}
+		a.composeMessage.Bcc = append(a.composeMessage.Bcc, &gomail.Address{Address: "frank@example.com"}, &gomail.Address{Address: "DAN@example.com"})
 		a.composeMessage.Subject = "Copies"
 		require.NoError(t, a.Send())
 		be.mu.Lock()
 		defer be.mu.Unlock()
-		assert.Equal(t, []string{"dan@example.com", "erin@example.com", "frank@example.com", testEmail}, be.to)
+		assert.Equal(t, []string{"dan@example.com", "erin@example.com", testEmail, "frank@example.com"}, be.to)
 		require.Len(t, be.data, 1)
 		assert.Contains(t, be.data[0], "Cc: <erin@example.com>")
 		assert.NotContains(t, be.data[0], "frank")
 		assert.NotContains(t, be.data[0], "Bcc")
+
+		Settings.AutoBCC = false
+		a.Compose()
+		assert.Empty(t, nonEmpty(a.composeMessage.Bcc), "not without AutoBCC")
 	}))
 }
 

@@ -59,6 +59,9 @@ func (a *App) compose(title string) {
 		from = Settings.Accounts[0]
 	}
 	a.composeMessage.From = []*mail.Address{{Address: from}}
+	if Settings.AutoBCC { // shown, so that it can be removed for a message
+		a.composeMessage.Bcc = append(a.composeMessage.Bcc, &mail.Address{Address: from})
+	}
 	if sig := signatureText(from); sig != "" {
 		// above any quoted message, as usual
 		a.composeMessage.body = "\n\n" + sig + a.composeMessage.body
@@ -222,8 +225,7 @@ func nonEmpty(as []*mail.Address) []*mail.Address {
 }
 
 // recipients returns the addresses of the recipients of the given message
-// from the given account, for SMTP: To, Cc, and Bcc, with the sender if
-// [SettingsData.AutoBCC], each once.
+// from the given account, for SMTP: To, Cc, and Bcc, each once.
 func recipients(from string, sm *SendMessage) []string {
 	var res []string
 	add := func(addr string) {
@@ -235,9 +237,6 @@ func recipients(from string, sm *SendMessage) []string {
 		for _, a := range nonEmpty(as) {
 			add(strings.TrimSpace(a.Address))
 		}
-	}
-	if Settings.AutoBCC && len(res) > 0 {
-		add(from)
 	}
 	return res
 }

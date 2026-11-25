@@ -40,7 +40,9 @@ type SettingsData struct { //types:add
 	// of the message.
 	FilingAccount AccountName
 
-	// AutoBCC sends a blind copy (Bcc) of every message to its sender.
+	// AutoBCC sends a blind copy (Bcc) of every message to its sender,
+	// whose address is put in the Bcc field of each new message, where
+	// it can be removed for that message.
 	AutoBCC bool
 
 	// Signatures are the signatures that can be added to the end of the
