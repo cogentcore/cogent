@@ -16,9 +16,22 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-// readMessages returns the messages being read: [App.readMessage],
-// with the other messages of its conversation unless [App.readSingle].
+// readMessages returns the messages that the actions on messages apply
+// to: those of all of the selected rows of the list if there are more than
+// one (see [rowMessages]), or else [App.readMessage], with the other
+// messages of its conversation unless [App.readSingle].
 func (a *App) readMessages() []*CacheMessage {
+	if len(a.selectedRows) > 1 { // all of the messages of the selected rows
+		var res []*CacheMessage
+		for _, mr := range a.selectedRows {
+			for _, cm := range rowMessages(mr) {
+				if !slices.Contains(res, cm) {
+					res = append(res, cm)
+				}
+			}
+		}
+		return res
+	}
 	if a.readMessage == nil {
 		return nil
 	}
@@ -34,8 +47,11 @@ func (a *App) readMessages() []*CacheMessage {
 // automatically saves the cache after the action is completed. Any then
 // function is called after the app is updated, with the lock of the window.
 func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
-	email := a.currentEmail
-	msgs := a.readMessages()
+	a.actionOn(a.currentEmail, a.readMessages(), f, then...)
+}
+
+// actionOn is [App.action] for the given messages of the given account.
+func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
 	go func() {
@@ -142,12 +158,16 @@ func (a *App) label(newLabels []string) {
 // to those that the given function returns for it. Any then function
 // is called after, as for [App.action].
 func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string, then ...func()) {
-	email := a.currentEmail
+	a.setLabelsOn(a.currentEmail, a.readMessages(), labelsFor, then...)
+}
+
+// setLabelsOn is [App.setLabels] for the given messages of the given account.
+func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm *CacheMessage) []string, then ...func()) {
 	targets := map[*CacheMessage][]string{}
-	for _, cm := range a.readMessages() {
+	for _, cm := range msgs {
 		targets[cm] = labelsFor(cm)
 	}
-	a.action(func(c *imapclient.Client, cm *CacheMessage) error {
+	a.actionOn(email, msgs, func(c *imapclient.Client, cm *CacheMessage) error {
 		newLabels := targets[cm]
 		if len(cm.Labels) == 0 {
 			return nil
@@ -231,6 +251,9 @@ func (a *App) Reply() { //types:add
 func (a *App) ReplyAll() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
+	a.composeMessage.Cc = slices.DeleteFunc(IMAPToMailAddresses(a.readMessage.Cc), func(ma *mail.Address) bool {
+		return ma.Address == a.currentEmail
+	})
 	a.reply("Reply all", false)
 }
 

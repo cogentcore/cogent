@@ -25,7 +25,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/emersion/go-imap/v2"
@@ -76,6 +75,10 @@ type App struct {
 	// readMessage is the current message we are reading, or the start
 	// of the conversation we are reading.
 	readMessage *CacheMessage
+
+	// selectedRows are the selected rows of the list of messages,
+	// for the actions on all of them (see [App.readMessages]).
+	selectedRows []*messageRow
 
 	// readSingle is whether we are reading just [App.readMessage],
 	// instead of its whole conversation.
@@ -176,47 +179,20 @@ func (a *App) Init() {
 	tree.AddChild(a, func(w *core.Splits) {
 		a.splits = w
 		w.SetSplits(0.15, 0.4, 0.45)
+		if len(Settings.Splits) == 3 {
+			w.SetSplits(Settings.Splits...)
+		}
+		w.OnChange(func(e events.Event) {
+			Settings.Splits = w.Splits()
+			a.saveSettings()
+		})
 		tree.AddChild(w, a.initMailboxes)
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 			w.Updater(a.updateList)
-			tree.AddChild(w, func(w *core.Text) {
-				w.SetType(core.TextTitleMedium)
-				w.Updater(func() {
-					w.SetText(friendlyLabelName(a.showLabel))
-				})
-			})
-			tree.AddChild(w, func(w *core.Text) {
-				w.Updater(func() {
-					w.Text = ""
-					total := a.totalMessages[a.currentEmail][a.showLabel]
-					if a.shownMessages < total { // still syncing
-						w.Text += fmt.Sprintf("%d of ", a.shownMessages)
-					}
-					w.Text += fmt.Sprintf("%d messages", total)
-					if !Settings.FlatList {
-						w.Text += fmt.Sprintf(" in %d conversations", len(a.listCache))
-					}
-					if a.unreadMessages > 0 {
-						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
-					}
-				})
-			})
-			tree.AddChild(w, func(w *core.Separator) {})
-			tree.AddChild(w, func(w *core.Switch) {
-				w.SetText("Conversations").SetTooltip("Group the messages into conversations")
-				w.Updater(func() {
-					w.SetChecked(!Settings.FlatList)
-				})
-				w.OnChange(func(e events.Event) {
-					Settings.FlatList = !w.IsChecked()
-					errors.Log(core.SaveSettings(Settings))
-					a.Update()
-				})
-			})
-			tree.AddChild(w, a.initList)
+			w.Maker(a.makeListPanel)
 		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
@@ -224,6 +200,18 @@ func (a *App) Init() {
 			})
 			w.Maker(func(p *tree.Plan) {
 				if a.readMessage == nil {
+					return
+				}
+				if n := len(a.selectedRows); n > 1 {
+					tree.Add(p, func(w *core.Text) {
+						w.SetType(core.TextHeadlineSmall)
+						w.Updater(func() {
+							w.SetText(fmt.Sprintf("%d selected", len(a.selectedRows)))
+						})
+					})
+					tree.Add(p, func(w *core.Text) {
+						w.SetType(core.TextSupporting).SetText("File, tag, delete, and mark them all at once.")
+					})
 					return
 				}
 				add := func(cm *CacheMessage) {
@@ -250,8 +238,17 @@ func (a *App) Init() {
 	})
 }
 
+// saveSettings saves the [Settings], showing any error.
+func (a *App) saveSettings() {
+	errors.Log(os.MkdirAll(filepath.Dir(Settings.Filename()), 0o700))
+	core.ErrorSnackbar(a, core.SaveSettings(Settings), "Error saving settings")
+}
+
 // showMailbox shows the messages of the given mailbox of the given account.
 func (a *App) showMailbox(email, mailbox string) {
+	if email != a.currentEmail || mailbox != a.showLabel {
+		a.selectedRows = nil
+	}
 	if email != a.currentEmail {
 		a.currentEmail = email
 		a.readMessage = nil
@@ -262,7 +259,7 @@ func (a *App) showMailbox(email, mailbox string) {
 
 func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(a.Compose).SetIcon(icons.Send).SetKey(keymap.New)
+		w.SetFunc(a.Compose).SetIcon(icons.Send).SetShortcut(shortcutOf("Compose"))
 	})
 	if a.testServer != nil {
 		tree.Add(p, func(w *core.FuncButton) {
@@ -272,24 +269,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.Label).SetIcon(icons.DriveFileMove).SetKey(keymap.Save)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.Delete).SetIcon(icons.Delete).SetKey(keymap.Delete)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.Reply).SetIcon(icons.Reply).SetKey(keymap.Replace)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.ReplyAll).SetIcon(icons.ReplyAll)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.Forward).SetIcon(icons.Forward)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.MarkAsUnread).SetIcon(icons.MarkAsUnread)
-		})
+		a.messageButtons(p, true)
 	}
 }
 

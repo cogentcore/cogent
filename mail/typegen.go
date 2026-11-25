@@ -14,6 +14,14 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.App", IDName
 // App is an email client app.
 func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.MailboxTree", IDName: "mailbox-tree", Doc: "MailboxTree is a node of the tree of mailboxes, for an account (with\nthe INBOX as its mailbox) or a mailbox. It records whether it is open\nin the [SettingsData.OpenMailboxes].", Embeds: []types.Field{{Name: "Tree"}}, Fields: []types.Field{{Name: "mailbox", Doc: "mailbox is the account and mailbox of the node."}, {Name: "account", Doc: "account is whether it is the node of the account."}, {Name: "openApplied", Doc: "openApplied is whether the saved open state has been applied."}, {Name: "applying", Doc: "applying is whether the saved open state is being applied,\nso that it is not saved again."}}})
+
+// NewMailboxTree returns a new [MailboxTree] with the given optional parent:
+// MailboxTree is a node of the tree of mailboxes, for an account (with
+// the INBOX as its mailbox) or a mailbox. It records whether it is open
+// in the [SettingsData.OpenMailboxes].
+func NewMailboxTree(parent ...tree.Node) *MailboxTree { return tree.New[MailboxTree](parent...) }
+
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.DisplayMessageFrame", IDName: "display-message-frame", Doc: "DisplayMessageFrame is a frame that displays the metadata and contents of a message.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Message"}}})
 
 // NewDisplayMessageFrame returns a new [DisplayMessageFrame] with the given optional parent:
@@ -28,7 +36,7 @@ func (t *DisplayMessageFrame) SetMessage(v *CacheMessage) *DisplayMessageFrame {
 	return t
 }
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the global Cogent Mail settings.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Accounts", Doc: "Accounts are the email accounts the user is signed into."}, {Name: "FlatList", Doc: "FlatList shows each message on its own in the list of messages,\ninstead of grouped into conversations."}, {Name: "Signatures", Doc: "Signatures are the signatures that can be added to the end of the\nmessages, in markdown."}, {Name: "DefaultSignatures", Doc: "DefaultSignatures are the names of the signatures added to new\nmessages from each account, by its email address."}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the global Cogent Mail settings.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Accounts", Doc: "Accounts are the email accounts the user is signed into."}, {Name: "FlatList", Doc: "FlatList shows each message on its own in the list of messages,\ninstead of grouped into conversations."}, {Name: "CompactList", Doc: "CompactList shows each message in two lines in the list of\nmessages, in one column, as always on mobile."}, {Name: "LabelsColumn", Doc: "LabelsColumn shows the other labels of the messages in the list\nof messages, in a column, or in the line of the subject in the\ncompact list."}, {Name: "Signatures", Doc: "Signatures are the signatures that can be added to the end of the\nmessages, in markdown."}, {Name: "DefaultSignatures", Doc: "DefaultSignatures are the names of the signatures added to new\nmessages from each account, by its email address."}, {Name: "ColumnWidths", Doc: "ColumnWidths are the widths of the columns of the list of messages\nthat are set, by the names of the fields (see [core.Table.ColumnWidths])."}, {Name: "Sort", Doc: "Sort is the column the list of messages is sorted by, with its\ndirection (see [core.Table.SortFieldName])."}, {Name: "Splits", Doc: "Splits are the proportions of the panels."}, {Name: "OpenMailboxes", Doc: "OpenMailboxes records whether each account and mailbox with\nsubfolders is open in the tree of mailboxes, by [mailboxKey], for\nthose that have been opened or closed."}}})
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.AddressTextField", IDName: "address-text-field", Doc: "AddressTextField represents a [mail.Address] with a [core.TextField].", Embeds: []types.Field{{Name: "TextField"}}, Fields: []types.Field{{Name: "Address"}}})
 
@@ -63,3 +71,19 @@ func NewSignatureButton(parent ...tree.Node) *SignatureButton {
 
 // SetSignature sets the [SignatureButton.Signature]
 func (t *SignatureButton) SetSignature(v *SignatureText) *SignatureButton { t.Signature = v; return t }
+
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.MessageSummaryView", IDName: "message-summary-view", Doc: "MessageSummaryView shows the summary of a message or conversation in\ntwo lines, for the compact list of messages: the sender and the date,\nand the subject, with the other labels if [SettingsData.LabelsColumn].", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Summary"}}})
+
+// NewMessageSummaryView returns a new [MessageSummaryView] with the given optional parent:
+// MessageSummaryView shows the summary of a message or conversation in
+// two lines, for the compact list of messages: the sender and the date,
+// and the subject, with the other labels if [SettingsData.LabelsColumn].
+func NewMessageSummaryView(parent ...tree.Node) *MessageSummaryView {
+	return tree.New[MessageSummaryView](parent...)
+}
+
+// SetSummary sets the [MessageSummaryView.Summary]
+func (t *MessageSummaryView) SetSummary(v *messageSummary) *MessageSummaryView {
+	t.Summary = v
+	return t
+}

@@ -14,12 +14,14 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/textcore"
@@ -32,6 +34,8 @@ import (
 type SendMessage struct {
 	From        []*mail.Address `display:"inline"`
 	To          []*mail.Address `display:"inline"`
+	Cc          []*mail.Address `display:"inline"`
+	Bcc         []*mail.Address `display:"inline"`
 	Subject     string
 	Attachments []core.Filename `display:"inline"`
 
@@ -73,6 +77,17 @@ func (a *App) compose(title string) {
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
+	b.AddTopBar(func(bar *core.Frame) {
+		tb := core.NewToolbar(bar)
+		core.NewButton(tb).SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).
+			SetShortcut("Command+'").OnClick(func(e events.Event) {
+			ChangeQuoteLevel(ed, 1)
+		})
+		core.NewButton(tb).SetText("Decrease quote").SetIcon(icons.FormatIndentDecrease).
+			SetShortcut("Command+Alt+'").OnClick(func(e events.Event) {
+			ChangeQuoteLevel(ed, -1)
+		})
+	})
 	b.AddBottomBar(func(bar *core.Frame) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
@@ -94,7 +109,11 @@ func (a *App) Send() error { //types:add
 	var h mail.Header
 	h.SetDate(time.Now())
 	h.SetAddressList("From", a.composeMessage.From)
-	h.SetAddressList("To", a.composeMessage.To)
+	h.SetAddressList("To", nonEmpty(a.composeMessage.To))
+	if cc := nonEmpty(a.composeMessage.Cc); len(cc) > 0 {
+		h.SetAddressList("Cc", cc)
+	}
+	// the Bcc recipients are not in the header
 	h.SetSubject(a.composeMessage.Subject)
 	h.SetMessageID(newMessageID(email))
 	if a.composeMessage.inReplyTo != "" {
@@ -176,11 +195,10 @@ func (a *App) Send() error { //types:add
 		return err
 	}
 
-	to := make([]string, len(a.composeMessage.To))
-	for i, t := range a.composeMessage.To {
-		to[i] = t.Address
+	to := recipients(email, a.composeMessage)
+	if len(to) == 0 {
+		return fmt.Errorf("no recipients")
 	}
-
 	err = a.send(email, to, &b)
 	if err == nil {
 		a.SyncNow() // to show it in the sent mailbox
@@ -189,6 +207,39 @@ func (a *App) Send() error { //types:add
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}
 	return err
+}
+
+// nonEmpty returns the given addresses without the empty ones,
+// as of new fields that are not filled in.
+func nonEmpty(as []*mail.Address) []*mail.Address {
+	var res []*mail.Address
+	for _, a := range as {
+		if a != nil && strings.TrimSpace(a.Address) != "" {
+			res = append(res, a)
+		}
+	}
+	return res
+}
+
+// recipients returns the addresses of the recipients of the given message
+// from the given account, for SMTP: To, Cc, and Bcc, with the sender if
+// [SettingsData.AutoBCC], each once.
+func recipients(from string, sm *SendMessage) []string {
+	var res []string
+	add := func(addr string) {
+		if !slices.ContainsFunc(res, func(r string) bool { return strings.EqualFold(r, addr) }) {
+			res = append(res, addr)
+		}
+	}
+	for _, as := range [][]*mail.Address{sm.To, sm.Cc, sm.Bcc} {
+		for _, a := range nonEmpty(as) {
+			add(strings.TrimSpace(a.Address))
+		}
+	}
+	if Settings.AutoBCC && len(res) > 0 {
+		add(from)
+	}
+	return res
 }
 
 // newMessageID returns a new unique Message-ID (without angle brackets)

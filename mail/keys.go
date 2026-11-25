@@ -53,12 +53,58 @@ func addPanelKeys(maps keymap.Maps) {
 	}
 }
 
-// mailChords are the single key chords of the actions on messages,
-// which only apply in the main window, not in the compose windows (where
-// Control+O opens a line), so they are not in the key maps.
-var mailChords = map[key.Chord]func(a *App){
-	"Control+O": (*App).File,
-	"Control+T": (*App).Tag,
+// shortcut is a keyboard shortcut of an action of the main window.
+type shortcut struct {
+	// name is the name of the method of the action.
+	name string
+
+	// chords are the chords of the shortcut, with Command for Meta
+	// on the Mac and Control elsewhere (see [key.Chord.PlatformChord]).
+	// The first one is shown on the buttons.
+	chords []key.Chord
+
+	// fun is the action.
+	fun func(a *App)
+
+	// message is whether the action needs a message being read.
+	message bool
+}
+
+// shortcuts are the keyboard shortcuts of the actions of the main window,
+// which only apply there, not in the compose windows (where Control+O
+// opens a line), so they are not in the key maps.
+var shortcuts = []shortcut{
+	{"Compose", []key.Chord{"Command+N"}, (*App).Compose, false},
+	{"Reply", []key.Chord{"Command+R"}, (*App).Reply, true},
+	{"ReplyAll", []key.Chord{"Command+Shift+R"}, (*App).ReplyAll, true},
+	{"Forward", []key.Chord{"Command+Shift+F"}, (*App).Forward, true},
+	{"File", []key.Chord{"Control+O"}, (*App).File, true},
+	{"Tag", []key.Chord{"Control+T"}, (*App).Tag, true},
+	{"Delete", []key.Chord{"Backspace", "Delete"}, (*App).Delete, true},
+	{"MarkAsUnread", []key.Chord{"Command+Shift+U"}, (*App).MarkAsUnread, true},
+}
+
+// shortcutOf returns the chord of the shortcut of the action with the
+// given name, as shown on its buttons, or "" if it has none.
+func shortcutOf(name string) key.Chord {
+	for _, sc := range shortcuts {
+		if sc.name == name {
+			return sc.chords[0]
+		}
+	}
+	return ""
+}
+
+// shortcutFor returns the shortcut with the given chord, if any.
+func shortcutFor(kc key.Chord) (shortcut, bool) {
+	for _, sc := range shortcuts {
+		for _, c := range sc.chords {
+			if c.PlatformChord() == kc {
+				return sc, true
+			}
+		}
+	}
+	return shortcut{}, false
 }
 
 // mailKeys handles the keys of Cogent Mail for all of the widgets of the
@@ -93,9 +139,12 @@ func (a *App) mailKeys(e events.Event) {
 		a.FocusPrevPanel()
 		return
 	}
-	if f, ok := mailChords[kc]; ok {
+	if sc, ok := shortcutFor(kc); ok {
+		if sc.message && a.readMessage == nil {
+			return
+		}
 		e.SetHandled()
-		f(a)
+		sc.fun(a)
 	}
 }
 
@@ -149,16 +198,17 @@ func (a *App) focusPanelDelta(delta int) {
 
 // focusPanel moves the keyboard focus into the given panel, returning
 // false if nothing in it can take the focus: onto the mailbox being shown
-// and the selected message, if any.
+// and the list of messages. The focus is quiet, without the highlight of
+// the focus from the keyboard, as the selection shows where it is.
 func (a *App) focusPanel(w core.Widget) bool {
 	if w == core.Widget(a.mailboxes) {
 		for _, n := range a.mailboxes.GetSelectedNodes() {
-			n.AsCoreTree().SetFocus()
+			n.AsCoreTree().SetFocusQuiet()
 			return true
 		}
 	}
 	if a.list != nil && a.list.Parent == w {
-		a.list.SetFocus() // a read-only list, with key navigation
+		a.list.SetFocusQuiet() // a read-only list, with key navigation
 		return true
 	}
 	return focusWithin(w)
@@ -169,7 +219,7 @@ func (a *App) focusPanel(w core.Widget) bool {
 func focusWithin(w core.Widget) bool {
 	for cw, cwb := range w.AsWidget().AllWidgets() {
 		if cwb.IsDisplayable() && !cwb.StateIs(states.Disabled) && cwb.AbilityIs(abilities.Focusable) {
-			cw.AsWidget().SetFocus()
+			cw.AsWidget().SetFocusQuiet()
 			return true
 		}
 	}

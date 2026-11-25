@@ -15,12 +15,15 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/tree"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -28,6 +31,7 @@ func init() {
 	core.AddValueType[mail.Address, AddressTextField]()
 	core.AddValueType[Attachment, AttachmentButton]()
 	core.AddValueType[SignatureText, SignatureButton]()
+	core.AddValueType[messageSummary, MessageSummaryView]()
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
@@ -168,5 +172,63 @@ func (sb *SignatureButton) Init() {
 			})
 		})
 		d.RunDialog(sb)
+	})
+}
+
+// MessageSummaryView shows the summary of a message or conversation in
+// two lines, for the compact list of messages: the sender and the date,
+// and the subject, with the other labels if [SettingsData.LabelsColumn].
+type MessageSummaryView struct {
+	core.Frame
+	Summary *messageSummary
+}
+
+func (sv *MessageSummaryView) WidgetValue() any { return &sv.Summary }
+
+func (sv *MessageSummaryView) Init() {
+	sv.Frame.Init()
+	sv.Styler(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Grow.Set(1, 0)
+		s.Gap.Zero()
+	})
+	tree.AddChild(sv, func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
+				s.Grow.Set(1, 0)
+				if sv.Summary.Unread {
+					s.Font.Weight = rich.Bold
+				}
+			})
+			w.Updater(func() { w.SetText(sv.Summary.From) })
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetType(core.TextBodySmall)
+			w.Styler(func(s *styles.Style) {
+				s.SetTextWrap(false)
+			})
+			w.Updater(func() { w.SetText(sv.Summary.Date) })
+		})
+	})
+	tree.AddChild(sv, func(w *core.Text) {
+		w.SetType(core.TextBodySmall)
+		w.Styler(func(s *styles.Style) {
+			s.SetTextWrap(false)
+			s.Color = colors.Scheme.OnSurfaceVariant
+			if sv.Summary.Unread {
+				s.Font.Weight = rich.Bold
+			}
+		})
+		w.Updater(func() {
+			text := sv.Summary.Subject
+			if Settings.LabelsColumn && sv.Summary.Labels != "" {
+				text += "  ·  " + sv.Summary.Labels
+			}
+			w.SetText(text)
+		})
 	})
 }

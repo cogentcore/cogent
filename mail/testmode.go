@@ -6,6 +6,7 @@ package mail
 
 import (
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 
 	"cogentcore.org/cogent/mail/testserver"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 )
 
@@ -72,8 +74,14 @@ func (a *App) StartTesting(opts TestingOptions) error {
 		srv.Close()
 		return err
 	}
-	Settings.File = filepath.Join(dir, "settings.toml")
+	// The settings of testing mode are separate, and kept between runs.
+	*Settings = SettingsData{SettingsBase: core.SettingsBase{Name: Settings.Name,
+		File: filepath.Join(core.TheApp.AppDataDir(), "testing", "settings.toml")}}
+	if err := tomlx.Open(Settings, Settings.Filename()); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		slog.Error("mail: loading the settings of testing mode", "err", err)
+	}
 	Settings.Accounts = srv.Accounts
+	Settings.Apply()
 	for _, account := range srv.Accounts {
 		a.servers[account] = Server{IMAP: srv.IMAPAddr, SMTP: srv.SMTPAddr, Insecure: true, Password: testserver.Password}
 	}

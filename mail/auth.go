@@ -37,6 +37,7 @@ func (a *App) signIn() (string, error) {
 	fun := func(token *oauth2.Token, userInfo *oidc.UserInfo) {
 		if !slices.Contains(Settings.Accounts, userInfo.Email) {
 			Settings.Accounts = append(Settings.Accounts, userInfo.Email)
+			Settings.Apply()
 			errors.Log(core.SaveSettings(Settings))
 		}
 		a.currentEmail = userInfo.Email

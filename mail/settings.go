@@ -34,13 +34,86 @@ type SettingsData struct { //types:add
 	// instead of grouped into conversations.
 	FlatList bool
 
+	// CompactList shows each message in two lines in the list of
+	// messages, in one column, as always on mobile.
+	CompactList bool
+
+	// LabelsColumn shows the other labels of the messages in the list
+	// of messages, in a column, or in the line of the subject in the
+	// compact list.
+	LabelsColumn bool
+
+	// FilingAccount is the account whose folders are offered first for
+	// filing messages (Control+O), from any account, as for filing all of
+	// them into the folders of one account. By default it is the account
+	// of the message.
+	FilingAccount AccountName
+
+	// AutoBCC sends a blind copy (Bcc) of every message to its sender.
+	AutoBCC bool
+
 	// Signatures are the signatures that can be added to the end of the
 	// messages, in markdown.
 	Signatures []Signature
 
 	// DefaultSignatures are the names of the signatures added to new
 	// messages from each account, by its email address.
-	DefaultSignatures map[string]string
+	DefaultSignatures map[string]SignatureName
+
+	// ColumnWidths are the widths of the columns of the list of messages
+	// that are set, by the names of the fields (see [core.Table.ColumnWidths]).
+	ColumnWidths map[string]float32 `display:"-"`
+
+	// Sort is the column the list of messages is sorted by, with its
+	// direction (see [core.Table.SortFieldName]).
+	Sort string `display:"-"`
+
+	// Splits are the proportions of the panels.
+	Splits []float32 `display:"-"`
+
+	// OpenMailboxes records whether each account and mailbox with
+	// subfolders is open in the tree of mailboxes, by [mailboxKey], for
+	// those that have been opened or closed.
+	OpenMailboxes map[string]bool `display:"-"`
+}
+
+// Apply makes sure that each account has an entry in the
+// [SettingsData.DefaultSignatures], so that it can be set.
+func (sd *SettingsData) Apply() {
+	if sd.DefaultSignatures == nil {
+		sd.DefaultSignatures = map[string]SignatureName{}
+	}
+	for _, account := range sd.Accounts {
+		if _, ok := sd.DefaultSignatures[account]; !ok {
+			sd.DefaultSignatures[account] = ""
+		}
+	}
+}
+
+// AccountName is the email address of one of the [SettingsData.Accounts],
+// chosen from them, or "" for none.
+type AccountName string
+
+func (an AccountName) Widget() core.Value {
+	ch := core.NewChooser()
+	ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(""), Text: "(the account of the message)"})
+	for _, account := range Settings.Accounts {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(account), Text: account})
+	}
+	return ch
+}
+
+// SignatureName is the name of one of the [SettingsData.Signatures],
+// chosen from them, or "" for none.
+type SignatureName string
+
+func (sn SignatureName) Widget() core.Value {
+	ch := core.NewChooser()
+	ch.Items = append(ch.Items, core.ChooserItem{Value: SignatureName(""), Text: "(none)"})
+	for _, sig := range Settings.Signatures {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: SignatureName(sig.Name), Text: sig.Name})
+	}
+	return ch
 }
 
 // Signature is a signature that can be added to the end of messages.
@@ -63,7 +136,7 @@ type SignatureText string
 // account, after the standard "-- " separator line, with a line break at
 // the end of each line, or "" if it has none.
 func signatureText(email string) string {
-	name := Settings.DefaultSignatures[email]
+	name := string(Settings.DefaultSignatures[email])
 	if name == "" {
 		return ""
 	}

@@ -6,6 +6,7 @@ package mail
 
 import (
 	"fmt"
+	"image"
 	"io"
 	"net"
 	"os"
@@ -621,7 +622,7 @@ func TestMailboxes(t *testing.T) {
 		t.Helper()
 		n := parent.AsTree().ChildByName(name)
 		require.NotNil(t, n, name)
-		return n.(*core.Tree)
+		return n.(core.Treer).AsCoreTree()
 	}
 	var inbox *core.Tree
 	core.RenderImage(b, func() {
@@ -691,7 +692,7 @@ func TestFileKeys(t *testing.T) {
 				}
 			}
 			require.NotNil(t, ch, "the dialog of mailboxes")
-			ch.SetCurrentValue(label)
+			ch.SetCurrentValue(mailboxID{testEmail, label})
 			ch.SendChange()
 		})
 	}
@@ -723,8 +724,10 @@ func TestFileKeys(t *testing.T) {
 		a.list.SetFocus()
 	}), func() { keys(seqStart(t), "Control+P")() }, core.Locked(b, func() {
 		assert.True(t, a.mailboxes.ContainsFocus(), "the previous panel")
-		work := a.mailboxes.ChildByName(testEmail).AsTree().ChildByName("Work").(*core.Tree)
-		assert.True(t, work.StateIs(states.Focused), "the mailbox shown")
+		work := a.mailboxes.ChildByName(testEmail).AsTree().ChildByName("Work").(core.Treer).AsCoreTree()
+		assert.Len(t, a.mailboxes.GetSelectedNodes(), 1)
+		assert.True(t, work.ContainsFocus(), "the mailbox shown")
+		assert.False(t, work.StateIs(states.Focused), "quietly, without the highlight")
 	}), func() { keys(seqStart(t), "Control+O")() }, core.Locked(b, func() {
 		assert.True(t, a.list.ContainsFocus(), "the next panel")
 	}), keys("Control+Shift+Tab"), core.Locked(b, func() {
@@ -772,7 +775,7 @@ func TestAttachmentOpen(t *testing.T) {
 func TestSignature(t *testing.T) {
 	b, a := newTestApp(t, newIMAP(t))
 	Settings.Signatures = []Signature{{Name: "Work", Text: "Me\nThe Lab\n"}, {Name: "Home", Text: "me"}}
-	Settings.DefaultSignatures = map[string]string{testEmail: "Work"}
+	Settings.DefaultSignatures = map[string]SignatureName{testEmail: "Work"}
 	t.Cleanup(func() { Settings.Signatures, Settings.DefaultSignatures = nil, nil })
 	core.RenderImage(b, func() {
 		require.NoError(t, a.cacheMessages())
@@ -788,5 +791,240 @@ func TestSignature(t *testing.T) {
 		Settings.DefaultSignatures = nil
 		a.Compose()
 		assert.NotContains(t, a.composeMessage.body, "--", "no default")
+	}))
+}
+
+// TestSignatureSettings tests that each account has an entry for its
+// default signature, chosen from the names of the signatures.
+func TestSignatureSettings(t *testing.T) {
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	Settings.Accounts = []string{"a@x.test", "b@x.test"}
+	Settings.DefaultSignatures = map[string]SignatureName{"b@x.test": "Work"}
+	Settings.Signatures = []Signature{{Name: "Work"}, {Name: "Home"}}
+	Settings.Apply()
+	assert.Equal(t, map[string]SignatureName{"a@x.test": "", "b@x.test": "Work"}, Settings.DefaultSignatures)
+	ch, ok := SignatureName("").Widget().(*core.Chooser)
+	require.True(t, ok)
+	require.Len(t, ch.Items, 3)
+	assert.Equal(t, SignatureName("Home"), ch.Items[2].Value)
+}
+
+// TestSavedLayout tests saving the column widths and sort of the list of
+// messages, the splits, and which mailboxes are open, in the settings,
+// and applying them to a new app.
+func TestSavedLayout(t *testing.T) {
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Update()
+	}), core.Locked(b, func() {
+		a.list.ColumnWidths = map[string]float32{"From": 123}
+		a.list.SetSortFieldName("Subject:up")
+		a.list.SendChange()
+		a.splits.SetSplits(0.2, 0.3, 0.5)
+		a.splits.SendChange()
+		acct := a.mailboxes.ChildByName(testEmail).(*MailboxTree)
+		assert.False(t, acct.Closed, "an account is open")
+		acct.Close()
+	}))
+	assert.Equal(t, map[string]float32{"From": 123}, Settings.ColumnWidths)
+	assert.Equal(t, "Subject:up", Settings.Sort)
+	assert.InDeltaSlice(t, []float32{0.2, 0.3, 0.5}, Settings.Splits, 0.001)
+	assert.Equal(t, map[string]bool{testEmail: false}, Settings.OpenMailboxes)
+	saved, err := os.ReadFile(Settings.File)
+	require.NoError(t, err)
+	assert.Contains(t, string(saved), "Subject:up")
+
+	b2, a2 := newTestApp(t, a.imapClient[testEmail])
+	core.RenderImage(b2, func() {
+		require.NoError(t, a2.cacheMessages())
+	}, core.Locked(b2, func() {
+		a2.Update()
+	}), core.Locked(b2, func() {
+		assert.Equal(t, "Subject:up", a2.list.SortFieldName())
+		assert.Equal(t, float32(123), a2.list.ColumnWidths["From"])
+		assert.InDeltaSlice(t, []float32{0.2, 0.3, 0.5}, a2.splits.Splits(), 0.001)
+		assert.True(t, a2.mailboxes.ChildByName(testEmail).(*MailboxTree).Closed)
+	}))
+}
+
+// TestShortcuts tests the keyboard shortcuts of the actions on messages,
+// and the context menu of the list of messages, which shows them.
+func TestShortcuts(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Update()
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		a.list.SetFocusQuiet()
+		assert.Nil(t, a.composeMessage)
+	}), func() {
+		r, code, mods, err := key.Chord("Command+Shift+R").PlatformChord().Decode()
+		require.NoError(t, err)
+		b.Scene.RenderWindow().SystemWindow.Events().KeyChord(r, code, mods)
+	}, core.Locked(b, func() {
+		require.NotNil(t, a.composeMessage, "reply all")
+		assert.Equal(t, "Re: Hello", a.composeMessage.Subject)
+		m := core.NewScene()
+		a.messageMenu(m, image.Point{})
+		var shortcuts []string
+		for w := range m.AllWidgets() {
+			if bt, ok := w.(*core.FuncButton); ok {
+				shortcuts = append(shortcuts, bt.Text+"="+string(bt.Shortcut))
+			}
+		}
+		assert.Equal(t, []string{"Reply=Command+R", "Reply all=Command+Shift+R", "Forward=Command+Shift+F",
+			"File=Control+O", "Tag=Control+T", "Delete=Backspace", "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
+	}))
+}
+
+// TestBcc tests sending with Cc and Bcc, and the automatic Bcc to the
+// sender, which are not in the header.
+func TestBcc(t *testing.T) {
+	be := newSMTP(t)
+	b, a := newTestApp(t, newIMAP(t))
+	Settings.AutoBCC = true
+	t.Cleanup(func() { Settings.AutoBCC = false })
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Compose()
+		a.composeMessage.To[0].Address = "dan@example.com"
+		a.composeMessage.Cc = []*gomail.Address{{Address: "erin@example.com"}, {}}
+		a.composeMessage.Bcc = []*gomail.Address{{Address: "frank@example.com"}, {Address: "DAN@example.com"}}
+		a.composeMessage.Subject = "Copies"
+		require.NoError(t, a.Send())
+		be.mu.Lock()
+		defer be.mu.Unlock()
+		assert.Equal(t, []string{"dan@example.com", "erin@example.com", "frank@example.com", testEmail}, be.to)
+		require.Len(t, be.data, 1)
+		assert.Contains(t, be.data[0], "Cc: <erin@example.com>")
+		assert.NotContains(t, be.data[0], "frank")
+		assert.NotContains(t, be.data[0], "Bcc")
+	}))
+}
+
+// TestFileToAccount tests filing a conversation into a folder of another
+// account, the filing account, which copies its messages there and
+// removes them from the mailbox of the account they are in.
+func TestFileToAccount(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	require.NoError(t, a.testServer.CreateMailbox(alice, "Filed/Mail"))
+	Settings.FilingAccount = AccountName(alice)
+	syncAll := func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.cacheMessages())
+			if !a.syncMore {
+				return
+			}
+		}
+	}
+	var conv *messageRow
+	var subject string
+	var n int
+	core.RenderImage(b, syncAll, core.Locked(b, func() {
+		a.showMailbox(you, "INBOX")
+		for i, r := range a.listRows {
+			if r.conversation {
+				conv = r
+				a.list.SelectIndexEvent(i, events.SelectOne)
+				break
+			}
+		}
+		require.NotNil(t, conv)
+		subject = conv.message.Subject
+		n = len(a.readMessages())
+		assert.Equal(t, []string{alice, you, Settings.Accounts[2]}, a.filingAccounts())
+		a.File()
+	}), core.Locked(b, func() {
+		d := core.TopScene(b)
+		var ch *core.Chooser
+		for w := range d.AllWidgets() {
+			if c, ok := w.(*core.Chooser); ok {
+				ch = c
+			}
+		}
+		require.NotNil(t, ch)
+		assert.Equal(t, "Inbox", ch.Items[0].Text, "the filing account first")
+		assert.True(t, slices.ContainsFunc(ch.Items, func(it core.ChooserItem) bool {
+			return it.Text == you+": Projects/Alpha"
+		}), "then the others, with their accounts")
+		ch.SetCurrentValue(mailboxID{alice, "Filed/Mail"})
+		ch.SendChange()
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			for _, cm := range conv.message.replies {
+				if slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "INBOX" }) {
+					return false
+				}
+			}
+			return !slices.ContainsFunc(conv.message.Labels, func(l Label) bool { return l.Name == "INBOX" })
+		}, 5*time.Second, 10*time.Millisecond, "out of the INBOX")
+		syncAll()
+		filed := 0
+		for _, cm := range a.cache[alice] {
+			if strings.TrimPrefix(cm.Subject, "Re: ") == subject &&
+				slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "Filed/Mail" }) {
+				filed++
+			}
+		}
+		assert.Equal(t, n, filed, "all of the conversation")
+	})
+}
+
+// TestMultiSelect tests selecting more than one row of the list of
+// messages, which are not marked as read, and filing all of them at once.
+func TestMultiSelect(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var hello, report *CacheMessage
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+		report = messageBySubject(a, "Report")
+	}, core.Locked(b, func() {
+		a.showMailbox(testEmail, "Work")
+		require.Len(t, a.listRows, 2)
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		a.list.SelectIndexEvent(1, events.ExtendOne)
+		require.Len(t, a.selectedRows, 2)
+		msgs := a.readMessages()
+		assert.Len(t, msgs, 3, "the report, and the conversation")
+		assert.Contains(t, msgs, report)
+		assert.Contains(t, msgs, hello.replies[0])
+		assert.False(t, slices.Contains(hello.Flags, imap.FlagSeen), "not marked as read")
+		a.fileTo("Work", "[Gmail]/Trash")
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.imapMu[testEmail].Lock()
+			defer a.imapMu[testEmail].Unlock()
+			for _, cm := range []*CacheMessage{hello, hello.replies[0], report} {
+				if slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "Work" }) {
+					return false
+				}
+			}
+			return true
+		}, 5*time.Second, 10*time.Millisecond, "all filed out of Work")
+	}, core.Locked(b, func() {
+		assert.Empty(t, a.listRows)
+		assert.Empty(t, a.selectedRows)
+		assert.Contains(t, labelNames(report), "[Gmail]/Trash")
+		assert.Contains(t, labelNames(hello), "INBOX", "its other labels stay")
 	}))
 }
