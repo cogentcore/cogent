@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/iox/jsonx"
-	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
@@ -116,25 +115,20 @@ func (a *App) cacheMessagesForAccount(email string) error {
 		a.totalMessages[email] = map[string]int{}
 	}
 
-	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", filenameBase32(email))
+	dir := a.messagesDir(email)
 	cached := a.cache[email]
 
 	var err error
 	c := a.imapClient[email]
 	if c == nil {
-		c, err = imapclient.DialTLS("imap.gmail.com:993", nil)
+		c, err = a.dialIMAP(email)
 		if err != nil {
-			return fmt.Errorf("TLS dialing: %w", err)
+			return fmt.Errorf("connecting: %w", err)
 		}
 		// defer c.Logout() // TODO: Logout in QuitClean or something similar
 
 		a.imapClient[email] = c
 		a.imapMu[email] = &sync.Mutex{}
-
-		err = c.Authenticate(a.authClient[email])
-		if err != nil {
-			return fmt.Errorf("authenticating: %w", err)
-		}
 
 		err = os.MkdirAll(string(dir), 0700)
 		if err != nil {
@@ -167,6 +161,7 @@ func (a *App) cacheMessagesForAccount(email string) error {
 	for _, mailbox := range mailboxes {
 		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
 	}
+	a.trash[email] = findTrash(mailboxes)
 	a.AsyncUnlock()
 
 	for _, mailbox := range mailboxes {
@@ -238,6 +233,7 @@ func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	// those are typically the most recent messages.
 	if len(uids) > 100 {
 		uids = uids[len(uids)-100:]
+		a.syncMore = true
 	}
 
 	return a.cacheUIDs(uids, c, email, mailbox, dir, cached)

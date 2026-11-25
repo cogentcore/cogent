@@ -29,6 +29,10 @@ type SettingsData struct { //types:add
 
 	// Accounts are the email accounts the user is signed into.
 	Accounts []string
+
+	// FlatList shows each message on its own in the list of messages,
+	// instead of grouped into conversations.
+	FlatList bool
 }
 
 // friendlyLabelName converts the given label name to a user-friendly version.
@@ -60,5 +64,6 @@ var labelIcons = map[string]icons.Icon{
 	"Drafts": icons.Draft,
 	"Sent":   icons.Send,
 	"Spam":   icons.Report,
+	"Junk":   icons.Report,
 	"Trash":  icons.Delete,
 }

@@ -46,7 +46,11 @@ func (a *App) Compose() { //types:add
 // compose is the implementation of the email comoposition dialog,
 // which is called by other higher-level functions.
 func (a *App) compose(title string) {
-	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
+	from := a.currentEmail
+	if from == "" && len(Settings.Accounts) > 0 {
+		from = Settings.Accounts[0]
+	}
+	a.composeMessage.From = []*mail.Address{{Address: from}}
 	b := core.NewBody(title)
 	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := textcore.NewEditor(b)
@@ -60,7 +64,7 @@ func (a *App) compose(title string) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
 			a.composeMessage.body = ed.Lines.String()
-			a.Send()
+			core.ErrorSnackbar(a, a.Send(), "Error sending message")
 		})
 	})
 	b.RunWindowDialog(a)
@@ -159,13 +163,10 @@ func (a *App) Send() error { //types:add
 		to[i] = t.Address
 	}
 
-	err = sendMail(
-		smtpAddress,
-		a.authClient[email],
-		email,
-		to,
-		&b,
-	)
+	err = a.send(email, to, &b)
+	if err == nil {
+		a.SyncNow() // to show it in the sent mailbox
+	}
 	if se, ok := errors.AsType[*smtp.SMTPError](err); ok {
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}

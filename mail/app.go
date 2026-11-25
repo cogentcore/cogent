@@ -10,6 +10,7 @@ package mail
 import (
 	"cmp"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -18,6 +19,8 @@ import (
 	"sync"
 	"time"
 
+	"cogentcore.org/cogent/mail/testserver"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -61,12 +64,33 @@ type App struct {
 	// totalMessages is the total number of messages for each email account and label.
 	totalMessages map[string]map[string]int
 
-	// unreadMessages is the number of unread messages for the current email account
-	// and labels, used for displaying a count.
+	// shownMessages is the number of messages with the current label
+	// in the list of messages.
+	shownMessages int
+
+	// unreadMessages is the number of unread messages, or conversations
+	// unless [SettingsData.FlatList], for the current email account
+	// and label, used for displaying a count.
 	unreadMessages int
 
-	// readMessage is the current message we are reading.
+	// readMessage is the current message we are reading, or the start
+	// of the conversation we are reading.
 	readMessage *CacheMessage
+
+	// readSingle is whether we are reading just [App.readMessage],
+	// instead of its whole conversation.
+	readSingle bool
+
+	// listRows are the rows of the list of messages.
+	listRows []*messageRow
+
+	// messageRows and conversationRows are the rows of the list of
+	// messages for each message and conversation start, which are
+	// reused for the same ones.
+	messageRows, conversationRows map[*CacheMessage]*messageRow
+
+	// list is the tree table of the list of messages.
+	list *core.TreeTable
 
 	// currentEmail is the current email account.
 	currentEmail string
@@ -80,6 +104,31 @@ type App struct {
 
 	// showLabel is the current label to show messages for.
 	showLabel string
+
+	// servers are the server configurations of the accounts that are not
+	// Gmail, by email address.
+	servers map[string]Server
+
+	// trash is the trash mailbox of each account.
+	trash map[string]string
+
+	// dataDirectory, if set, is the directory of the data of the app
+	// instead of the standard one; see [App.dataDir].
+	dataDirectory string
+
+	// syncNow is sent to to sync the messages now instead of after
+	// [App.syncInterval].
+	syncNow chan struct{}
+
+	// syncInterval is the time between syncs of the messages.
+	syncInterval time.Duration
+
+	// syncMore is whether there are more messages to sync after the last
+	// sync, which syncs a limited number of messages for each mailbox.
+	syncMore bool
+
+	// testServer is the local simulated mail server in testing mode.
+	testServer *testserver.Server
 }
 
 // needed for interface import
@@ -100,19 +149,27 @@ func (a *App) Init() {
 	a.totalMessages = map[string]map[string]int{}
 	a.selectedMailbox = map[string]string{}
 	a.labels = map[string][]string{}
+	a.servers = map[string]Server{}
+	a.trash = map[string]string{}
+	a.syncNow = make(chan struct{}, 1)
+	a.syncInterval = time.Minute
 	a.showLabel = "INBOX"
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
 
 	tree.AddChild(a, func(w *core.Splits) {
-		w.SetSplits(0.1, 0.2, 0.7)
+		w.SetSplits(0.15, 0.4, 0.45)
 		tree.AddChild(w, func(w *core.Tree) {
 			w.SetText("Accounts")
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
+						w.SetText(email)
 						a.makeLabelTree(w, email, "")
+						w.OnSelect(func(e events.Event) {
+							a.showMailbox(email, "INBOX")
+						})
 					})
 				}
 			})
@@ -121,32 +178,7 @@ func (a *App) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			w.Updater(func() {
-				a.listCache = nil
-				a.unreadMessages = 0
-				mp := a.cache[a.currentEmail]
-				for _, cm := range mp {
-					if start := a.conversationStart(mp, cm); start != cm {
-						if !slices.Contains(start.replies, cm) {
-							start.replies = append(start.replies, cm)
-						}
-						continue
-					}
-					for _, label := range cm.Labels {
-						if label.Name != a.showLabel {
-							continue
-						}
-						a.listCache = append(a.listCache, cm)
-						if !slices.Contains(cm.Flags, imap.FlagSeen) {
-							a.unreadMessages++
-						}
-						break
-					}
-				}
-				slices.SortFunc(a.listCache, func(a, b *CacheMessage) int {
-					return cmp.Compare(b.latestDate().UnixNano(), a.latestDate().UnixNano())
-				})
-			})
+			w.Updater(a.updateList)
 			tree.AddChild(w, func(w *core.Text) {
 				w.SetType(core.TextTitleMedium)
 				w.Updater(func() {
@@ -157,20 +189,31 @@ func (a *App) Init() {
 				w.Updater(func() {
 					w.Text = ""
 					total := a.totalMessages[a.currentEmail][a.showLabel]
-					if len(a.listCache) < total {
-						w.Text += fmt.Sprintf("%d of ", len(a.listCache))
+					if a.shownMessages < total { // still syncing
+						w.Text += fmt.Sprintf("%d of ", a.shownMessages)
 					}
 					w.Text += fmt.Sprintf("%d messages", total)
+					if !Settings.FlatList {
+						w.Text += fmt.Sprintf(" in %d conversations", len(a.listCache))
+					}
 					if a.unreadMessages > 0 {
 						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 					}
 				})
 			})
 			tree.AddChild(w, func(w *core.Separator) {})
-			tree.AddChild(w, func(w *core.List) {
-				w.SetSlice(&a.listCache)
-				w.SetReadOnly(true)
+			tree.AddChild(w, func(w *core.Switch) {
+				w.SetText("Conversations").SetTooltip("Group the messages into conversations")
+				w.Updater(func() {
+					w.SetChecked(!Settings.FlatList)
+				})
+				w.OnChange(func(e events.Event) {
+					Settings.FlatList = !w.IsChecked()
+					errors.Log(core.SaveSettings(Settings))
+					a.Update()
+				})
 			})
+			tree.AddChild(w, a.initList)
 		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
@@ -186,6 +229,10 @@ func (a *App) Init() {
 							w.SetMessage(cm)
 						})
 					})
+				}
+				if a.readSingle {
+					add(a.readMessage)
+					return
 				}
 				slices.SortFunc(a.readMessage.replies, func(a, b *CacheMessage) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
@@ -230,18 +277,32 @@ func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
 					}
 				})
 				w.OnSelect(func(e events.Event) {
-					a.showLabel = label
-					a.Update()
+					a.showMailbox(email, label)
 				})
 			})
 		}
 	})
 }
 
+// showMailbox shows the messages of the given mailbox of the given account.
+func (a *App) showMailbox(email, mailbox string) {
+	if email != a.currentEmail {
+		a.currentEmail = email
+		a.readMessage = nil
+	}
+	a.showLabel = mailbox
+	a.Update()
+}
+
 func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send).SetKey(keymap.New)
 	})
+	if a.testServer != nil {
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.ReceiveTestMessage).SetIcon(icons.MoveToInbox)
+		})
+	}
 
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
@@ -266,21 +327,48 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	}
 }
 
+// GetMail starts getting the mail of all of the accounts, signing in
+// first if needed, and keeps it in sync with the servers.
 func (a *App) GetMail() {
 	go func() {
-		err := a.auth()
-		if err != nil {
-			core.ErrorDialog(a, err, "Error authorizing")
-			return
+		if a.testServer == nil {
+			err := a.auth()
+			if err != nil {
+				core.ErrorDialog(a, err, "Error authorizing")
+				return
+			}
 		}
 		// We keep caching messages forever to stay in sync.
+		failed := false
 		for {
-			err = a.cacheMessages()
+			a.syncMore = false
+			err := a.cacheMessages()
 			if err != nil {
-				core.ErrorDialog(a, err, "Error caching messages")
+				slog.Error("caching messages", "err", err)
+				if !failed { // only once until it works again
+					core.ErrorDialog(a, err, "Error caching messages")
+				}
+				failed = true
+			} else {
+				failed = false
+			}
+			if a.syncMore && err == nil {
+				continue
+			}
+			select {
+			case <-a.syncNow:
+			case <-time.After(a.syncInterval):
 			}
 		}
 	}()
+}
+
+// SyncNow syncs the messages now instead of at the next regular sync.
+func (a *App) SyncNow() {
+	select {
+	case a.syncNow <- struct{}{}:
+	default: // already pending
+	}
 }
 
 // selectMailbox selects the given mailbox for the given email for the given client.
@@ -305,7 +393,7 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 // cacheFilename returns the filename for the cached messages JSON file
 // for the given email address.
 func (a *App) cacheFilename(email string) string {
-	return filepath.Join(core.TheApp.AppDataDir(), "caching", filenameBase32(email), "cached-messages.json")
+	return filepath.Join(a.dataDir(), "caching", filenameBase32(email), "cached-messages.json")
 }
 
 // saveCacheFile safely saves the given cache data for the

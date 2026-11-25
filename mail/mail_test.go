@@ -205,15 +205,19 @@ func TestApp(t *testing.T) {
 		assert.False(t, hello.isRead())
 		assert.Equal(t, hello.replies[0].Date, hello.latestDate())
 
-		// clicking the message reads it, and marks it as read
-		var item *MessageListItem
-		for w := range a.AllWidgets() {
-			if mi, ok := w.(*MessageListItem); ok && mi.Message == hello {
-				item = mi
-			}
-		}
-		require.NotNil(t, item)
-		item.Send(events.Click)
+		// the conversation is one closed row, with both messages in it
+		require.Len(t, a.listRows, 1)
+		row := a.listRows[0]
+		assert.True(t, row.conversation)
+		assert.True(t, row.Closed)
+		assert.Equal(t, "Alice, You (2)", row.From)
+		require.Len(t, row.Children, 2)
+		assert.Equal(t, "Re: Hello", row.Children[0].Subject, "the newest first")
+		assert.Equal(t, a.rowAt(0), row)
+		assert.Nil(t, a.rowAt(1), "closed")
+
+		// selecting the conversation reads it, and marks it as read
+		a.list.SelectIndexEvent(0, events.SelectOne)
 	}), func() {
 		require.Eventually(t, func() bool {
 			a.imapMu[testEmail].Lock()
@@ -419,4 +423,130 @@ func TestReplySend(t *testing.T) {
 	smtpAddress = "127.0.0.1:1"
 	a.composeMessage.Attachments = nil
 	assert.Error(t, a.Send())
+}
+
+// TestTestingMode tests the testing mode: syncing the sample mail of all
+// of the accounts of the test server, switching between accounts,
+// sending a message from one to another, and receiving a test message.
+func TestTestingMode(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	oldFile, oldAccounts := Settings.File, Settings.Accounts
+	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	assert.Equal(t, you, a.currentEmail)
+	assert.NotEqual(t, oldFile, Settings.File, "not the real settings")
+	assert.NotEqual(t, core.TheApp.AppDataDir(), a.dataDir(), "not the real data")
+
+	syncAll := func() {
+		t.Helper()
+		for {
+			a.syncMore = false
+			require.NoError(t, a.cacheMessages())
+			if !a.syncMore {
+				return
+			}
+		}
+	}
+	core.RenderImage(b, func() {
+		syncAll()
+		assert.Greater(t, len(a.cache[you]), 150)
+		assert.NotEmpty(t, a.cache[alice])
+		assert.Equal(t, "[Gmail]/Trash", a.trash[you])
+		assert.Contains(t, a.labels[you], "Projects/Alpha")
+	}, core.Locked(b, func() {
+		a.showMailbox(you, "INBOX")
+		assert.NotEmpty(t, a.listCache)
+		a.showMailbox(alice, "INBOX")
+		assert.Equal(t, alice, a.currentEmail)
+		n := len(a.listCache)
+		assert.NotZero(t, n)
+
+		a.showMailbox(you, "INBOX")
+		a.Compose()
+		assert.Equal(t, you, a.composeMessage.From[0].Address)
+		a.composeMessage.To[0].Address = alice
+		a.composeMessage.Subject = "Testing mode"
+		a.composeMessage.body = "Hello *Alice*"
+		require.NoError(t, a.Send())
+		require.NoError(t, a.ReceiveTestMessage())
+	}), func() {
+		syncAll()
+		assert.NotNil(t, findSubject(a, alice, "Testing mode", "INBOX"), "alice got it")
+		assert.NotNil(t, findSubject(a, you, "Testing mode", "[Gmail]/Sent Mail"), "you sent it")
+		unread := 0
+		for _, cm := range a.cache[you] {
+			if cm.Date.After(time.Now().Add(-time.Minute)) && !slices.Contains(cm.Flags, imap.FlagSeen) {
+				unread++
+			}
+		}
+		assert.Equal(t, 1, unread, "the received test message")
+	})
+}
+
+// findSubject returns the cached message of the given account with the
+// given subject in the given mailbox.
+func findSubject(a *App, email, subject, mailbox string) *CacheMessage {
+	for _, cm := range a.cache[email] {
+		if cm.Subject == subject && slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == mailbox }) {
+			return cm
+		}
+	}
+	return nil
+}
+
+// TestList tests the list of messages: opening a conversation, reading one
+// of its messages on its own, the flat list, and filing a conversation.
+func TestList(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	t.Cleanup(func() { Settings.FlatList = false })
+	var hello *CacheMessage
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+	}, core.Locked(b, func() {
+		a.Update()
+		a.list.Open(0)
+		a.Update()
+		child := a.rowAt(1)
+		require.NotNil(t, child)
+		assert.Equal(t, "Re: Hello", child.Subject)
+		a.list.SelectIndexEvent(1, events.SelectOne)
+		assert.True(t, a.readSingle)
+		assert.Equal(t, hello.replies[0], a.readMessage)
+		assert.Len(t, a.readMessages(), 1)
+
+		Settings.FlatList = true
+		a.Update()
+		require.Len(t, a.listRows, 2)
+		assert.False(t, a.listRows[0].conversation)
+		assert.Equal(t, "Re: Hello", a.listRows[0].Subject)
+		Settings.FlatList = false
+		a.Update()
+		require.Len(t, a.listRows, 1)
+		assert.True(t, a.listRows[0].conversation)
+		assert.False(t, a.listRows[0].Closed, "still open")
+
+		// filing the conversation out of the INBOX files both messages
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		assert.False(t, a.readSingle)
+		a.label([]string{"Work"})
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.imapMu[testEmail].Lock()
+			defer a.imapMu[testEmail].Unlock()
+			return slices.Equal([]string{"Work"}, labelNames(hello)) &&
+				slices.Equal([]string{"Work"}, labelNames(hello.replies[0]))
+		}, 5*time.Second, 10*time.Millisecond)
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Update()
+		assert.Empty(t, a.listRows, "the INBOX is empty")
+		a.showMailbox(testEmail, "Work")
+		require.Len(t, a.listRows, 2, "the conversation and the report")
+	}))
 }

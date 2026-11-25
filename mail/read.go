@@ -94,9 +94,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 	w.SetProperty("readMessage", dmf.Message)
 	w.DeleteChildren()
 
-	bemail := filenameBase32(theApp.currentEmail)
-
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, dmf.Message.Filename))
+	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.currentEmail), dmf.Message.Filename))
 	if err != nil {
 		return err
 	}

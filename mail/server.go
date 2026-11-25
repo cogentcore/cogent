@@ -1,0 +1,142 @@
+// Copyright (c) 2026, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package mail
+
+import (
+	"io"
+	"path/filepath"
+	"slices"
+
+	"cogentcore.org/core/core"
+	"github.com/emersion/go-imap/v2"
+	"github.com/emersion/go-imap/v2/imapclient"
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
+)
+
+// Server is the configuration of the mail servers of an account.
+type Server struct {
+	// IMAP is the address of the IMAP server, with the port.
+	IMAP string
+
+	// SMTP is the address of the SMTP server, with the port.
+	SMTP string
+
+	// Insecure connects without TLS, as for a local test server.
+	Insecure bool
+
+	// Password, if set, is used to log in with the email address of the
+	// account as the username, instead of OAuth.
+	Password string
+}
+
+// imapAddress is the address of the Gmail IMAP server.
+var imapAddress = "imap.gmail.com:993"
+
+// server returns the server configuration of the given account:
+// that in [App.servers] if any, or else Gmail.
+func (a *App) server(email string) Server {
+	if s, ok := a.servers[email]; ok {
+		return s
+	}
+	return Server{IMAP: imapAddress, SMTP: smtpAddress}
+}
+
+// dialIMAP connects and logs in to the IMAP server of the given account.
+func (a *App) dialIMAP(email string) (*imapclient.Client, error) {
+	srv := a.server(email)
+	var c *imapclient.Client
+	var err error
+	if srv.Insecure {
+		c, err = imapclient.DialInsecure(srv.IMAP, nil)
+	} else {
+		c, err = imapclient.DialTLS(srv.IMAP, nil)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if srv.Password != "" {
+		err = c.Login(email, srv.Password).Wait()
+	} else {
+		err = c.Authenticate(a.authClient[email])
+	}
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+	return c, nil
+}
+
+// smtpAuth returns the SASL client for sending messages from the given account.
+func (a *App) smtpAuth(email string) sasl.Client {
+	if srv := a.server(email); srv.Password != "" {
+		return sasl.NewPlainClient("", email, srv.Password)
+	}
+	return a.authClient[email]
+}
+
+// send sends the given message with the SMTP server of the given account.
+func (a *App) send(email string, to []string, r io.Reader) error {
+	srv := a.server(email)
+	if srv.Insecure {
+		return sendMailInsecure(srv.SMTP, a.smtpAuth(email), email, to, r)
+	}
+	return sendMail(srv.SMTP, a.smtpAuth(email), email, to, r)
+}
+
+// sendMailInsecure sends a message with SMTP without TLS,
+// which [smtp.SendMail] requires.
+func sendMailInsecure(addr string, auth sasl.Client, from string, to []string, r io.Reader) error {
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+	if auth != nil {
+		if err := c.Auth(auth); err != nil {
+			return err
+		}
+	}
+	if err := c.SendMail(from, to, r); err != nil {
+		return err
+	}
+	return c.Quit()
+}
+
+// dataDir returns the directory of the data of the app: the messages
+// and their cache.
+func (a *App) dataDir() string {
+	if a.dataDirectory != "" {
+		return a.dataDirectory
+	}
+	return core.TheApp.AppDataDir()
+}
+
+// messagesDir returns the directory of the cached messages of the given account.
+func (a *App) messagesDir(email string) string {
+	return filepath.Join(a.dataDir(), "mail", filenameBase32(email))
+}
+
+// trashNames are the names of trash mailboxes of servers without
+// the special-use attribute for it.
+var trashNames = []string{"[Gmail]/Trash", "Trash", "Deleted Messages", "Deleted Items"}
+
+// findTrash returns the trash mailbox in the given mailboxes: the one with
+// the special-use attribute if any, or else one with a standard name.
+func findTrash(mailboxes []*imap.ListData) string {
+	for _, mb := range mailboxes {
+		if slices.Contains(mb.Attrs, imap.MailboxAttrTrash) {
+			return mb.Mailbox
+		}
+	}
+	for _, name := range trashNames {
+		for _, mb := range mailboxes {
+			if mb.Mailbox == name {
+				return name
+			}
+		}
+	}
+	return ""
+}

@@ -12,79 +12,15 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/abilities"
-	"cogentcore.org/core/tree"
 	"github.com/mitchellh/go-homedir"
 )
 
 func init() {
-	core.AddValueType[CacheMessage, MessageListItem]()
 	core.AddValueType[mail.Address, AddressTextField]()
 	core.AddValueType[Attachment, AttachmentButton]()
-}
-
-// MessageListItem represents a [CacheMessage] with a [core.Frame] for the message list.
-type MessageListItem struct {
-	core.Frame
-	Message *CacheMessage
-}
-
-func (mi *MessageListItem) WidgetValue() any { return &mi.Message }
-
-func (mi *MessageListItem) Init() {
-	mi.Frame.Init()
-	mi.Styler(func(s *styles.Style) {
-		s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
-		s.Cursor = cursors.Pointer
-		s.Direction = styles.Column
-		s.Grow.Set(1, 0)
-	})
-	mi.OnClick(func(e events.Event) {
-		theApp.readMessage = mi.Message
-		theApp.MarkAsRead()
-		theApp.Update()
-	})
-
-	tree.AddChild(mi, func(w *core.Text) {
-		w.SetType(core.TextTitleMedium)
-		w.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-			s.SetTextWrap(false)
-		})
-		w.Updater(func() {
-			var text strings.Builder
-			if !mi.Message.isRead() {
-				fmt.Fprintf(&text, `<span color="%s">●</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
-			}
-			if len(mi.Message.replies) > 0 {
-				fmt.Fprintf(&text, `<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
-			}
-			for _, f := range mi.Message.From {
-				if f.Name != "" {
-					text.WriteString(f.Name + " ")
-				} else {
-					text.WriteString(f.Addr() + " ")
-				}
-			}
-			w.SetText(text.String())
-		})
-	})
-	tree.AddChild(mi, func(w *core.Text) {
-		w.SetType(core.TextBodyMedium)
-		w.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-			s.SetTextWrap(false)
-		})
-		w.Updater(func() {
-			w.SetText(mi.Message.Subject)
-		})
-	})
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
