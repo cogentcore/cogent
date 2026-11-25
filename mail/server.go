@@ -5,10 +5,13 @@
 package mail
 
 import (
+	"fmt"
 	"io"
 	"path/filepath"
 	"slices"
 
+	"cogentcore.org/cogent/mail/xoauth2"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"github.com/cogentcore/go-imap/v2"
 	"github.com/cogentcore/go-imap/v2/imapclient"
@@ -60,7 +63,14 @@ func (a *App) dialIMAP(email string) (*imapclient.Client, error) {
 	if srv.Password != "" {
 		err = c.Login(email, srv.Password).Wait()
 	} else {
-		err = c.Authenticate(a.authClient[email])
+		var auth sasl.Client
+		auth, err = a.saslClient(email)
+		if err == nil {
+			err = c.Authenticate(auth)
+			if xe := (*xoauth2.Xoauth2Error)(nil); errors.As(err, &xe) {
+				err = fmt.Errorf("the server did not accept the sign-in of %s (%w): use Sign in again in the menu of the account, and allow all of the access to Gmail", email, err)
+			}
+		}
 	}
 	if err != nil {
 		c.Close()
@@ -70,20 +80,24 @@ func (a *App) dialIMAP(email string) (*imapclient.Client, error) {
 }
 
 // smtpAuth returns the SASL client for sending messages from the given account.
-func (a *App) smtpAuth(email string) sasl.Client {
+func (a *App) smtpAuth(email string) (sasl.Client, error) {
 	if srv := a.server(email); srv.Password != "" {
-		return sasl.NewPlainClient("", email, srv.Password)
+		return sasl.NewPlainClient("", email, srv.Password), nil
 	}
-	return a.authClient[email]
+	return a.saslClient(email)
 }
 
 // send sends the given message with the SMTP server of the given account.
 func (a *App) send(email string, to []string, r io.Reader) error {
 	srv := a.server(email)
-	if srv.Insecure {
-		return sendMailInsecure(srv.SMTP, a.smtpAuth(email), email, to, r)
+	auth, err := a.smtpAuth(email)
+	if err != nil {
+		return err
 	}
-	return sendMail(srv.SMTP, a.smtpAuth(email), email, to, r)
+	if srv.Insecure {
+		return sendMailInsecure(srv.SMTP, auth, email, to, r)
+	}
+	return sendMail(srv.SMTP, auth, email, to, r)
 }
 
 // sendMailInsecure sends a message with SMTP without TLS,

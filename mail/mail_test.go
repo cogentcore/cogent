@@ -33,6 +33,7 @@ import (
 	"github.com/emersion/go-smtp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 // testEmail is the email address of the account of the tests.
@@ -148,6 +149,7 @@ func newTestApp(t *testing.T, c *imapclient.Client) (*core.Body, *App) {
 	a.dataDirectory = t.TempDir()
 	a.imapClient[testEmail] = c
 	a.imapMu[testEmail] = &sync.Mutex{}
+	a.tokens[testEmail] = oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "test"}) // signed in
 	t.Cleanup(a.closeStores)
 	return b, a
 }
@@ -1322,4 +1324,82 @@ func TestSearchMessages(t *testing.T) {
 		assert.Nil(t, a.searchResults, "another mailbox ends the search")
 		assert.Equal(t, "", a.searchField.Text())
 	}))
+}
+
+// TestSearchTyping tests typing in the search field while reading a
+// message: the keys edit the text, and Backspace does not delete the
+// message, while the shortcuts with Command still apply.
+func TestSearchTyping(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var hello *CacheMessage
+	var labels []string
+	keys := func(chords ...key.Chord) func() {
+		return func() {
+			src := b.Scene.RenderWindow().SystemWindow.Events()
+			for _, c := range chords {
+				r, code, mods, err := c.PlatformChord().Decode()
+				require.NoError(t, err)
+				src.KeyChord(r, code, mods)
+			}
+		}
+	}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+		labels = labelNames(hello)
+	}, core.Locked(b, func() {
+		a.Update()
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		require.NotNil(t, a.readMessage)
+		a.FocusSearch()
+	}), keys("h", "e", "l", "x", "Backspace", "l", "o"), core.Locked(b, func() {
+		assert.Equal(t, "hello", a.searchField.Text())
+		assert.Equal(t, labels, labelNames(hello), "not deleted")
+		assert.Nil(t, a.composeMessage)
+	}), keys("Command+R"), core.Locked(b, func() {
+		assert.NotNil(t, a.composeMessage, "reply, from the search field")
+	}))
+}
+
+// TestAccounts tests an account that is not signed in, which is not synced
+// until it is, and removing an account with its local mail.
+func TestAccounts(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	oldFile, oldAccounts := Settings.File, Settings.Accounts
+	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	t.Cleanup(a.closeStores)
+	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	gmail := "new@gmail.com" // signs in with OAuth
+	Settings.Accounts = append(Settings.Accounts, gmail)
+	core.RenderImage(b, func() {
+		assert.True(t, a.signedIn(you), "with a password")
+		assert.False(t, a.signedIn(gmail))
+		assert.Equal(t, []string{gmail}, a.signInSaved(), "no saved token")
+		a.syncMore = false
+		require.NoError(t, a.cacheMessages(), "skips the account that is not signed in")
+		assert.NotEmpty(t, a.cache[alice])
+		assert.Nil(t, a.stores[gmail])
+		err := a.send(gmail, []string{you}, strings.NewReader("Subject: x\r\n\r\nx\r\n"))
+		assert.ErrorContains(t, err, "not signed in to new@gmail.com")
+	}, core.Locked(b, func() {
+		a.showMailbox(alice, "INBOX")
+		a.RemoveAccount(alice)
+		assert.Equal(t, []string{you, Settings.Accounts[1], gmail}, Settings.Accounts)
+		assert.NotContains(t, Settings.Accounts, alice)
+		assert.Equal(t, you, a.currentEmail, "the first account is shown")
+		assert.Nil(t, a.cache[alice])
+	}), func() {
+		require.Eventually(t, func() bool {
+			_, err := os.Stat(a.messagesDir(alice))
+			return os.IsNotExist(err)
+		}, 5*time.Second, 10*time.Millisecond, "the local mail is deleted")
+		a.syncMore = false
+		require.NoError(t, a.cacheMessages())
+		assert.Nil(t, a.stores[alice], "no longer synced")
+	})
 }

@@ -14,7 +14,6 @@ require (
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/cogentcore/go-imap/v2 v2.0.0-20261125174307-259d719c2d5d
 	github.com/corentings/chess/v2 v2.0.8
-	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/dop251/goja v0.0.0-20261110190325-844f1a0e4767
 	github.com/emersion/go-message v0.18.2
 	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
@@ -78,6 +77,7 @@ require (
 	github.com/cogentcore/glfw4/v3.4/glfw v0.1.0-pre.2.0.20261121165724-248ae4b326b2 // indirect
 	github.com/cogentcore/mvm v0.0.0-20261120030535-e3f31e8a9ab5 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
+	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2/v2 v2.11.0 // indirect

@@ -6,9 +6,11 @@ package mail
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/mail"
 	"os"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -80,13 +82,18 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 
 // cacheMessages syncs the messages of all of the accounts with their servers.
 func (a *App) cacheMessages() error {
-	for _, account := range Settings.Accounts {
+	accounts := slices.Clone(Settings.Accounts) // as one may be added
+	var errs []error
+	for _, account := range accounts {
+		if !a.signedIn(account) {
+			continue // until the user signs in to it
+		}
 		err := a.syncAccount(account)
 		if err != nil {
-			return fmt.Errorf("syncing messages for account %q: %w", account, err)
+			errs = append(errs, fmt.Errorf("syncing messages for account %q: %w", account, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // listMailboxes gets the mailboxes of the given account from the server,

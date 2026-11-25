@@ -28,7 +28,6 @@ import (
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
 	"github.com/cogentcore/go-imap/v2/imapclient"
-	"github.com/emersion/go-sasl"
 	"golang.org/x/oauth2"
 )
 
@@ -36,11 +35,12 @@ import (
 type App struct {
 	core.Frame
 
-	// authToken contains the [oauth2.Token] for each account.
-	authToken map[string]*oauth2.Token
+	// tokens are the sources of the OAuth tokens of the accounts that
+	// are signed in, which keep the access tokens fresh, under authMu.
+	tokens map[string]oauth2.TokenSource
 
-	// authClient contains the [sasl.Client] authentication for sending messages for each account.
-	authClient map[string]sasl.Client
+	// authMu is the mutex of tokens, which the sync uses.
+	authMu sync.Mutex
 
 	// imapClient contains the imap clients for each account.
 	imapClient map[string]*imapclient.Client
@@ -181,8 +181,7 @@ var theApp *App
 func (a *App) Init() {
 	theApp = a
 	a.Frame.Init()
-	a.authToken = map[string]*oauth2.Token{}
-	a.authClient = map[string]sasl.Client{}
+	a.tokens = map[string]oauth2.TokenSource{}
 	a.imapClient = map[string]*imapclient.Client{}
 	a.imapMu = map[string]*sync.Mutex{}
 	a.cache = map[string]map[string]*CacheMessage{}
@@ -315,11 +314,14 @@ func (a *App) GetMail() {
 	os.RemoveAll(filepath.Join(a.dataDir(), "caching"))
 	go func() {
 		if a.testServer == nil {
-			err := a.auth()
-			if err != nil {
-				core.ErrorDialog(a, err, "Error authorizing")
-				return
+			need := a.signInSaved()
+			a.AsyncLock()
+			if len(Settings.Accounts) == 0 {
+				a.AddAccount()
+			} else if len(need) > 0 {
+				a.signInDialog(need)
 			}
+			a.AsyncUnlock()
 		}
 		// We keep caching messages forever to stay in sync.
 		failed := false

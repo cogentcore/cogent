@@ -5,58 +5,275 @@
 package mail
 
 import (
+	"context"
 	"encoding/base32"
+	"errors"
+	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 
 	"cogentcore.org/cogent/mail/xoauth2"
 	"cogentcore.org/core/base/auth"
-	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/auth/cicons"
+	cerrors "cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"github.com/coreos/go-oidc/v3/oidc"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"github.com/emersion/go-sasl"
 	"golang.org/x/oauth2"
 )
 
-// auth authorizes access to the user's mail and sets [App.AuthClient].
-// If the user does not already have a saved auth token, it calls [SignIn].
-func (a *App) auth() error {
-	email, err := a.signIn()
-	if err != nil {
-		return err
-	}
+// gmailScopes are the OAuth scopes of the access to Gmail: all of the
+// mail, with IMAP and SMTP.
+var gmailScopes = []string{"https://mail.google.com/"}
 
-	a.authClient[email] = xoauth2.NewXoauth2Client(email, a.authToken[email].AccessToken)
-	return nil
+// tokenFile returns the file of the saved OAuth token of the given account.
+func (a *App) tokenFile(email string) string {
+	if email == "" {
+		return ""
+	}
+	return filepath.Join(a.dataDir(), "auth", filenameBase32(email), "google-token.json")
 }
 
-// signIn displays a dialog for the user to sign in with the platform of their choice.
-// It returns the user's email address.
-func (a *App) signIn() (string, error) {
-	d := core.NewBody("Sign in")
-	email := make(chan string)
-	fun := func(token *oauth2.Token, userInfo *oidc.UserInfo) {
-		if !slices.Contains(Settings.Accounts, userInfo.Email) {
-			Settings.Accounts = append(Settings.Accounts, userInfo.Email)
-			Settings.Apply()
-			errors.Log(core.SaveSettings(Settings))
-		}
-		a.currentEmail = userInfo.Email
-		a.authToken[userInfo.Email] = token
-		d.Close()
-		email <- userInfo.Email
+// authConfig returns the configuration of signing in to the given
+// account, or to a new one for "".
+func (a *App) authConfig(ctx context.Context, email string) *auth.AuthConfig {
+	ac := &auth.AuthConfig{
+		Ctx:       ctx,
+		TokenFile: a.tokenFile,
+		Scopes:    gmailScopes,
 	}
-	auth.Buttons(d, &auth.ButtonsConfig{
-		SuccessFunc: fun,
-		TokenFile: func(provider, email string) string {
-			return filepath.Join(core.TheApp.AppDataDir(), "auth", filenameBase32(email), provider+"-token.json")
-		},
-		Accounts: Settings.Accounts,
-		Scopes: map[string][]string{
-			"google": {"https://mail.google.com/"},
-		},
+	if email == "" {
+		ac.SelectAccount = true
+	} else {
+		ac.Accounts = []string{email}
+		ac.LoginHint = email
+	}
+	return ac
+}
+
+// usesOAuth returns whether the given account signs in with OAuth,
+// as Gmail does, instead of a password.
+func (a *App) usesOAuth(email string) bool {
+	return a.server(email).Password == ""
+}
+
+// signedIn returns whether the given account can connect to its server:
+// it is connected, or it has a password, or a token from signing in.
+func (a *App) signedIn(email string) bool {
+	if !a.usesOAuth(email) {
+		return true
+	}
+	if a.imapClient[email] != nil {
+		return true
+	}
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+	return a.tokens[email] != nil
+}
+
+// setTokens sets the source of the OAuth tokens of the given account.
+func (a *App) setTokens(email string, ts oauth2.TokenSource) {
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+	a.tokens[email] = ts
+}
+
+// saslClient returns the SASL client for signing in to the servers of the
+// given account with OAuth, with an access token that is valid now, as
+// they expire after an hour.
+func (a *App) saslClient(email string) (sasl.Client, error) {
+	a.authMu.Lock()
+	ts := a.tokens[email]
+	a.authMu.Unlock()
+	if ts == nil {
+		return nil, fmt.Errorf("not signed in to %s", email)
+	}
+	token, err := ts.Token()
+	if err != nil {
+		return nil, fmt.Errorf("signing in to %s: %w", email, err)
+	}
+	return xoauth2.NewXoauth2Client(email, token.AccessToken), nil
+}
+
+// signInSaved signs in to each of the accounts that use OAuth with its
+// saved token, returning those that need the user to sign in again,
+// without a saved token that works.
+func (a *App) signInSaved() []string {
+	var need []string
+	for _, email := range slices.Clone(Settings.Accounts) {
+		if !a.usesOAuth(email) || a.signedIn(email) {
+			continue
+		}
+		ac := a.authConfig(context.Background(), email)
+		ac.NoPrompt = true
+		ts, userInfo, err := auth.GoogleTokenSource(ac)
+		if err == nil && userInfo.Email != email {
+			err = fmt.Errorf("the saved token of %s is for %s", email, userInfo.Email)
+		}
+		if err != nil {
+			if !errors.Is(err, auth.ErrNoToken) {
+				cerrors.Log(err)
+			}
+			need = append(need, email)
+			continue
+		}
+		a.setTokens(email, ts)
+	}
+	return need
+}
+
+// signedInTo records that the user signed in to the given account with
+// the given tokens, adding it to the accounts if it is new, and syncs it.
+// It must be called with the lock of the window.
+func (a *App) signedInTo(email string, ts oauth2.TokenSource) {
+	a.setTokens(email, ts)
+	if !slices.Contains(Settings.Accounts, email) {
+		Settings.Accounts = append(Settings.Accounts, email)
+		a.saveSettings()
+	}
+	if a.currentEmail == "" {
+		a.currentEmail = email
+	}
+	a.Update()
+	a.SyncNow()
+}
+
+// AddAccount adds another Gmail account, which the user signs in to in
+// the browser, choosing the account there.
+func (a *App) AddAccount() { //types:add
+	a.signInDialog(nil)
+}
+
+// SignInAgain signs in to the given account again in the browser, as
+// when its saved sign-in no longer works.
+func (a *App) SignInAgain(email string) {
+	a.signInDialog([]string{email})
+}
+
+// signInDialog opens a dialog for signing in in the browser to each of
+// the given accounts, or to a new one, chosen there, for none.
+func (a *App) signInDialog(accounts []string) {
+	title := "Add account"
+	if len(accounts) > 0 {
+		title = "Sign in"
+	}
+	d := core.NewBody(title)
+	ctx, cancel := context.WithCancel(context.Background())
+	d.OnClose(func(e events.Event) { cancel() })
+	if len(accounts) == 0 {
+		core.NewText(d).SetText("Sign in to the Gmail account to add in your browser.")
+		accounts = []string{""}
+	} else {
+		core.NewText(d).SetText("Sign in again in your browser, as the saved sign-in no longer works.")
+	}
+	status := core.NewText(d)
+	left := len(accounts)
+	for _, email := range accounts {
+		bt := core.NewButton(d).SetType(core.ButtonOutlined).SetIcon(cicons.SignInWithGoogle)
+		text := "Sign in with Google"
+		if email != "" {
+			text = "Sign in to " + email
+		}
+		bt.SetText(text)
+		bt.OnClick(func(e events.Event) {
+			bt.SetEnabled(false).Update()
+			status.SetText("Waiting for you to sign in in the browser...").Update()
+			go func() {
+				ts, userInfo, err := auth.GoogleTokenSource(a.authConfig(ctx, email))
+				if errors.Is(err, context.Canceled) {
+					return // the dialog was closed
+				}
+				d.AsyncLock()
+				defer d.AsyncUnlock()
+				if err != nil {
+					status.SetText("").Update()
+					bt.SetEnabled(true).Update()
+					core.ErrorDialog(d, err, "Error signing in")
+					return
+				}
+				a.signedInTo(userInfo.Email, ts)
+				left--
+				if left == 0 {
+					d.Close()
+					return
+				}
+				status.SetText("Signed in to " + userInfo.Email).Update()
+				bt.SetText("Signed in").SetIcon(icons.Check).Update()
+			}()
+		})
+	}
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
 	})
 	d.RunDialog(a)
-	return <-email, nil
+}
+
+// confirmRemoveAccount asks whether to remove the given account,
+// and removes it if so.
+func (a *App) confirmRemoveAccount(email string) {
+	d := core.NewBody("Remove account")
+	core.NewText(d).SetText("Remove " + email + " from Cogent Mail? Its mail stays on the server; the copy here is deleted.")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Remove").OnClick(func(e events.Event) {
+			a.RemoveAccount(email)
+		})
+	})
+	d.RunDialog(a)
+}
+
+// RemoveAccount removes the given account from the app: its sign-in, and
+// its local copy of the mail, which stays on the server.
+func (a *App) RemoveAccount(email string) {
+	Settings.Accounts = slices.DeleteFunc(Settings.Accounts, func(s string) bool { return s == email })
+	if Settings.FilingAccount == AccountName(email) {
+		Settings.FilingAccount = ""
+	}
+	a.saveSettings()
+	if a.currentEmail == email {
+		a.currentEmail = ""
+		if len(Settings.Accounts) > 0 {
+			a.currentEmail = Settings.Accounts[0]
+		}
+		a.showLabel = "INBOX"
+		a.readMessage = nil
+	}
+	c, mu := a.imapClient[email], a.imapMu[email]
+	st, si := a.stores[email], a.searches[email]
+	delete(a.imapClient, email)
+	delete(a.imapMu, email)
+	delete(a.stores, email)
+	delete(a.searches, email)
+	delete(a.cache, email)
+	delete(a.totalMessages, email)
+	a.authMu.Lock()
+	delete(a.tokens, email)
+	a.authMu.Unlock()
+	a.Update()
+	go func() { // after any sync of it
+		if mu != nil {
+			mu.Lock()
+			defer mu.Unlock()
+		}
+		if c != nil {
+			c.Logout().Wait()
+			c.Close()
+		}
+		if st != nil {
+			st.Close()
+		}
+		if si != nil {
+			si.Close()
+		}
+		for _, f := range []string{a.messagesDir(email),
+			filepath.Join(a.dataDir(), "store", filenameBase32(email)+".db"),
+			filepath.Join(a.dataDir(), "search", filenameBase32(email)+".bleve"),
+			filepath.Dir(a.tokenFile(email))} {
+			cerrors.Log(os.RemoveAll(f))
+		}
+	}()
 }
 
 // filenameBase32 converts the given string to a filename-safe base32 version.

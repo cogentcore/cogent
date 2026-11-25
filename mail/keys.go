@@ -6,6 +6,7 @@ package mail
 
 import (
 	"slices"
+	"strings"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -144,9 +145,20 @@ func (a *App) mailKeys(e events.Event) {
 		if sc.message && a.readMessage == nil {
 			return
 		}
+		if a.typing() && !strings.Contains(string(sc.chords[0]), "Command") {
+			return // a key for the text, such as Backspace
+		}
 		e.SetHandled()
 		sc.fun(a)
 	}
+}
+
+// typing returns whether the keyboard focus is in a text field of the main
+// window, the search field, where only the shortcuts with Command (or
+// Control elsewhere) apply, and the other keys, such as Backspace, edit
+// the text.
+func (a *App) typing() bool {
+	return a.searchField != nil && a.searchField.StateIs(states.Focused)
 }
 
 // panels returns the panels among which the keyboard focus moves, in

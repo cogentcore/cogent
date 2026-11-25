@@ -7,6 +7,7 @@ package mail
 import (
 	"cmp"
 	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"slices"
@@ -118,6 +119,7 @@ func (mt *MailboxTree) saveOpen(open bool) {
 func (a *App) initMailboxes(w *core.Tree) {
 	w.SetText("Accounts")
 	w.ContextMenus = nil // only those of the mailboxes
+	w.AddContextMenu(func(m *core.Scene, pos image.Point) { a.addAccountButton(m) })
 	a.mailboxes = w
 	w.Updater(a.countUnread)
 	w.Maker(func(p *tree.Plan) {

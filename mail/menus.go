@@ -64,8 +64,29 @@ func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Poi
 			core.NewButton(m).SetText("Sync now").SetIcon(icons.Sync).OnClick(func(e events.Event) {
 				a.SyncNow()
 			})
+			core.NewSeparator(m)
+			if a.usesOAuth(email) && a.testServer == nil {
+				core.NewButton(m).SetText("Sign in again").SetIcon(icons.Login).OnClick(func(e events.Event) {
+					a.SignInAgain(email)
+				})
+			}
+			a.addAccountButton(m)
+			core.NewButton(m).SetText("Remove account").SetIcon(icons.PersonRemove).OnClick(func(e events.Event) {
+				a.confirmRemoveAccount(email)
+			})
 		}
 	}
+}
+
+// addAccountButton adds the button of [App.AddAccount] to the given menu,
+// except in testing mode, which has its own accounts.
+func (a *App) addAccountButton(m *core.Scene) {
+	if a.testServer != nil {
+		return
+	}
+	core.NewButton(m).SetText("Add account").SetIcon(icons.PersonAdd).OnClick(func(e events.Event) {
+		a.AddAccount()
+	})
 }
 
 // messageMenu is the context menu of the list of messages.
