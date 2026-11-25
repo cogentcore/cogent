@@ -5,10 +5,14 @@
 package mail
 
 import (
+	"mime"
+
 	"fmt"
 	"io"
 	"path/filepath"
 	"slices"
+
+	"github.com/emersion/go-message/charset"
 
 	"cogentcore.org/cogent/mail/xoauth2"
 	"cogentcore.org/core/base/errors"
@@ -47,15 +51,23 @@ func (a *App) server(email string) Server {
 	return Server{IMAP: imapAddress, SMTP: smtpAddress}
 }
 
+// imapOptions are the options of the IMAP clients, which decode the
+// headers of the messages (as in their envelopes) in all of the character
+// sets that go-message supports, such as windows-1252, as importing its
+// charset package also does for the messages themselves.
+var imapOptions = &imapclient.Options{
+	WordDecoder: &mime.WordDecoder{CharsetReader: charset.Reader},
+}
+
 // dialIMAP connects and logs in to the IMAP server of the given account.
 func (a *App) dialIMAP(email string) (*imapclient.Client, error) {
 	srv := a.server(email)
 	var c *imapclient.Client
 	var err error
 	if srv.Insecure {
-		c, err = imapclient.DialInsecure(srv.IMAP, nil)
+		c, err = imapclient.DialInsecure(srv.IMAP, imapOptions)
 	} else {
-		c, err = imapclient.DialTLS(srv.IMAP, nil)
+		c, err = imapclient.DialTLS(srv.IMAP, imapOptions)
 	}
 	if err != nil {
 		return nil, err

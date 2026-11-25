@@ -1403,3 +1403,28 @@ func TestAccounts(t *testing.T) {
 		assert.Nil(t, a.stores[alice], "no longer synced")
 	})
 }
+
+// TestIndexMissing tests adding the downloaded messages that are not in
+// the search index to it, a limited number at a time.
+func TestIndexMissing(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		si := a.searches[testEmail]
+		hello := messageBySubject(a, "Hello")
+		require.NotEmpty(t, hello.Filename)
+		require.True(t, si.has(hello.key))
+		require.NoError(t, si.remove(hello.key))
+		a.indexChecked = map[string]map[string]bool{}
+
+		n := len(a.cache[testEmail])
+		a.syncMore = false
+		require.NoError(t, a.indexMissing(testEmail, 1))
+		assert.True(t, a.syncMore, "more to check")
+		a.syncMore = false
+		require.NoError(t, a.indexMissing(testEmail, n))
+		assert.False(t, a.syncMore)
+		assert.True(t, si.has(hello.key), "indexed again")
+		assert.Len(t, a.indexChecked[testEmail], n)
+	})
+}

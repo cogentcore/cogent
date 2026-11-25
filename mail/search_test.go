@@ -69,3 +69,24 @@ func TestSearchIndex(t *testing.T) {
 func TestSearchTerms(t *testing.T) {
 	assert.Equal(t, []string{"a", `"b c"`, "-d", `from:"e f"`}, searchTerms(` a  "b c" -d from:"e f"`))
 }
+
+// TestCharsets tests a message in windows-1252, which is not one of the
+// character sets of the standard library, in its header and its body.
+func TestCharsets(t *testing.T) {
+	fn := filepath.Join(t.TempDir(), "msg.eml")
+	msg := "From: =?windows-1252?Q?Ren=E9e?= <renee@example.com>\r\n" +
+		"Subject: =?windows-1252?Q?Caf=E9_=93menu=94?=\r\n" +
+		"Content-Type: text/plain; charset=windows-1252\r\n" +
+		"Content-Transfer-Encoding: 8bit\r\n\r\n" +
+		"The \x93caf\xe9\x94 is open \x96 come by.\r\n"
+	require.NoError(t, os.WriteFile(fn, []byte(msg), 0o600))
+	doc, err := readSearchDoc(fn)
+	require.NoError(t, err)
+	assert.Equal(t, "Café “menu”", doc.Subject)
+	assert.Equal(t, "Renée renee@example.com", doc.From)
+	assert.Contains(t, doc.Body, "The “café” is open – come by.")
+
+	addr, err := imapOptions.WordDecoder.DecodeHeader("=?windows-1252?Q?Ren=E9e?=")
+	require.NoError(t, err)
+	assert.Equal(t, "Renée", addr, "in the envelopes from the server")
+}

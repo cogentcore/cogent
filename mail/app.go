@@ -167,6 +167,10 @@ type App struct {
 	// to be read (see [App.downloadNow]).
 	downloading map[*CacheMessage]bool
 
+	// indexChecked are the keys of the downloaded messages of each account
+	// checked to be in its search index in this run (see [App.indexMissing]).
+	indexChecked map[string]map[string]bool
+
 	// testServer is the local simulated mail server in testing mode.
 	testServer *testserver.Server
 }
@@ -195,6 +199,7 @@ func (a *App) Init() {
 	a.condStore = map[string]bool{}
 	a.specialUse = map[string]map[imap.MailboxAttr]string{}
 	a.downloading = map[*CacheMessage]bool{}
+	a.indexChecked = map[string]map[string]bool{}
 	a.trash = map[string]string{}
 	a.syncNow = make(chan struct{}, 1)
 	a.syncInterval = time.Minute

@@ -172,7 +172,57 @@ func (a *App) syncAccount(email string) error {
 		}
 	}
 	a.countMessages(email)
-	return a.downloadBodies(email, bodiesPerSync)
+	if err := a.downloadBodies(email, bodiesPerSync); err != nil {
+		return err
+	}
+	return a.indexMissing(email, indexChecksPerSync)
+}
+
+// indexChecksPerSync is the number of downloaded messages checked by
+// [App.indexMissing] in each sync of an account.
+var indexChecksPerSync = 2000
+
+// indexMissing adds the downloaded messages of the given account that are
+// not in its search index to it, as those that could not be read when
+// they were downloaded (such as those in windows-1252 before it was
+// supported), checking up to the given number of messages that have not
+// been checked yet in this run of the app.
+func (a *App) indexMissing(email string, n int) error {
+	si := a.searches[email]
+	if si == nil {
+		return nil
+	}
+	a.AsyncLock()
+	if a.indexChecked[email] == nil {
+		a.indexChecked[email] = map[string]bool{}
+	}
+	checked := a.indexChecked[email]
+	var check []*CacheMessage
+	for _, cm := range a.cache[email] {
+		if cm.Filename != "" && !checked[cm.key] {
+			if len(check) == n {
+				a.syncMore = true
+				break
+			}
+			check = append(check, cm)
+		}
+	}
+	a.AsyncUnlock()
+	dir := a.messagesDir(email)
+	docs := map[string]*searchDoc{}
+	for _, cm := range check {
+		checked[cm.key] = true // only used by the sync, after the above
+		if si.has(cm.key) {
+			continue
+		}
+		doc, err := readSearchDoc(filepath.Join(dir, cm.Filename))
+		if err != nil {
+			slog.Error("indexing message", "file", cm.Filename, "err", err)
+			continue
+		}
+		docs[cm.key] = doc
+	}
+	return si.add(docs)
 }
 
 // countMessages sets the numbers of messages in the mailboxes of the given
@@ -614,6 +664,8 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage) error {
 			saved[k] = cm
 			if doc, err := readSearchDoc(fn); err == nil {
 				docs[k] = doc
+			} else {
+				slog.Error("indexing message", "file", filename, "err", err)
 			}
 		}
 		err = cmd.Close()
