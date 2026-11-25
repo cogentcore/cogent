@@ -7,6 +7,7 @@ package mail
 import (
 	"cmp"
 	"fmt"
+	"image"
 	"maps"
 	"reflect"
 	"slices"
@@ -16,6 +17,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
@@ -56,6 +58,10 @@ type messageRow struct {
 
 	// conversation is whether this is a conversation row.
 	conversation bool
+
+	// elsewhere is whether this is a message of a conversation that is
+	// not in the mailbox being shown, which is dimmed.
+	elsewhere bool
 }
 
 // messageSummary is the summary of a message or conversation in two
@@ -66,6 +72,10 @@ type messageSummary struct {
 	// Unread is whether the message or conversation is unread,
 	// which is shown in bold.
 	Unread bool
+
+	// Dim is whether the message is not in the mailbox being shown,
+	// in a conversation, which is dimmed.
+	Dim bool
 }
 
 // compactDate returns the given date in the short format of the compact
@@ -94,29 +104,51 @@ func friendlyLabels(labels []string) string {
 }
 
 // setSummary sets the Message summary of the row from its other fields.
-func (mr *messageRow) setSummary(date time.Time) {
-	mr.Message = messageSummary{From: mr.From, Date: compactDate(date), Subject: mr.Subject, Labels: mr.Labels,
-		Unread: !mr.isRead()}
+// The labels are only in it if they are shown.
+func (mr *messageRow) setSummary(date time.Time, labels bool) {
+	mr.Message = messageSummary{From: mr.From, Date: compactDate(date), Subject: mr.Subject, Unread: !mr.isRead()}
+	if labels {
+		mr.Message.Labels = mr.Labels
+	}
+}
+
+// listViews returns the options of the view of the list of messages.
+func (a *App) listViews() ListViews {
+	return Settings.ListViews
+}
+
+// flatList returns whether the list of messages shows each message on its
+// own, instead of grouped into conversations.
+func (a *App) flatList() bool {
+	v := a.listViews()
+	return !v.HasFlag(ViewConversations)
 }
 
 // compactList returns whether the list of messages is compact, as set in
-// the settings, and always on mobile, with its narrow screen.
-func compactList() bool {
-	return Settings.CompactList || core.TheApp.SystemPlatform().IsMobile()
+// its view, and always on mobile, with its narrow screen.
+func (a *App) compactList() bool {
+	v := a.listViews()
+	return v.HasFlag(ViewCompact) || core.TheApp.SystemPlatform().IsMobile()
+}
+
+// labelsShown returns whether the list of messages shows their other labels.
+func (a *App) labelsShown() bool {
+	v := a.listViews()
+	return v.HasFlag(ViewLabels)
 }
 
 // listField returns whether to show the given field of the rows in the
 // list of messages: only the Message summary in the compact list, and the
-// Labels only if [SettingsData.LabelsColumn].
-func listField(field reflect.StructField) bool {
-	if compactList() {
+// Labels only if [ViewLabels].
+func (a *App) listField(field reflect.StructField) bool {
+	if a.compactList() {
 		return field.Name == "Message"
 	}
 	switch field.Name {
 	case "Message":
 		return false
 	case "Labels":
-		return Settings.LabelsColumn
+		return a.labelsShown()
 	}
 	return true
 }
@@ -175,7 +207,7 @@ func (a *App) hasLabel(cm *CacheMessage) bool {
 
 // updateList updates the rows of the list of messages for the current
 // account and label: conversations of messages, unless
-// [SettingsData.FlatList], with any message of the conversation having
+// [App.flatList], with any message of the conversation having
 // the label, or the messages with the label. It reuses the rows of the
 // same messages, so that the selection and closed conversations stay.
 func (a *App) updateList() {
@@ -185,28 +217,31 @@ func (a *App) updateList() {
 	starts := a.updateConversations()
 	oldMessages, oldConversations := a.messageRows, a.conversationRows
 	a.messageRows = map[*CacheMessage]*messageRow{}
-	if !Settings.FlatList { // else they are kept for when it is not
+	flat := a.flatList()
+	if !flat { // else they are kept for when it is not
 		a.conversationRows = map[*CacheMessage]*messageRow{}
 	}
 	email := a.currentEmail
+	showLabels := a.labelsShown()
 
 	rowOf := func(cm *CacheMessage) *messageRow {
 		mr := oldMessages[cm]
 		if mr == nil {
 			mr = &messageRow{message: cm}
 		}
+		mr.elsewhere = false
 		mr.From = senderName(cm, email)
 		mr.Subject = cm.Subject
 		mr.Date = cm.Date.Local().Format(listDateFormat)
 		mr.Labels = friendlyLabels(otherLabels(cm))
-		mr.setSummary(cm.Date)
+		mr.setSummary(cm.Date, showLabels)
 		a.messageRows[cm] = mr
 		return mr
 	}
 
 	rows := a.listRows[:0]
 	for _, start := range starts {
-		if Settings.FlatList {
+		if flat {
 			for _, cm := range append([]*CacheMessage{start}, start.replies...) {
 				if a.hasLabel(cm) {
 					a.listCache = append(a.listCache, cm)
@@ -234,7 +269,10 @@ func (a *App) updateList() {
 		})
 		cr.Children = cr.Children[:0]
 		for _, cm := range msgs {
-			cr.Children = append(cr.Children, rowOf(cm))
+			mr := rowOf(cm)
+			mr.elsewhere = !a.hasLabel(cm)
+			mr.Message.Dim = mr.elsewhere
+			cr.Children = append(cr.Children, mr)
 		}
 		// the senders in the order they joined the conversation
 		var senders []string
@@ -257,7 +295,7 @@ func (a *App) updateList() {
 			}
 		}
 		cr.Labels = friendlyLabels(sortedLabels(labels))
-		cr.setSummary(start.latestDate())
+		cr.setSummary(start.latestDate(), showLabels)
 		rows = append(rows, cr)
 	}
 	for _, cm := range a.cache[email] {
@@ -266,7 +304,7 @@ func (a *App) updateList() {
 		}
 	}
 	for _, cm := range a.listCache {
-		if Settings.FlatList && !slices.Contains(cm.Flags, imap.FlagSeen) || !Settings.FlatList && !cm.isRead() {
+		if flat && !slices.Contains(cm.Flags, imap.FlagSeen) || !flat && !cm.isRead() {
 			a.unreadMessages++
 		}
 	}
@@ -280,12 +318,12 @@ func (a *App) updateList() {
 func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
 	w.ReadOnlyKeyNav = true
-	w.ShowField = listField // before the items
-	w.FitWidth = compactList()
+	w.ShowField = a.listField // before the items
+	w.FitWidth = a.compactList()
 	w.ContextMenus = nil // only that of the messages
 	w.AddContextMenu(a.messageMenu)
 	w.SetItems(&a.listRows)
-	compact := compactList()
+	compact := a.compactList()
 	if !compact {
 		w.ColumnWidths = Settings.ColumnWidths
 		sort := Settings.Sort
@@ -310,6 +348,10 @@ func (a *App) initList(w *core.TreeTable) {
 		mr := a.rowAt(row)
 		if mr == nil {
 			return
+		}
+		if mr.elsewhere { // in another mailbox: see its labels
+			s.Color = colors.Scheme.OnSurfaceVariant
+			s.Opacity = 0.6
 		}
 		if !mr.isRead() {
 			s.Font.Weight = rich.Bold
@@ -406,10 +448,24 @@ func (a *App) selectNext() func() {
 // mailbox, the numbers of messages, the switches of the view of the list,
 // and the list, which is made anew when the view changes.
 func (a *App) makeListPanel(p *tree.Plan) {
-	tree.Add(p, func(w *core.Text) {
-		w.SetType(core.TextTitleMedium)
-		w.Updater(func() {
-			w.SetText(friendlyLabelName(a.showLabel))
+	tree.Add(p, func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Align.Items = styles.Center
+			s.Grow.Set(1, 0)
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetType(core.TextTitleMedium)
+			w.Styler(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
+			})
+			w.Updater(func() {
+				w.SetText(friendlyLabelName(a.showLabel))
+			})
+		})
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetType(core.ButtonAction).SetIcon(icons.Tune)
+			w.SetTooltip("The view of the list of messages")
+			w.SetMenu(a.viewMenu)
 		})
 	})
 	tree.Add(p, func(w *core.Text) {
@@ -420,7 +476,7 @@ func (a *App) makeListPanel(p *tree.Plan) {
 				w.Text += fmt.Sprintf("%d of ", a.shownMessages)
 			}
 			w.Text += fmt.Sprintf("%d messages", total)
-			if !Settings.FlatList {
+			if !a.flatList() {
 				w.Text += fmt.Sprintf(" in %d conversations", len(a.listCache))
 			}
 			if a.unreadMessages > 0 {
@@ -429,34 +485,17 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.Frame) {
-		w.Styler(func(s *styles.Style) {
-			s.Wrap = true
-		})
-		w.Maker(func(p *tree.Plan) {
-			add := func(name, tooltip string, get func() bool, set func(on bool)) {
-				tree.AddAt(p, name, func(w *core.Switch) {
-					w.SetText(name).SetTooltip(tooltip)
-					w.Updater(func() {
-						w.SetChecked(get())
-					})
-					w.OnChange(func(e events.Event) {
-						set(w.IsChecked())
-						a.saveSettings()
-						a.Update()
-					})
-				})
-			}
-			add("Conversations", "Group the messages into conversations",
-				func() bool { return !Settings.FlatList }, func(on bool) { Settings.FlatList = !on })
-			if !core.TheApp.SystemPlatform().IsMobile() {
-				add("Compact", "Show each message in two lines, in one column",
-					func() bool { return Settings.CompactList }, func(on bool) { Settings.CompactList = on })
-			}
-			add("Labels", "Show the other labels of the messages, in a column or line",
-				func() bool { return Settings.LabelsColumn }, func(on bool) { Settings.LabelsColumn = on })
-		})
-	})
 	// a new list for the fields shown, which are set before the items
-	tree.AddAt(p, fmt.Sprintf("list-%v-%v", compactList(), Settings.LabelsColumn), a.initList)
+	tree.AddAt(p, fmt.Sprintf("list-%v-%v", a.compactList(), a.labelsShown()), a.initList)
+}
+
+// viewMenu is the menu of the view of the list of messages:
+// the switches of the [SettingsData.ListViews].
+func (a *App) viewMenu(m *core.Scene, pos image.Point) {
+	sw := core.NewSwitches(m) // chips, for bit flags
+	core.Bind(&Settings.ListViews, sw)
+	sw.OnChange(func(e events.Event) {
+		a.saveSettings()
+		a.Update()
+	})
 }

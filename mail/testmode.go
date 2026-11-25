@@ -77,6 +77,7 @@ func (a *App) StartTesting(opts TestingOptions) error {
 	// The settings of testing mode are separate, and kept between runs.
 	*Settings = SettingsData{SettingsBase: core.SettingsBase{Name: Settings.Name,
 		File: filepath.Join(core.TheApp.AppDataDir(), "testing", "settings.toml")}}
+	Settings.Defaults()
 	if err := tomlx.Open(Settings, Settings.Filename()); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		slog.Error("mail: loading the settings of testing mode", "err", err)
 	}

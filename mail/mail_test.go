@@ -510,7 +510,7 @@ func findSubject(a *App, email, subject, mailbox string) *CacheMessage {
 // of its messages on its own, the flat list, and filing a conversation.
 func TestList(t *testing.T) {
 	b, a := newTestApp(t, newIMAP(t))
-	t.Cleanup(func() { Settings.FlatList = false })
+	t.Cleanup(func() { Settings.ListViews = 0; Settings.Defaults() })
 	var hello *CacheMessage
 	core.RenderImage(b, func() {
 		require.NoError(t, a.cacheMessages())
@@ -527,12 +527,12 @@ func TestList(t *testing.T) {
 		assert.Equal(t, hello.replies[0], a.readMessage)
 		assert.Len(t, a.readMessages(), 1)
 
-		Settings.FlatList = true
+		Settings.ListViews = 0 // flat
 		a.Update()
 		require.Len(t, a.listRows, 2)
 		assert.False(t, a.listRows[0].conversation)
 		assert.Equal(t, "Re: Hello", a.listRows[0].Subject)
-		Settings.FlatList = false
+		Settings.Defaults() // conversations
 		a.Update()
 		require.Len(t, a.listRows, 1)
 		assert.True(t, a.listRows[0].conversation)
@@ -1026,5 +1026,136 @@ func TestMultiSelect(t *testing.T) {
 		assert.Empty(t, a.selectedRows)
 		assert.Contains(t, labelNames(report), "[Gmail]/Trash")
 		assert.Contains(t, labelNames(hello), "INBOX", "its other labels stay")
+	}))
+}
+
+// TestViewMenu tests the view menu of the list of messages, whose
+// switches set the view of the list in the settings.
+func TestViewMenu(t *testing.T) {
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	Settings.ListViews = 0
+	Settings.Defaults()
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Update()
+		assert.False(t, a.flatList(), "conversations by default")
+		m := core.NewScene()
+		a.viewMenu(m, image.Point{})
+		var sw *core.Switches
+		for w := range m.AllWidgets() {
+			if s, ok := w.(*core.Switches); ok {
+				sw = s
+			}
+		}
+		require.NotNil(t, sw)
+		var names []string
+		for _, it := range sw.Items {
+			names = append(names, it.Text)
+		}
+		assert.Equal(t, []string{"Conversations", "Compact", "Labels"}, names)
+		sw.Update() // makes the switches
+		var compact *core.Switch
+		for w := range sw.AllWidgets() {
+			if s, ok := w.(*core.Switch); ok && s.Text == "Compact" {
+				compact = s
+			}
+		}
+		require.NotNil(t, compact)
+		compact.Send(events.Click)
+	}), core.Locked(b, func() {
+		assert.True(t, a.compactList())
+		assert.False(t, a.flatList())
+		assert.True(t, Settings.ListViews.HasFlag(ViewCompact))
+		assert.True(t, a.list.FitWidth, "a new compact list")
+		saved, err := os.ReadFile(Settings.File)
+		require.NoError(t, err)
+		assert.Contains(t, string(saved), "ListViews")
+	}))
+}
+
+// TestFileOneOfConversation tests filing one message of a conversation
+// into another account, which files only it, out of the INBOX, as only
+// the row of a conversation files all of its messages, and that the
+// messages of a conversation in other mailboxes are dimmed.
+func TestFileOneOfConversation(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	Settings.FilingAccount = AccountName(you)
+	syncAll := func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.cacheMessages())
+			if !a.syncMore {
+				return
+			}
+		}
+	}
+	inInbox := func(cm *CacheMessage) bool {
+		return slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "INBOX" })
+	}
+	var conv, child *messageRow
+	core.RenderImage(b, syncAll, core.Locked(b, func() {
+		a.showMailbox(alice, "INBOX")
+	}), core.Locked(b, func() {
+		// a conversation with more than one message in the INBOX
+		for i, r := range a.listRows {
+			if r.conversation && len(slices.DeleteFunc(rowMessages(r), func(cm *CacheMessage) bool { return !inInbox(cm) })) > 1 {
+				conv = r
+				a.list.Open(i)
+				break
+			}
+		}
+		require.NotNil(t, conv)
+	}), core.Locked(b, func() {
+		for i := range 30 {
+			r := a.rowAt(i)
+			if r == nil {
+				break
+			}
+			if slices.Contains(conv.Children, r) {
+				assert.Equal(t, !inInbox(r.message), r.elsewhere, "dimmed if not in the INBOX")
+				if child == nil && inInbox(r.message) {
+					child = r
+					a.list.SelectIndexEvent(i, events.SelectOne)
+				}
+			}
+		}
+		require.NotNil(t, child)
+		require.Len(t, a.readMessages(), 1, "only the message of the row")
+		a.fileToAccount("INBOX", mailboxID{you, "Projects/Alpha"})
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return !inInbox(child.message)
+		}, 5*time.Second, 10*time.Millisecond, "out of the INBOX of alice")
+		syncAll()
+	}, core.Locked(b, func() {
+		inboxLeft := 0
+		for _, cm := range rowMessages(conv) {
+			if inInbox(cm) {
+				inboxLeft++
+			}
+		}
+		assert.Positive(t, inboxLeft, "the others stay in the INBOX")
+		n := 0
+		for _, cm := range a.cache[you] {
+			if slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "Projects/Alpha" }) &&
+				cm.MessageID == child.message.MessageID {
+				n++
+			}
+		}
+		assert.Equal(t, 1, n, "filed in you")
 	}))
 }

@@ -177,7 +177,7 @@ func (sb *SignatureButton) Init() {
 
 // MessageSummaryView shows the summary of a message or conversation in
 // two lines, for the compact list of messages: the sender and the date,
-// and the subject, with the other labels if [SettingsData.LabelsColumn].
+// and the subject, with the other labels if they are shown ([ViewLabels]).
 type MessageSummaryView struct {
 	core.Frame
 	Summary *messageSummary
@@ -191,6 +191,9 @@ func (sv *MessageSummaryView) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 0)
 		s.Gap.Zero()
+		if sv.Summary.Dim {
+			s.Opacity = 0.6
+		}
 	})
 	tree.AddChild(sv, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
@@ -225,7 +228,7 @@ func (sv *MessageSummaryView) Init() {
 		})
 		w.Updater(func() {
 			text := sv.Summary.Subject
-			if Settings.LabelsColumn && sv.Summary.Labels != "" {
+			if sv.Summary.Labels != "" {
 				text += "  ·  " + sv.Summary.Labels
 			}
 			w.SetText(text)

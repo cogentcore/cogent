@@ -68,7 +68,7 @@ type App struct {
 	shownMessages int
 
 	// unreadMessages is the number of unread messages, or conversations
-	// unless [SettingsData.FlatList], for the current email account
+	// unless [App.flatList], for the current email account
 	// and label, used for displaying a count.
 	unreadMessages int
 

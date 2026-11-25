@@ -30,18 +30,9 @@ type SettingsData struct { //types:add
 	// Accounts are the email accounts the user is signed into.
 	Accounts []string
 
-	// FlatList shows each message on its own in the list of messages,
-	// instead of grouped into conversations.
-	FlatList bool
-
-	// CompactList shows each message in two lines in the list of
-	// messages, in one column, as always on mobile.
-	CompactList bool
-
-	// LabelsColumn shows the other labels of the messages in the list
-	// of messages, in a column, or in the line of the subject in the
-	// compact list.
-	LabelsColumn bool
+	// ListViews are the options of the view of the list of messages,
+	// also set in its view menu.
+	ListViews ListViews
 
 	// FilingAccount is the account whose folders are offered first for
 	// filing messages (Control+O), from any account, as for filing all of
@@ -77,6 +68,12 @@ type SettingsData struct { //types:add
 	OpenMailboxes map[string]bool `display:"-"`
 }
 
+// Defaults sets the default settings: the list of messages groups them
+// into conversations.
+func (sd *SettingsData) Defaults() {
+	sd.ListViews.SetFlag(true, ViewConversations)
+}
+
 // Apply makes sure that each account has an entry in the
 // [SettingsData.DefaultSignatures], so that it can be set.
 func (sd *SettingsData) Apply() {
@@ -89,6 +86,24 @@ func (sd *SettingsData) Apply() {
 		}
 	}
 }
+
+// ListViews are the options of the view of the list of messages,
+// which are shown as switches in its view menu.
+type ListViews int64 //enums:bitflag -trim-prefix View
+
+const (
+	// ViewConversations groups the messages into conversations,
+	// instead of showing each one on its own.
+	ViewConversations ListViews = iota
+
+	// ViewCompact shows each message in two lines, in one column,
+	// as always on mobile.
+	ViewCompact
+
+	// ViewLabels shows the other labels of the messages, in a column,
+	// or after the subject in the compact view.
+	ViewLabels
+)
 
 // AccountName is the email address of one of the [SettingsData.Accounts],
 // chosen from them, or "" for none.
