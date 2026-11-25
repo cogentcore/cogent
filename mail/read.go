@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -72,6 +72,15 @@ func (dmf *DisplayMessageFrame) Init() {
 			s.Grow.Set(1, 0)
 		})
 		w.Updater(func() {
+			if dmf.Message.Filename == "" { // not downloaded yet
+				if w.Property("readMessage") != "downloading" {
+					w.SetProperty("readMessage", "downloading")
+					w.DeleteChildren()
+					core.NewText(w).SetType(core.TextSupporting).SetText("Downloading the message...")
+				}
+				theApp.downloadNow(theApp.currentEmail, dmf.Message)
+				return
+			}
 			if dmf.Message != w.Property("readMessage") {
 				core.ErrorSnackbar(w, dmf.displayMessageContents(w), "Error reading message")
 				header.Update() // with the attachments, which are now parsed

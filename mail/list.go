@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2"
 )
 
 // messageRow is a row of the list of messages, in a [core.TreeTable]: a
@@ -183,14 +183,36 @@ func senderName(cm *CacheMessage, email string) string {
 
 // updateConversations sets the replies of the messages of the current
 // account, and returns the starts of the conversations.
+// On Gmail, the conversations are its threads (by X-GM-THRID), whose
+// first message is the start; elsewhere, a conversation starts with the
+// message that the others reply to (by [CacheMessage.InReplyTo]).
 func (a *App) updateConversations() []*CacheMessage {
 	mp := a.cache[a.currentEmail]
 	for _, cm := range mp {
 		cm.replies = nil
 	}
 	var starts []*CacheMessage
+	if a.gmail[a.currentEmail] {
+		threads := map[uint64][]*CacheMessage{}
+		for _, cm := range mp {
+			threads[cm.GmailThreadID] = append(threads[cm.GmailThreadID], cm)
+		}
+		for _, msgs := range threads {
+			slices.SortFunc(msgs, func(x, y *CacheMessage) int { return cmp.Compare(x.Date.UnixNano(), y.Date.UnixNano()) })
+			start := msgs[0]
+			start.replies = msgs[1:]
+			starts = append(starts, start)
+		}
+		return starts
+	}
+	byID := map[string]*CacheMessage{}
 	for _, cm := range mp {
-		start := a.conversationStart(mp, cm)
+		if cm.MessageID != "" {
+			byID[cm.MessageID] = cm
+		}
+	}
+	for _, cm := range mp {
+		start := conversationStart(byID, cm)
 		if start == cm {
 			starts = append(starts, cm)
 		} else {
@@ -240,6 +262,21 @@ func (a *App) updateList() {
 	}
 
 	rows := a.listRows[:0]
+	if a.searchResults != nil { // each message found, on its own
+		for _, cm := range a.cache[email] {
+			if a.searchResults[cm.key] {
+				a.listCache = append(a.listCache, cm)
+				rows = append(rows, rowOf(cm))
+				if !slices.Contains(cm.Flags, imap.FlagSeen) {
+					a.unreadMessages++
+				}
+			}
+		}
+		a.shownMessages = len(a.listCache)
+		slices.SortFunc(rows, func(a, b *messageRow) int { return cmp.Compare(b.Date, a.Date) })
+		a.listRows = rows
+		return
+	}
 	for _, start := range starts {
 		if flat {
 			for _, cm := range append([]*CacheMessage{start}, start.replies...) {
@@ -459,6 +496,10 @@ func (a *App) makeListPanel(p *tree.Plan) {
 				s.Grow.Set(1, 0)
 			})
 			w.Updater(func() {
+				if a.searchResults != nil {
+					w.SetText("Search: " + a.currentEmail)
+					return
+				}
 				w.SetText(friendlyLabelName(a.showLabel))
 			})
 		})
@@ -468,9 +509,39 @@ func (a *App) makeListPanel(p *tree.Plan) {
 			w.SetMenu(a.viewMenu)
 		})
 	})
+	tree.Add(p, func(w *core.TextField) {
+		a.searchField = w
+		w.SetPlaceholder("Search").SetLeadingIcon(icons.Search)
+		w.SetTooltip(`Search the messages of the account: all of the words, "phrases", from: to: cc: subject: body: attachment: for those fields, and -word for not; Escape clears it`)
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+			s.Max.X.Zero()
+		})
+		w.SetTrailingIcon(icons.Close, func(e events.Event) {
+			w.SetText("")
+			a.SearchMessages("")
+		})
+		w.OnChange(func(e events.Event) {
+			a.SearchMessages(w.Text())
+		})
+		w.OnKeyChord(func(e events.Event) {
+			if e.KeyChord() == "Escape" {
+				e.SetHandled()
+				w.SetText("")
+				a.SearchMessages("")
+			}
+		})
+	})
 	tree.Add(p, func(w *core.Text) {
 		w.Updater(func() {
 			w.Text = ""
+			if a.searchResults != nil {
+				w.Text = fmt.Sprintf("%d messages found", len(a.listCache))
+				if a.unreadMessages > 0 {
+					w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
+				}
+				return
+			}
 			total := a.totalMessages[a.currentEmail][a.showLabel]
 			if a.shownMessages < total { // still syncing
 				w.Text += fmt.Sprintf("%d of ", a.shownMessages)
@@ -498,4 +569,42 @@ func (a *App) viewMenu(m *core.Scene, pos image.Point) {
 		a.saveSettings()
 		a.Update()
 	})
+}
+
+// searchLimit is the maximum number of messages found by a search.
+var searchLimit = 1000
+
+// SearchMessages shows the messages of the current account that match the given
+// search (see [searchIndex.query]), the newest first, or the messages of
+// the mailbox being shown again for an empty one.
+func (a *App) SearchMessages(search string) { //types:add
+	search = strings.TrimSpace(search)
+	a.searchText = search
+	a.selectedRows = nil
+	if search == "" {
+		a.searchResults = nil
+		a.Update()
+		return
+	}
+	si := a.searches[a.currentEmail]
+	if si == nil {
+		return
+	}
+	keys, err := si.search(search, searchLimit)
+	if err != nil {
+		core.ErrorSnackbar(a, err, "Error searching")
+		return
+	}
+	a.searchResults = map[string]bool{}
+	for _, k := range keys {
+		a.searchResults[k] = true
+	}
+	a.Update()
+}
+
+// FocusSearch moves the keyboard focus to the search field.
+func (a *App) FocusSearch() { //types:add
+	if a.searchField != nil {
+		a.searchField.SetFocus()
+	}
 }

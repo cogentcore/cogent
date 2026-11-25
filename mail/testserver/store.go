@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapclient"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapclient"
 )
 
 // storedMailbox is a mailbox in the saved state of the server.
@@ -28,6 +28,10 @@ type storedMessage struct {
 	Flags []imap.Flag
 	Time  time.Time
 	Data  []byte
+
+	// Labels are the mailboxes of the message in Gmail mode, where it is
+	// stored once, in a stored mailbox without a name.
+	Labels []string `json:",omitempty"`
 }
 
 // stateFile returns the file of the saved state of the given account in the given directory.
@@ -63,6 +67,9 @@ func (s *Server) Save(dir string) error {
 
 // read returns all of the mailboxes and messages of the given account.
 func (s *Server) read(account string) ([]storedMailbox, error) {
+	if gu := s.gmailUsers[account]; gu != nil {
+		return gu.stored(), nil
+	}
 	c, err := imapclient.DialInsecure(s.IMAPAddr, nil)
 	if err != nil {
 		return nil, err
@@ -93,7 +100,7 @@ func (s *Server) read(account string) ([]storedMailbox, error) {
 			for _, m := range msgs {
 				var data []byte
 				for _, d := range m.BodySection {
-					data = d
+					data = d.Bytes
 				}
 				mb.Messages = append(mb.Messages, storedMessage{Flags: m.Flags, Time: m.InternalDate, Data: data})
 			}
@@ -120,6 +127,10 @@ func (s *Server) Load(dir string) (bool, error) {
 		var mbs []storedMailbox
 		if err := json.Unmarshal(b, &mbs); err != nil {
 			return any, fmt.Errorf("testserver: loading %q: %w", account, err)
+		}
+		if gu := s.gmailUsers[account]; gu != nil {
+			gu.load(mbs)
+			continue
 		}
 		u := s.users[account]
 		for _, mb := range mbs {

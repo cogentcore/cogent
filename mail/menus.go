@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapclient"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapclient"
 )
 
 // isUserMailbox returns whether the given mailbox is one of the user,
@@ -141,7 +141,7 @@ func (a *App) mailboxAction(email string, f func(c *imapclient.Client) error) {
 			_, err = a.listMailboxes(c, email)
 		}
 		if err == nil {
-			err = a.saveCacheFile(a.cache[email], email)
+			err = a.saveAllMessages(email)
 		}
 		mu.Unlock()
 		core.ErrorSnackbar(a, err, "Error")
@@ -172,7 +172,7 @@ func (a *App) RenameMailbox(email, old, name string) {
 			}
 			a.selectedMailbox[email] = ""
 		}
-		if err := c.Rename(old, name).Wait(); err != nil {
+		if err := c.Rename(old, name, nil).Wait(); err != nil {
 			return err
 		}
 		renamed := func(l string) string {
@@ -186,6 +186,15 @@ func (a *App) RenameMailbox(email, old, name string) {
 		for _, cm := range a.cache[email] {
 			for i := range cm.Labels {
 				cm.Labels[i].Name = renamed(cm.Labels[i].Name)
+			}
+		}
+		st := a.stores[email]
+		for _, l := range a.labels[email] {
+			if r := renamed(l); r != l {
+				if ms, err := st.mailbox(l); err == nil && ms.UIDValidity != 0 {
+					st.setMailbox(r, ms)
+					st.removeMailbox(l)
+				}
 			}
 		}
 		if email == a.currentEmail {
@@ -245,13 +254,16 @@ func (a *App) DeleteMailbox(email, label string) {
 				return err
 			}
 		}
+		for _, name := range names {
+			if err := a.removeMailboxUIDs(email, name, nil); err != nil {
+				return err
+			}
+			a.stores[email].removeMailbox(name)
+		}
 		a.AsyncLock()
 		defer a.AsyncUnlock()
-		for id, cm := range a.cache[email] {
+		for _, cm := range a.cache[email] { // labels without UIDs, as on Gmail
 			cm.Labels = slices.DeleteFunc(cm.Labels, func(l Label) bool { return slices.Contains(names, l.Name) })
-			if len(cm.Labels) == 0 {
-				delete(a.cache[email], id)
-			}
 		}
 		if email == a.currentEmail && slices.Contains(names, a.showLabel) {
 			a.showLabel = "INBOX"
@@ -270,7 +282,7 @@ func (a *App) MarkAllAsRead(email, label string) {
 		}
 		err := c.Store(imap.UIDSet{imap.UIDRange{Start: 1, Stop: 0}}, &imap.StoreFlags{
 			Op: imap.StoreFlagsAdd, Silent: true, Flags: []imap.Flag{imap.FlagSeen},
-		}, nil).Wait()
+		}, nil).Close()
 		if err != nil {
 			return err
 		}

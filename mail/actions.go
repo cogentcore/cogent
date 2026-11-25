@@ -11,8 +11,8 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapclient"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -65,8 +65,8 @@ func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.
 				break
 			}
 		}
-		err := a.saveCacheFile(a.cache[email], email)
-		core.ErrorSnackbar(a, err, "Error saving cache")
+		err := a.saveMessages(email, msgs...)
+		core.ErrorSnackbar(a, err, "Error saving messages")
 		mu.Unlock()
 		a.AsyncLock()
 		a.Update()
@@ -172,6 +172,9 @@ func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm 
 		if len(cm.Labels) == 0 {
 			return nil
 		}
+		if a.gmail[email] {
+			return a.setGmailLabels(c, email, cm, newLabels)
+		}
 		// resultantLabels are the labels we apply to cm.Labels after
 		// the process is over.
 		resultantLabels := slices.Clone(cm.Labels)
@@ -205,11 +208,11 @@ func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm 
 				Op:     imap.StoreFlagsAdd,
 				Silent: true,
 				Flags:  []imap.Flag{imap.FlagDeleted},
-			}, nil).Wait()
+			}, nil).Close()
 			if err != nil {
 				return err
 			}
-			err = c.UIDExpunge(label.UIDSet()).Wait()
+			err = c.UIDExpunge(label.UIDSet()).Close()
 			if err != nil {
 				return err
 			}
@@ -336,6 +339,9 @@ func (a *App) markSeen(seen bool) {
 			op = imap.StoreFlagsAdd
 		}
 		for _, label := range cm.Labels {
+			if label.UID == 0 { // a Gmail label, whose message has the flags in its mailbox
+				continue
+			}
 			if err := a.selectMailbox(c, email, label.Name); err != nil {
 				return err
 			}
@@ -343,7 +349,7 @@ func (a *App) markSeen(seen bool) {
 				Op:     op,
 				Silent: true,
 				Flags:  []imap.Flag{imap.FlagSeen},
-			}, nil).Wait()
+			}, nil).Close()
 			if err != nil {
 				return err
 			}
@@ -361,4 +367,105 @@ func (a *App) markSeen(seen bool) {
 		}
 		return nil
 	})
+}
+
+// viewLabel returns the label of the given message that has its UID, on
+// Gmail its mailbox: All Mail, the Trash, or the Spam, and false if none
+// does.
+func viewLabel(cm *CacheMessage) (Label, bool) {
+	for _, l := range cm.Labels {
+		if l.UID > 0 {
+			return l, true
+		}
+	}
+	return Label{}, false
+}
+
+// setGmailLabels changes the labels of the given message of the given
+// account on Gmail to the given ones, with the client of the account:
+// moving it to the Trash or the Spam if they are in them, and else adding
+// and removing its Gmail labels (X-GM-LABELS) as needed, in its mailbox.
+func (a *App) setGmailLabels(c *imapclient.Client, email string, cm *CacheMessage, labels []string) error {
+	view, ok := viewLabel(cm)
+	if !ok {
+		return fmt.Errorf("the message %q is not synced yet", cm.Subject)
+	}
+	if err := a.selectMailbox(c, email, view.Name); err != nil {
+		return err
+	}
+	for _, attr := range []imap.MailboxAttr{imap.MailboxAttrTrash, imap.MailboxAttrJunk} {
+		mb := a.specialUse[email][attr]
+		if mb == "" || mb == view.Name || !slices.Contains(labels, mb) {
+			continue
+		}
+		md, err := c.Move(view.UIDSet(), mb).Wait()
+		if err != nil {
+			return err
+		}
+		uid := imap.UID(0)
+		if md != nil {
+			if dst, ok := md.DestUIDs.(imap.UIDSet); ok {
+				if uids, ok := dst.Nums(); ok && len(uids) == 1 {
+					uid = uids[0]
+				}
+			}
+		}
+		a.AsyncLock()
+		cm.Labels = []Label{{mb, uid}}
+		a.AsyncUnlock()
+		return nil
+	}
+	if view.Name != a.specialUse[email][imap.MailboxAttrAll] && !slices.Contains(labels, view.Name) {
+		// out of the Trash or the Spam: moved to the first of the labels,
+		// and it is in All Mail again, with a new UID after the next sync
+		dest := a.specialUse[email][imap.MailboxAttrAll]
+		if len(labels) > 0 {
+			dest = labels[0]
+		}
+		if _, err := c.Move(view.UIDSet(), dest).Wait(); err != nil {
+			return err
+		}
+		res := []Label{}
+		for _, l := range labels {
+			res = append(res, Label{Name: l})
+		}
+		a.AsyncLock()
+		cm.Labels = res
+		a.AsyncUnlock()
+		a.SyncNow()
+		return nil
+	}
+	var add, remove []string
+	for _, l := range labels {
+		if l != view.Name && !slices.ContainsFunc(cm.Labels, func(x Label) bool { return x.Name == l }) {
+			add = append(add, a.gmailLabel(email, l))
+		}
+	}
+	for _, l := range cm.Labels {
+		if l.UID == 0 && !slices.Contains(labels, l.Name) {
+			remove = append(remove, a.gmailLabel(email, l.Name))
+		}
+	}
+	for _, change := range []struct {
+		op     imap.StoreFlagsOp
+		labels []string
+	}{{imap.StoreFlagsAdd, add}, {imap.StoreFlagsDel, remove}} {
+		if len(change.labels) == 0 {
+			continue
+		}
+		err := c.StoreGmailLabels(view.UIDSet(), &imap.StoreGmailLabels{Op: change.op, Silent: true, Labels: change.labels}).Close()
+		if err != nil {
+			return err
+		}
+	}
+	res := []Label{view}
+	for _, l := range labels {
+		if l != view.Name {
+			res = append(res, Label{Name: l})
+		}
+	}
+	a.AsyncLock()
+	cm.Labels = res
+	a.AsyncUnlock()
+	return nil
 }

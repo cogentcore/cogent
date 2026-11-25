@@ -21,9 +21,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapserver"
-	"github.com/emersion/go-imap/v2/imapserver/imapmemserver"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapserver"
+	"github.com/cogentcore/go-imap/v2/imapserver/imapmemserver"
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 )
@@ -61,9 +61,12 @@ type Server struct {
 	OnDeliver func(accounts []string)
 
 	mem   *imapmemserver.Server
-	users map[string]*imapmemserver.User
+	users map[string]backendUser
 	imap  *imapserver.Server
-	smtp  *smtp.Server
+
+	// gmailUsers are the accounts of the Gmail-like backend (unless Plain).
+	gmailUsers map[string]*gmailUser
+	smtp       *smtp.Server
 
 	mu       sync.Mutex
 	msgCount int
@@ -78,8 +81,15 @@ func New(opts Options) (*Server, error) {
 	for i, a := range opts.Accounts {
 		opts.Accounts[i] = strings.ToLower(a)
 	}
-	s := &Server{Options: opts, mem: imapmemserver.New(), users: map[string]*imapmemserver.User{}}
+	s := &Server{Options: opts, mem: imapmemserver.New(), users: map[string]backendUser{},
+		gmailUsers: map[string]*gmailUser{}}
 	for _, a := range opts.Accounts {
+		if !opts.Plain {
+			u := newGmailUser(a, Password)
+			s.gmailUsers[a] = u
+			s.users[a] = u
+			continue
+		}
 		u := imapmemserver.NewUser(a, Password)
 		for _, mb := range s.StandardMailboxes() {
 			if err := u.Create(mb, nil); err != nil {
@@ -90,11 +100,19 @@ func New(opts Options) (*Server, error) {
 		s.users[a] = u
 	}
 
+	caps := imap.CapSet{imap.CapIMAP4rev1: {}, imap.CapIMAP4rev2: {}}
+	if !opts.Plain {
+		caps[imap.CapCondStore] = struct{}{}
+		caps[imap.CapGmailExt1] = struct{}{}
+	}
 	s.imap = imapserver.New(&imapserver.Options{
 		NewSession: func(c *imapserver.Conn) (imapserver.Session, *imapserver.GreetingData, error) {
+			if !opts.Plain {
+				return &gmailSession{s: s}, nil, nil
+			}
 			return s.mem.NewSession(), nil, nil
 		},
-		Caps:         imap.CapSet{imap.CapIMAP4rev1: {}, imap.CapIMAP4rev2: {}},
+		Caps:         caps,
 		InsecureAuth: true,
 	})
 	iln, err := listen(opts.IMAPAddr)
@@ -175,16 +193,27 @@ func (s *Server) CreateMailbox(account, mailbox string) error {
 	return nil
 }
 
+// backendUser is an account of the backend of the server: an
+// imapmemserver.User, or a [gmailUser].
+type backendUser interface {
+	Append(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error)
+	Create(name string, options *imap.CreateOptions) error
+	Status(name string, options *imap.StatusOptions) (*imap.StatusData, error)
+}
+
 // Append adds the given message to the given mailboxes of the given account,
-// creating them as needed. In Gmail mode, it is also added to All Mail.
-// The time is the internal date; zero is now.
+// creating them as needed: in Gmail mode, it is one message with them as its
+// labels, in All Mail. The time is the internal date; zero is now.
 func (s *Server) Append(account string, mailboxes []string, msg []byte, flags []imap.Flag, t time.Time) error {
 	u := s.users[account]
 	if u == nil {
 		return fmt.Errorf("testserver: no account %q", account)
 	}
-	if !s.Plain {
-		mailboxes = append(mailboxes, "[Gmail]/All Mail")
+	if gu := s.gmailUsers[account]; gu != nil {
+		gu.mu.Lock()
+		gu.appendMessage(msg, flags, t, mailboxes...)
+		gu.mu.Unlock()
+		return nil
 	}
 	for _, mb := range mailboxes {
 		if err := s.CreateMailbox(account, mb); err != nil {
@@ -219,8 +248,15 @@ func (s *Server) Deliver(from string, to []string, msg []byte) error {
 		}
 	}
 	if s.HasAccount(from) {
-		err := s.Append(from, []string{s.SentMailbox()}, msg, []imap.Flag{imap.FlagSeen}, time.Time{})
-		if err != nil {
+		// to self: one message in Gmail mode, in the Sent and the INBOX
+		mbs := []string{s.SentMailbox()}
+		var flags []imap.Flag
+		if toSelf && !s.Plain {
+			mbs = append(mbs, "INBOX")
+		} else {
+			flags = []imap.Flag{imap.FlagSeen}
+		}
+		if err := s.Append(from, mbs, msg, flags, time.Time{}); err != nil {
 			return err
 		}
 		if !toSelf {
@@ -228,7 +264,7 @@ func (s *Server) Deliver(from string, to []string, msg []byte) error {
 		}
 	}
 	for _, r := range got {
-		if r == from && !toSelf {
+		if r == from && (!toSelf || !s.Plain) {
 			continue
 		}
 		if err := s.Append(r, []string{"INBOX"}, msg, nil, time.Time{}); err != nil {

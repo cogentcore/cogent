@@ -24,10 +24,10 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapclient"
-	"github.com/emersion/go-imap/v2/imapserver"
-	"github.com/emersion/go-imap/v2/imapserver/imapmemserver"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapclient"
+	"github.com/cogentcore/go-imap/v2/imapserver"
+	"github.com/cogentcore/go-imap/v2/imapserver/imapmemserver"
 	gomail "github.com/emersion/go-message/mail"
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
@@ -145,10 +145,10 @@ func newTestApp(t *testing.T, c *imapclient.Client) (*core.Body, *App) {
 		core.NewToolbar(bar).Maker(a.MakeToolbar)
 	})
 	a.currentEmail = testEmail
+	a.dataDirectory = t.TempDir()
 	a.imapClient[testEmail] = c
 	a.imapMu[testEmail] = &sync.Mutex{}
-	require.NoError(t, os.MkdirAll(filepath.Join(core.TheApp.AppDataDir(), "mail", filenameBase32(testEmail)), 0o700))
-	require.NoError(t, os.MkdirAll(filepath.Dir(a.cacheFilename(testEmail)), 0o700))
+	t.Cleanup(a.closeStores)
 	return b, a
 }
 
@@ -250,10 +250,11 @@ func TestApp(t *testing.T) {
 			return !slices.Contains(hello.Flags, imap.FlagSeen)
 		}, 5*time.Second, 10*time.Millisecond)
 		assert.NotContains(t, serverFlags(t, a, "Work", hello.Labels[1].UID), imap.FlagSeen)
-		// the cache file is saved
-		data, err := os.ReadFile(a.cacheFilename(testEmail))
+		// the messages are in the store
+		stored, err := a.stores[testEmail].load()
 		require.NoError(t, err)
-		assert.Contains(t, string(data), "Report")
+		assert.Len(t, stored, 3)
+		assert.Equal(t, hello.Flags, stored[hello.key].Flags)
 	})
 }
 
@@ -1163,5 +1164,162 @@ func TestFileOneOfConversation(t *testing.T) {
 			}
 		}
 		assert.Equal(t, 1, n, "filed in you")
+	}))
+}
+
+// TestGmailSync tests syncing with the Gmail-like test server: the changes
+// of flags and labels made by another client, through CONDSTORE, and a
+// message that is deleted, which is removed with its file and from the
+// search index, which has the text of the messages that are downloaded.
+func TestGmailSync(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	t.Cleanup(a.closeStores)
+	you := Settings.Accounts[0]
+	syncAll := func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.syncAccount(you))
+			if !a.syncMore {
+				return
+			}
+		}
+	}
+	other, err := imapclient.DialInsecure(a.testServer.IMAPAddr, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { other.Close() })
+	require.NoError(t, other.Login(you, "password").Wait())
+	var cm *CacheMessage
+	core.RenderImage(b, func() {
+		syncAll()
+		assert.True(t, a.gmail[you])
+		assert.True(t, a.condStore[you])
+		st, err := a.stores[you].mailbox("[Gmail]/All Mail")
+		require.NoError(t, err)
+		assert.NotZero(t, st.HighestModSeq)
+		a.AsyncLock()
+		for _, m := range a.cache[you] {
+			if strings.HasPrefix(m.Subject, "Hello from") && !slices.Contains(m.Flags, imap.FlagSeen) {
+				cm = m
+			}
+		}
+		a.AsyncUnlock()
+		require.NotNil(t, cm)
+		assert.NotEmpty(t, cm.Filename, "downloaded")
+		keys, err := a.searches[you].search(`subject:"`+cm.Subject+`"`, 10)
+		require.NoError(t, err)
+		assert.Contains(t, keys, cm.key, "indexed")
+
+		// another client reads it and labels it, in All Mail
+		view, ok := viewLabel(cm)
+		require.True(t, ok)
+		_, err = other.Select(view.Name, nil).Wait()
+		require.NoError(t, err)
+		require.NoError(t, other.Store(view.UIDSet(), &imap.StoreFlags{Op: imap.StoreFlagsAdd, Silent: true, Flags: []imap.Flag{imap.FlagSeen}}, nil).Close())
+		require.NoError(t, other.StoreGmailLabels(view.UIDSet(), &imap.StoreGmailLabels{Op: imap.StoreFlagsAdd, Silent: true, Labels: []string{"Family"}}).Close())
+		syncAll()
+		a.AsyncLock()
+		assert.Contains(t, cm.Flags, imap.FlagSeen)
+		assert.True(t, slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "Family" }))
+		a.AsyncUnlock()
+
+		// another client deletes it, out of the Trash
+		md, err := other.Move(view.UIDSet(), "[Gmail]/Trash").Wait()
+		require.NoError(t, err)
+		_, err = other.Select("[Gmail]/Trash", nil).Wait()
+		require.NoError(t, err)
+		require.NoError(t, other.Store(md.DestUIDs, &imap.StoreFlags{Op: imap.StoreFlagsAdd, Silent: true, Flags: []imap.Flag{imap.FlagDeleted}}, nil).Close())
+		require.NoError(t, other.Expunge().Close())
+		file := filepath.Join(a.messagesDir(you), cm.Filename)
+		_, err = os.Stat(file)
+		require.NoError(t, err)
+		syncAll()
+		a.AsyncLock()
+		assert.Nil(t, a.cache[you][cm.key], "gone")
+		a.AsyncUnlock()
+		_, err = os.Stat(file)
+		assert.Error(t, err, "its file is removed")
+		keys, err = a.searches[you].search(`subject:"`+cm.Subject+`"`, 10)
+		require.NoError(t, err)
+		assert.NotContains(t, keys, cm.key)
+		stored, err := a.stores[you].load()
+		require.NoError(t, err)
+		assert.NotContains(t, stored, cm.key)
+	})
+}
+
+// TestStoreReload tests that the messages are loaded from the store when
+// the app starts again, before syncing.
+func TestStoreReload(t *testing.T) {
+	c := newIMAP(t)
+	b, a := newTestApp(t, c)
+	dir := a.dataDirectory
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	})
+	a.closeStores()
+	b2, a2 := newTestApp(t, c)
+	a2.dataDirectory = dir
+	core.RenderImage(b2, func() {
+		require.NoError(t, a2.openLocal(testEmail))
+		assert.Len(t, a2.cache[testEmail], 3, "before syncing")
+		hello := messageBySubject(a2, "Hello")
+		require.NotNil(t, hello)
+		assert.Equal(t, []string{"INBOX", "Work"}, labelNames(hello))
+		assert.NotEmpty(t, hello.Filename)
+	})
+}
+
+// TestSearchMessages tests searching the messages of an account from the
+// search field of the list, and clearing the search.
+func TestSearchMessages(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	old := *Settings
+	t.Cleanup(func() { *Settings = old })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	t.Cleanup(a.closeStores)
+	you := Settings.Accounts[0]
+	core.RenderImage(b, func() {
+		for {
+			a.syncMore = false
+			require.NoError(t, a.syncAccount(you))
+			if !a.syncMore {
+				break
+			}
+		}
+	}, core.Locked(b, func() {
+		a.showMailbox(you, "INBOX")
+		inbox := len(a.listRows)
+		a.searchField.SetText("from:carol")
+		a.searchField.SendChange()
+		require.NotEmpty(t, a.listRows)
+		for _, r := range a.listRows {
+			assert.False(t, r.conversation, "each message on its own")
+			assert.Contains(t, r.From, "Carol", r.Subject)
+		}
+		assert.Greater(t, len(a.listRows), inbox/2, "in all of the mailboxes")
+		a.SearchMessages(`"go-nuts" -proposal`)
+		require.NotEmpty(t, a.listRows)
+		for _, r := range a.listRows {
+			assert.NotContains(t, r.Subject, "proposal")
+		}
+		a.SearchMessages("nothingmatchesthis")
+		assert.Empty(t, a.listRows)
+		a.SearchMessages("")
+		assert.Len(t, a.listRows, inbox, "the mailbox again")
+		a.SearchMessages("from:carol")
+		a.showMailbox(you, "Family")
+		assert.Nil(t, a.searchResults, "another mailbox ends the search")
+		assert.Equal(t, "", a.searchField.Text())
 	}))
 }

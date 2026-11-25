@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2"
 )
 
 // mailboxID identifies a mailbox of an account, as the

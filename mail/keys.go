@@ -75,6 +75,7 @@ type shortcut struct {
 // opens a line), so they are not in the key maps.
 var shortcuts = []shortcut{
 	{"Compose", []key.Chord{"Command+N"}, (*App).Compose, false},
+	{"FocusSearch", []key.Chord{"Command+F"}, (*App).FocusSearch, false},
 	{"Reply", []key.Chord{"Command+R"}, (*App).Reply, true},
 	{"ReplyAll", []key.Chord{"Command+Shift+R"}, (*App).ReplyAll, true},
 	{"Forward", []key.Chord{"Command+Shift+F"}, (*App).Forward, true},

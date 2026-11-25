@@ -20,15 +20,14 @@ import (
 
 	"cogentcore.org/cogent/mail/testserver"
 	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-imap/v2/imapclient"
+	"github.com/cogentcore/go-imap/v2"
+	"github.com/cogentcore/go-imap/v2/imapclient"
 	"github.com/emersion/go-sasl"
 	"golang.org/x/oauth2"
 )
@@ -75,6 +74,15 @@ type App struct {
 	// readMessage is the current message we are reading, or the start
 	// of the conversation we are reading.
 	readMessage *CacheMessage
+
+	// searchText is the text of the current search, if any, and
+	// searchResults are the keys of the messages it found, or nil
+	// if there is no search (see [App.SearchMessages]).
+	searchText    string
+	searchResults map[string]bool
+
+	// searchField is the search field of the list of messages.
+	searchField *core.TextField
 
 	// selectedRows are the selected rows of the list of messages,
 	// for the actions on all of them (see [App.readMessages]).
@@ -143,6 +151,22 @@ type App struct {
 	// sync, which syncs a limited number of messages for each mailbox.
 	syncMore bool
 
+	// stores and searches are the store and search index of each account.
+	stores   map[string]*messageStore
+	searches map[string]*searchIndex
+
+	// gmail and condStore are whether the server of each account has
+	// the Gmail extension and CONDSTORE.
+	gmail, condStore map[string]bool
+
+	// specialUse are the special-use mailboxes of each account,
+	// such as the Sent one, by their attributes.
+	specialUse map[string]map[imap.MailboxAttr]string
+
+	// downloading are the messages whose contents are being downloaded
+	// to be read (see [App.downloadNow]).
+	downloading map[*CacheMessage]bool
+
 	// testServer is the local simulated mail server in testing mode.
 	testServer *testserver.Server
 }
@@ -166,6 +190,12 @@ func (a *App) Init() {
 	a.selectedMailbox = map[string]string{}
 	a.labels = map[string][]string{}
 	a.servers = map[string]Server{}
+	a.stores = map[string]*messageStore{}
+	a.searches = map[string]*searchIndex{}
+	a.gmail = map[string]bool{}
+	a.condStore = map[string]bool{}
+	a.specialUse = map[string]map[imap.MailboxAttr]string{}
+	a.downloading = map[*CacheMessage]bool{}
 	a.trash = map[string]string{}
 	a.syncNow = make(chan struct{}, 1)
 	a.syncInterval = time.Minute
@@ -248,6 +278,10 @@ func (a *App) saveSettings() {
 func (a *App) showMailbox(email, mailbox string) {
 	if email != a.currentEmail || mailbox != a.showLabel {
 		a.selectedRows = nil
+		a.searchResults = nil // back to the mailbox
+		if a.searchField != nil {
+			a.searchField.SetText("")
+		}
 	}
 	if email != a.currentEmail {
 		a.currentEmail = email
@@ -276,6 +310,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 // GetMail starts getting the mail of all of the accounts, signing in
 // first if needed, and keeps it in sync with the servers.
 func (a *App) GetMail() {
+	core.TheApp.AddQuitCleanFunc(a.closeStores)
+	// the cache of messages of before the store, which is no longer used
+	os.RemoveAll(filepath.Join(a.dataDir(), "caching"))
 	go func() {
 		if a.testServer == nil {
 			err := a.auth()
@@ -336,42 +373,23 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 	return nil
 }
 
-// cacheFilename returns the filename for the cached messages JSON file
-// for the given email address.
-func (a *App) cacheFilename(email string) string {
-	return filepath.Join(a.dataDir(), "caching", filenameBase32(email), "cached-messages.json")
-}
-
-// saveCacheFile safely saves the given cache data for the
-// given email account by going through a temporary file to
-// avoid truncating it without writing it if we quit during the process.
-func (a *App) saveCacheFile(cached map[string]*CacheMessage, email string) error {
-	fname := a.cacheFilename(email)
-	err := jsonx.Save(&cached, fname+".tmp")
-	if err != nil {
-		return fmt.Errorf("saving cache list: %w", err)
-	}
-	err = os.Rename(fname+".tmp", fname)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // conversationStart returns the first message in the conversation
 // of the given message using [CacheMessage.InReplyTo] and the given
-// cache map.
-func (a *App) conversationStart(mp map[string]*CacheMessage, cm *CacheMessage) *CacheMessage {
-	for {
+// messages by their Message-IDs.
+func conversationStart(byID map[string]*CacheMessage, cm *CacheMessage) *CacheMessage {
+	seen := map[*CacheMessage]bool{}
+	for !seen[cm] {
+		seen[cm] = true
 		if len(cm.InReplyTo) == 0 {
 			return cm
 		}
-		new, ok := mp[cm.InReplyTo[0]]
+		new, ok := byID[cm.InReplyTo[0]]
 		if !ok {
 			return cm
 		}
 		cm = new
 	}
+	return cm // a loop of replies
 }
 
 // latestDate returns the latest date/time of the message and all of its replies.
