@@ -88,9 +88,13 @@ func (a *App) cacheMessages() error {
 		if !a.signedIn(account) {
 			continue // until the user signs in to it
 		}
+		a.checkConnection(account)
 		err := a.syncAccount(account)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("syncing messages for account %q: %w", account, err))
+			if c := a.imapClient[account]; c != nil {
+				a.dropClient(account, c) // connected again in the next sync
+			}
 		}
 	}
 	return errors.Join(errs...)

@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -1427,4 +1428,132 @@ func TestIndexMissing(t *testing.T) {
 		assert.True(t, si.has(hello.key), "indexed again")
 		assert.Len(t, a.indexChecked[testEmail], n)
 	})
+}
+
+// TestMixedTextParts tests a message with text, an attachment, and then a
+// blank text part, as Apple Mail sends: the first text is shown.
+func TestMixedTextParts(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	msg := "From: me@example.com\r\nSubject: Re: files\r\nMIME-Version: 1.0\r\n" +
+		"Content-Type: multipart/mixed; boundary=\"B\"\r\n\r\n" +
+		"--B\r\nContent-Type: text/plain; charset=us-ascii\r\n\r\nHere are the two files.\r\n" +
+		"--B\r\nContent-Disposition: attachment; filename=\"a.docx\"\r\nContent-Type: application/octet-stream\r\n\r\nxyz\r\n" +
+		"--B\r\nContent-Type: text/plain; charset=us-ascii\r\n\r\n\r\n\r\n" +
+		"--B--\r\n"
+	require.NoError(t, os.MkdirAll(a.messagesDir(testEmail), 0o700))
+	require.NoError(t, os.WriteFile(filepath.Join(a.messagesDir(testEmail), "mixed"), []byte(msg), 0o600))
+	cm := &CacheMessage{Filename: "mixed"}
+	dmf := NewDisplayMessageFrame(b)
+	dmf.Message = cm
+	w := core.NewFrame(b)
+	require.NoError(t, dmf.displayMessageContents(w))
+	assert.Equal(t, "Here are the two files.", cm.parsed.plain)
+	require.Len(t, cm.parsed.attachments, 1)
+	require.NoError(t, dmf.displayMessageContents(w))
+	assert.Equal(t, "Here are the two files.", cm.parsed.plain, "not twice when shown again")
+}
+
+// newTestingApp returns an app in testing mode, with a seeded test server.
+func newTestingApp(t *testing.T) (*core.Body, *App) {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+	oldFile, oldAccounts := Settings.File, Settings.Accounts
+	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
+	t.Cleanup(core.TrackWindows())
+	b := core.NewBody()
+	a := NewApp(b)
+	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	t.Cleanup(a.testServer.Close)
+	t.Cleanup(a.closeStores)
+	return b, a
+}
+
+// TestReconnect tests connecting again after the connection to the
+// server is closed, as after the computer sleeps.
+func TestReconnect(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0]
+	core.RenderImage(b, func() {
+		a.syncMore = false
+		require.NoError(t, a.cacheMessages())
+		old := a.imapClient[you]
+		require.NotNil(t, old)
+		old.Close() // the connection is lost
+		a.syncMore = false
+		require.NoError(t, a.cacheMessages(), "connects again")
+		assert.NotNil(t, a.imapClient[you])
+		assert.NotSame(t, old, a.imapClient[you])
+
+		// a failed sync drops the connection, for the next sync
+		c := a.imapClient[you]
+		a.selectedMailbox[you] = ""
+		assert.Error(t, a.syncMailbox(you, "No such mailbox"))
+		a.dropClient(you, c)
+		assert.Nil(t, a.imapClient[you])
+		a.syncMore = false
+		require.NoError(t, a.cacheMessages())
+		assert.NotNil(t, a.imapClient[you])
+	})
+}
+
+// TestIdle tests the connection that idles on the INBOX, which syncs
+// when new mail comes.
+func TestIdle(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0]
+	core.RenderImage(b, func() { // the lock of the window needs it shown
+		a.startIdle(you)
+		select {
+		case <-a.syncNow: // not yet
+		default:
+		}
+		require.Eventually(t, func() bool {
+			require.NoError(t, a.testServer.RandomMessage(you)) // new mail
+			select {
+			case <-a.syncNow:
+				return true
+			case <-time.After(200 * time.Millisecond):
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond, "a sync once idling")
+	}, core.Locked(b, func() {
+		a.stopIdle(you)
+		assert.Empty(t, a.idleStop)
+	}))
+}
+
+// TestStatusBar tests the status of the syncing below the mailboxes.
+func TestStatusBar(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	texts := func() []string {
+		var res []string
+		for w := range a.statusBar.AllWidgets() {
+			switch w := w.(type) {
+			case *core.Text:
+				if _, ok := w.Parent.(*core.Button); !ok { // not the text of a button
+					res = append(res, w.Text)
+				}
+			case *core.Button:
+				res = append(res, w.Text)
+			case *core.Meter:
+				res = append(res, fmt.Sprintf("meter %.2f", w.Value))
+			}
+		}
+		return res
+	}
+	core.RenderImage(b, func() {
+		a.progressStatus(testEmail, "downloading messages", 250, 1000, 50)
+	}, core.Locked(b, func() {
+		assert.Equal(t, []string{testEmail + ": downloading messages, 250 of 1,000", "meter 0.25"}, texts())
+	}), func() {
+		a.syncDone(errors.New("dial tcp: no route to host"))
+	}, core.Locked(b, func() {
+		assert.Equal(t, []string{"Not synced: dial tcp: no route to host"}, texts())
+	}), func() {
+		a.syncDone(nil)
+	}, core.Locked(b, func() {
+		got := texts()
+		require.Len(t, got, 1)
+		assert.True(t, strings.HasPrefix(got[0], "Updated "), got[0])
+	}))
 }

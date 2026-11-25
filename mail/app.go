@@ -9,6 +9,7 @@ package mail
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -167,6 +168,17 @@ type App struct {
 	// to be read (see [App.downloadNow]).
 	downloading map[*CacheMessage]bool
 
+	// idleStop stops the connection that idles for each account
+	// (see [App.idle]).
+	idleStop map[string]context.CancelFunc
+
+	// status is the status of the syncing, shown below the mailboxes
+	// (see [App.setStatus]).
+	status syncStatus
+
+	// statusBar shows the status.
+	statusBar *core.Frame
+
 	// indexChecked are the keys of the downloaded messages of each account
 	// checked to be in its search index in this run (see [App.indexMissing]).
 	indexChecked map[string]map[string]bool
@@ -200,6 +212,8 @@ func (a *App) Init() {
 	a.specialUse = map[string]map[imap.MailboxAttr]string{}
 	a.downloading = map[*CacheMessage]bool{}
 	a.indexChecked = map[string]map[string]bool{}
+	a.idleStop = map[string]context.CancelFunc{}
+	a.status.progress = -1
 	a.trash = map[string]string{}
 	a.syncNow = make(chan struct{}, 1)
 	a.syncInterval = time.Minute
@@ -220,7 +234,20 @@ func (a *App) Init() {
 			Settings.Splits = w.Splits()
 			a.saveSettings()
 		})
-		tree.AddChild(w, a.initMailboxes)
+		tree.AddChild(w, func(w *core.Frame) { // the sidebar
+			w.Styler(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+			tree.AddChild(w, func(w *core.Frame) {
+				w.Styler(func(s *styles.Style) {
+					s.Direction = styles.Column
+					s.Grow.Set(1, 1)
+					s.Overflow.Set(styles.OverflowAuto)
+				})
+				tree.AddChild(w, a.initMailboxes)
+			})
+			tree.AddChild(w, a.initStatusBar)
+		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
@@ -329,18 +356,17 @@ func (a *App) GetMail() {
 			a.AsyncUnlock()
 		}
 		// We keep caching messages forever to stay in sync.
-		failed := false
 		for {
 			a.syncMore = false
 			err := a.cacheMessages()
 			if err != nil {
 				slog.Error("caching messages", "err", err)
-				if !failed { // only once until it works again
-					core.ErrorDialog(a, err, "Error caching messages")
+			}
+			a.syncDone(err) // the error is shown in the status
+			for _, email := range slices.Clone(Settings.Accounts) {
+				if a.imapClient[email] != nil { // connected, so it can idle
+					a.startIdle(email)
 				}
-				failed = true
-			} else {
-				failed = false
 			}
 			if a.syncMore && err == nil {
 				continue

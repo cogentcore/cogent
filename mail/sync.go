@@ -208,6 +208,9 @@ func (a *App) indexMissing(email string, n int) error {
 		}
 	}
 	a.AsyncUnlock()
+	if len(check) > 0 {
+		a.setStatus(email+": checking the search index", -1)
+	}
 	dir := a.messagesDir(email)
 	docs := map[string]*searchDoc{}
 	for _, cm := range check {
@@ -253,6 +256,7 @@ func (a *App) syncMailbox(email, mailbox string) error {
 	st := a.stores[email]
 	gmail, condStore := a.gmail[email], a.condStore[email]
 
+	a.setStatus(fmt.Sprintf("%s: syncing %s", email, friendlyLabelName(mailbox)), -1)
 	mu.Lock()
 	defer mu.Unlock()
 	// always selected again, for its current state
@@ -292,7 +296,8 @@ func (a *App) syncMailbox(email, mailbox string) error {
 		opts.RFC822Size = true
 		var uids imap.UIDSet
 		uids.AddRange(start, 0) // start:*
-		if err := a.fetchMessages(c, email, mailbox, uids, &opts, start); err != nil {
+		total := int(sd.NumMessages) - a.countUIDs(email, mailbox) // about
+		if err := a.fetchMessages(c, email, mailbox, uids, &opts, start, total); err != nil {
 			return fmt.Errorf("fetching new messages: %w", err)
 		}
 	}
@@ -353,9 +358,11 @@ func (a *App) countUIDs(email, mailbox string) int {
 
 // fetchMessages fetches the messages with the given UIDs (from the given
 // first one) in the given mailbox, adding them to the cache and the store
-// in batches, or adding the mailbox to their labels if they are cached.
-func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids imap.UIDSet, options *imap.FetchOptions, first imap.UID) error {
+// in batches, or adding the mailbox to their labels if they are cached,
+// showing the progress of the given (approximate) total in the status.
+func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids imap.UIDSet, options *imap.FetchOptions, first imap.UID, total int) error {
 	cmd := c.Fetch(uids, options)
+	n := 0
 	batch := map[string]*CacheMessage{}
 	flush := func() error {
 		if len(batch) == 0 {
@@ -395,6 +402,8 @@ func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids im
 		a.setMessageLabels(email, cm, mailbox, md.UID, md.GmailLabels)
 		a.AsyncUnlock()
 		batch[key] = cm
+		n++
+		a.progressStatus(email, "listing messages in "+friendlyLabelName(mailbox), n, max(total, n), 200)
 		if len(batch) >= 200 {
 			if err := flush(); err != nil {
 				cmd.Close()
@@ -592,7 +601,9 @@ func (a *App) downloadBodies(email string, n int) error {
 			need = append(need, cm)
 		}
 	}
+	total := len(a.cache[email])
 	a.AsyncUnlock()
+	done := total - len(need)
 	if len(need) == 0 {
 		return nil
 	}
@@ -601,12 +612,16 @@ func (a *App) downloadBodies(email string, n int) error {
 		need = need[:n]
 		a.syncMore = true
 	}
-	return a.downloadMessages(email, need)
+	return a.downloadMessages(email, need, func() {
+		done++
+		a.progressStatus(email, "downloading messages", done, total, 20)
+	})
 }
 
 // downloadMessages downloads the contents of the given messages of the
-// given account, by mailbox, saving them in files and indexing them.
-func (a *App) downloadMessages(email string, msgs []*CacheMessage) error {
+// given account, by mailbox, saving them in files and indexing them,
+// calling the given function, if any, after each one.
+func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func()) error {
 	byMailbox := map[string]map[imap.UID]*CacheMessage{}
 	for _, cm := range msgs {
 		for _, l := range cm.Labels {
@@ -662,6 +677,9 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage) error {
 			a.AsyncUnlock()
 			k := cm.key
 			saved[k] = cm
+			if progress != nil {
+				progress()
+			}
 			if doc, err := readSearchDoc(fn); err == nil {
 				docs[k] = doc
 			} else {
@@ -695,7 +713,7 @@ func (a *App) downloadNow(email string, cm *CacheMessage) {
 	}
 	a.downloading[cm] = true
 	go func() {
-		err := a.downloadMessages(email, []*CacheMessage{cm})
+		err := a.downloadMessages(email, []*CacheMessage{cm}, nil)
 		a.AsyncLock()
 		delete(a.downloading, cm)
 		a.AsyncUnlock()

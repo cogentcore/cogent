@@ -231,6 +231,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 	dmf.Message.parsed.references = refs
 
 	dmf.Message.parsed.attachments = nil
+	dmf.Message.parsed.plain = ""
 	gotHTML := false
 	for {
 		p, err := mr.NextPart()
@@ -253,7 +254,14 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 				if err != nil {
 					return err
 				}
-				dmf.Message.parsed.plain = string(b)
+				// all of the text parts, in order, as Apple Mail sends
+				// text, then attachments, then more (often blank) text
+				if text := string(b); strings.TrimSpace(text) != "" {
+					if dmf.Message.parsed.plain != "" {
+						dmf.Message.parsed.plain += "\n\n"
+					}
+					dmf.Message.parsed.plain += text
+				}
 			case "text/html":
 				ctx := messageContext()
 				err := htmlcore.ReadHTML(ctx, w, p.Body)

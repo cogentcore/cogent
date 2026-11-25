@@ -61,13 +61,19 @@ var imapOptions = &imapclient.Options{
 
 // dialIMAP connects and logs in to the IMAP server of the given account.
 func (a *App) dialIMAP(email string) (*imapclient.Client, error) {
+	return a.dialIMAPWith(email, imapOptions)
+}
+
+// dialIMAPWith connects and logs in to the IMAP server of the given
+// account with the given options.
+func (a *App) dialIMAPWith(email string, options *imapclient.Options) (*imapclient.Client, error) {
 	srv := a.server(email)
 	var c *imapclient.Client
 	var err error
 	if srv.Insecure {
-		c, err = imapclient.DialInsecure(srv.IMAP, imapOptions)
+		c, err = imapclient.DialInsecure(srv.IMAP, options)
 	} else {
-		c, err = imapclient.DialTLS(srv.IMAP, imapOptions)
+		c, err = imapclient.DialTLS(srv.IMAP, options)
 	}
 	if err != nil {
 		return nil, err

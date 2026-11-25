@@ -93,6 +93,10 @@ type gmailBox struct {
 	uidNext    imap.UID
 	entries    []*gmailEntry // in UID order
 	subscribed bool
+
+	// added, if not nil, is closed when a message is added to the
+	// mailbox, for the sessions idling on it (see [gmailSession.Idle]).
+	added chan struct{}
 }
 
 // gmailEntry is a message in a [gmailBox], with its UID there.
@@ -172,6 +176,10 @@ func (u *gmailUser) addLabel(msg *gmailMessage, b *gmailBox) imap.UID {
 	b.uidNext++
 	b.entries = append(b.entries, e)
 	msg.modSeq = u.nextModSeq()
+	if b.added != nil {
+		close(b.added)
+		b.added = nil
+	}
 	return e.uid
 }
 
@@ -534,9 +542,35 @@ func (sess *gmailSession) Poll(w *imapserver.UpdateWriter, allowExpunge bool) er
 	return nil
 }
 
+// Idle sends the number of messages of the selected mailbox when messages
+// are added to it, as for new mail, until stopped.
 func (sess *gmailSession) Idle(w *imapserver.UpdateWriter, stop <-chan struct{}) error {
-	<-stop
-	return nil
+	u := sess.u
+	for {
+		u.mu.Lock()
+		b := sess.box
+		if b == nil {
+			u.mu.Unlock()
+			<-stop
+			return nil
+		}
+		if b.added == nil {
+			b.added = make(chan struct{})
+		}
+		added := b.added
+		u.mu.Unlock()
+		select {
+		case <-stop:
+			return nil
+		case <-added:
+		}
+		u.mu.Lock()
+		n := len(b.entries)
+		u.mu.Unlock()
+		if err := w.WriteNumMessages(uint32(n)); err != nil {
+			return err
+		}
+	}
 }
 
 // forEach calls the given function for each entry of the selected mailbox

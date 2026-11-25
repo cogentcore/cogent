@@ -214,7 +214,7 @@ func (a *App) focusPanelDelta(delta int) {
 // and the list of messages. The focus is quiet, without the highlight of
 // the focus from the keyboard, as the selection shows where it is.
 func (a *App) focusPanel(w core.Widget) bool {
-	if w == core.Widget(a.mailboxes) {
+	if a.mailboxes != nil && a.mailboxes.Parent != nil && a.mailboxes.Parent.AsTree().Parent == w { // the sidebar
 		for _, n := range a.mailboxes.GetSelectedNodes() {
 			n.AsCoreTree().SetFocusQuiet()
 			return true

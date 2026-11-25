@@ -248,6 +248,7 @@ func (a *App) RemoveAccount(email string) {
 	delete(a.searches, email)
 	delete(a.cache, email)
 	delete(a.totalMessages, email)
+	a.stopIdle(email)
 	a.authMu.Lock()
 	delete(a.tokens, email)
 	a.authMu.Unlock()
