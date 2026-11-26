@@ -87,7 +87,7 @@ func (rt ReminderTime) at(day time.Time) (time.Time, bool) {
 // overdueDays is the number of days after now for which the daily
 // reminders of the overdue items are scheduled, as they are scheduled
 // again whenever the app runs.
-const overdueDays = 7
+const overdueDays = 2
 
 // reminderSep separates the parts of the IDs of reminders:
 // the ID of the list, of the item, the name of the field, and the time.

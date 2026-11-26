@@ -71,7 +71,7 @@ func TestReminders(t *testing.T) {
 		}},
 	}
 	// 1 day before at 9:00pm, and on the day at 9:00am, and when overdue,
-	// at both times every day, for a week from now
+	// at both times every day, for 2 days from now
 	ns := ls.reminders(now)
 	byItem := map[string][]*system.Notification{}
 	for _, n := range ns {
@@ -82,25 +82,24 @@ func TestReminders(t *testing.T) {
 	assert.Empty(t, byItem["d"], "no date")
 
 	bs := byItem["b"]
-	require.Len(t, bs, 13, "2 before, and 11 overdue until Nov 27 at 9:00am")
+	require.Len(t, bs, 3, "2 before, and 1 overdue until Nov 22 at noon")
 	assert.Equal(t, system.Notification{ID: l.ID + "/b/Due/20261120T2100", Title: "Tomorrow", Body: "Chores: Due Sat Nov 21", Time: day(20).Add(21 * time.Hour)}, *bs[0])
 	assert.Equal(t, day(21).Add(9*time.Hour), bs[1].Time)
 	assert.Equal(t, system.Notification{ID: l.ID + "/b/Due/20261122T0900", Title: "Tomorrow", Body: "Chores: overdue, Due Sat Nov 21", Time: day(22).Add(9 * time.Hour)}, *bs[2])
-	assert.Equal(t, day(22).Add(21*time.Hour), bs[3].Time)
-	assert.Equal(t, day(27).Add(9*time.Hour), bs[12].Time)
 
 	as := byItem["a"] // due today, overdue tomorrow
-	require.Len(t, as, 13)
+	require.Len(t, as, 3)
 	assert.Equal(t, day(21).Add(9*time.Hour), as[0].Time)
 	assert.Equal(t, "Chores: overdue, Due Fri Nov 20", as[0].Body)
+	assert.Equal(t, day(21).Add(21*time.Hour), as[1].Time)
+	assert.Equal(t, day(22).Add(9*time.Hour), as[2].Time)
 
 	fs := byItem["f"]
-	require.Len(t, fs, 9)
+	require.Len(t, fs, 2, "not overdue until after Nov 22 at noon")
 	assert.Equal(t, "In a category", fs[0].Title)
 	assert.Equal(t, day(22).Add(21*time.Hour), fs[0].Time)
 	assert.Equal(t, day(23).Add(9*time.Hour), fs[1].Time)
-	assert.Equal(t, day(24).Add(9*time.Hour), fs[2].Time)
-	assert.Len(t, ns, 35)
+	assert.Len(t, ns, 8)
 
 	lt.Reminders = []ReminderTime{{Time: timeOfDay(17, 30)}} // the list type's own times
 	ns = ls.reminders(now)
@@ -135,23 +134,17 @@ func TestDateTimeReminders(t *testing.T) {
 		return ts
 	}
 	ns := lt.itemReminders(l, it, now)
-	require.Len(t, ns, 15)
+	require.Len(t, ns, 5)
 	assert.Equal(t, "Meetings: At Sat Nov 21 3:00pm", ns[0].Body)
 	assert.Equal(t, "Meetings: overdue, At Sat Nov 21 3:00pm", ns[3].Body)
 	day := func(d, h int) time.Time { return time.Date(2026, 11, d, h, 0, 0, 0, time.Local) }
-	// before, at it, and then overdue at both times every day, until Nov 27 at 9:00am
-	want := []time.Time{day(20, 21), day(21, 9), at, day(21, 21)}
-	for d := 22; d <= 26; d++ {
-		want = append(want, day(d, 9), day(d, 21))
-	}
-	want = append(want, day(27, 9))
-	assert.Equal(t, want, times())
+	// before, at it, and then overdue at both times every day, until Nov 22 at noon
+	assert.Equal(t, []time.Time{day(20, 21), day(21, 9), at, day(21, 21), day(22, 9)}, times())
 
 	// times on the day after it are not before it, and one at it is not
 	// repeated: 3pm and 5pm on the day, and both every day after it
 	lt.Reminders = []ReminderTime{{Time: timeOfDay(17, 0)}, {Time: timeOfDay(15, 0)}}
-	ts := times()
-	assert.Equal(t, []time.Time{at, day(21, 17), day(22, 15), day(22, 17)}, ts[:4])
+	assert.Equal(t, []time.Time{at, day(21, 17)}, times())
 }
 
 // TestReminderClicked tests that a click on a reminder opens its list.
