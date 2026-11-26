@@ -847,7 +847,7 @@ func (ls *Lists) makeItemTools(p *tree.Plan) {
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("List settings").SetIcon(icons.Settings).
+		w.SetText("List settings").SetIcon(icons.Tune).
 			SetTooltip("Edit the settings of the current list: its type, and whether to show the values of the groups of items")
 		w.OnClick(func(e events.Event) {
 			ls.listSettings(w)
