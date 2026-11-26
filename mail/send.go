@@ -42,6 +42,46 @@ type SendMessage struct {
 	body       string
 	inReplyTo  string
 	references []string
+
+	// draft is its draft, once it is saved, as it is written.
+	draft *draft
+
+	// orig is the message that this is a copy of, with its contents at
+	// one time, for saving it (see [SendMessage.snapshot]), whose draft
+	// is the draft of this one.
+	orig *SendMessage
+
+	// seq is the number of the copy, and savedSeq is that of the latest
+	// copy saved, under the lock of the app.
+	seq, savedSeq int
+}
+
+// holder returns the message that holds the draft of this one:
+// its original if it is a copy.
+func (sm *SendMessage) holder() *SendMessage {
+	if sm.orig != nil {
+		return sm.orig
+	}
+	return sm
+}
+
+// snapshot returns a copy of the message with its contents now, with the
+// given number, for saving it with the lock of the app, while it can
+// change in its compose window, which has its own lock.
+func (sm *SendMessage) snapshot(seq int) *SendMessage {
+	cp := func(as []*mail.Address) []*mail.Address {
+		res := make([]*mail.Address, 0, len(as))
+		for _, ad := range as {
+			if ad != nil {
+				c := *ad
+				res = append(res, &c)
+			}
+		}
+		return res
+	}
+	return &SendMessage{From: cp(sm.From), To: cp(sm.To), Cc: cp(sm.Cc), Bcc: cp(sm.Bcc),
+		Subject: sm.Subject, Attachments: slices.Clone(sm.Attachments), body: sm.body,
+		inReplyTo: sm.inReplyTo, references: slices.Clone(sm.references), orig: sm, seq: seq}
 }
 
 // Compose opens a dialog to send a new message.
@@ -51,20 +91,26 @@ func (a *App) Compose() { //types:add
 	a.compose("Compose")
 }
 
-// compose is the implementation of the email comoposition dialog,
-// which is called by other higher-level functions.
-func (a *App) compose(title string) {
-	from := a.currentEmail
-	if from == "" && len(Settings.Accounts) > 0 {
-		from = Settings.Accounts[0]
-	}
-	a.composeMessage.From = []*mail.Address{{Address: from}}
-	if Settings.AutoBCC { // shown, so that it can be removed for a message
-		a.composeMessage.Bcc = append(a.composeMessage.Bcc, &mail.Address{Address: from})
-	}
-	if sig := signatureText(from); sig != "" {
-		// above any quoted message, as usual
-		a.composeMessage.body = "\n\n" + sig + a.composeMessage.body
+// compose is the implementation of the email composition window for
+// [App.composeMessage], which is called by other higher-level functions,
+// returning its body. The message is saved as a draft as it is written,
+// once it is changed, and when the window is closed, unless it is sent or
+// discarded.
+func (a *App) compose(title string) *core.Body {
+	sm := a.composeMessage
+	if sm.draft == nil { // a new message
+		from := a.currentEmail
+		if from == "" && len(Settings.Accounts) > 0 {
+			from = Settings.Accounts[0]
+		}
+		sm.From = []*mail.Address{{Address: from}}
+		if Settings.AutoBCC { // shown, so that it can be removed for a message
+			sm.Bcc = append(sm.Bcc, &mail.Address{Address: from})
+		}
+		if sig := signatureText(from); sig != "" {
+			// above any quoted message, as usual
+			sm.body = "\n\n" + sig + sm.body
+		}
 	}
 	// All of the compose windows have the same size, which is remembered
 	// by the part of the title before the colon.
@@ -72,14 +118,70 @@ func (a *App) compose(title string) {
 	b.Styler(func(s *styles.Style) {
 		s.Min.Set(units.Ch(80), units.Ch(80))
 	})
-	core.NewForm(b).SetStruct(a.composeMessage)
+	form := core.NewForm(b).SetStruct(sm)
 	ed := textcore.NewEditor(b)
-	core.Bind(&a.composeMessage.body, ed)
+	core.Bind(&sm.body, ed)
 	ed.Lines.SetLanguage(fileinfo.Markdown)
 	ed.Lines.Settings.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
+
+	// Saving the draft once it is changed. The compose window has its own
+	// lock, so the message is copied with it, and saved with the lock of
+	// the app, in order (see [SendMessage.snapshot]).
+	initial := sm.contents()
+	changed := sm.draft != nil
+	done := false // sent or discarded
+	seq := 0
+	withApp := func(f func(c *SendMessage)) {
+		sm.body = ed.Lines.String()
+		seq++
+		c := sm.snapshot(seq)
+		go func() {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			if c.seq < sm.savedSeq {
+				return // a later one is done
+			}
+			sm.savedSeq = c.seq
+			f(c)
+		}()
+	}
+	save := func() {
+		sm.body = ed.Lines.String()
+		if done || (!changed && sm.contents() == initial) {
+			return
+		}
+		changed = true
+		withApp(func(c *SendMessage) {
+			core.ErrorSnackbar(a, a.saveDraft(c), "Error saving draft")
+		})
+	}
+	var timer *time.Timer
+	stopTimer := func() {
+		if timer != nil {
+			timer.Stop()
+		}
+	}
+	change := func(e events.Event) { // after a pause in writing
+		stopTimer()
+		timer = time.AfterFunc(draftSaveDelay, func() {
+			if b.AsyncLockIfShown() {
+				defer b.AsyncUnlock()
+				save()
+			}
+		})
+	}
+	form.OnChange(change)
+	form.OnInput(change)
+	ed.OnInput(change)
+	ed.OnChange(change)
+	b.OnClose(func(e events.Event) {
+		stopTimer()
+		save()
+	})
+
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
 		core.NewButton(tb).SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).
@@ -92,124 +194,169 @@ func (a *App) compose(title string) {
 		})
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
-		b.AddCancel(bar)
+		core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).
+			OnClick(func(e events.Event) {
+				stopTimer()
+				done = true
+				withApp(func(c *SendMessage) {
+					if d := sm.draft; d != nil {
+						a.removeDraft(d)
+						a.Update()
+					}
+				})
+				b.Close()
+			})
+		b.AddCancel(bar).SetText("Save draft")
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
-			a.composeMessage.body = ed.Lines.String()
-			core.ErrorSnackbar(a, a.Send(), "Error sending message")
+			stopTimer()
+			done = true
+			withApp(func(c *SendMessage) {
+				d, err := a.queue(c)
+				if err != nil {
+					core.ErrorSnackbar(a, err, "Error sending message (it is in Drafts)")
+					return
+				}
+				go a.sendOutboxShowing(d.Account)
+			})
 		})
 	})
 	b.RunWindowDialog(a)
+	return b
 }
 
-// Send sends the current message
+// Send sends [App.composeMessage] now, putting it in the outbox first,
+// where it stays if it cannot be sent, as when offline, to be sent in a
+// later sync. It must be called with the lock of the window.
 func (a *App) Send() error { //types:add
-	if len(a.composeMessage.From) != 1 {
-		return fmt.Errorf("expected 1 sender, but got %d", len(a.composeMessage.From))
-	}
-	email := a.composeMessage.From[0].Address
-
-	var b bytes.Buffer
-	var h mail.Header
-	h.SetDate(time.Now())
-	h.SetAddressList("From", a.composeMessage.From)
-	h.SetAddressList("To", nonEmpty(a.composeMessage.To))
-	if cc := nonEmpty(a.composeMessage.Cc); len(cc) > 0 {
-		h.SetAddressList("Cc", cc)
-	}
-	// the Bcc recipients are not in the header
-	h.SetSubject(a.composeMessage.Subject)
-	h.SetMessageID(newMessageID(email))
-	if a.composeMessage.inReplyTo != "" {
-		h.SetMsgIDList("In-Reply-To", []string{a.composeMessage.inReplyTo})
-	}
-	if len(a.composeMessage.references) > 0 {
-		h.SetMsgIDList("References", a.composeMessage.references)
-	}
-
-	mw, err := mail.CreateWriter(&b, h)
+	d, err := a.queue(a.composeMessage)
 	if err != nil {
 		return err
 	}
-
-	iw, err := mw.CreateInline()
-	if err != nil {
-		return err
+	if !a.startSending(d) {
+		return nil
 	}
-
-	var ph mail.InlineHeader
-	ph.SetContentType("text/plain", nil)
-	pw, err := iw.CreatePart(ph)
-	if err != nil {
-		return err
-	}
-	pw.Write([]byte(a.composeMessage.body))
-	err = pw.Close()
-	if err != nil {
-		return err
-	}
-
-	var hh mail.InlineHeader
-	hh.SetContentType("text/html", nil)
-	hw, err := iw.CreatePart(hh)
-	if err != nil {
-		return err
-	}
-	err = goldmark.Convert([]byte(a.composeMessage.body), hw)
-	if err != nil {
-		return err
-	}
-	err = hw.Close()
-	if err != nil {
-		return err
-	}
-	err = iw.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, at := range a.composeMessage.Attachments {
-		fname := string(at)
-		ah := mail.AttachmentHeader{}
-		ah.SetFilename(filepath.Base(fname))
-		fi, err := fileinfo.NewFileInfo(fname)
-		if err != nil {
-			return err
-		}
-		ah.SetContentType(fi.Mime, nil)
-		aw, err := mw.CreateAttachment(ah)
-		if err != nil {
-			return err
-		}
-		f, err := os.Open(fname)
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(aw, f)
-		if err != nil {
-			return err
-		}
-		err = aw.Close()
-		if err != nil {
-			return err
-		}
-	}
-	err = mw.Close()
-	if err != nil {
-		return err
-	}
-
-	to := recipients(email, a.composeMessage)
-	if len(to) == 0 {
-		return fmt.Errorf("no recipients")
-	}
-	err = a.send(email, to, &b)
+	err = a.sendDraft(d)
 	if err == nil {
+		a.removeDraft(d)
 		a.SyncNow() // to show it in the sent mailbox
 	}
+	a.Update()
 	if se, ok := errors.AsType[*smtp.SMTPError](err); ok {
 		slog.Error("error sending message: SMTP error:", "code", se.Code, "enhancedCode", se.EnhancedCode, "message", se.Message)
 	}
 	return err
+}
+
+// contents returns the contents of the message, as text, for checking
+// whether it has changed.
+func (sm *SendMessage) contents() string {
+	var b strings.Builder
+	for _, as := range [][]*mail.Address{sm.From, sm.To, sm.Cc, sm.Bcc} {
+		for _, ad := range as {
+			if ad != nil {
+				fmt.Fprintf(&b, "%s <%s>,", ad.Name, ad.Address)
+			}
+		}
+		b.WriteString("\n")
+	}
+	fmt.Fprintln(&b, sm.Subject, sm.Attachments)
+	b.WriteString(strings.TrimRight(sm.body, "\n")) // as the editor adds one
+	return b.String()
+}
+
+// buildMessage returns the message of the given draft, in MIME, with
+// its text as plain text and HTML (from markdown), and its attachments.
+// Attachments that cannot be read are an error if strict, and else left
+// out, as for a draft that is still being written.
+func buildMessage(d *draft, strict bool) ([]byte, error) {
+	var b bytes.Buffer
+	var h mail.Header
+	h.SetDate(d.Date)
+	h.SetAddressList("From", d.From)
+	h.SetAddressList("To", nonEmpty(d.To))
+	if cc := nonEmpty(d.Cc); len(cc) > 0 {
+		h.SetAddressList("Cc", cc)
+	}
+	// the Bcc recipients are not in the header
+	h.SetSubject(d.Subject)
+	h.SetMessageID(d.MessageID)
+	if d.InReplyTo != "" {
+		h.SetMsgIDList("In-Reply-To", []string{d.InReplyTo})
+	}
+	if len(d.References) > 0 {
+		h.SetMsgIDList("References", d.References)
+	}
+
+	mw, err := mail.CreateWriter(&b, h)
+	if err != nil {
+		return nil, err
+	}
+	iw, err := mw.CreateInline()
+	if err != nil {
+		return nil, err
+	}
+	var ph mail.InlineHeader
+	ph.SetContentType("text/plain", nil)
+	pw, err := iw.CreatePart(ph)
+	if err != nil {
+		return nil, err
+	}
+	pw.Write([]byte(d.Body))
+	if err := pw.Close(); err != nil {
+		return nil, err
+	}
+	var hh mail.InlineHeader
+	hh.SetContentType("text/html", nil)
+	hw, err := iw.CreatePart(hh)
+	if err != nil {
+		return nil, err
+	}
+	if err := goldmark.Convert([]byte(d.Body), hw); err != nil {
+		return nil, err
+	}
+	if err := hw.Close(); err != nil {
+		return nil, err
+	}
+	if err := iw.Close(); err != nil {
+		return nil, err
+	}
+
+	for _, at := range d.Attachments {
+		fname := string(at)
+		if fname == "" {
+			continue
+		}
+		ah := mail.AttachmentHeader{}
+		ah.SetFilename(filepath.Base(fname))
+		fi, err := fileinfo.NewFileInfo(fname)
+		if err != nil {
+			if !strict {
+				continue
+			}
+			return nil, err
+		}
+		ah.SetContentType(fi.Mime, nil)
+		aw, err := mw.CreateAttachment(ah)
+		if err != nil {
+			return nil, err
+		}
+		f, err := os.Open(fname)
+		if err != nil {
+			return nil, err
+		}
+		_, err = io.Copy(aw, f)
+		f.Close()
+		if err != nil {
+			return nil, err
+		}
+		if err := aw.Close(); err != nil {
+			return nil, err
+		}
+	}
+	if err := mw.Close(); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 // nonEmpty returns the given addresses without the empty ones,

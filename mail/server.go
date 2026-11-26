@@ -9,6 +9,7 @@ import (
 
 	"fmt"
 	"io"
+	"log/slog"
 	"path/filepath"
 	"slices"
 
@@ -85,9 +86,18 @@ func (a *App) dialIMAPWith(email string, options *imapclient.Options) (*imapclie
 		auth, err = a.saslClient(email)
 		if err == nil {
 			err = c.Authenticate(auth)
+			slog.Debug("mail: signing in to the IMAP server", "account", email, "err", err)
 			if xe := (*xoauth2.Xoauth2Error)(nil); errors.As(err, &xe) {
 				err = fmt.Errorf("the server did not accept the sign-in of %s (%w): use Sign in again in the menu of the account, and allow all of the access to Gmail", email, err)
 			}
+		}
+	}
+	if err == nil {
+		// the capabilities after signing in, which [imapclient.Client.Caps]
+		// can return as none if they take a while, as for a busy account
+		_, err = c.Capability().Wait()
+		if err != nil {
+			err = fmt.Errorf("getting the capabilities of the server: %w", err)
 		}
 	}
 	if err != nil {
@@ -148,7 +158,7 @@ func (a *App) dataDir() string {
 
 // messagesDir returns the directory of the cached messages of the given account.
 func (a *App) messagesDir(email string) string {
-	return filepath.Join(a.dataDir(), "mail", filenameBase32(email))
+	return filepath.Join(a.dataDir(), "mail", accountName(email))
 }
 
 // trashNames are the names of trash mailboxes of servers without

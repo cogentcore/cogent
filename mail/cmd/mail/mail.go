@@ -38,6 +38,7 @@ func main() {
 			log.Fatalln("starting testing mode:", err)
 		}
 	}
+	errors.Log(a.StartDebugLog())
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(a.MakeToolbar)
 	})

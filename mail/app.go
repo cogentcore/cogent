@@ -40,8 +40,20 @@ type App struct {
 	// are signed in, which keep the access tokens fresh, under authMu.
 	tokens map[string]oauth2.TokenSource
 
-	// authMu is the mutex of tokens, which the sync uses.
+	// authErrs are the errors of signing in to the accounts with their
+	// saved tokens that could not be checked, as when offline, under
+	// authMu; they are tried again in each sync.
+	authErrs map[string]error
+
+	// authMu is the mutex of tokens and authErrs, which the sync uses.
 	authMu sync.Mutex
+
+	// drafts are the messages being written and those in the outbox,
+	// waiting to be sent, by their IDs, under draftsMu (see [draft]).
+	drafts map[string]*draft
+
+	// draftsMu is the mutex of drafts, and of sending them.
+	draftsMu sync.Mutex
 
 	// imapClient contains the imap clients for each account.
 	imapClient map[string]*imapclient.Client
@@ -198,6 +210,8 @@ func (a *App) Init() {
 	theApp = a
 	a.Frame.Init()
 	a.tokens = map[string]oauth2.TokenSource{}
+	a.authErrs = map[string]error{}
+	a.drafts = map[string]*draft{}
 	a.imapClient = map[string]*imapclient.Client{}
 	a.imapMu = map[string]*sync.Mutex{}
 	a.cache = map[string]map[string]*CacheMessage{}
@@ -246,6 +260,7 @@ func (a *App) Init() {
 				})
 				tree.AddChild(w, a.initMailboxes)
 			})
+			tree.AddChild(w, func(w *core.Separator) {}) // above the status
 			tree.AddChild(w, a.initStatusBar)
 		})
 		tree.AddChild(w, func(w *core.Frame) {
@@ -324,6 +339,10 @@ func (a *App) showMailbox(email, mailbox string) {
 
 func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(core.SettingsWindow).SetText("").SetIcon(icons.Settings)
+		w.SetTooltip("Settings")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send).SetShortcut(shortcutOf("Compose"))
 	})
 	if a.testServer != nil {
@@ -334,7 +353,11 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
-		a.messageButtons(p, true)
+		if a.readMessage.isLocal() && len(a.selectedRows) <= 1 {
+			a.draftButtons(p)
+		} else {
+			a.messageButtons(p, true)
+		}
 	}
 }
 
@@ -345,6 +368,7 @@ func (a *App) GetMail() {
 	// the cache of messages of before the store, which is no longer used
 	os.RemoveAll(filepath.Join(a.dataDir(), "caching"))
 	go func() {
+		a.openAllLocal() // shown before connecting, as when offline
 		if a.testServer == nil {
 			need := a.signInSaved()
 			a.AsyncLock()

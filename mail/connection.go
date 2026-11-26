@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"time"
 
 	"github.com/cogentcore/go-imap/v2"
@@ -165,7 +166,7 @@ func (a *App) idle(ctx context.Context, email string) error {
 			cmd.Wait()
 			return nil
 		case <-c.Closed():
-			return errors.New("the connection was closed")
+			return net.ErrClosed
 		case <-time.After(idleCheckInterval):
 		}
 		if err := cmd.Close(); err != nil {
@@ -182,7 +183,7 @@ func (a *App) idle(ctx context.Context, email string) error {
 				return err
 			}
 		case <-time.After(connectionTimeout):
-			return errors.New("the connection is not responding")
+			return errNotResponding
 		}
 	}
 }

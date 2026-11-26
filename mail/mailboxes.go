@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"fmt"
 	"image"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -67,13 +68,23 @@ func (mt *MailboxTree) key() string {
 
 // setOpenFromSettings opens or closes the node as saved in the settings,
 // or else open for an account, and closed for a mailbox, after the next
-// render, once its children are made.
+// render, once its children are made. If they are not made yet, as a node
+// without children is closed and cannot be opened, it is done in the next
+// update (see [MailboxTree.openApplied]).
 func (mt *MailboxTree) setOpenFromSettings() {
+	mt.openApplied = true
+	slog.Debug("mail: opening the mailbox node", "key", mt.key(), "children", len(mt.Children), "closed", mt.Closed)
 	mt.Defer(func() {
+		if !mt.HasChildren() {
+			slog.Debug("mail: mailbox node without children yet", "key", mt.key())
+			mt.openApplied = false // again in the next update
+			return
+		}
 		open, ok := Settings.OpenMailboxes[mt.key()]
 		if !ok {
 			open = mt.account
 		}
+		slog.Debug("mail: opened the mailbox node", "key", mt.key(), "open", open, "saved", ok, "children", len(mt.Children))
 		mt.applying = true
 		if open {
 			mt.Open()
@@ -133,8 +144,7 @@ func (a *App) initMailboxes(w *core.Tree) {
 				a.makeLabelTree(w, email, "")
 				w.Updater(func() {
 					// its mailboxes are made in this update once they are known
-					if !w.openApplied && len(a.labels[email]) > 0 {
-						w.openApplied = true
+					if !w.openApplied && len(a.mailboxLabels(email)) > 0 {
 						w.setOpenFromSettings()
 					}
 					w.SetText(withCount(email, a.unread[email]["INBOX"]))
@@ -167,7 +177,7 @@ func withCount(text string, n int) string {
 	if n == 0 {
 		return text
 	}
-	return fmt.Sprintf("%s (%d)", text, n)
+	return fmt.Sprintf("%s\u2002(%d)", text, n) // a wider space
 }
 
 // countUnread counts the unread messages in each mailbox of each account.
@@ -193,7 +203,7 @@ func labelRank(label string) int {
 	switch friendlyLabelName(label) {
 	case "Inbox":
 		return 0
-	case "Drafts":
+	case "Drafts", outboxLabel:
 		return 1
 	case "Sent":
 		return 2
@@ -219,7 +229,7 @@ func sortedLabels(labels []string) []string {
 func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 	w.Maker(func(p *tree.Plan) {
 		friendlyParentLabel := friendlyLabelName(parentLabel)
-		labels := sortedLabels(a.labels[email])
+		labels := sortedLabels(a.mailboxLabels(email))
 		for _, label := range labels {
 			if skipLabels[label] {
 				continue

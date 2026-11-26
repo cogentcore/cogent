@@ -430,10 +430,16 @@ func TestReplySend(t *testing.T) {
 		assert.Error(t, a.Send(), "no attachment")
 	}))
 
-	// a server that is not there is an error, not a panic
+	// a server that is not there is an error, not a panic, and the
+	// message stays in the outbox, to be sent later
 	smtpAddress = "127.0.0.1:1"
 	a.composeMessage.Attachments = nil
-	assert.Error(t, a.Send())
+	err := a.Send()
+	assert.Error(t, err)
+	assert.True(t, isOffline(err), err)
+	n, refused := a.outboxCount()
+	assert.Equal(t, 1, n)
+	assert.Equal(t, 0, refused)
 }
 
 // TestTestingMode tests the testing mode: syncing the sample mail of all
@@ -649,9 +655,9 @@ func TestMailboxes(t *testing.T) {
 			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names)
 		inbox = node(acct, "INBOX")
 		assert.True(t, inbox.StateIs(states.Selected), "the mailbox shown")
-		assert.Equal(t, fmt.Sprintf("Inbox (%d)", a.unread[you]["INBOX"]), inbox.Text)
+		assert.Equal(t, fmt.Sprintf("Inbox\u2002(%d)", a.unread[you]["INBOX"]), inbox.Text)
 		assert.NotZero(t, a.unread[you]["INBOX"])
-		assert.Contains(t, acct.Text, "you@mail.test (")
+		assert.Contains(t, acct.Text, "you@mail.test\u2002(", "a wider space before the count")
 		assert.Equal(t, icons.Inbox, inbox.Icon)
 		projects := node(acct, "Projects")
 		assert.Equal(t, icons.Folder, projects.Icon, "with subfolders")
@@ -1029,7 +1035,9 @@ func TestMultiSelect(t *testing.T) {
 					return false
 				}
 			}
-			return true
+			a.AsyncLock() // and the list updated after
+			defer a.AsyncUnlock()
+			return len(a.listRows) == 0
 		}, 5*time.Second, 10*time.Millisecond, "all filed out of Work")
 	}, core.Locked(b, func() {
 		assert.Empty(t, a.listRows)
@@ -1541,19 +1549,28 @@ func TestStatusBar(t *testing.T) {
 		}
 		return res
 	}
+	var heights []float32
+	height := func() { heights = append(heights, a.statusBar.Geom.Size.Actual.Total.Y) }
 	core.RenderImage(b, func() {
 		a.progressStatus(testEmail, "downloading messages", 250, 1000, 50)
 	}, core.Locked(b, func() {
+		height()
 		assert.Equal(t, []string{testEmail + ": downloading messages, 250 of 1,000", "meter 0.25"}, texts())
 	}), func() {
 		a.syncDone(errors.New("dial tcp: no route to host"))
 	}, core.Locked(b, func() {
+		height()
 		assert.Equal(t, []string{"Not synced: dial tcp: no route to host"}, texts())
 	}), func() {
 		a.syncDone(nil)
 	}, core.Locked(b, func() {
+		height()
 		got := texts()
 		require.Len(t, got, 1)
 		assert.True(t, strings.HasPrefix(got[0], "Updated "), got[0])
 	}))
+	require.Len(t, heights, 3)
+	assert.NotZero(t, heights[0])
+	assert.Equal(t, heights[0], heights[1], "a fixed height")
+	assert.Equal(t, heights[0], heights[2], "a fixed height")
 }

@@ -195,6 +195,11 @@ func (a *App) updateConversations() []*CacheMessage {
 	if a.gmail[a.currentEmail] {
 		threads := map[uint64][]*CacheMessage{}
 		for _, cm := range mp {
+			if cm.GmailThreadID == 0 { // a local message on its own
+				cm.replies = nil
+				starts = append(starts, cm)
+				continue
+			}
 			threads[cm.GmailThreadID] = append(threads[cm.GmailThreadID], cm)
 		}
 		for _, msgs := range threads {
@@ -489,18 +494,44 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Grow.Set(1, 0)
+			s.Gap.X.Em(0.5)
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetType(core.TextTitleMedium)
-			w.Styler(func(s *styles.Style) {
-				s.Grow.Set(1, 0)
-			})
 			w.Updater(func() {
 				if a.searchResults != nil {
 					w.SetText("Search: " + a.currentEmail)
 					return
 				}
 				w.SetText(friendlyLabelName(a.showLabel))
+			})
+		})
+		tree.AddChild(w, func(w *core.Text) { // the count, after the name
+			w.SetType(core.TextBodySmall)
+			w.Styler(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
+				s.Color = colors.Scheme.OnSurfaceVariant
+			})
+			w.Updater(func() {
+				w.Text = ""
+				if a.searchResults != nil {
+					w.Text = fmt.Sprintf("%d messages found", len(a.listCache))
+					if a.unreadMessages > 0 {
+						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
+					}
+					return
+				}
+				total := a.totalMessages[a.currentEmail][a.showLabel]
+				if a.shownMessages < total { // still syncing
+					w.Text += fmt.Sprintf("%d of ", a.shownMessages)
+				}
+				w.Text += fmt.Sprintf("%d messages", total)
+				if !a.flatList() {
+					w.Text += fmt.Sprintf(" in %d conversations", len(a.listCache))
+				}
+				if a.unreadMessages > 0 {
+					w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
+				}
 			})
 		})
 		tree.AddChild(w, func(w *core.Button) {
@@ -529,29 +560,6 @@ func (a *App) makeListPanel(p *tree.Plan) {
 				e.SetHandled()
 				w.SetText("")
 				a.SearchMessages("")
-			}
-		})
-	})
-	tree.Add(p, func(w *core.Text) {
-		w.Updater(func() {
-			w.Text = ""
-			if a.searchResults != nil {
-				w.Text = fmt.Sprintf("%d messages found", len(a.listCache))
-				if a.unreadMessages > 0 {
-					w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
-				}
-				return
-			}
-			total := a.totalMessages[a.currentEmail][a.showLabel]
-			if a.shownMessages < total { // still syncing
-				w.Text += fmt.Sprintf("%d of ", a.shownMessages)
-			}
-			w.Text += fmt.Sprintf("%d messages", total)
-			if !a.flatList() {
-				w.Text += fmt.Sprintf(" in %d conversations", len(a.listCache))
-			}
-			if a.unreadMessages > 0 {
-				w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 			}
 		})
 	})

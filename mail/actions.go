@@ -54,10 +54,26 @@ func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error, then 
 func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
+	msgs = slices.DeleteFunc(slices.Clone(msgs), (*CacheMessage).isLocal) // not on the server
+	if len(msgs) == 0 {
+		return
+	}
+	notConnected := fmt.Errorf("%s is not connected: try again once it is", email)
+	mu := a.imapMu[email]
+	if mu == nil || a.imapClient[email] == nil {
+		core.ErrorSnackbar(a, notConnected, "Offline")
+		return
+	}
 	go func() {
-		mu := a.imapMu[email]
 		mu.Lock()
 		c := a.imapClient[email]
+		if c == nil { // dropped while waiting
+			mu.Unlock()
+			a.AsyncLock()
+			core.ErrorSnackbar(a, notConnected, "Offline")
+			a.AsyncUnlock()
+			return
+		}
 		for _, cm := range msgs {
 			err := f(c, cm)
 			if err != nil {
@@ -231,6 +247,12 @@ func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm 
 
 // Delete moves the current message to the trash.
 func (a *App) Delete() { //types:add
+	if slices.ContainsFunc(a.readMessages(), (*CacheMessage).isLocal) {
+		a.DiscardDraft() // the local ones, not on the server
+		if !slices.ContainsFunc(a.readMessages(), func(cm *CacheMessage) bool { return !cm.isLocal() }) {
+			return
+		}
+	}
 	trash := a.trash[a.currentEmail]
 	if trash == "" {
 		core.ErrorSnackbar(a, fmt.Errorf("no trash mailbox for %s", a.currentEmail))

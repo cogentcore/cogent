@@ -86,9 +86,26 @@ func (a *App) cacheMessages() error {
 	var errs []error
 	for _, account := range accounts {
 		if !a.signedIn(account) {
-			continue // until the user signs in to it
+			if a.authErr(account) == nil {
+				continue // until the user signs in to it
+			}
+			// the saved sign-in could not be checked, as when offline
+			need, err := a.signInSavedTo(account)
+			if need {
+				a.AsyncLock()
+				a.signInDialog([]string{account})
+				a.AsyncUnlock()
+				continue
+			}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("signing in to %q: %w", account, err))
+				continue
+			}
 		}
 		a.checkConnection(account)
+		if err := a.sendOutbox(account); err != nil {
+			errs = append(errs, fmt.Errorf("sending messages from %q: %w", account, err))
+		}
 		err := a.syncAccount(account)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("syncing messages for account %q: %w", account, err))

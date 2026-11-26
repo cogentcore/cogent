@@ -79,8 +79,9 @@ func thousands(n int) string {
 
 // initStatusBar initializes the bar below the mailboxes that shows the
 // status of the syncing: what is being done, with a meter of its progress,
-// or the error of the last sync, which can be clicked for all of it, or
-// when it was last synced.
+// or that it is offline, or the error of the last sync, which can be
+// clicked for all of it, or when it was last synced, with the number of
+// messages in the outbox, if any. It has a fixed height.
 func (a *App) initStatusBar(w *core.Frame) {
 	a.statusBar = w
 	w.Styler(func(s *styles.Style) {
@@ -88,9 +89,26 @@ func (a *App) initStatusBar(w *core.Frame) {
 		s.Grow.Set(1, 0)
 		s.Gap.Set(units.Dp(2))
 		s.Padding.Set(units.Dp(4), units.Dp(8))
+		// a fixed height, of two lines of text and the meter, so that the
+		// mailboxes above do not change size as the status changes
+		h := units.Em(3.4)
+		s.Min.Y, s.Max.Y = h, h
+		s.Overflow.Y = styles.OverflowHidden
 	})
 	w.Maker(func(p *tree.Plan) {
 		st := a.status
+		if st.text == "" && isOffline(st.err) {
+			tree.Add(p, func(w *core.Button) {
+				w.SetType(core.ButtonText).SetIcon(icons.CloudOff)
+				w.Updater(func() {
+					w.SetText(withOutbox("Offline", a.outboxText(), ": "))
+					if err := a.status.err; err != nil {
+						w.SetTooltip("Showing the downloaded mail, and syncing once connected: " + err.Error())
+					}
+				})
+			})
+			return
+		}
 		if st.err != nil && st.text == "" {
 			tree.Add(p, func(w *core.Button) {
 				w.SetType(core.ButtonText).SetIcon(icons.Error)
@@ -98,7 +116,7 @@ func (a *App) initStatusBar(w *core.Frame) {
 					s.Color = colors.Scheme.Error.Base
 				})
 				w.Updater(func() {
-					w.SetText("Not synced: " + firstLine(a.status.err.Error()))
+					w.SetText(withOutbox("Not synced: "+firstLine(a.status.err.Error()), a.outboxText(), "\n"))
 					w.SetTooltip(a.status.err.Error())
 				})
 				w.OnClick(func(e events.Event) {
@@ -116,9 +134,9 @@ func (a *App) initStatusBar(w *core.Frame) {
 				case a.status.text != "":
 					w.SetText(a.status.text)
 				case !a.status.synced.IsZero():
-					w.SetText("Updated " + a.status.synced.Format(time.Kitchen))
+					w.SetText(withOutbox("Updated "+a.status.synced.Format(time.Kitchen), a.outboxText(), "\n"))
 				default:
-					w.SetText("")
+					w.SetText(a.outboxText())
 				}
 			})
 		})
@@ -134,6 +152,29 @@ func (a *App) initStatusBar(w *core.Frame) {
 			})
 		}
 	})
+}
+
+// outboxText returns the text of the number of messages in the outbox
+// in the status, or "" if there are none.
+func (a *App) outboxText() string {
+	n, refused := a.outboxCount()
+	if n == 0 {
+		return ""
+	}
+	text := fmt.Sprintf("%d in the outbox", n)
+	if refused > 0 {
+		text += fmt.Sprintf(", %d not sent", refused)
+	}
+	return text
+}
+
+// withOutbox returns the given status text with the given text of the
+// outbox after the given separator, if it is not "".
+func withOutbox(text, outbox, sep string) string {
+	if outbox == "" {
+		return text
+	}
+	return text + sep + outbox
 }
 
 // firstLine returns the first line of the given text, cut short if long.

@@ -89,4 +89,14 @@ func TestCharsets(t *testing.T) {
 	addr, err := imapOptions.WordDecoder.DecodeHeader("=?windows-1252?Q?Ren=E9e?=")
 	require.NoError(t, err)
 	assert.Equal(t, "Renée", addr, "in the envelopes from the server")
+
+	// an unknown 8-bit charset: UTF-8, and other bytes as Windows-1252
+	msg = "From: a@example.com\r\nSubject: Unknown\r\n" +
+		"Content-Type: text/plain; charset=unknown-8bit\r\n" +
+		"Content-Transfer-Encoding: 8bit\r\n\r\n" +
+		"Na\xefve caf\xc3\xa9 \x93ok\x94\r\n"
+	require.NoError(t, os.WriteFile(fn, []byte(msg), 0o600))
+	doc, err = readSearchDoc(fn)
+	require.NoError(t, err)
+	assert.Contains(t, doc.Body, "Naïve café “ok”")
 }

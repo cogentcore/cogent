@@ -73,10 +73,14 @@ func (dmf *DisplayMessageFrame) Init() {
 		})
 		w.Updater(func() {
 			if dmf.Message.Filename == "" { // not downloaded yet
-				if w.Property("readMessage") != "downloading" {
-					w.SetProperty("readMessage", "downloading")
+				text := "Downloading the message..."
+				if theApp.imapClient[theApp.currentEmail] == nil {
+					text = "Not downloaded yet: it will be once connected."
+				}
+				if w.Property("readMessage") != text {
+					w.SetProperty("readMessage", text)
 					w.DeleteChildren()
-					core.NewText(w).SetType(core.TextSupporting).SetText("Downloading the message...")
+					core.NewText(w).SetType(core.TextSupporting).SetText(text)
 				}
 				theApp.downloadNow(theApp.currentEmail, dmf.Message)
 				return
@@ -164,6 +168,10 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 		text("Cc", addressList(cm.Cc))
 		text("Subject", cm.Subject)
 		text("Date", cm.Date.Local().Format(headerDateFormat))
+		if cm.isLocal() {
+			text("Status", theApp.draftStatus(cm))
+			text("Bcc", addressList(cm.Bcc))
+		}
 		if labels := otherLabels(cm); len(labels) > 0 {
 			field("Labels", func(p *tree.Plan) {
 				tree.AddAt(p, "Labels", func(w *core.Frame) {

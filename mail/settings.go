@@ -6,7 +6,6 @@ package mail
 
 import (
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"cogentcore.org/core/core"
@@ -14,7 +13,7 @@ import (
 )
 
 func init() {
-	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
+	core.AddAppSettings(Settings)
 }
 
 // Settings is the currently active global Cogent Mail settings instance.
@@ -196,6 +195,7 @@ var skipLabels = map[string]bool{
 var labelIcons = map[string]icons.Icon{
 	"Inbox":  icons.Inbox,
 	"Drafts": icons.Draft,
+	"Outbox": icons.Outbox,
 	"Sent":   icons.Send,
 	"Spam":   icons.Report,
 	"Junk":   icons.Report,

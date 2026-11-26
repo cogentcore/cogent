@@ -70,14 +70,15 @@ func (a *App) openAccount(email string) error {
 // openLocal opens the store and search index of the given account,
 // loading its messages into the cache.
 func (a *App) openLocal(email string) error {
+	a.migrateFiles(email) // before any new files are made
 	if err := os.MkdirAll(a.messagesDir(email), 0o700); err != nil {
 		return err
 	}
-	st, err := openStore(filepath.Join(a.dataDir(), "store", filenameBase32(email)+".db"))
+	st, err := openStore(a.storeFile(email))
 	if err != nil {
 		return err
 	}
-	si, err := openSearch(filepath.Join(a.dataDir(), "search", filenameBase32(email)+".bleve"))
+	si, err := openSearch(a.searchDir(email))
 	if err != nil {
 		st.Close()
 		return err
@@ -91,6 +92,19 @@ func (a *App) openLocal(email string) error {
 	for k, cm := range cached {
 		cm.key = k
 	}
+	if changed := a.shardMessages(email, cached); len(changed) > 0 {
+		if err := st.put(changed); err != nil {
+			st.Close()
+			si.Close()
+			return err
+		}
+	}
+	info, err := st.info()
+	if err != nil {
+		st.Close()
+		si.Close()
+		return err
+	}
 	a.AsyncLock()
 	defer a.AsyncUnlock()
 	if a.totalMessages[email] == nil {
@@ -99,6 +113,8 @@ func (a *App) openLocal(email string) error {
 	a.stores[email] = st
 	a.searches[email] = si
 	a.cache[email] = cached
+	a.setAccountInfo(email, info)
+	a.loadDrafts(email)
 	return nil
 }
 
@@ -152,6 +168,12 @@ func (a *App) syncAccount(email string) error {
 	if err != nil {
 		return err
 	}
+	a.AsyncLock()
+	err = a.saveAccountInfo(email)
+	a.AsyncUnlock()
+	if err != nil {
+		return err
+	}
 	var sync []string
 	if a.gmail[email] {
 		for _, attr := range []imap.MailboxAttr{imap.MailboxAttrAll, imap.MailboxAttrTrash, imap.MailboxAttrJunk} {
@@ -199,7 +221,7 @@ func (a *App) indexMissing(email string, n int) error {
 	checked := a.indexChecked[email]
 	var check []*CacheMessage
 	for _, cm := range a.cache[email] {
-		if cm.Filename != "" && !checked[cm.key] {
+		if cm.Filename != "" && !checked[cm.key] && !cm.isLocal() {
 			if len(check) == n {
 				a.syncMore = true
 				break
@@ -665,14 +687,24 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 			if cm == nil || len(md.BodySection) == 0 {
 				continue
 			}
-			filename := messageFilename()
+			filename := shardName(messageFilename())
 			fn := filepath.Join(dir, filename)
+			if err := os.MkdirAll(filepath.Dir(fn), 0o700); err != nil {
+				cmd.Close()
+				mu.Unlock()
+				return err
+			}
 			if err := os.WriteFile(fn, md.BodySection[0].Bytes, 0o600); err != nil {
 				cmd.Close()
 				mu.Unlock()
 				return err
 			}
 			a.AsyncLock()
+			if cm.Filename != "" { // downloaded at the same time, as when read
+				a.AsyncUnlock()
+				os.Remove(fn)
+				continue
+			}
 			cm.Filename = filename
 			a.AsyncUnlock()
 			k := cm.key
@@ -708,8 +740,8 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 // account now, in the background, if it does not have them, as when it
 // is read before they are downloaded, updating the app after.
 func (a *App) downloadNow(email string, cm *CacheMessage) {
-	if cm.Filename != "" || a.downloading[cm] {
-		return
+	if cm.Filename != "" || a.downloading[cm] || a.imapClient[email] == nil {
+		return // downloaded in the next sync once connected
 	}
 	a.downloading[cm] = true
 	go func() {
@@ -731,7 +763,7 @@ func (a *App) saveMessages(email string, msgs ...*CacheMessage) error {
 	}
 	m := map[string]*CacheMessage{}
 	for _, cm := range msgs {
-		if cm.key != "" {
+		if cm.key != "" && !cm.isLocal() {
 			m[cm.key] = cm
 		}
 	}

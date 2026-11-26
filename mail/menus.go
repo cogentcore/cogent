@@ -95,7 +95,11 @@ func (a *App) messageMenu(m *core.Scene, pos image.Point) {
 		return
 	}
 	p := tree.Plan{}
-	a.messageButtons(&p, false)
+	if a.readMessage.isLocal() && len(a.selectedRows) <= 1 {
+		a.draftButtons(&p)
+	} else {
+		a.messageButtons(&p, false)
+	}
 	p.Update(m)
 }
 
