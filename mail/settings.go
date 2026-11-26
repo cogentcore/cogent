@@ -150,8 +150,8 @@ type Signature struct {
 type SignatureText string
 
 // signatureText returns the text of the default signature of the given
-// account, after the standard "-- " separator line, with a line break at
-// the end of each line, or "" if it has none.
+// account, with a line break at the end of each line, or "" if it has none.
+// No "-- " separator line is added: the signature can include one.
 func signatureText(email string) string {
 	name := string(Settings.DefaultSignatures[email])
 	if name == "" {
@@ -164,7 +164,7 @@ func signatureText(email string) string {
 		}
 		lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
 		// two spaces at the end of a line are a line break in markdown
-		return "--  \n" + strings.Join(lines, "  \n") + "\n"
+		return strings.Join(lines, "  \n") + "\n"
 	}
 	return ""
 }

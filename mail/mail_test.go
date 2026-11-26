@@ -785,13 +785,13 @@ func TestSignature(t *testing.T) {
 		require.NoError(t, a.cacheMessages())
 	}, core.Locked(b, func() {
 		a.Compose()
-		assert.Equal(t, "\n\n--  \nMe  \nThe Lab\n", a.composeMessage.body)
+		assert.Equal(t, "\n\nMe  \nThe Lab\n", a.composeMessage.body)
 		a.readMessage = messageBySubject(a, "Report")
 		a.readSingle = true
 		a.Update()
 	}), core.Locked(b, func() {
 		a.Reply()
-		assert.True(t, strings.HasPrefix(a.composeMessage.body, "\n\n--  \nMe  \nThe Lab\n\n\n> On "), a.composeMessage.body)
+		assert.True(t, strings.HasPrefix(a.composeMessage.body, "\n\nMe  \nThe Lab\n\n\n> On "), a.composeMessage.body)
 		Settings.DefaultSignatures = nil
 		a.Compose()
 		assert.NotContains(t, a.composeMessage.body, "--", "no default")
