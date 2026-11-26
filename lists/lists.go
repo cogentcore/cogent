@@ -341,6 +341,7 @@ func (ls *Lists) makeCurrent(p *tree.Plan) {
 		return
 	}
 	ls.makeListHeader(p)
+	ls.makeSearch(p)
 	tree.AddAt(p, "table", func(w *core.TreeTable) {
 		ls.initTable(w)
 	})
@@ -358,7 +359,6 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Gap.X.Em(1)
-			s.Grow.Set(1, 0) // for the search field
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetType(core.TextHeadlineSmall)
@@ -370,7 +370,6 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 			})
 		})
 		w.Maker(ls.makeFilterSwitch)
-		w.Maker(ls.makeSearch)
 	})
 }
 
