@@ -7,7 +7,6 @@ package lists
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -51,29 +50,19 @@ type ReminderTime struct {
 	// DaysPrior is the number of days before the date, 0 for on the day.
 	DaysPrior int `min:"0"`
 
-	// Time is the time of day, such as 9:00 or 5:30pm.
-	Time string
+	// Time is the time of day, of which only the hour and minute are used.
+	Time time.Time `display:"time"`
 }
 
 // defaultReminderTimes returns the default times of reminders:
 // 1 day before at 9:00pm, and on the day at 9:00am.
 func defaultReminderTimes() []ReminderTime {
-	return []ReminderTime{{DaysPrior: 1, Time: "9:00pm"}, {DaysPrior: 0, Time: "9:00am"}}
+	return []ReminderTime{{DaysPrior: 1, Time: timeOfDay(21, 0)}, {DaysPrior: 0, Time: timeOfDay(9, 0)}}
 }
 
-// reminderLayouts are the layouts of the times of day of reminders.
-var reminderLayouts = []string{"15:04", "3:04pm", "3:04 pm", "3pm", "3 pm", "15"}
-
-// parseTimeOfDay returns the time of day of the given text, such as 9:00
-// or 5:30pm, as a duration since midnight.
-func parseTimeOfDay(s string) (time.Duration, error) {
-	s = strings.ToLower(strings.TrimSpace(s))
-	for _, layout := range reminderLayouts {
-		if t, err := time.Parse(layout, s); err == nil {
-			return time.Duration(t.Hour())*time.Hour + time.Duration(t.Minute())*time.Minute, nil
-		}
-	}
-	return 0, fmt.Errorf("invalid time of day %q: it must be like 9:00 or 5:30pm", s)
+// timeOfDay returns the given time of day, as a [ReminderTime.Time].
+func timeOfDay(hour, minute int) time.Time {
+	return time.Date(2000, 1, 1, hour, minute, 0, 0, time.Local)
 }
 
 // reminderTimes returns the times of the reminders of the list type:
@@ -86,14 +75,13 @@ func (lt *ListType) reminderTimes() []ReminderTime {
 }
 
 // at returns the time of the reminder for the given day, in local time,
-// and false if its time of day is not valid.
+// and false if it has no time of day.
 func (rt ReminderTime) at(day time.Time) (time.Time, bool) {
-	d, err := parseTimeOfDay(rt.Time)
-	if err != nil {
+	if rt.Time.IsZero() {
 		return time.Time{}, false
 	}
-	y, m, dd := day.Date()
-	return time.Date(y, m, dd-rt.DaysPrior, 0, 0, 0, 0, time.Local).Add(d), true
+	y, m, d := day.Date()
+	return time.Date(y, m, d-rt.DaysPrior, rt.Time.Hour(), rt.Time.Minute(), 0, 0, time.Local), true
 }
 
 // overdueDays is the number of days after now for which the daily

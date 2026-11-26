@@ -27,29 +27,17 @@ func TestFieldFlags(t *testing.T) {
 
 	// the reminder times changed in ours, and the Detail flag in theirs
 	base := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
-	ours := marshal([]*ListType{{Name: todoType, Reminders: []ReminderTime{{DaysPrior: 2, Time: "8:00"}}, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
+	ours := marshal([]*ListType{{Name: todoType, Reminders: []ReminderTime{{DaysPrior: 2, Time: timeOfDay(8, 0)}}, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
 	theirs := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes", Flags: detail}}}})
 	merged := mergeFiles(map[string][]byte{typesFile: base}, map[string][]byte{typesFile: ours}, map[string][]byte{typesFile: theirs}, false)
 	var types []*ListType
 	require.NoError(t, json.Unmarshal(merged[typesFile], &types))
 	require.Len(t, types, 1)
-	assert.Equal(t, []ReminderTime{{DaysPrior: 2, Time: "8:00"}}, types[0].Reminders)
+	require.Len(t, types[0].Reminders, 1)
+	rt := types[0].Reminders[0]
+	assert.Equal(t, []int{2, 8, 0}, []int{rt.DaysPrior, rt.Time.Hour(), rt.Time.Minute()})
 	require.Len(t, types[0].Fields, 2)
 	assert.Equal(t, detail, types[0].Fields[1].Flags)
-}
-
-func TestParseTimeOfDay(t *testing.T) {
-	for s, want := range map[string]time.Duration{
-		"9:00": 9 * time.Hour, "17:30": 17*time.Hour + 30*time.Minute, "5:30pm": 17*time.Hour + 30*time.Minute,
-		"5:30 PM": 17*time.Hour + 30*time.Minute, "8am": 8 * time.Hour, " 12 am ": 0, "7": 7 * time.Hour,
-	} {
-		d, err := parseTimeOfDay(s)
-		if assert.NoError(t, err, s) {
-			assert.Equal(t, want, d, s)
-		}
-	}
-	_, err := parseTimeOfDay("noon")
-	assert.Error(t, err)
 }
 
 // reminderItem returns a saved item with the given values.
@@ -114,7 +102,7 @@ func TestReminders(t *testing.T) {
 	assert.Equal(t, day(24).Add(9*time.Hour), fs[2].Time)
 	assert.Len(t, ns, 35)
 
-	lt.Reminders = []ReminderTime{{Time: "5:30pm"}} // the list type's own times
+	lt.Reminders = []ReminderTime{{Time: timeOfDay(17, 30)}} // the list type's own times
 	ns = ls.reminders(now)
 	assert.Equal(t, system.Notification{ID: l.ID + "/a/Due/20261120T1730", Title: "Today", Body: "Chores: Due Fri Nov 20", Time: day(20).Add(17*time.Hour + 30*time.Minute)}, *ns[0], "today at 5:30pm")
 	assert.Equal(t, day(21).Add(17*time.Hour+30*time.Minute), ns[1].Time)
@@ -161,7 +149,7 @@ func TestDateTimeReminders(t *testing.T) {
 
 	// times on the day after it are not before it, and one at it is not
 	// repeated: 3pm and 5pm on the day, and both every day after it
-	lt.Reminders = []ReminderTime{{Time: "5pm"}, {Time: "3pm"}}
+	lt.Reminders = []ReminderTime{{Time: timeOfDay(17, 0)}, {Time: timeOfDay(15, 0)}}
 	ts := times()
 	assert.Equal(t, []time.Time{at, day(21, 17), day(22, 15), day(22, 17)}, ts[:4])
 }
