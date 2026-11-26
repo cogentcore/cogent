@@ -23,7 +23,8 @@ import (
 // at the reminder times of the list type (see [ListType.Reminders]), or of
 // the [ReminderSettings]: each is a number of days before the date, at a
 // time of day, such as 1 day before at 9:00pm, and on the day at 9:00am.
-// A date and time also reminds at that time. They are scheduled with
+// A date and time also reminds at that time. An item that is overdue
+// reminds at all of the times of day, every day, until it is done. They are scheduled with
 // [system.Notifier.Sync] whenever the lists change, so that the operating
 // system shows them even when the app is not running (except on Linux and
 // the web). A click on one opens its list.
@@ -95,6 +96,11 @@ func (rt ReminderTime) at(day time.Time) (time.Time, bool) {
 	return time.Date(y, m, dd-rt.DaysPrior, 0, 0, 0, 0, time.Local).Add(d), true
 }
 
+// overdueDays is the number of days after now for which the daily
+// reminders of the overdue items are scheduled, as they are scheduled
+// again whenever the app runs.
+const overdueDays = 7
+
 // reminderSep separates the parts of the IDs of reminders:
 // the ID of the list, of the item, the name of the field, and the time.
 const reminderSep = "/"
@@ -125,8 +131,9 @@ func (ls *Lists) reminders(now time.Time) []*system.Notification {
 }
 
 // itemReminders returns the reminders of the given item of the given list,
-// of this type, for its dates after now, if it is not done: if it has none
-// of the filter values of the fields (see [ListType.showItem]).
+// of this type, after now, if it is not done: if it has none of the filter
+// values of the fields (see [ListType.showItem]). After its date, it is
+// overdue, and has reminders at all of the times of day, every day.
 func (lt *ListType) itemReminders(l *List, it *Item, now time.Time) []*system.Notification {
 	for _, f := range lt.Fields {
 		filter := strings.TrimSpace(f.Filter)
@@ -154,9 +161,26 @@ func (lt *ListType) itemReminders(l *List, it *Item, now time.Time) []*system.No
 			due += date.Format(" 3:04pm")
 			times = append(times, date)
 		}
-		for _, rt := range lt.reminderTimes() {
-			if t, ok := rt.at(date); ok && (f.Type == Date || t.Before(date)) {
+		// the item is overdue after the time, or the day, of the date
+		overdue := date
+		if f.Type == Date {
+			y, m, d := date.Date()
+			overdue = time.Date(y, m, d+1, 0, 0, 0, 0, time.Local)
+		}
+		rts := lt.reminderTimes()
+		for _, rt := range rts {
+			if t, ok := rt.at(date); ok && t.Before(overdue) {
 				times = append(times, t)
+			}
+		}
+		// when it is overdue, at all of the times of day, every day
+		end := now.AddDate(0, 0, overdueDays)
+		y, m, d := overdue.Date()
+		for day := time.Date(y, m, d, 0, 0, 0, 0, time.Local); !day.After(end); day = day.AddDate(0, 0, 1) {
+			for _, rt := range rts {
+				if t, ok := (ReminderTime{Time: rt.Time}).at(day); ok && !t.Before(overdue) && !t.After(end) {
+					times = append(times, t)
+				}
 			}
 		}
 		slices.SortFunc(times, func(a, b time.Time) int { return a.Compare(b) })
@@ -165,10 +189,14 @@ func (lt *ListType) itemReminders(l *List, it *Item, now time.Time) []*system.No
 			if !t.After(now) {
 				continue
 			}
+			body := l.Name + ": " + f.Name + " " + due
+			if !t.Before(overdue) {
+				body = l.Name + ": overdue, " + f.Name + " " + due
+			}
 			ns = append(ns, &system.Notification{
 				ID:    l.ID + reminderSep + it.ID + reminderSep + f.Name + reminderSep + t.Format("20060102T1504"),
 				Title: lt.itemTitle(it),
-				Body:  l.Name + ": " + f.Name + " " + due,
+				Body:  body,
 				Time:  t,
 			})
 		}
