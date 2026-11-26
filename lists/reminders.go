@@ -47,8 +47,8 @@ type ReminderSettings struct {
 // at a time of day.
 type ReminderTime struct {
 
-	// Days is the number of days before the date, 0 for on the day.
-	Days int `min:"0"`
+	// DaysPrior is the number of days before the date, 0 for on the day.
+	DaysPrior int `min:"0"`
 
 	// Time is the time of day, such as 9:00 or 5:30pm.
 	Time string
@@ -57,7 +57,7 @@ type ReminderTime struct {
 // defaultReminderTimes returns the default times of reminders:
 // 1 day before at 9:00pm, and on the day at 9:00am.
 func defaultReminderTimes() []ReminderTime {
-	return []ReminderTime{{Days: 1, Time: "9:00pm"}, {Days: 0, Time: "9:00am"}}
+	return []ReminderTime{{DaysPrior: 1, Time: "9:00pm"}, {DaysPrior: 0, Time: "9:00am"}}
 }
 
 // reminderLayouts are the layouts of the times of day of reminders.
@@ -92,7 +92,7 @@ func (rt ReminderTime) at(day time.Time) (time.Time, bool) {
 		return time.Time{}, false
 	}
 	y, m, dd := day.Date()
-	return time.Date(y, m, dd-rt.Days, 0, 0, 0, 0, time.Local).Add(d), true
+	return time.Date(y, m, dd-rt.DaysPrior, 0, 0, 0, 0, time.Local).Add(d), true
 }
 
 // reminderSep separates the parts of the IDs of reminders:

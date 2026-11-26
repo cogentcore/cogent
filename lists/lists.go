@@ -720,11 +720,21 @@ func (ls *Lists) Rename(l *List) {
 	d.RunDialog(ls)
 }
 
-// MakeToolbar makes the toolbar of the app, which has the tools for the
-// lists, the items of the current list, the list types, and the syncing,
-// or in the mobile layout only those that are not for the items, which
-// are in the toolbar of the window of the items (see [Lists.openItems]).
+// MakeToolbar makes the toolbar of the app, which has a settings button
+// on desktop platforms (not in the mobile layout), and the tools for the lists, the items of the
+// current list, the list types, and the syncing, or in the mobile layout
+// only those that are not for the items, which are in the toolbar of the
+// window of the items (see [Lists.openItems]).
 func (ls *Lists) MakeToolbar(p *tree.Plan) {
+	if !ls.Mobile && !core.TheApp.Platform().IsMobile() { // in the app menu on phones and the web
+		tree.Add(p, func(w *core.Button) {
+			w.SetIcon(icons.Settings).
+				SetTooltip("Settings: reminders, syncing with GitHub, and the appearance of the app")
+			w.OnClick(func(e events.Event) {
+				core.SettingsWindow()
+			})
+		})
+	}
 	ls.makeListTools(p)
 	tree.Add(p, func(w *core.Separator) {})
 	if !ls.Mobile {

@@ -26,13 +26,13 @@ func TestFieldFlags(t *testing.T) {
 
 	// the reminder times changed in ours, and the Detail flag in theirs
 	base := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
-	ours := marshal([]*ListType{{Name: todoType, Reminders: []ReminderTime{{Days: 2, Time: "8:00"}}, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
+	ours := marshal([]*ListType{{Name: todoType, Reminders: []ReminderTime{{DaysPrior: 2, Time: "8:00"}}, Fields: []*Field{{Name: "Task"}, {Name: "Notes"}}}})
 	theirs := marshal([]*ListType{{Name: todoType, Fields: []*Field{{Name: "Task"}, {Name: "Notes", Flags: detail}}}})
 	merged := mergeFiles(map[string][]byte{typesFile: base}, map[string][]byte{typesFile: ours}, map[string][]byte{typesFile: theirs}, false)
 	var types []*ListType
 	require.NoError(t, json.Unmarshal(merged[typesFile], &types))
 	require.Len(t, types, 1)
-	assert.Equal(t, []ReminderTime{{Days: 2, Time: "8:00"}}, types[0].Reminders)
+	assert.Equal(t, []ReminderTime{{DaysPrior: 2, Time: "8:00"}}, types[0].Reminders)
 	require.Len(t, types[0].Fields, 2)
 	assert.Equal(t, detail, types[0].Fields[1].Flags)
 }
