@@ -111,6 +111,23 @@ func TestLabelChooser(t *testing.T) {
 			}
 		}
 		require.Len(t, chs, 3, "of the two emails and the phone (an address opens in its own form)")
+		var addr *core.FormButton
+		tips := map[string]string{}
+		for w := range br.editor.AllWidgets() {
+			if fb, ok := w.(*core.FormButton); ok {
+				addr = fb
+			}
+			for _, f := range []string{"Emails", "Phones", "Addresses"} {
+				if strings.HasPrefix(w.AsTree().Name, "value-"+f+"-") {
+					tips[f] = w.AsWidget().Tooltip
+				}
+			}
+		}
+		require.NotNil(t, addr)
+		assert.Equal(t, "1 Main St", addr.Text, "the first line of the address")
+		for _, f := range []string{"Emails", "Phones", "Addresses"} {
+			assert.Contains(t, tips[f], "Open in dialog", f)
+		}
 		ch := chs[0]
 		assert.True(t, ch.Editable)
 		var texts []string

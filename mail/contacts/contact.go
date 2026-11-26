@@ -16,13 +16,15 @@ import (
 	"sync"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/styles"
 	"github.com/emersion/go-vcard"
 )
 
 // Contact is a person or organization, as a vCard, with the fields that
 // are edited, which are set from the card and back to it when it is
-// saved; its other fields, as a photo, are kept as they are.
-type Contact struct {
+// saved; its other fields, as a photo, are kept as they are. Its documented
+// fields are the tooltips of its editor.
+type Contact struct { //types:add -setters=false
 
 	// Name is the full name, as shown.
 	Name string
@@ -33,13 +35,16 @@ type Contact struct {
 	// Title is the job title.
 	Title string
 
-	// Emails are the email addresses.
+	// Emails are the email addresses. Use Open in dialog (in the context
+	// menu of an item) to change the order of the items.
 	Emails []Labeled `display:"inline"`
 
-	// Phones are the phone numbers.
+	// Phones are the phone numbers. Use Open in dialog (in the context
+	// menu of an item) to change the order of the items.
 	Phones []Labeled `display:"inline"`
 
-	// Addresses are the postal addresses.
+	// Addresses are the postal addresses. Use Open in dialog (in the
+	// context menu of an item) to change the order of the items.
 	Addresses []PostalAddress `display:"inline"`
 
 	// Birthday is the date of birth, as YYYY-MM-DD (or --MM-DD
@@ -67,17 +72,33 @@ type Labeled struct {
 	Label Label
 
 	// Value is the value, as the email address.
-	Value string
+	Value string `width:"30"`
 }
 
 // PostalAddress is a postal address, with a label, as home or work.
+// It is shown by its first line (see [PostalAddress.Label]).
 type PostalAddress struct {
-	Label      Label
+	Type       Label `label:"Label"`
 	Street     string
 	City       string
 	Region     string
 	PostalCode string
 	Country    string
+}
+
+// Label returns the label of the address, as shown on the button that
+// opens it: its first line, or else its city and region, or country.
+func (a PostalAddress) Label() string {
+	if line, _, _ := strings.Cut(strings.TrimSpace(a.Street), "\n"); line != "" {
+		return strings.TrimSpace(line)
+	}
+	if s := strings.Join(nonEmpty(a.City, a.Region), ", "); s != "" {
+		return s
+	}
+	if a.Country != "" {
+		return a.Country
+	}
+	return "New address"
 }
 
 // UID returns the unique ID of the contact.
@@ -104,7 +125,7 @@ func fromCard(card vcard.Card) *Contact {
 	c.Emails = labeledValues(card, vcard.FieldEmail)
 	c.Phones = labeledValues(card, vcard.FieldTelephone)
 	for _, a := range card.Addresses() {
-		c.Addresses = append(c.Addresses, PostalAddress{Label: Label(label(a.Field)), Street: a.StreetAddress,
+		c.Addresses = append(c.Addresses, PostalAddress{Type: Label(label(a.Field)), Street: a.StreetAddress,
 			City: a.Locality, Region: a.Region, PostalCode: a.PostalCode, Country: a.Country})
 	}
 	c.Birthday = card.Value(vcard.FieldBirthday)
@@ -145,10 +166,10 @@ func (c *Contact) toCard() vcard.Card {
 	setLabeled(card, vcard.FieldTelephone, c.Phones)
 	delete(card, vcard.FieldAddress)
 	for _, a := range c.Addresses {
-		if a == (PostalAddress{Label: a.Label}) {
+		if a == (PostalAddress{Type: a.Type}) {
 			continue // empty
 		}
-		card.AddAddress(&vcard.Address{Field: labelField(string(a.Label)), StreetAddress: a.Street,
+		card.AddAddress(&vcard.Address{Field: labelField(string(a.Type)), StreetAddress: a.Street,
 			Locality: a.City, Region: a.Region, PostalCode: a.PostalCode, Country: a.Country})
 	}
 	setValue(card, vcard.FieldBirthday, c.Birthday)
@@ -246,6 +267,10 @@ type Label string
 
 func (l Label) Widget() core.Value {
 	ch := core.NewChooser().SetEditable(true).SetAllowNew(true)
+	ch.Styler(func(s *styles.Style) {
+		s.Min.X.Ch(13) // as labels are short, all the same width
+		s.Max.X.Ch(13)
+	})
 	for _, lb := range Labels() {
 		ch.Items = append(ch.Items, core.ChooserItem{Value: Label(lb), Text: lb})
 	}
@@ -283,7 +308,7 @@ func Labels() []string {
 				add(v.Label)
 			}
 			for _, a := range c.Addresses {
-				add(a.Label)
+				add(a.Type)
 			}
 		}
 	}

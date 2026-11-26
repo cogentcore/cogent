@@ -42,6 +42,9 @@ func TestStore(t *testing.T) {
 	assert.Equal(t, []Labeled{{"cell", "+1 530 555 0100"}}, yuko.Phones)
 	require.Len(t, yuko.Addresses, 1)
 	assert.Equal(t, PostalAddress{"home", "1 Main St", "Davis", "CA", "95616", "USA"}, yuko.Addresses[0])
+	assert.Equal(t, "1 Main St", yuko.Addresses[0].Label(), "its first line")
+	assert.Equal(t, "Davis, CA", PostalAddress{Street: " \n", City: "Davis", Region: "CA"}.Label())
+	assert.Equal(t, "Apt 2", PostalAddress{Street: "Apt 2\n1 Main St"}.Label())
 	assert.Equal(t, "1968-02-03", yuko.Birthday)
 
 	// reloaded from the files, one per contact
