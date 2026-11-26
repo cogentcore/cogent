@@ -15,5 +15,6 @@ import (
 // tokens of signing in.
 func TestMain(m *testing.M) {
 	keyring.MockInit()
+	syncUpdateInterval = 0 // updated right away, for checking the lists after syncs
 	os.Exit(m.Run())
 }

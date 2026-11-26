@@ -67,6 +67,10 @@ type SettingsData struct { //types:add
 	// subfolders is open in the tree of mailboxes, by [mailboxKey], for
 	// those that have been opened or closed.
 	OpenMailboxes map[string]bool `display:"-"`
+
+	// ShownAccount and ShownMailbox are the account and mailbox shown
+	// last, which are shown when the app starts again.
+	ShownAccount, ShownMailbox string `display:"-"`
 }
 
 // Defaults sets the default settings: the list of messages groups them
@@ -104,6 +108,10 @@ const (
 	// ViewLabels shows the other labels of the messages, in a column,
 	// or after the subject in the compact view.
 	ViewLabels
+
+	// ViewAttachments shows the number of attachments of the messages, in
+	// a column, or after the subject in the compact view, empty for none.
+	ViewAttachments
 )
 
 // AccountName is the email address of one of the [SettingsData.Accounts],

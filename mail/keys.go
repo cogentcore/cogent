@@ -69,41 +69,71 @@ type shortcut struct {
 
 	// message is whether the action needs a message being read.
 	message bool
+
+	// keyFuns are the standard key functions of the shortcut, whose
+	// chords in the key map of the user are its chords, as Delete
+	// (Control+D in the Emacs key map) and Backspace for deleting. The
+	// first one is shown on the buttons, if it has no chords.
+	keyFuns []keymap.Functions
 }
 
 // shortcuts are the keyboard shortcuts of the actions of the main window,
 // which only apply there, not in the compose windows (where Control+O
-// opens a line), so they are not in the key maps.
+// opens a line), so they are not in the key maps. Those with standard key
+// functions use the chords of the key map of the user; the others, which
+// have none, have their own chords.
 var shortcuts = []shortcut{
-	{"Compose", []key.Chord{"Command+N"}, (*App).Compose, false},
-	{"FocusSearch", []key.Chord{"Command+F"}, (*App).FocusSearch, false},
-	{"Reply", []key.Chord{"Command+R"}, (*App).Reply, true},
-	{"ReplyAll", []key.Chord{"Command+Shift+R"}, (*App).ReplyAll, true},
-	{"Forward", []key.Chord{"Command+Shift+F"}, (*App).Forward, true},
-	{"File", []key.Chord{"Control+O"}, (*App).File, true},
-	{"Tag", []key.Chord{"Control+T"}, (*App).Tag, true},
-	{"Delete", []key.Chord{"Backspace", "Delete"}, (*App).Delete, true},
-	{"MarkAsUnread", []key.Chord{"Command+Shift+U"}, (*App).MarkAsUnread, true},
+	{"Compose", nil, (*App).Compose, false, []keymap.Functions{keymap.New}},
+	{"FocusSearch", nil, (*App).FocusSearch, false, []keymap.Functions{keymap.Find}},
+	{"Reply", []key.Chord{"Command+R"}, (*App).Reply, true, nil},
+	{"ReplyAll", []key.Chord{"Command+Shift+R"}, (*App).ReplyAll, true, nil},
+	{"Forward", []key.Chord{"Command+Shift+F"}, (*App).Forward, true, nil},
+	{"File", []key.Chord{"Control+O"}, (*App).File, true, nil},
+	{"Tag", []key.Chord{"Control+T"}, (*App).Tag, true, nil},
+	{"Delete", nil, (*App).Delete, true, []keymap.Functions{keymap.Delete, keymap.Backspace}},
+	{"MarkAsUnread", []key.Chord{"Command+Shift+U"}, (*App).MarkAsUnread, true, nil},
+}
+
+// textKey returns whether the shortcut is a key for editing text, as
+// Backspace, which is not a shortcut while typing in a text field.
+func (sc shortcut) textKey() bool {
+	for _, kf := range sc.keyFuns {
+		if kf == keymap.Delete || kf == keymap.Backspace {
+			return true
+		}
+	}
+	return len(sc.chords) > 0 && !strings.Contains(string(sc.chords[0]), "Command")
 }
 
 // shortcutOf returns the chord of the shortcut of the action with the
 // given name, as shown on its buttons, or "" if it has none.
 func shortcutOf(name string) key.Chord {
 	for _, sc := range shortcuts {
-		if sc.name == name {
+		if sc.name != name {
+			continue
+		}
+		if len(sc.chords) > 0 {
 			return sc.chords[0]
+		}
+		if len(sc.keyFuns) > 0 {
+			return sc.keyFuns[0].Chord()
 		}
 	}
 	return ""
 }
 
-// shortcutFor returns the shortcut with the given chord, if any.
+// shortcutFor returns the shortcut with the given chord, or whose key
+// functions it is in the key map, if any.
 func shortcutFor(kc key.Chord) (shortcut, bool) {
+	kf := keymap.Of(kc)
 	for _, sc := range shortcuts {
 		for _, c := range sc.chords {
 			if c.PlatformChord() == kc {
 				return sc, true
 			}
+		}
+		if slices.Contains(sc.keyFuns, kf) {
+			return sc, true
 		}
 	}
 	return shortcut{}, false
@@ -145,7 +175,7 @@ func (a *App) mailKeys(e events.Event) {
 		if sc.message && a.readMessage == nil {
 			return
 		}
-		if a.typing() && !strings.Contains(string(sc.chords[0]), "Command") {
+		if a.typing() && sc.textKey() {
 			return // a key for the text, such as Backspace
 		}
 		e.SetHandled()

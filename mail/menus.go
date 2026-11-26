@@ -386,29 +386,46 @@ func (a *App) fileTo(from, target string) {
 func (a *App) fileToAccount(from string, target mailboxID) {
 	email := a.currentEmail
 	msgs := a.readMessages()
+	if a.imapMu[target.email] == nil || a.imapClient[target.email] == nil {
+		core.ErrorSnackbar(a, fmt.Errorf("%s is not connected yet", target.email))
+		return
+	}
+	labelsFor := func(cm *CacheMessage) []string {
+		var res []string
+		for _, l := range cm.Labels {
+			if l.Name != from {
+				res = append(res, l.Name)
+			}
+		}
+		return res
+	}
+	// out of the mailbox right away, while they are copied, which takes a while
+	targets := map[*CacheMessage][]string{}
+	for _, cm := range msgs {
+		targets[cm] = labelsFor(cm)
+	}
 	next := a.selectNext()
+	a.setPending(targets)
+	a.Update()
+	next()
 	go func() {
 		mu, c := a.imapMu[target.email], a.imapClient[target.email]
-		if mu == nil || c == nil {
-			core.ErrorSnackbar(a, fmt.Errorf("%s is not connected yet", target.email))
-			return
+		var err error
+		if c == nil {
+			err = fmt.Errorf("%s is not connected", target.email)
+		} else {
+			mu.Lock()
+			err = a.appendMessages(c, email, msgs, target.label)
+			mu.Unlock()
 		}
-		mu.Lock()
-		err := a.appendMessages(c, email, msgs, target.label)
-		mu.Unlock()
+		a.AsyncLock()
+		defer a.AsyncUnlock()
 		if err != nil {
+			a.clearPending(targets) // back in the mailbox
 			core.ErrorSnackbar(a, err, "Error filing in "+target.email)
 			return
 		}
-		a.setLabelsOn(email, msgs, func(cm *CacheMessage) []string {
-			var res []string
-			for _, l := range cm.Labels {
-				if l.Name != from {
-					res = append(res, l.Name)
-				}
-			}
-			return res
-		}, next)
+		a.setLabelsOn(email, msgs, labelsFor)
 		a.SyncNow() // to get them in the other account
 	}()
 }

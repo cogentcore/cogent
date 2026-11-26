@@ -6,7 +6,6 @@ package mail
 
 import (
 	"context"
-	"encoding/base32"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -334,10 +333,4 @@ func (a *App) RemoveAccount(email string) {
 			cerrors.Log(os.RemoveAll(f))
 		}
 	}()
-}
-
-// filenameBase32 converts the given string to a filename-safe base32 version,
-// as the files of the accounts were named before (see [App.migrateFiles]).
-func filenameBase32(s string) string {
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(s))
 }

@@ -38,6 +38,9 @@ type searchDoc struct {
 	// Attachments are the names of the files of the attachments.
 	Attachments string
 
+	// attachments is the number of attachments, which is not indexed.
+	attachments int
+
 	// Date is the date of the message.
 	Date time.Time
 }
@@ -266,6 +269,7 @@ func readSearchDoc(filename string) (*searchDoc, error) {
 				htmlText += htmlToText(string(b)) + "\n"
 			}
 		case *mail.AttachmentHeader:
+			doc.attachments++ // as each is shown when reading it
 			if name, err := h.Filename(); err == nil && name != "" {
 				atts = append(atts, name)
 			}

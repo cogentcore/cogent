@@ -54,14 +54,21 @@ func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error, then 
 func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
+	done := func() { // with the lock of the window
+		for _, f := range then {
+			f()
+		}
+	}
 	msgs = slices.DeleteFunc(slices.Clone(msgs), (*CacheMessage).isLocal) // not on the server
 	if len(msgs) == 0 {
+		done()
 		return
 	}
 	notConnected := fmt.Errorf("%s is not connected: try again once it is", email)
 	mu := a.imapMu[email]
 	if mu == nil || a.imapClient[email] == nil {
 		core.ErrorSnackbar(a, notConnected, "Offline")
+		done()
 		return
 	}
 	go func() {
@@ -71,6 +78,7 @@ func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.
 			mu.Unlock()
 			a.AsyncLock()
 			core.ErrorSnackbar(a, notConnected, "Offline")
+			done()
 			a.AsyncUnlock()
 			return
 		}
@@ -178,10 +186,20 @@ func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string, then ...func(
 }
 
 // setLabelsOn is [App.setLabels] for the given messages of the given account.
+// The messages are shown with their new labels right away (see
+// [App.pendingLabels]), as out of the mailbox being shown when they are
+// filed out of it, and the then functions are called then, while the
+// server changes them, which takes a while; if that fails, they are
+// shown with their labels again.
 func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm *CacheMessage) []string, then ...func()) {
 	targets := map[*CacheMessage][]string{}
 	for _, cm := range msgs {
 		targets[cm] = labelsFor(cm)
+	}
+	a.setPending(targets)
+	a.Update()
+	for _, f := range then {
+		f()
 	}
 	a.actionOn(email, msgs, func(c *imapclient.Client, cm *CacheMessage) error {
 		newLabels := targets[cm]
@@ -242,7 +260,28 @@ func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm 
 		cm.Labels = resultantLabels
 		a.AsyncUnlock()
 		return nil
-	}, then...)
+	}, func() { a.clearPending(targets) })
+}
+
+// setPending sets the labels that the given messages are shown with,
+// while the server changes them (see [App.pendingLabels]).
+func (a *App) setPending(targets map[*CacheMessage][]string) {
+	if a.pendingLabels == nil {
+		a.pendingLabels = map[*CacheMessage][]string{}
+	}
+	for cm, labels := range targets {
+		a.pendingLabels[cm] = labels
+	}
+}
+
+// clearPending stops showing the given messages with their pending labels,
+// once the server has changed them (or failed to), updating the app.
+// It must be called with the lock of the window.
+func (a *App) clearPending(targets map[*CacheMessage][]string) {
+	for cm := range targets {
+		delete(a.pendingLabels, cm)
+	}
+	a.Update()
 }
 
 // Delete moves the current message to the trash.
@@ -293,6 +332,14 @@ func (a *App) Forward() { //types:add
 // used by other higher-level functions. forward is whether
 // this is actually a forward instead of a reply.
 func (a *App) reply(title string, forward bool) {
+	a.replyTo(a.readMessage, title, forward)
+	a.compose(title)
+}
+
+// replyTo sets [App.composeMessage], whose recipients are set, to a reply
+// to the given message, or a forward of it, with its subject, references,
+// and quoted text.
+func (a *App) replyTo(cm *CacheMessage, title string, forward bool) {
 	// If we have more than one receiver, then we should not be one of them.
 	if len(a.composeMessage.To) > 1 {
 		a.composeMessage.To = slices.DeleteFunc(a.composeMessage.To, func(ma *mail.Address) bool {
@@ -303,7 +350,7 @@ func (a *App) reply(title string, forward bool) {
 			a.composeMessage.To = []*mail.Address{{Address: a.currentEmail}}
 		}
 	}
-	a.composeMessage.Subject = a.readMessage.Subject
+	a.composeMessage.Subject = cm.Subject
 	prefix := "Re: "
 	if forward {
 		prefix = "Fwd: "
@@ -311,18 +358,21 @@ func (a *App) reply(title string, forward bool) {
 	if !strings.HasPrefix(a.composeMessage.Subject, prefix) {
 		a.composeMessage.Subject = prefix + a.composeMessage.Subject
 	}
-	a.composeMessage.inReplyTo = a.readMessage.MessageID
-	a.composeMessage.references = append(a.readMessage.parsed.references, a.readMessage.MessageID)
-	from := IMAPToMailAddresses(a.readMessage.From)[0].String()
-	date := a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
+	a.composeMessage.inReplyTo = cm.MessageID
+	a.composeMessage.references = append(slices.Clone(cm.parsed.references), cm.MessageID)
+	from := ""
+	if len(cm.From) > 0 {
+		from = IMAPToMailAddresses(cm.From)[0].String()
+	}
+	date := cm.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
 	if forward {
 		a.composeMessage.body = "\n\n> Begin forwarded message:\n>"
 		a.composeMessage.body += "\n> From: " + from
 		// Need 2 spaces to create a newline in markdown.
-		a.composeMessage.body += "  \n> Subject: " + a.readMessage.Subject
+		a.composeMessage.body += "  \n> Subject: " + cm.Subject
 		a.composeMessage.body += "  \n> Date: " + date
-		to := make([]string, len(a.readMessage.To))
-		for i, addr := range IMAPToMailAddresses(a.readMessage.To) {
+		to := make([]string, len(cm.To))
+		for i, addr := range IMAPToMailAddresses(cm.To) {
 			to[i] = addr.String()
 		}
 		a.composeMessage.body += "  \n> To: " + strings.Join(to, ", ")
@@ -330,8 +380,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
 	}
 	a.composeMessage.body += "\n>\n> "
-	a.composeMessage.body += strings.ReplaceAll(a.readMessage.parsed.plain, "\n", "\n> ")
-	a.compose(title)
+	a.composeMessage.body += strings.ReplaceAll(cm.parsed.plain, "\n", "\n> ")
 }
 
 // MarkAsRead marks the current message as read.

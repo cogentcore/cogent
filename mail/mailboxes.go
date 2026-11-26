@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
@@ -182,6 +183,12 @@ func withCount(text string, n int) string {
 
 // countUnread counts the unread messages in each mailbox of each account.
 func (a *App) countUnread() {
+	start := time.Now()
+	defer func() {
+		if d := time.Since(start); d > 50*time.Millisecond {
+			slog.Debug("mail: counting the unread messages took a while", "took", d)
+		}
+	}()
 	a.unread = map[string]map[string]int{}
 	for email, mp := range a.cache {
 		counts := map[string]int{}

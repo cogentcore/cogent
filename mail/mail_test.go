@@ -140,6 +140,7 @@ func newTestApp(t *testing.T, c *imapclient.Client) (*core.Body, *App) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
 	Settings.Accounts = []string{testEmail}
+	Settings.ShownAccount, Settings.ShownMailbox = "", "" // not that of another test
 	t.Cleanup(core.TrackWindows())
 	b := core.NewBody()
 	a := NewApp(b)
@@ -310,7 +311,6 @@ func TestFriendlyLabels(t *testing.T) {
 	assert.Equal(t, "Inbox", friendlyLabelName("INBOX"))
 	assert.Equal(t, "Sent", friendlyLabelName("[Gmail]/Sent Mail"))
 	assert.Equal(t, "Work/Project", friendlyLabelName("Work/Project"))
-	assert.Equal(t, "MFRGG", filenameBase32("abc"))
 }
 
 // smtpBackend is an SMTP server backend that keeps the messages sent.
@@ -890,7 +890,7 @@ func TestShortcuts(t *testing.T) {
 			}
 		}
 		assert.Equal(t, []string{"Reply=Command+R", "Reply all=Command+Shift+R", "Forward=Command+Shift+F",
-			"File=Control+O", "Tag=Control+T", "Delete=Backspace", "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
+			"File=Control+O", "Tag=Control+T", "Delete=" + string(keymap.Delete.Chord()), "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
 	}))
 }
 
@@ -1009,13 +1009,14 @@ func TestFileToAccount(t *testing.T) {
 // messages, which are not marked as read, and filing all of them at once.
 func TestMultiSelect(t *testing.T) {
 	b, a := newTestApp(t, newIMAP(t))
-	var hello, report *CacheMessage
+	var hello, reply, report *CacheMessage
 	core.RenderImage(b, func() {
 		require.NoError(t, a.cacheMessages())
 		hello = messageBySubject(a, "Hello")
 		report = messageBySubject(a, "Report")
 	}, core.Locked(b, func() {
 		a.showMailbox(testEmail, "Work")
+		reply = hello.replies[0] // the replies are set by updates of the list
 		require.Len(t, a.listRows, 2)
 		a.list.SelectIndexEvent(0, events.SelectOne)
 		a.list.SelectIndexEvent(1, events.ExtendOne)
@@ -1028,16 +1029,14 @@ func TestMultiSelect(t *testing.T) {
 		a.fileTo("Work", "[Gmail]/Trash")
 	}), func() {
 		require.Eventually(t, func() bool {
-			a.imapMu[testEmail].Lock()
-			defer a.imapMu[testEmail].Unlock()
-			for _, cm := range []*CacheMessage{hello, hello.replies[0], report} {
+			a.AsyncLock() // as the labels are set, and the list updated
+			defer a.AsyncUnlock()
+			for _, cm := range []*CacheMessage{hello, reply, report} {
 				if slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == "Work" }) {
 					return false
 				}
 			}
-			a.AsyncLock() // and the list updated after
-			defer a.AsyncUnlock()
-			return len(a.listRows) == 0
+			return len(a.listRows) == 0 && len(a.pendingLabels) == 0
 		}, 5*time.Second, 10*time.Millisecond, "all filed out of Work")
 	}, core.Locked(b, func() {
 		assert.Empty(t, a.listRows)
@@ -1074,7 +1073,7 @@ func TestViewMenu(t *testing.T) {
 		for _, it := range sw.Items {
 			names = append(names, it.Text)
 		}
-		assert.Equal(t, []string{"Conversations", "Compact", "Labels"}, names)
+		assert.Equal(t, []string{"Conversations", "Compact", "Labels", "Attachments"}, names)
 		sw.Update() // makes the switches
 		var compact *core.Switch
 		for w := range sw.AllWidgets() {
@@ -1468,6 +1467,7 @@ func newTestingApp(t *testing.T) (*core.Body, *App) {
 	oldFile, oldAccounts := Settings.File, Settings.Accounts
 	t.Cleanup(func() { Settings.File, Settings.Accounts = oldFile, oldAccounts })
 	t.Cleanup(core.TrackWindows())
+	Settings.ShownAccount, Settings.ShownMailbox = "", "" // not that of another test
 	b := core.NewBody()
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))

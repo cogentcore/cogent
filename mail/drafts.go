@@ -92,17 +92,22 @@ func (a *App) draftsLabel(email string) string {
 
 // mailboxLabels returns the labels of the mailboxes of the given account,
 // with the local ones of its drafts and outbox, if they are not on the
-// server, as the outbox.
+// server, as the outbox. It is called for each mailbox of the tree of
+// mailboxes, so it only looks at the drafts, not all of the messages.
 func (a *App) mailboxLabels(email string) []string {
 	labels := a.labels[email]
-	for _, cm := range a.cache[email] {
-		if !cm.isLocal() {
+	a.draftsMu.Lock()
+	defer a.draftsMu.Unlock()
+	for _, d := range a.drafts {
+		if d.Account != email {
 			continue
 		}
-		for _, l := range cm.Labels {
-			if !slices.Contains(labels, l.Name) {
-				labels = append(slices.Clone(labels), l.Name)
-			}
+		label := a.draftsLabel(email)
+		if d.Queued {
+			label = outboxLabel
+		}
+		if !slices.Contains(labels, label) {
+			labels = append(slices.Clone(labels), label)
 		}
 	}
 	return labels
@@ -170,6 +175,12 @@ func (a *App) setLocal(d *draft) {
 		Labels:   []Label{{Name: label}},
 		key:      localPrefix + d.ID,
 	}
+	for _, at := range d.Attachments {
+		if at != "" {
+			cm.Attachments++
+		}
+	}
+	cm.AttachmentsCounted = true
 	if d.InReplyTo != "" {
 		cm.InReplyTo = []string{d.InReplyTo}
 		for _, o := range mp { // in its conversation

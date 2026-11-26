@@ -44,6 +44,7 @@ func (at *AddressTextField) WidgetValue() any { return &at.Address }
 
 func (at *AddressTextField) Init() {
 	at.TextField.Init()
+	at.SetPasteFilter(linkAddress) // as a mailto: link copied from a page
 	at.Updater(func() {
 		if at.IsReadOnly() && at.Address.Name != "" && at.Address.Name != at.Address.Address {
 			at.SetText(fmt.Sprintf("%s (%s)", at.Address.Name, at.Address.Address))
@@ -146,10 +147,16 @@ func (sb *SignatureButton) WidgetValue() any { return &sb.Signature }
 func (sb *SignatureButton) Init() {
 	sb.Button.Init()
 	sb.SetType(core.ButtonTonal).SetIcon(icons.Edit)
+	sb.Styler(func(s *styles.Style) {
+		s.Max.X.Ch(60) // not as wide as a long first line
+	})
 	sb.Updater(func() {
 		first, _, _ := strings.Cut(strings.TrimSpace(string(*sb.Signature)), "\n")
 		if first == "" {
 			first = "(empty)"
+		}
+		if r := []rune(first); len(r) > 50 {
+			first = string(r[:50]) + "…"
 		}
 		sb.SetText(first)
 	})
@@ -230,6 +237,9 @@ func (sv *MessageSummaryView) Init() {
 			text := sv.Summary.Subject
 			if sv.Summary.Labels != "" {
 				text += "  ·  " + sv.Summary.Labels
+			}
+			if sv.Summary.Attachments != "" {
+				text += "  ·  " + sv.Summary.Attachments
 			}
 			w.SetText(text)
 		})

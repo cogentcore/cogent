@@ -70,7 +70,6 @@ func (a *App) openAccount(email string) error {
 // openLocal opens the store and search index of the given account,
 // loading its messages into the cache.
 func (a *App) openLocal(email string) error {
-	a.migrateFiles(email) // before any new files are made
 	if err := os.MkdirAll(a.messagesDir(email), 0o700); err != nil {
 		return err
 	}
@@ -91,13 +90,6 @@ func (a *App) openLocal(email string) error {
 	}
 	for k, cm := range cached {
 		cm.key = k
-	}
-	if changed := a.shardMessages(email, cached); len(changed) > 0 {
-		if err := st.put(changed); err != nil {
-			st.Close()
-			si.Close()
-			return err
-		}
 	}
 	info, err := st.info()
 	if err != nil {
@@ -205,10 +197,11 @@ func (a *App) syncAccount(email string) error {
 var indexChecksPerSync = 2000
 
 // indexMissing adds the downloaded messages of the given account that are
-// not in its search index to it, as those that could not be read when
-// they were downloaded (such as those in windows-1252 before it was
-// supported), checking up to the given number of messages that have not
-// been checked yet in this run of the app.
+// not in its search index to it, as those that could not be read when they
+// were downloaded (such as those in windows-1252 before it was supported),
+// and counts the attachments of those downloaded before they were counted,
+// checking up to the given number of messages that have not been checked
+// yet in this run of the app.
 func (a *App) indexMissing(email string, n int) error {
 	si := a.searches[email]
 	if si == nil {
@@ -231,13 +224,18 @@ func (a *App) indexMissing(email string, n int) error {
 	}
 	a.AsyncUnlock()
 	if len(check) > 0 {
-		a.setStatus(email+": checking the search index", -1)
+		a.setStatus(email+": checking the downloaded messages", -1)
 	}
 	dir := a.messagesDir(email)
 	docs := map[string]*searchDoc{}
+	counted := map[string]*CacheMessage{}
 	for _, cm := range check {
 		checked[cm.key] = true // only used by the sync, after the above
-		if si.has(cm.key) {
+		a.AsyncLock()
+		count := !cm.AttachmentsCounted
+		a.AsyncUnlock()
+		index := !si.has(cm.key)
+		if !index && !count {
 			continue
 		}
 		doc, err := readSearchDoc(filepath.Join(dir, cm.Filename))
@@ -245,7 +243,21 @@ func (a *App) indexMissing(email string, n int) error {
 			slog.Error("indexing message", "file", cm.Filename, "err", err)
 			continue
 		}
-		docs[cm.key] = doc
+		if index {
+			docs[cm.key] = doc
+		}
+		if count { // downloaded before they were counted
+			a.AsyncLock()
+			cm.Attachments, cm.AttachmentsCounted = doc.attachments, true
+			a.AsyncUnlock()
+			counted[cm.key] = cm
+		}
+	}
+	if len(counted) > 0 {
+		if err := a.stores[email].put(counted); err != nil {
+			return err
+		}
+		a.syncUpdate()
 	}
 	return si.add(docs)
 }
@@ -317,7 +329,7 @@ func (a *App) syncMailbox(email, mailbox string) error {
 		opts.Envelope = true
 		opts.RFC822Size = true
 		var uids imap.UIDSet
-		uids.AddRange(start, 0) // start:*
+		uids.AddRange(start, 0)                                    // start:*
 		total := int(sd.NumMessages) - a.countUIDs(email, mailbox) // about
 		if err := a.fetchMessages(c, email, mailbox, uids, &opts, start, total); err != nil {
 			return fmt.Errorf("fetching new messages: %w", err)
@@ -392,9 +404,7 @@ func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids im
 		}
 		err := a.stores[email].put(batch)
 		batch = map[string]*CacheMessage{}
-		a.AsyncLock()
-		a.Update()
-		a.AsyncUnlock()
+		a.syncUpdate()
 		return err
 	}
 	for {
@@ -510,9 +520,7 @@ func (a *App) fetchChanges(c *imapclient.Client, email, mailbox string, uids ima
 	if len(changed) == 0 {
 		return nil
 	}
-	a.AsyncLock()
-	a.Update()
-	a.AsyncUnlock()
+	a.syncUpdate()
 	return a.stores[email].put(changed)
 }
 
@@ -550,10 +558,10 @@ func (a *App) removeMailboxUIDs(email, mailbox string, keep []imap.UID) error {
 		}
 		changed[k] = cm
 	}
-	if len(gone) > 0 || len(changed) > 0 {
-		a.Update()
-	}
 	a.AsyncUnlock()
+	if len(gone) > 0 || len(changed) > 0 {
+		a.syncUpdate()
+	}
 	for _, f := range files {
 		os.Remove(f)
 	}
@@ -699,6 +707,7 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 				mu.Unlock()
 				return err
 			}
+			doc, docErr := readSearchDoc(fn)
 			a.AsyncLock()
 			if cm.Filename != "" { // downloaded at the same time, as when read
 				a.AsyncUnlock()
@@ -706,16 +715,19 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 				continue
 			}
 			cm.Filename = filename
+			if docErr == nil {
+				cm.Attachments, cm.AttachmentsCounted = doc.attachments, true
+			}
 			a.AsyncUnlock()
 			k := cm.key
 			saved[k] = cm
 			if progress != nil {
 				progress()
 			}
-			if doc, err := readSearchDoc(fn); err == nil {
+			if docErr == nil {
 				docs[k] = doc
 			} else {
-				slog.Error("indexing message", "file", filename, "err", err)
+				slog.Error("indexing message", "file", filename, "err", docErr)
 			}
 		}
 		err = cmd.Close()
@@ -730,9 +742,7 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 			return err
 		}
 	}
-	a.AsyncLock()
-	a.Update()
-	a.AsyncUnlock()
+	a.syncUpdate()
 	return nil
 }
 

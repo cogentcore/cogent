@@ -6,6 +6,7 @@ package mail
 
 import (
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"path/filepath"
@@ -94,26 +95,36 @@ func (dmf *DisplayMessageFrame) Init() {
 }
 
 // messageContext returns a new context for reading the HTML (or markdown)
-// of a message, with a bar on the left of quoted text.
-func messageContext() *htmlcore.Context {
+// of the given message, with a bar on the left of quoted text, in which a
+// mailto: link opens a reply to the message to its addresses.
+func messageContext(cm *CacheMessage) *htmlcore.Context {
 	bar := colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base))
 	text := colors.AsHex(colors.ToUniform(colors.Scheme.OnSurfaceVariant))
 	return htmlcore.NewContext().SetStyle(fmt.Sprintf(
-		"blockquote { margin: 0.5em 0 0.5em 0.25em; padding-left: 0.75em; border-left: 3px solid %s; color: %s; }", bar, text))
+		"blockquote { margin: 0.5em 0 0.5em 0.25em; padding-left: 0.75em; border-left: 3px solid %s; color: %s; }", bar, text)).
+		SetOpenURL(func(u string, e events.Event) {
+			if isMailto(u) {
+				theApp.replyMailto(u, cm)
+				return
+			}
+			core.TheApp.OpenURL(u)
+		})
 }
 
 // headerDateFormat is the format of the date in the header of a message.
 const headerDateFormat = "Mon, Jan 2, 2006 at 3:04 PM"
 
-// addressList returns the given addresses as text, with their names.
-func addressList(as []imap.Address) string {
+// addressLinks returns the given addresses as HTML, each a mailto: link
+// with its name, if any, and address.
+func addressLinks(as []imap.Address) string {
 	var res []string
 	for _, a := range as {
-		if a.Name != "" && a.Name != a.Addr() {
-			res = append(res, fmt.Sprintf("%s <%s>", a.Name, a.Addr()))
-		} else {
-			res = append(res, a.Addr())
+		addr := a.Addr()
+		label := html.EscapeString(addr)
+		if a.Name != "" && a.Name != addr {
+			label = html.EscapeString(a.Name) + " &lt;" + label + "&gt;"
 		}
+		res = append(res, fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString("mailto:"+addr), label))
 	}
 	return strings.Join(res, ", ")
 }
@@ -153,24 +164,43 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 			})
 			value(p)
 		}
-		text := func(name, value string) {
-			if value == "" {
+		// htmlText adds a field with the given HTML, as of the message
+		// when it is updated, if it is not empty
+		htmlText := func(name string, value func(cm *CacheMessage) string) {
+			if value(cm) == "" {
 				return
 			}
 			field(name, func(p *tree.Plan) {
 				tree.AddAt(p, name, func(w *core.Text) {
-					w.Updater(func() { w.SetText(value) })
+					w.Styler(func(s *styles.Style) {
+						s.Grow.Set(1, 0) // wrapping in the width of the header
+					})
+					// a mailto: link of an address replies to the message
+					w.HandleTextClick(func(tl *rich.Hyperlink, e events.Event) {
+						if isMailto(tl.URL) {
+							theApp.replyMailto(tl.URL, dmf.Message)
+							return
+						}
+						core.TheApp.OpenURL(tl.URL)
+					})
+					w.Updater(func() { w.SetText(value(dmf.Message)) })
 				})
 			})
 		}
-		text("From", addressList(cm.From))
-		text("To", addressList(cm.To))
-		text("Cc", addressList(cm.Cc))
-		text("Subject", cm.Subject)
-		text("Date", cm.Date.Local().Format(headerDateFormat))
+		text := func(name string, value func(cm *CacheMessage) string) {
+			htmlText(name, func(cm *CacheMessage) string { return html.EscapeString(value(cm)) })
+		}
+		addresses := func(name string, as func(cm *CacheMessage) []imap.Address) {
+			htmlText(name, func(cm *CacheMessage) string { return addressLinks(as(cm)) })
+		}
+		addresses("From", func(cm *CacheMessage) []imap.Address { return cm.From })
+		addresses("To", func(cm *CacheMessage) []imap.Address { return cm.To })
+		addresses("Cc", func(cm *CacheMessage) []imap.Address { return cm.Cc })
+		text("Subject", func(cm *CacheMessage) string { return cm.Subject })
+		text("Date", func(cm *CacheMessage) string { return cm.Date.Local().Format(headerDateFormat) })
 		if cm.isLocal() {
-			text("Status", theApp.draftStatus(cm))
-			text("Bcc", addressList(cm.Bcc))
+			text("Status", func(cm *CacheMessage) string { return theApp.draftStatus(cm) })
+			addresses("Bcc", func(cm *CacheMessage) []imap.Address { return cm.Bcc })
 		}
 		if labels := otherLabels(cm); len(labels) > 0 {
 			field("Labels", func(p *tree.Plan) {
@@ -271,7 +301,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 					dmf.Message.parsed.plain += text
 				}
 			case "text/html":
-				ctx := messageContext()
+				ctx := messageContext(dmf.Message)
 				err := htmlcore.ReadHTML(ctx, w, p.Body)
 				if err != nil {
 					return err
@@ -294,7 +324,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML {
-		err := htmlcore.ReadMDString(messageContext(), w, dmf.Message.parsed.plain)
+		err := htmlcore.ReadMDString(messageContext(dmf.Message), w, dmf.Message.parsed.plain)
 		if err != nil {
 			return err
 		}

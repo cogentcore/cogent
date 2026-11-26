@@ -184,12 +184,30 @@ type App struct {
 	// (see [App.idle]).
 	idleStop map[string]context.CancelFunc
 
+	// syncUpdatePending is whether an update of the app for the changes
+	// from the sync is pending, under syncUpdateMu (see [App.syncUpdate]).
+	syncUpdatePending bool
+	syncUpdateMu      sync.Mutex
+
 	// status is the status of the syncing, shown below the mailboxes
 	// (see [App.setStatus]).
 	status syncStatus
 
 	// statusBar shows the status.
 	statusBar *core.Frame
+
+	// pendingLabels are the labels of the messages whose labels are being
+	// changed on the server, as when they are filed or deleted, which
+	// they are shown with until then, so that they leave the mailbox
+	// right away (see [App.setLabelsOn]). It is used with the lock of the
+	// window.
+	pendingLabels map[*CacheMessage][]string
+
+	// readPanel is the panel of the message being read, and toolbar is
+	// the toolbar of the app, which are updated on their own when the
+	// message being read changes (see [App.updateReading]).
+	readPanel *core.Frame
+	toolbar   *core.Toolbar
 
 	// indexChecked are the keys of the downloaded messages of each account
 	// checked to be in its search index in this run (see [App.indexMissing]).
@@ -232,6 +250,9 @@ func (a *App) Init() {
 	a.syncNow = make(chan struct{}, 1)
 	a.syncInterval = time.Minute
 	a.showLabel = "INBOX"
+	if slices.Contains(Settings.Accounts, Settings.ShownAccount) && Settings.ShownMailbox != "" {
+		a.currentEmail, a.showLabel = Settings.ShownAccount, Settings.ShownMailbox // as last shown
+	}
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
@@ -271,6 +292,7 @@ func (a *App) Init() {
 			w.Maker(a.makeListPanel)
 		})
 		tree.AddChild(w, func(w *core.Frame) {
+			a.readPanel = w
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
@@ -334,11 +356,16 @@ func (a *App) showMailbox(email, mailbox string) {
 		a.readMessage = nil
 	}
 	a.showLabel = mailbox
+	if Settings.ShownAccount != email || Settings.ShownMailbox != mailbox {
+		Settings.ShownAccount, Settings.ShownMailbox = email, mailbox
+		a.saveSettings() // shown when the app starts again
+	}
 	a.Update()
 }
 
 func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
+		a.toolbar, _ = w.Parent.(*core.Toolbar)
 		w.SetFunc(core.SettingsWindow).SetText("").SetIcon(icons.Settings)
 		w.SetTooltip("Settings")
 	})
@@ -365,8 +392,6 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 // first if needed, and keeps it in sync with the servers.
 func (a *App) GetMail() {
 	core.TheApp.AddQuitCleanFunc(a.closeStores)
-	// the cache of messages of before the store, which is no longer used
-	os.RemoveAll(filepath.Join(a.dataDir(), "caching"))
 	go func() {
 		a.openAllLocal() // shown before connecting, as when offline
 		if a.testServer == nil {

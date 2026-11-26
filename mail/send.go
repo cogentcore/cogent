@@ -46,6 +46,11 @@ type SendMessage struct {
 	// draft is its draft, once it is saved, as it is written.
 	draft *draft
 
+	// replyAll, if set, are the recipients to add for a reply to all,
+	// with the Reply all button of its compose window, as for a reply
+	// to the address of a mailto: link (see [App.replyMailto]).
+	replyAll *replyAll
+
 	// orig is the message that this is a copy of, with its contents at
 	// one time, for saving it (see [SendMessage.snapshot]), whose draft
 	// is the draft of this one.
@@ -194,6 +199,16 @@ func (a *App) compose(title string) *core.Body {
 		})
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
+		if sm.replyAll != nil { // a reply to a link, which can be to all
+			all := core.NewButton(bar).SetType(core.ButtonText).SetText("Reply all").SetIcon(icons.ReplyAll)
+			all.SetTooltip("Reply to all of the message, adding its sender and recipients")
+			all.OnClick(func(e events.Event) {
+				sm.addReplyAll()
+				form.Update()
+				change(e)
+				all.SetEnabled(false).Update()
+			})
+		}
 		core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).
 			OnClick(func(e events.Event) {
 				stopTimer()

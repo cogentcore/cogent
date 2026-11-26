@@ -8,9 +8,11 @@ import (
 	"cmp"
 	"fmt"
 	"image"
+	"log/slog"
 	"maps"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -46,6 +48,10 @@ type messageRow struct {
 	// (see [otherLabels]), an optional column.
 	Labels string `edit:"-"`
 
+	// Attachments is the number of attachments of the message, or of the
+	// messages of the conversation, an optional column, empty for none.
+	Attachments string `edit:"-"`
+
 	// Children are the messages of a conversation, in a conversation row.
 	Children []*messageRow `display:"-"`
 
@@ -68,6 +74,10 @@ type messageRow struct {
 // lines, for the compact list (see [MessageSummaryView]).
 type messageSummary struct {
 	From, Date, Subject, Labels string
+
+	// Attachments is the number of attachments, as text, if shown,
+	// or "" for none.
+	Attachments string
 
 	// Unread is whether the message or conversation is unread,
 	// which is shown in bold.
@@ -104,12 +114,27 @@ func friendlyLabels(labels []string) string {
 }
 
 // setSummary sets the Message summary of the row from its other fields.
-// The labels are only in it if they are shown.
-func (mr *messageRow) setSummary(date time.Time, labels bool) {
+// The labels and attachments are only in it if they are shown.
+func (mr *messageRow) setSummary(date time.Time, labels, attachments bool) {
 	mr.Message = messageSummary{From: mr.From, Date: compactDate(date), Subject: mr.Subject, Unread: !mr.isRead()}
 	if labels {
 		mr.Message.Labels = mr.Labels
 	}
+	if attachments && mr.Attachments != "" {
+		mr.Message.Attachments = mr.Attachments + " attachment"
+		if mr.Attachments != "1" {
+			mr.Message.Attachments += "s"
+		}
+	}
+}
+
+// attachmentsText returns the given number of attachments as text,
+// or "" for none.
+func attachmentsText(n int) string {
+	if n == 0 {
+		return ""
+	}
+	return strconv.Itoa(n)
 }
 
 // listViews returns the options of the view of the list of messages.
@@ -137,6 +162,13 @@ func (a *App) labelsShown() bool {
 	return v.HasFlag(ViewLabels)
 }
 
+// attachmentsShown returns whether the list of messages shows the
+// numbers of their attachments.
+func (a *App) attachmentsShown() bool {
+	v := a.listViews()
+	return v.HasFlag(ViewAttachments)
+}
+
 // listField returns whether to show the given field of the rows in the
 // list of messages: only the Message summary in the compact list, and the
 // Labels only if [ViewLabels].
@@ -149,6 +181,8 @@ func (a *App) listField(field reflect.StructField) bool {
 		return false
 	case "Labels":
 		return a.labelsShown()
+	case "Attachments":
+		return a.attachmentsShown()
 	}
 	return true
 }
@@ -182,21 +216,29 @@ func senderName(cm *CacheMessage, email string) string {
 }
 
 // updateConversations sets the replies of the messages of the current
-// account, and returns the starts of the conversations.
-// On Gmail, the conversations are its threads (by X-GM-THRID), whose
-// first message is the start; elsewhere, a conversation starts with the
-// message that the others reply to (by [CacheMessage.InReplyTo]).
-func (a *App) updateConversations() []*CacheMessage {
+// account, and returns the starts of the conversations, and the number of
+// messages with the label being shown. On Gmail, the conversations are its
+// threads (by X-GM-THRID), whose first message is the start, and only those
+// with a message with the label being shown are made, as there can be very
+// many messages; elsewhere, a conversation starts with the message that the
+// others reply to (by [CacheMessage.InReplyTo]).
+func (a *App) updateConversations() (starts []*CacheMessage, shown int) {
 	mp := a.cache[a.currentEmail]
+	want := map[uint64]bool{} // the threads with the label, on Gmail
 	for _, cm := range mp {
 		cm.replies = nil
+		if a.hasLabel(cm) {
+			shown++
+			want[cm.GmailThreadID] = true
+		}
 	}
-	var starts []*CacheMessage
 	if a.gmail[a.currentEmail] {
 		threads := map[uint64][]*CacheMessage{}
 		for _, cm := range mp {
+			if !want[cm.GmailThreadID] {
+				continue
+			}
 			if cm.GmailThreadID == 0 { // a local message on its own
-				cm.replies = nil
 				starts = append(starts, cm)
 				continue
 			}
@@ -208,7 +250,7 @@ func (a *App) updateConversations() []*CacheMessage {
 			start.replies = msgs[1:]
 			starts = append(starts, start)
 		}
-		return starts
+		return starts, shown
 	}
 	byID := map[string]*CacheMessage{}
 	for _, cm := range mp {
@@ -224,11 +266,15 @@ func (a *App) updateConversations() []*CacheMessage {
 			start.replies = append(start.replies, cm)
 		}
 	}
-	return starts
+	return starts, shown
 }
 
-// hasLabel returns whether the given message has the label being shown.
+// hasLabel returns whether the given message has the label being shown,
+// with the labels it is getting, if any (see [App.pendingLabels]).
 func (a *App) hasLabel(cm *CacheMessage) bool {
+	if labels, ok := a.pendingLabels[cm]; ok {
+		return slices.Contains(labels, a.showLabel)
+	}
 	return slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == a.showLabel })
 }
 
@@ -238,10 +284,17 @@ func (a *App) hasLabel(cm *CacheMessage) bool {
 // the label, or the messages with the label. It reuses the rows of the
 // same messages, so that the selection and closed conversations stay.
 func (a *App) updateList() {
+	start := time.Now()
+	defer func() {
+		if d := time.Since(start); d > 50*time.Millisecond {
+			slog.Debug("mail: updating the list of messages took a while", "took", d,
+				"account", a.currentEmail, "messages", len(a.cache[a.currentEmail]), "rows", len(a.listRows))
+		}
+	}()
 	a.listCache = nil
 	a.unreadMessages = 0
 	a.shownMessages = 0
-	starts := a.updateConversations()
+	starts, shown := a.updateConversations()
 	oldMessages, oldConversations := a.messageRows, a.conversationRows
 	a.messageRows = map[*CacheMessage]*messageRow{}
 	flat := a.flatList()
@@ -249,7 +302,7 @@ func (a *App) updateList() {
 		a.conversationRows = map[*CacheMessage]*messageRow{}
 	}
 	email := a.currentEmail
-	showLabels := a.labelsShown()
+	showLabels, showAttachments := a.labelsShown(), a.attachmentsShown()
 
 	rowOf := func(cm *CacheMessage) *messageRow {
 		mr := oldMessages[cm]
@@ -261,7 +314,8 @@ func (a *App) updateList() {
 		mr.Subject = cm.Subject
 		mr.Date = cm.Date.Local().Format(listDateFormat)
 		mr.Labels = friendlyLabels(otherLabels(cm))
-		mr.setSummary(cm.Date, showLabels)
+		mr.Attachments = attachmentsText(cm.Attachments)
+		mr.setSummary(cm.Date, showLabels, showAttachments)
 		a.messageRows[cm] = mr
 		return mr
 	}
@@ -337,14 +391,15 @@ func (a *App) updateList() {
 			}
 		}
 		cr.Labels = friendlyLabels(sortedLabels(labels))
-		cr.setSummary(start.latestDate(), showLabels)
+		n := 0
+		for _, cm := range msgs {
+			n += cm.Attachments
+		}
+		cr.Attachments = attachmentsText(n)
+		cr.setSummary(start.latestDate(), showLabels, showAttachments)
 		rows = append(rows, cr)
 	}
-	for _, cm := range a.cache[email] {
-		if a.hasLabel(cm) {
-			a.shownMessages++
-		}
-	}
+	a.shownMessages = shown
 	for _, cm := range a.listCache {
 		if flat && !slices.Contains(cm.Flags, imap.FlagSeen) || !flat && !cm.isRead() {
 			a.unreadMessages++
@@ -361,6 +416,7 @@ func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
 	w.ReadOnlyKeyNav = true
 	w.ShowField = a.listField // before the items
+	w.HeaderIcons = map[string]icons.Icon{"Attachments": icons.AttachFile} // a narrow column
 	w.FitWidth = a.compactList()
 	w.ContextMenus = nil // only that of the messages
 	w.AddContextMenu(a.messageMenu)
@@ -417,7 +473,7 @@ func (a *App) initList(w *core.TreeTable) {
 		if len(a.selectedRows) <= 1 { // only when reading it
 			a.MarkAsRead()
 		}
-		a.Update()
+		a.updateReading()
 	})
 	a.list = w
 }
@@ -494,7 +550,8 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Grow.Set(1, 0)
-			s.Gap.X.Em(0.5)
+			s.Gap.X.Em(0.75)
+			s.FixedSpacing = true // not narrowed by a smaller Spacing setting
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetType(core.TextTitleMedium)
@@ -536,7 +593,7 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		})
 		tree.AddChild(w, func(w *core.Button) {
 			w.SetType(core.ButtonAction).SetIcon(icons.Tune)
-			w.SetTooltip("The view of the list of messages")
+			w.SetTooltip("Settings for the messages list")
 			w.SetMenu(a.viewMenu)
 		})
 	})
@@ -563,9 +620,8 @@ func (a *App) makeListPanel(p *tree.Plan) {
 			}
 		})
 	})
-	tree.Add(p, func(w *core.Separator) {})
 	// a new list for the fields shown, which are set before the items
-	tree.AddAt(p, fmt.Sprintf("list-%v-%v", a.compactList(), a.labelsShown()), a.initList)
+	tree.AddAt(p, fmt.Sprintf("list-%v-%v-%v", a.compactList(), a.labelsShown(), a.attachmentsShown()), a.initList)
 }
 
 // viewMenu is the menu of the view of the list of messages:

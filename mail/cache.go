@@ -34,6 +34,12 @@ type CacheMessage struct {
 	// conversation (thread) on Gmail, for an account on Gmail.
 	GmailMsgID, GmailThreadID uint64 `json:",omitempty"`
 
+	// Attachments is the number of attachments of the message, which is
+	// known once AttachmentsCounted, when its contents are downloaded
+	// (or checked after, by [App.indexMissing]).
+	Attachments        int  `json:",omitempty"`
+	AttachmentsCounted bool `json:",omitempty"`
+
 	// Labels are the labels associated with the message.
 	// Labels are many-to-many, similar to gmail. All labels
 	// also correspond to IMAP mailboxes.
