@@ -52,6 +52,10 @@ type messageRow struct {
 	// messages of the conversation, an optional column, empty for none.
 	Attachments string `edit:"-"`
 
+	// Starred is whether the message, or a message of the conversation,
+	// is starred, an optional column, the last one, where it stands out.
+	Starred starMark `edit:"-"`
+
 	// Children are the messages of a conversation, in a conversation row.
 	Children []*messageRow `display:"-"`
 
@@ -78,6 +82,9 @@ type messageSummary struct {
 	// Attachments is the number of attachments, as text, if shown,
 	// or "" for none.
 	Attachments string
+
+	// Starred is whether it is starred, if the stars are shown.
+	Starred bool
 
 	// Unread is whether the message or conversation is unread,
 	// which is shown in bold.
@@ -115,8 +122,9 @@ func friendlyLabels(labels []string) string {
 
 // setSummary sets the Message summary of the row from its other fields.
 // The labels and attachments are only in it if they are shown.
-func (mr *messageRow) setSummary(date time.Time, labels, attachments bool) {
-	mr.Message = messageSummary{From: mr.From, Date: compactDate(date), Subject: mr.Subject, Unread: !mr.isRead()}
+func (mr *messageRow) setSummary(date time.Time, labels, attachments, stars bool) {
+	mr.Message = messageSummary{From: mr.From, Date: compactDate(date), Subject: mr.Subject, Unread: !mr.isRead(),
+		Starred: stars && bool(mr.Starred)}
 	if labels {
 		mr.Message.Labels = mr.Labels
 	}
@@ -162,6 +170,12 @@ func (a *App) labelsShown() bool {
 	return v.HasFlag(ViewLabels)
 }
 
+// starsShown returns whether the list of messages shows their stars.
+func (a *App) starsShown() bool {
+	v := a.listViews()
+	return v.HasFlag(ViewStars)
+}
+
 // attachmentsShown returns whether the list of messages shows the
 // numbers of their attachments.
 func (a *App) attachmentsShown() bool {
@@ -183,6 +197,8 @@ func (a *App) listField(field reflect.StructField) bool {
 		return a.labelsShown()
 	case "Attachments":
 		return a.attachmentsShown()
+	case "Starred":
+		return a.starsShown()
 	}
 	return true
 }
@@ -272,6 +288,9 @@ func (a *App) updateConversations() (starts []*CacheMessage, shown int) {
 // hasLabel returns whether the given message has the label being shown,
 // with the labels it is getting, if any (see [App.pendingLabels]).
 func (a *App) hasLabel(cm *CacheMessage) bool {
+	if a.isStarredLabel(a.showLabel) { // by the flag, as soon as it is starred
+		return cm.isStarred()
+	}
 	if labels, ok := a.pendingLabels[cm]; ok {
 		return slices.Contains(labels, a.showLabel)
 	}
@@ -302,7 +321,7 @@ func (a *App) updateList() {
 		a.conversationRows = map[*CacheMessage]*messageRow{}
 	}
 	email := a.currentEmail
-	showLabels, showAttachments := a.labelsShown(), a.attachmentsShown()
+	showLabels, showAttachments, showStars := a.labelsShown(), a.attachmentsShown(), a.starsShown()
 
 	rowOf := func(cm *CacheMessage) *messageRow {
 		mr := oldMessages[cm]
@@ -315,7 +334,8 @@ func (a *App) updateList() {
 		mr.Date = cm.Date.Local().Format(listDateFormat)
 		mr.Labels = friendlyLabels(otherLabels(cm))
 		mr.Attachments = attachmentsText(cm.Attachments)
-		mr.setSummary(cm.Date, showLabels, showAttachments)
+		mr.Starred = starMark(cm.isStarred())
+		mr.setSummary(cm.Date, showLabels, showAttachments, showStars)
 		a.messageRows[cm] = mr
 		return mr
 	}
@@ -385,7 +405,7 @@ func (a *App) updateList() {
 		var labels []string
 		for _, cm := range msgs {
 			for _, l := range otherLabels(cm) {
-				if !slices.Contains(labels, l) && labelRank(l) != 2 {
+				if !slices.Contains(labels, l) && friendlyLabelName(l) != "Sent" {
 					labels = append(labels, l)
 				}
 			}
@@ -396,7 +416,8 @@ func (a *App) updateList() {
 			n += cm.Attachments
 		}
 		cr.Attachments = attachmentsText(n)
-		cr.setSummary(start.latestDate(), showLabels, showAttachments)
+		cr.Starred = starMark(slices.ContainsFunc(msgs, (*CacheMessage).isStarred))
+		cr.setSummary(start.latestDate(), showLabels, showAttachments, showStars)
 		rows = append(rows, cr)
 	}
 	a.shownMessages = shown
@@ -416,7 +437,7 @@ func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
 	w.ReadOnlyKeyNav = true
 	w.ShowField = a.listField // before the items
-	w.HeaderIcons = map[string]icons.Icon{"Attachments": icons.AttachFile} // a narrow column
+	w.HeaderIcons = map[string]icons.Icon{"Attachments": icons.AttachFile, "Starred": icons.Star} // narrow columns
 	w.FitWidth = a.compactList()
 	w.ContextMenus = nil // only that of the messages
 	w.AddContextMenu(a.messageMenu)
@@ -621,7 +642,7 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		})
 	})
 	// a new list for the fields shown, which are set before the items
-	tree.AddAt(p, fmt.Sprintf("list-%v-%v-%v", a.compactList(), a.labelsShown(), a.attachmentsShown()), a.initList)
+	tree.AddAt(p, fmt.Sprintf("list-%v-%v-%v-%v", a.compactList(), a.labelsShown(), a.attachmentsShown(), a.starsShown()), a.initList)
 }
 
 // viewMenu is the menu of the view of the list of messages:

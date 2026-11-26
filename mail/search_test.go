@@ -99,4 +99,22 @@ func TestCharsets(t *testing.T) {
 	doc, err = readSearchDoc(fn)
 	require.NoError(t, err)
 	assert.Contains(t, doc.Body, "Naïve café “ok”")
+
+	// Windows code pages, and a name in quotes
+	for cs, body := range map[string]string{"cp932": "\x93\xfa\x96\x7b", "'iso-8859-1'": "caf\xe9", `"ISO-8859-1" `: "caf\xe9"} {
+		msg = "From: a@example.com\r\nSubject: Charset\r\n" +
+			"Content-Type: text/plain; charset=" + cs + "\r\n" +
+			"Content-Transfer-Encoding: 8bit\r\n\r\n" + body + "\r\n"
+		require.NoError(t, os.WriteFile(fn, []byte(msg), 0o600))
+		doc, err = readSearchDoc(fn)
+		require.NoError(t, err, cs)
+		if cs == "cp932" {
+			assert.Contains(t, doc.Body, "日本", cs)
+		} else {
+			assert.Contains(t, doc.Body, "café", cs)
+		}
+	}
+	addr, err = imapOptions.WordDecoder.DecodeHeader("=?cp932?B?k/qWew==?=")
+	require.NoError(t, err)
+	assert.Equal(t, "日本", addr, "in the envelopes from the server")
 }

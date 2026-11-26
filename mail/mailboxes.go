@@ -192,12 +192,18 @@ func (a *App) countUnread() {
 	a.unread = map[string]map[string]int{}
 	for email, mp := range a.cache {
 		counts := map[string]int{}
+		starred := a.starredLabel(email)
 		for _, cm := range mp {
 			if slices.Contains(cm.Flags, imap.FlagSeen) {
 				continue
 			}
 			for _, l := range cm.Labels {
-				counts[l.Name]++
+				if l.Name != starred {
+					counts[l.Name]++
+				}
+			}
+			if cm.isStarred() { // by the flag, as the Starred mailbox shows
+				counts[starred]++
 			}
 		}
 		a.unread[email] = counts
@@ -210,14 +216,16 @@ func labelRank(label string) int {
 	switch friendlyLabelName(label) {
 	case "Inbox":
 		return 0
-	case "Drafts", outboxLabel:
+	case "Starred": // after the Inbox, as on Gmail
 		return 1
-	case "Sent":
+	case "Drafts", outboxLabel:
 		return 2
-	case "Spam", "Junk":
+	case "Sent":
 		return 3
-	case "Trash":
+	case "Spam", "Junk":
 		return 4
+	case "Trash":
+		return 5
 	}
 	return 10
 }

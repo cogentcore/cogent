@@ -93,7 +93,7 @@ func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.
 		core.ErrorSnackbar(a, err, "Error saving messages")
 		mu.Unlock()
 		a.AsyncLock()
-		a.Update()
+		a.updateMail()
 		for _, f := range then {
 			f()
 		}
@@ -197,7 +197,7 @@ func (a *App) setLabelsOn(email string, msgs []*CacheMessage, labelsFor func(cm 
 		targets[cm] = labelsFor(cm)
 	}
 	a.setPending(targets)
-	a.Update()
+	a.updateMail()
 	for _, f := range then {
 		f()
 	}
@@ -281,7 +281,7 @@ func (a *App) clearPending(targets map[*CacheMessage][]string) {
 	for cm := range targets {
 		delete(a.pendingLabels, cm)
 	}
-	a.Update()
+	a.updateMail()
 }
 
 // Delete moves the current message to the trash.
@@ -395,49 +395,7 @@ func (a *App) MarkAsUnread() { //types:add
 
 // markSeen sets the [imap.FlagSeen] flag of the messages being read.
 func (a *App) markSeen(seen bool) {
-	if !slices.ContainsFunc(a.readMessages(), func(cm *CacheMessage) bool {
-		return slices.Contains(cm.Flags, imap.FlagSeen) != seen
-	}) {
-		return // Already set correctly.
-	}
-	email := a.currentEmail
-	a.action(func(c *imapclient.Client, cm *CacheMessage) error {
-		if slices.Contains(cm.Flags, imap.FlagSeen) == seen {
-			return nil // Already set correctly.
-		}
-		op := imap.StoreFlagsDel
-		if seen {
-			op = imap.StoreFlagsAdd
-		}
-		for _, label := range cm.Labels {
-			if label.UID == 0 { // a Gmail label, whose message has the flags in its mailbox
-				continue
-			}
-			if err := a.selectMailbox(c, email, label.Name); err != nil {
-				return err
-			}
-			err := c.Store(label.UIDSet(), &imap.StoreFlags{
-				Op:     op,
-				Silent: true,
-				Flags:  []imap.Flag{imap.FlagSeen},
-			}, nil).Close()
-			if err != nil {
-				return err
-			}
-		}
-		// Also directly update the cache, with the lock of the window,
-		// as it shows the flags.
-		a.AsyncLock()
-		defer a.AsyncUnlock()
-		if seen {
-			cm.Flags = append(cm.Flags, imap.FlagSeen)
-		} else {
-			cm.Flags = slices.DeleteFunc(cm.Flags, func(flag imap.Flag) bool {
-				return flag == imap.FlagSeen
-			})
-		}
-		return nil
-	})
+	a.setFlagOn(a.currentEmail, a.readMessages(), imap.FlagSeen, seen)
 }
 
 // viewLabel returns the label of the given message that has its UID, on

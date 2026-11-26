@@ -112,6 +112,9 @@ func (a *App) cacheMessages() error {
 		if err := a.sendOutbox(account); err != nil {
 			errs = append(errs, fmt.Errorf("sending messages from %q: %w", account, err))
 		}
+		if err := a.syncContacts(account); err != nil {
+			errs = append(errs, err)
+		}
 		err := a.syncAccount(account)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("syncing messages for account %q: %w", account, err))

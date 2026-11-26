@@ -6,16 +6,16 @@ import (
 	"cogentcore.org/core/enums"
 )
 
-var _ListViewsValues = []ListViews{0, 1, 2, 3}
+var _ListViewsValues = []ListViews{0, 1, 2, 3, 4}
 
 // ListViewsN is the highest valid value for type ListViews, plus one.
-const ListViewsN ListViews = 4
+const ListViewsN ListViews = 5
 
-var _ListViewsValueMap = map[string]ListViews{`Conversations`: 0, `Compact`: 1, `Labels`: 2, `Attachments`: 3}
+var _ListViewsValueMap = map[string]ListViews{`Conversations`: 0, `Compact`: 1, `Labels`: 2, `Attachments`: 3, `Stars`: 4}
 
-var _ListViewsDescMap = map[ListViews]string{0: `ViewConversations groups the messages into conversations, instead of showing each one on its own.`, 1: `ViewCompact shows each message in two lines, in one column, as always on mobile.`, 2: `ViewLabels shows the other labels of the messages, in a column, or after the subject in the compact view.`, 3: `ViewAttachments shows the number of attachments of the messages, in a column, or after the subject in the compact view, empty for none.`}
+var _ListViewsDescMap = map[ListViews]string{0: `ViewConversations groups the messages into conversations, instead of showing each one on its own.`, 1: `ViewCompact shows each message in two lines, in one column, as always on mobile.`, 2: `ViewLabels shows the other labels of the messages, in a column, or after the subject in the compact view.`, 3: `ViewAttachments shows the number of attachments of the messages, in a column, or after the subject in the compact view, empty for none.`, 4: `ViewStars shows the stars of the starred messages, in a column, or before the sender in the compact view.`}
 
-var _ListViewsMap = map[ListViews]string{0: `Conversations`, 1: `Compact`, 2: `Labels`, 3: `Attachments`}
+var _ListViewsMap = map[ListViews]string{0: `Conversations`, 1: `Compact`, 2: `Labels`, 3: `Attachments`, 4: `Stars`}
 
 // String returns the string representation of this ListViews value.
 func (i ListViews) String() string { return enums.BitFlagString(i, _ListViewsValues) }

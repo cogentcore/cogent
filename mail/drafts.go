@@ -96,6 +96,9 @@ func (a *App) draftsLabel(email string) string {
 // mailboxes, so it only looks at the drafts, not all of the messages.
 func (a *App) mailboxLabels(email string) []string {
 	labels := a.labels[email]
+	if st := a.starredLabel(email); len(labels) > 0 && !slices.Contains(labels, st) {
+		labels = append(slices.Clone(labels), st) // a local one, by the flag
+	}
 	a.draftsMu.Lock()
 	defer a.draftsMu.Unlock()
 	for _, d := range a.drafts {

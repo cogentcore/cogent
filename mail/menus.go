@@ -69,6 +69,17 @@ func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Poi
 				core.NewButton(m).SetText("Sign in again").SetIcon(icons.Login).OnClick(func(e events.Event) {
 					a.SignInAgain(email)
 				})
+				if Settings.SyncContacts[email] {
+					core.NewButton(m).SetText("Stop syncing contacts").SetIcon(icons.SyncDisabled).OnClick(func(e events.Event) {
+						a.SetSyncContacts(email, false)
+					})
+				} else {
+					core.NewButton(m).SetText("Sync contacts").SetIcon(icons.Contacts).
+						SetTooltip("Sync the contacts with Google Contacts, which asks for the access to them").
+						OnClick(func(e events.Event) {
+							a.SetSyncContacts(email, true)
+						})
+				}
 			}
 			a.addAccountButton(m)
 			core.NewButton(m).SetText("Remove account").SetIcon(icons.PersonRemove).OnClick(func(e events.Event) {
@@ -121,6 +132,7 @@ func (a *App) messageButtons(p *tree.Plan, toolbar bool) {
 	separator("sep-file")
 	button(a.File, "File", icons.DriveFileMove)
 	button(a.Tag, "Tag", icons.Label)
+	button(a.Star, "Star", icons.Star)
 	button(a.Delete, "Delete", icons.Delete)
 	separator("sep-read")
 	if !toolbar {
@@ -483,7 +495,7 @@ func (a *App) chooseMailbox(title, prompt string, accounts []string, except mail
 	for i, email := range accounts {
 		for _, label := range sortedLabels(a.labels[email]) {
 			mb := mailboxID{email, label}
-			if skipLabels[label] || mb == except || labelRank(label) == 1 { // not Drafts
+			if r := labelRank(label); skipLabels[label] || mb == except || r == 1 || r == 2 { // not Starred or Drafts
 				continue
 			}
 			text := friendlyLabelName(label)

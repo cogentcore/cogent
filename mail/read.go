@@ -94,13 +94,19 @@ func (dmf *DisplayMessageFrame) Init() {
 	})
 }
 
+// messageImages is the cache of the decoded images of the messages, shared
+// by all of them, so that showing a message again does not get its images
+// again.
+var messageImages = htmlcore.NewImageCache(200 << 20)
+
 // messageContext returns a new context for reading the HTML (or markdown)
 // of the given message, with a bar on the left of quoted text, in which a
-// mailto: link opens a reply to the message to its addresses.
+// mailto: link opens a reply to the message to its addresses. Its images
+// are gotten in the background, after it is shown, as there can be many.
 func messageContext(cm *CacheMessage) *htmlcore.Context {
 	bar := colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base))
 	text := colors.AsHex(colors.ToUniform(colors.Scheme.OnSurfaceVariant))
-	return htmlcore.NewContext().SetStyle(fmt.Sprintf(
+	return htmlcore.NewContext().SetDelayedImageLoad(true).SetImageCache(messageImages).SetStyle(fmt.Sprintf(
 		"blockquote { margin: 0.5em 0 0.5em 0.25em; padding-left: 0.75em; border-left: 3px solid %s; color: %s; }", bar, text)).
 		SetOpenURL(func(u string, e events.Event) {
 			if isMailto(u) {
@@ -135,7 +141,7 @@ func addressLinks(as []imap.Address) string {
 func otherLabels(cm *CacheMessage) []string {
 	var res []string
 	for _, l := range cm.Labels {
-		if l.Name != theApp.showLabel && !skipLabels[l.Name] {
+		if l.Name != theApp.showLabel && !skipLabels[l.Name] && !theApp.isStarredLabel(l.Name) { // the star is shown
 			res = append(res, l.Name)
 		}
 	}

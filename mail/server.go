@@ -13,8 +13,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/emersion/go-message/charset"
-
 	"cogentcore.org/cogent/mail/xoauth2"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
@@ -57,7 +55,7 @@ func (a *App) server(email string) Server {
 // sets that go-message supports, such as windows-1252, as importing its
 // charset package also does for the messages themselves.
 var imapOptions = &imapclient.Options{
-	WordDecoder: &mime.WordDecoder{CharsetReader: charset.Reader},
+	WordDecoder: &mime.WordDecoder{CharsetReader: charsetReader},
 }
 
 // dialIMAP connects and logs in to the IMAP server of the given account.

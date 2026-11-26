@@ -5,12 +5,15 @@
 package mail
 
 import (
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"cogentcore.org/core/core"
+	"github.com/cogentcore/go-imap/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestSyncUpdate tests that the updates of the app for the changes from
@@ -21,8 +24,9 @@ func TestSyncUpdate(t *testing.T) {
 	t.Cleanup(func() { syncUpdateInterval = old })
 	b, a := newTestApp(t, nil)
 	var n atomic.Int32
-	a.Updater(func() { n.Add(1) })
-	core.RenderImage(b, func() {
+	core.RenderImage(b, core.Locked(b, func() {
+		a.listPanel.Updater(func() { n.Add(1) }) // the list, not the message being read
+	}), func() {
 		start := n.Load()
 		for range 20 {
 			a.syncUpdate()
@@ -53,4 +57,39 @@ func TestShownMailbox(t *testing.T) {
 	theApp = a
 	assert.Equal(t, "INBOX", a3.showLabel)
 	Settings.ShownAccount, Settings.ShownMailbox = "", ""
+}
+
+// TestMarkReadRightAway tests that a message is shown as read as soon as
+// it is selected, before the server is changed, and that the update for
+// it does not lay out the message being read again.
+func TestMarkReadRightAway(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var reads atomic.Int32
+	var hello *CacheMessage
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.readPanel.Updater(func() { reads.Add(1) })
+		a.showMailbox(testEmail, "Work")
+		hello = messageBySubject(a, "Hello")
+		require.False(t, hello.isRead())
+		var row *messageRow
+		for _, mr := range a.listRows {
+			if mr.message == hello {
+				row = mr
+			}
+		}
+		require.NotNil(t, row)
+		require.True(t, row.Message.Unread)
+		a.readMessage, a.readSingle = hello, true
+		n := reads.Load()
+		a.MarkAsRead()
+		assert.True(t, slices.Contains(hello.Flags, imap.FlagSeen), "right away, with the lock still held")
+		assert.False(t, row.Message.Unread, "not bold in the list")
+		assert.Equal(t, n, reads.Load(), "the message being read not updated")
+	}), func() {
+		require.Eventually(t, func() bool {
+			return slices.Contains(serverFlags(t, a, "Work", hello.Labels[len(hello.Labels)-1].UID), imap.FlagSeen)
+		}, 5*time.Second, 10*time.Millisecond, "on the server")
+	})
 }

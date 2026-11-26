@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/cogent/mail/testserver"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
@@ -203,11 +204,32 @@ type App struct {
 	// window.
 	pendingLabels map[*CacheMessage][]string
 
+	// contacts is the store of the contacts, opened when first used
+	// (see [App.contactsStore]).
+	contacts *contacts.Store
+
+	// mailCandidates are the candidates for completing addresses from the
+	// mail, found at candidatesTime (see [App.addressCandidates]).
+	mailCandidates []contacts.Candidate
+	candidatesTime time.Time
+
+	// contactsSynced is when the contacts of each account were last synced
+	// (see [App.syncContacts]).
+	contactsSynced map[string]time.Time
+
+	// contactsServer, if set, is the CardDAV server of the contacts
+	// instead of Google, in tests.
+	contactsServer string
+
 	// readPanel is the panel of the message being read, and toolbar is
 	// the toolbar of the app, which are updated on their own when the
 	// message being read changes (see [App.updateReading]).
 	readPanel *core.Frame
 	toolbar   *core.Toolbar
+
+	// sidebar is the panel of the mailboxes and the status, and listPanel
+	// is that of the list of messages (see [App.updateMail]).
+	sidebar, listPanel *core.Frame
 
 	// indexChecked are the keys of the downloaded messages of each account
 	// checked to be in its search index in this run (see [App.indexMissing]).
@@ -245,6 +267,7 @@ func (a *App) Init() {
 	a.downloading = map[*CacheMessage]bool{}
 	a.indexChecked = map[string]map[string]bool{}
 	a.idleStop = map[string]context.CancelFunc{}
+	a.contactsSynced = map[string]time.Time{}
 	a.status.progress = -1
 	a.trash = map[string]string{}
 	a.syncNow = make(chan struct{}, 1)
@@ -270,6 +293,7 @@ func (a *App) Init() {
 			a.saveSettings()
 		})
 		tree.AddChild(w, func(w *core.Frame) { // the sidebar
+			a.sidebar = w
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
@@ -285,6 +309,7 @@ func (a *App) Init() {
 			tree.AddChild(w, a.initStatusBar)
 		})
 		tree.AddChild(w, func(w *core.Frame) {
+			a.listPanel = w
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
@@ -368,6 +393,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 		a.toolbar, _ = w.Parent.(*core.Toolbar)
 		w.SetFunc(core.SettingsWindow).SetText("").SetIcon(icons.Settings)
 		w.SetTooltip("Settings")
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(a.Contacts).SetIcon(icons.Contacts)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send).SetShortcut(shortcutOf("Compose"))

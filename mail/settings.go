@@ -39,6 +39,11 @@ type SettingsData struct { //types:add
 	// of the message.
 	FilingAccount AccountName
 
+	// ContactsAccount is the account whose Google Contacts the contacts
+	// made here are added to, of those whose contacts are synced (in the
+	// menu of the account). By default it is the first of them.
+	ContactsAccount ContactsAccountName
+
 	// AutoBCC sends a blind copy (Bcc) of every message to its sender,
 	// whose address is put in the Bcc field of each new message, where
 	// it can be removed for that message.
@@ -68,6 +73,10 @@ type SettingsData struct { //types:add
 	// those that have been opened or closed.
 	OpenMailboxes map[string]bool `display:"-"`
 
+	// SyncContacts are the Gmail accounts whose contacts are synced with
+	// Google Contacts, by email address (see [App.SetSyncContacts]).
+	SyncContacts map[string]bool `display:"-"`
+
 	// ShownAccount and ShownMailbox are the account and mailbox shown
 	// last, which are shown when the app starts again.
 	ShownAccount, ShownMailbox string `display:"-"`
@@ -77,11 +86,15 @@ type SettingsData struct { //types:add
 // into conversations.
 func (sd *SettingsData) Defaults() {
 	sd.ListViews.SetFlag(true, ViewConversations)
+	sd.ListViews.SetFlag(true, ViewStars)
 }
 
 // Apply makes sure that each account has an entry in the
 // [SettingsData.DefaultSignatures], so that it can be set.
 func (sd *SettingsData) Apply() {
+	if theApp != nil && theApp.contacts != nil { // as the account of new contacts changes
+		theApp.contacts.NewAccount = newContactsAccount()
+	}
 	if sd.DefaultSignatures == nil {
 		sd.DefaultSignatures = map[string]SignatureName{}
 	}
@@ -112,6 +125,10 @@ const (
 	// ViewAttachments shows the number of attachments of the messages, in
 	// a column, or after the subject in the compact view, empty for none.
 	ViewAttachments
+
+	// ViewStars shows the stars of the starred messages, in a column,
+	// or before the sender in the compact view.
+	ViewStars
 )
 
 // AccountName is the email address of one of the [SettingsData.Accounts],
@@ -123,6 +140,21 @@ func (an AccountName) Widget() core.Value {
 	ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(""), Text: "(the account of the message)"})
 	for _, account := range Settings.Accounts {
 		ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(account), Text: account})
+	}
+	return ch
+}
+
+// ContactsAccountName is the email address of one of the accounts whose
+// contacts are synced, chosen from them, or "" for the first of them.
+type ContactsAccountName string
+
+func (an ContactsAccountName) Widget() core.Value {
+	ch := core.NewChooser()
+	ch.Items = append(ch.Items, core.ChooserItem{Value: ContactsAccountName(""), Text: "(the first that syncs contacts)"})
+	for _, account := range Settings.Accounts {
+		if Settings.SyncContacts[account] {
+			ch.Items = append(ch.Items, core.ChooserItem{Value: ContactsAccountName(account), Text: account})
+		}
 	}
 	return ch
 }
@@ -196,16 +228,16 @@ var skipLabels = map[string]bool{
 	"[Gmail]":           true,
 	"[Gmail]/All Mail":  true,
 	"[Gmail]/Important": true,
-	"[Gmail]/Starred":   true,
 }
 
 // labelIcons are the icons for each friendly label name.
 var labelIcons = map[string]icons.Icon{
-	"Inbox":  icons.Inbox,
-	"Drafts": icons.Draft,
-	"Outbox": icons.Outbox,
-	"Sent":   icons.Send,
-	"Spam":   icons.Report,
-	"Junk":   icons.Report,
-	"Trash":  icons.Delete,
+	"Inbox":   icons.Inbox,
+	"Drafts":  icons.Draft,
+	"Outbox":  icons.Outbox,
+	"Sent":    icons.Send,
+	"Starred": icons.Star,
+	"Spam":    icons.Report,
+	"Junk":    icons.Report,
+	"Trash":   icons.Delete,
 }

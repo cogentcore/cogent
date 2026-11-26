@@ -651,7 +651,7 @@ func TestMailboxes(t *testing.T) {
 		for _, c := range acct.Children {
 			names = append(names, c.AsTree().Name)
 		}
-		assert.Equal(t, []string{"INBOX", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
+		assert.Equal(t, []string{"INBOX", "[Gmail]/Starred", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
 			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names)
 		inbox = node(acct, "INBOX")
 		assert.True(t, inbox.StateIs(states.Selected), "the mailbox shown")
@@ -666,7 +666,7 @@ func TestMailboxes(t *testing.T) {
 	}), func() {
 		b.Scene.RenderWindow().SystemWindow.Events().KeyChord(0, key.CodeDownArrow, 0)
 	}, core.Locked(b, func() {
-		assert.Equal(t, "[Gmail]/Drafts", a.showLabel, "moved with the keyboard")
+		assert.Equal(t, "[Gmail]/Starred", a.showLabel, "moved with the keyboard, to the next mailbox")
 		assert.False(t, inbox.StateIs(states.Selected))
 		a.showMailbox(Settings.Accounts[1], "INBOX")
 	}), core.Locked(b, func() {
@@ -890,7 +890,7 @@ func TestShortcuts(t *testing.T) {
 			}
 		}
 		assert.Equal(t, []string{"Reply=Command+R", "Reply all=Command+Shift+R", "Forward=Command+Shift+F",
-			"File=Control+O", "Tag=Control+T", "Delete=" + string(keymap.Delete.Chord()), "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
+			"File=Control+O", "Tag=Control+T", "Star=Command+Shift+L", "Delete=" + string(keymap.Delete.Chord()), "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
 	}))
 }
 
@@ -1073,7 +1073,7 @@ func TestViewMenu(t *testing.T) {
 		for _, it := range sw.Items {
 			names = append(names, it.Text)
 		}
-		assert.Equal(t, []string{"Conversations", "Compact", "Labels", "Attachments"}, names)
+		assert.Equal(t, []string{"Conversations", "Compact", "Labels", "Attachments", "Stars"}, names)
 		sw.Update() // makes the switches
 		var compact *core.Switch
 		for w := range sw.AllWidgets() {

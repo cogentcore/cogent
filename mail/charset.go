@@ -5,7 +5,15 @@
 package mail
 
 import (
+	"io"
+	"strings"
 	"unicode/utf8"
+
+	"github.com/emersion/go-message"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/encoding/korean"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 
 	"github.com/emersion/go-message/charset"
 	"golang.org/x/text/encoding"
@@ -18,6 +26,21 @@ func init() {
 	for _, name := range []string{"unknown-8bit", "x-unknown", "unknown"} {
 		charset.RegisterEncoding(name, unknown8bit{})
 	}
+	// names of Windows code pages that are not in the standard indexes
+	charset.RegisterEncoding("cp932", japanese.ShiftJIS)
+	charset.RegisterEncoding("windows-932", japanese.ShiftJIS)
+	charset.RegisterEncoding("cp936", simplifiedchinese.GBK)
+	charset.RegisterEncoding("cp949", korean.EUCKR)
+	charset.RegisterEncoding("cp950", traditionalchinese.Big5)
+	message.CharsetReader = charsetReader
+}
+
+// charsetReader returns a reader of the text in the given charset, as
+// UTF-8, as [charset.Reader], for the name of the charset as senders put
+// it, in quotes or with spaces around it.
+func charsetReader(name string, input io.Reader) (io.Reader, error) {
+	name = strings.Trim(strings.TrimSpace(name), `"'`)
+	return charset.Reader(name, input)
 }
 
 // unknown8bit is the encoding of text in an unknown 8-bit charset: the

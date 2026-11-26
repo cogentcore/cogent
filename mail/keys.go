@@ -92,6 +92,7 @@ var shortcuts = []shortcut{
 	{"Tag", []key.Chord{"Control+T"}, (*App).Tag, true, nil},
 	{"Delete", nil, (*App).Delete, true, []keymap.Functions{keymap.Delete, keymap.Backspace}},
 	{"MarkAsUnread", []key.Chord{"Command+Shift+U"}, (*App).MarkAsUnread, true, nil},
+	{"Star", []key.Chord{"Command+Shift+L"}, (*App).Star, true, nil}, // as the flag of Apple Mail
 }
 
 // textKey returns whether the shortcut is a key for editing text, as

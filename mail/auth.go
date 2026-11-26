@@ -42,7 +42,7 @@ func (a *App) authConfig(ctx context.Context, email string) *auth.AuthConfig {
 	ac := &auth.AuthConfig{
 		Ctx:       ctx,
 		TokenFile: a.tokenFile,
-		Scopes:    gmailScopes,
+		Scopes:    authScopes(email),
 	}
 	if email == "" {
 		ac.SelectAccount = true
@@ -195,6 +195,12 @@ const allowAccess = "On Google's page, check the box that allows Cogent Mail to 
 // signInDialog opens a dialog for signing in in the browser to each of
 // the given accounts, or to a new one, chosen there, for none.
 func (a *App) signInDialog(accounts []string) {
+	a.signInDialogFor(accounts, "Sign in again in your browser, as the saved sign-in no longer works.")
+}
+
+// signInDialogFor is [App.signInDialog] with the given reason for signing
+// in again to the given accounts.
+func (a *App) signInDialogFor(accounts []string, reason string) {
 	title := "Add account"
 	if len(accounts) > 0 {
 		title = "Sign in"
@@ -206,7 +212,7 @@ func (a *App) signInDialog(accounts []string) {
 		core.NewText(d).SetText("Sign in to the Gmail account to add in your browser.")
 		accounts = []string{""}
 	} else {
-		core.NewText(d).SetText("Sign in again in your browser, as the saved sign-in no longer works.")
+		core.NewText(d).SetText(reason)
 	}
 	core.NewText(d).SetType(core.TextSupporting).SetText(allowAccess)
 	status := core.NewText(d)
@@ -304,6 +310,10 @@ func (a *App) RemoveAccount(email string) {
 	delete(a.tokens, email)
 	delete(a.authErrs, email)
 	a.authMu.Unlock()
+	if Settings.SyncContacts[email] {
+		delete(Settings.SyncContacts, email)
+		a.saveSettings()
+	}
 	a.draftsMu.Lock()
 	for id, d := range a.drafts {
 		if d.Account == email {

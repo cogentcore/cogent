@@ -21,6 +21,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/tree"
@@ -32,12 +33,17 @@ func init() {
 	core.AddValueType[Attachment, AttachmentButton]()
 	core.AddValueType[SignatureText, SignatureButton]()
 	core.AddValueType[messageSummary, MessageSummaryView]()
+	core.AddValueType[starMark, StarIcon]()
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
 type AddressTextField struct {
 	core.TextField
 	Address mail.Address
+
+	// completed is the address that was completed, whose name is that of
+	// the completion, until the text is changed (see [completeAddress]).
+	completed string
 }
 
 func (at *AddressTextField) WidgetValue() any { return &at.Address }
@@ -45,6 +51,17 @@ func (at *AddressTextField) WidgetValue() any { return &at.Address }
 func (at *AddressTextField) Init() {
 	at.TextField.Init()
 	at.SetPasteFilter(linkAddress) // as a mailto: link copied from a page
+	if !at.IsReadOnly() {
+		// completing the names and addresses of the contacts and the mail
+		at.SetCompleter(at, func(data any, text string, posLine, posChar int) complete.Matches {
+			if theApp == nil {
+				return complete.Matches{}
+			}
+			return theApp.addressMatches(text)
+		}, func(data any, text string, cursorPos int, c complete.Completion, seed string) complete.Edit {
+			return completeAddress(at, text, cursorPos, c)
+		})
+	}
 	at.Updater(func() {
 		if at.IsReadOnly() && at.Address.Name != "" && at.Address.Name != at.Address.Address {
 			at.SetText(fmt.Sprintf("%s (%s)", at.Address.Name, at.Address.Address))
@@ -56,6 +73,10 @@ func (at *AddressTextField) Init() {
 		text := at.Text()
 		if !strings.Contains(text, "@") && !strings.Contains(text, ".") {
 			return fmt.Errorf("invalid email address")
+		}
+		if at.completed != "" && text != at.completed {
+			at.Address.Name = "" // that of another address
+			at.completed = ""
 		}
 		at.Address.Address = text
 		return nil
@@ -205,6 +226,18 @@ func (sv *MessageSummaryView) Init() {
 	tree.AddChild(sv, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
+		})
+		tree.AddChild(w, func(w *core.Icon) {
+			w.Styler(func(s *styles.Style) {
+				s.Color = colors.Scheme.Warn.Base
+			})
+			w.Updater(func() {
+				if sv.Summary.Starred {
+					w.SetIcon(icons.StarFill)
+				} else {
+					w.SetIcon(icons.None)
+				}
+			})
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.Styler(func(s *styles.Style) {

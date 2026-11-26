@@ -21,7 +21,7 @@ var syncUpdateInterval = time.Second
 func (a *App) syncUpdate() {
 	if syncUpdateInterval == 0 {
 		a.AsyncLock()
-		a.Update()
+		a.updateMail()
 		a.AsyncUnlock()
 		return
 	}
@@ -36,7 +36,7 @@ func (a *App) syncUpdate() {
 		a.syncUpdatePending = false
 		a.syncUpdateMu.Unlock()
 		a.AsyncLock()
-		a.Update()
+		a.updateMail()
 		a.AsyncUnlock()
 	})
 }
@@ -52,5 +52,25 @@ func (a *App) updateReading() {
 	a.readPanel.Update()
 	if a.toolbar != nil {
 		a.toolbar.Update()
+	}
+}
+
+// updateMail updates the mailboxes, the list of messages, the status, and
+// the toolbar, as after the messages or their flags change, without the
+// panel of the message being read, unless it is gone, as laying out a large
+// message again takes a while.
+func (a *App) updateMail() {
+	if a.listPanel == nil || a.sidebar == nil {
+		a.Update()
+		return
+	}
+	a.sidebar.Update()
+	a.listPanel.Update()
+	if a.toolbar != nil {
+		a.toolbar.Update()
+	}
+	if cm := a.readMessage; cm != nil && a.cache[a.currentEmail][cm.key] != cm {
+		a.readMessage = nil // gone, as deleted on the server
+		a.readPanel.Update()
 	}
 }
