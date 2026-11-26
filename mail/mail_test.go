@@ -293,7 +293,7 @@ func TestLabels(t *testing.T) {
 	}, core.Locked(b, func() {
 		a.showLabel = "[Gmail]/Trash"
 		a.Update()
-		assert.Len(t, a.listCache, 1)
+		assert.Len(t, a.listCache, 2, "the messages of the conversation, each on its own (see messagesOnly)")
 		a.Label() // the dialog
 	}), core.Locked(b, func() {
 		d := core.TopScene(b)
@@ -423,9 +423,9 @@ func TestReplySend(t *testing.T) {
 		assert.Contains(t, msg, "<em>news</em>", "the HTML version")
 		assert.Contains(t, msg, `filename=notes.txt`)
 
-		a.composeMessage.From = ""
+		a.composeMessage.Sender.From = ""
 		assert.Error(t, a.Send(), "no sender")
-		a.composeMessage.From = testEmail
+		a.composeMessage.Sender.From = testEmail
 		a.composeMessage.Attachments = []core.Filename{"none.txt"}
 		assert.Error(t, a.Send(), "no attachment")
 	}))
@@ -485,7 +485,7 @@ func TestTestingMode(t *testing.T) {
 
 		a.showMailbox(you, "INBOX")
 		a.Compose()
-		assert.Equal(t, SenderAccount(you), a.composeMessage.From)
+		assert.Equal(t, SenderAccount(you), a.composeMessage.Sender.From)
 		a.composeMessage.To[0].Address = alice
 		a.composeMessage.Subject = "Testing mode"
 		a.composeMessage.body = "Hello *Alice*"
@@ -1573,4 +1573,51 @@ func TestStatusBar(t *testing.T) {
 	assert.NotZero(t, heights[0])
 	assert.Equal(t, heights[0], heights[1], "a fixed height")
 	assert.Equal(t, heights[0], heights[2], "a fixed height")
+}
+
+// TestReadDownloading tests that a message that is read before it is
+// downloaded shows that it is being downloaded, and then the message, once
+// it is (which the updates of the sync, without the message being read,
+// did not show).
+func TestReadDownloading(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var hello *CacheMessage
+	// shows returns whether the panel of the message being read has the
+	// given text
+	shows := func(text string) bool {
+		found := false
+		a.readPanel.WalkDown(func(n tree.Node) bool {
+			if tx, ok := n.(*core.Text); ok && strings.Contains(tx.Text, text) {
+				found = true
+			}
+			return !found
+		})
+		return found
+	}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+		require.NotNil(t, hello)
+	}, core.Locked(b, func() {
+		hello.Filename = "" // not downloaded yet
+		a.readMessage = hello
+		a.Update()
+		assert.True(t, shows("Downloading the message"))
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return hello.Filename != "" && !shows("Downloading the message")
+		}, 5*time.Second, 10*time.Millisecond)
+		a.AsyncLock()
+		defer a.AsyncUnlock()
+		shown := false
+		a.readPanel.WalkDown(func(n tree.Node) bool {
+			if n.AsTree().Property("readMessage") == hello {
+				shown = true
+			}
+			return !shown
+		})
+		assert.True(t, shown, "the message")
+	})
 }

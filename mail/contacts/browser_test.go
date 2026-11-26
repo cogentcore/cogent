@@ -6,6 +6,7 @@ package contacts
 
 import (
 	"image"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -141,4 +142,30 @@ func TestLabelChooser(t *testing.T) {
 	s2, err := Open(s.Dir)
 	require.NoError(t, err)
 	assert.Equal(t, Label("work"), s2.Contacts()[1].Emails[0].Label, "saved")
+}
+
+// TestBrowserSplits tests the proportions of the browser: 0.2 for the list
+// by default, and those set by the user, which are saved in the settings.
+func TestBrowserSplits(t *testing.T) {
+	t.Cleanup(func() { Settings.Splits = nil })
+	s, err := Open(t.TempDir())
+	require.NoError(t, err)
+	b := core.NewBody()
+	br := NewBrowser(b).SetStore(s)
+	var sp *core.Splits
+	core.RenderImage(b, core.Locked(b, func() {
+		sp = br.Child(0).(*core.Splits)
+		assert.Equal(t, []float32{0.2, 0.8}, sp.Splits(), "by default")
+		sp.SetSplits(0.3, 0.7)
+		sp.SendChange()
+	}))
+	assert.Equal(t, []float32{0.3, 0.7}, Settings.Splits)
+	data, err := os.ReadFile(Settings.Filename())
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "Splits", "saved")
+	b2 := core.NewBody()
+	br2 := NewBrowser(b2).SetStore(s)
+	core.RenderImage(b2, core.Locked(b2, func() {
+		assert.Equal(t, []float32{0.3, 0.7}, br2.Child(0).(*core.Splits).Splits(), "as the user set them")
+	}))
 }

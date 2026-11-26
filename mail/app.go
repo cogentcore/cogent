@@ -214,6 +214,10 @@ type App struct {
 	mailCandidates []contacts.Candidate
 	candidatesTime time.Time
 
+	// senderNames are the names in the most messages sent from each account
+	// (see [App.senderName]).
+	senderNames map[string]string
+
 	// contactsSynced is when the contacts of each account were last synced
 	// (see [App.syncContacts]).
 	contactsSynced map[string]time.Time

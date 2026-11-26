@@ -44,7 +44,11 @@ type draft struct {
 	Attachments       []core.Filename
 	Body              string
 	InReplyTo         string
-	References        []string
+
+	// Signature is the name of the signature of the message.
+	Signature SignatureName `json:",omitempty"`
+
+	References []string
 
 	// MessageID is the Message-ID of the message (without angle brackets).
 	MessageID string
@@ -254,7 +258,8 @@ func (a *App) removeDraft(d *draft) {
 
 // setDraft sets the given draft from the given message being written.
 func (sm *SendMessage) setDraft(d *draft) {
-	d.From = []*mail.Address{{Address: string(sm.From)}}
+	d.From = []*mail.Address{{Address: string(sm.Sender.From)}}
+	d.Signature = sm.Sender.Signature
 	d.To, d.Cc, d.Bcc = sm.To, sm.Cc, sm.Bcc
 	d.Subject, d.Attachments, d.Body = sm.Subject, sm.Attachments, sm.body
 	d.InReplyTo, d.References = sm.inReplyTo, sm.references
@@ -266,7 +271,7 @@ func (d *draft) sendMessage() *SendMessage {
 	if len(d.From) > 0 && d.From[0] != nil {
 		from = SenderAccount(d.From[0].Address)
 	}
-	return &SendMessage{From: from, To: d.To, Cc: d.Cc, Bcc: d.Bcc, Subject: d.Subject,
+	return &SendMessage{Sender: MessageSender{From: from, Signature: d.Signature}, To: d.To, Cc: d.Cc, Bcc: d.Bcc, Subject: d.Subject,
 		Attachments: d.Attachments, body: d.Body, inReplyTo: d.InReplyTo, references: d.References, draft: d}
 }
 
@@ -291,14 +296,17 @@ func (a *App) saveDraft(sm *SendMessage) error {
 	}
 	a.draftsMu.Unlock()
 	from := a.currentEmail
-	if sm.From != "" {
-		from = string(sm.From)
+	if sm.Sender.From != "" {
+		from = string(sm.Sender.From)
 	}
 	if d.Account != "" && d.Account != from { // moved to another account
 		a.removeDraft(d)
 	}
 	d.Account = from
 	sm.setDraft(d)
+	if len(d.From) == 1 && d.From[0] != nil { // with the name of the sender
+		d.From[0].Name = a.senderName(d.From[0].Address)
+	}
 	if d.MessageID == "" {
 		d.MessageID = newMessageID(from)
 	}
@@ -319,7 +327,7 @@ func (a *App) saveDraft(sm *SendMessage) error {
 // its draft. If it cannot be sent, it is saved as a draft, and the error
 // is returned. It must be called with the lock of the window.
 func (a *App) queue(sm *SendMessage) (*draft, error) {
-	if sm.From == "" {
+	if sm.Sender.From == "" {
 		return nil, errors.New("no sender")
 	}
 	if err := a.saveDraft(sm); err != nil {

@@ -94,21 +94,36 @@ func TestMatch(t *testing.T) {
 	require.NoError(t, err)
 	_, err = s.Import(strings.NewReader(appleExport))
 	require.NoError(t, err)
-	mail := []Candidate{{Name: "Yuko M", Address: "YMUNAKATA@ucdavis.edu", Score: 5},
-		{Name: "Yuri Gagarin", Address: "yuri@space.test", Score: 50}, {Address: "help@acme.test", Score: 1}}
+	// in the mail: the second address of the contact used the most, and
+	// another name for it
+	mail := []Candidate{{Name: "YUKO M", Address: "YUKO@example.com", Score: 50},
+		{Name: "Yuko M", Address: "ymunakata@ucdavis.edu", Score: 5},
+		{Name: "Yuri Gagarin", Address: "yuri@space.test", Score: 500}, {Address: "help@acme.test", Score: 1}}
 	cands := Merge(s.Candidates(), mail)
 	assert.Len(t, cands, 4, "one per address")
 	m := Match(cands, "yu", 10)
 	require.Len(t, m, 3)
-	assert.Equal(t, "ymunakata@ucdavis.edu", m[0].Address, "the contacts first")
-	assert.Equal(t, "Yuko Munakata", m[0].Name, "with the name of the contact")
-	assert.Equal(t, float64(ContactScore+5), m[0].Score, "the scores summed")
-	assert.Equal(t, "yuri@space.test", m[2].Address)
+	assert.Equal(t, "ymunakata@ucdavis.edu", m[0].Address, "the first address of the contact first, as the default")
+	assert.Equal(t, "yuko@example.com", m[1].Address, "then its second, however much it is used")
+	assert.Equal(t, "Yuko Munakata", m[1].Name, "with the name of the contact")
+	assert.Equal(t, "yuri@space.test", m[2].Address, "then the others, however much they are used")
+	assert.Equal(t, float64(55), m[0].Score+m[1].Score, "the scores of the mail kept")
 	assert.Len(t, Match(cands, "yuko muna", 10), 2, "all of the words: both of her addresses")
 	assert.Len(t, Match(cands, "yuko gag", 10), 0)
 	assert.Len(t, Match(cands, "ucdav", 10), 1, "by the address")
 	assert.Len(t, Match(cands, "yu", 1), 1, "at most n")
 	assert.Empty(t, Match(cands, " ", 10))
+
+	// another contact matching, used more in the mail, comes first
+	c := s.New()
+	c.Name = "Yusuf Ali"
+	c.Emails = []Labeled{{Value: "yusuf@x.test"}}
+	require.NoError(t, s.Save(c))
+	cands = Merge(s.Candidates(), mail, []Candidate{{Address: "yusuf@x.test", Score: 100}})
+	m = Match(cands, "yu", 10)
+	require.Len(t, m, 4)
+	assert.Equal(t, []string{"yusuf@x.test", "ymunakata@ucdavis.edu", "yuko@example.com", "yuri@space.test"},
+		[]string{m[0].Address, m[1].Address, m[2].Address, m[3].Address})
 }
 
 // TestNoName tests the names of the contacts without one.

@@ -41,7 +41,7 @@ type SendMessage struct {
 	Bcc         []*mail.Address `display:"inline" tab:"-"`
 	Subject     string
 	Attachments []core.Filename `display:"inline" tab:"-"`
-	From        SenderAccount   `tab:"-"`
+	Sender      MessageSender   `display:"inline" tab:"-"`
 
 	body       string
 	inReplyTo  string
@@ -88,9 +88,22 @@ func (sm *SendMessage) snapshot(seq int) *SendMessage {
 		}
 		return res
 	}
-	return &SendMessage{From: sm.From, To: cp(sm.To), Cc: cp(sm.Cc), Bcc: cp(sm.Bcc),
+	return &SendMessage{Sender: sm.Sender, To: cp(sm.To), Cc: cp(sm.Cc), Bcc: cp(sm.Bcc),
 		Subject: sm.Subject, Attachments: slices.Clone(sm.Attachments), body: sm.body,
 		inReplyTo: sm.inReplyTo, references: slices.Clone(sm.references), orig: sm, seq: seq}
+}
+
+// MessageSender is the sender of a message being written: the account that
+// it is from, and its signature, shown side by side.
+type MessageSender struct {
+
+	// From is the account that the message is sent from.
+	From SenderAccount
+
+	// Signature is the signature of the message, which is that of the
+	// account by default, and which is changed in the message when it is
+	// changed (see [switchSignature]).
+	Signature SignatureName
 }
 
 // SenderAccount is the account that a message is sent from, chosen from
@@ -100,26 +113,23 @@ type SenderAccount string
 func (sa SenderAccount) Widget() core.Value {
 	ch := core.NewChooser()
 	for _, account := range Settings.Accounts {
-		ch.Items = append(ch.Items, core.ChooserItem{Value: SenderAccount(account), Text: account})
+		text := account
+		if theApp != nil { // with its name, as Name <address>
+			text = addressText(&mail.Address{Name: theApp.senderName(account), Address: account})
+		}
+		ch.Items = append(ch.Items, core.ChooserItem{Value: SenderAccount(account), Text: text})
 	}
 	return ch
 }
 
-// switchSender changes the signature and the automatic Bcc of the given
-// message being written in the given editor from those of the given old
-// account to those of the new one, as when its sender is changed.
+// switchSender changes the signature of the given message being written in
+// the given editor to the default one of the given new account, and its
+// automatic Bcc from the given old account to it, as when its account is
+// changed.
 func switchSender(sm *SendMessage, ed *textcore.Editor, old, new string) {
-	body := ed.Lines.String()
-	if os, ns := signatureText(old), signatureText(new); os != ns {
-		switch {
-		case os != "" && strings.Contains(body, os):
-			body = strings.Replace(body, os, ns, 1)
-		case os == "" && ns != "": // as a new message has it
-			body = "\n\n" + ns + body
-		}
-		ed.Lines.SetString(body)
-		sm.body = body
-	}
+	sig := Settings.DefaultSignatures[new]
+	switchSignature(sm, ed, sm.Sender.Signature, sig)
+	sm.Sender.Signature = sig
 	if Settings.AutoBCC {
 		for _, ad := range sm.Bcc {
 			if ad != nil && strings.EqualFold(ad.Address, old) {
@@ -127,6 +137,26 @@ func switchSender(sm *SendMessage, ed *textcore.Editor, old, new string) {
 			}
 		}
 	}
+}
+
+// switchSignature changes the given old signature of the given message being
+// written in the given editor to the given new one, replacing its text, or
+// adding the new one above any quoted text, as in a new message, if the old
+// one is none.
+func switchSignature(sm *SendMessage, ed *textcore.Editor, old, new SignatureName) {
+	body := ed.Lines.String()
+	os, ns := signatureNamed(old), signatureNamed(new)
+	if os == ns {
+		return
+	}
+	switch {
+	case os != "" && strings.Contains(body, os):
+		body = strings.Replace(body, os, ns, 1)
+	case os == "" && ns != "":
+		body = "\n\n" + ns + body
+	}
+	ed.Lines.SetString(body)
+	sm.body = body
 }
 
 // Compose opens a dialog to send a new message.
@@ -140,7 +170,8 @@ func (a *App) Compose() { //types:add
 // [App.composeMessage], which is called by other higher-level functions,
 // returning its body. The message is saved as a draft as it is written,
 // once it is changed, and when the window is closed, unless it is sent or
-// discarded.
+// discarded; closing a new message asks whether to save it as a draft or
+// discard it.
 func (a *App) compose(title string) *core.Body {
 	sm := a.composeMessage
 	if sm.draft == nil { // a new message
@@ -148,11 +179,12 @@ func (a *App) compose(title string) *core.Body {
 		if from == "" && len(Settings.Accounts) > 0 {
 			from = Settings.Accounts[0]
 		}
-		sm.From = SenderAccount(from)
+		sm.Sender.From = SenderAccount(from)
+		sm.Sender.Signature = Settings.DefaultSignatures[from]
 		if Settings.AutoBCC { // shown, so that it can be removed for a message
 			sm.Bcc = append(sm.Bcc, &mail.Address{Address: from})
 		}
-		if sig := signatureText(from); sig != "" {
+		if sig := signatureNamed(sm.Sender.Signature); sig != "" {
 			// above any quoted message, as usual
 			sm.body = "\n\n" + sig + sm.body
 		}
@@ -230,13 +262,18 @@ func (a *App) compose(title string) *core.Body {
 			}
 		}
 	})
-	sender := string(sm.From)
+	sender, sig := string(sm.Sender.From), sm.Sender.Signature
 	form.OnChange(func(e events.Event) {
-		if new := string(sm.From); new != sender { // its signature and Bcc
-			switchSender(sm, ed, sender, new)
-			sender = new
-			form.Update()
+		switch {
+		case string(sm.Sender.From) != sender: // its signature and Bcc
+			switchSender(sm, ed, sender, string(sm.Sender.From))
+		case sm.Sender.Signature != sig:
+			switchSignature(sm, ed, sig, sm.Sender.Signature)
+		default:
+			return
 		}
+		sender, sig = string(sm.Sender.From), sm.Sender.Signature
+		form.Update()
 	})
 	form.OnChange(change)
 	form.OnInput(change)
@@ -245,6 +282,41 @@ func (a *App) compose(title string) *core.Body {
 	b.OnClose(func(e events.Event) {
 		stopTimer()
 		save()
+	})
+	discard := func() {
+		stopTimer()
+		done = true
+		withApp(func(c *SendMessage) {
+			if d := sm.draft; d != nil {
+				a.removeDraft(d)
+				a.Update()
+			}
+		})
+	}
+	// A new message that is closed without being sent asks whether to save
+	// it as a draft (it is saved as it is written, in case of a crash, and
+	// removed if not), so that drafts do not accumulate from messages that
+	// are not sent; a draft being edited is saved.
+	isNew := sm.draft == nil
+	decided := false // to save it as a draft, with its button
+	b.AddCloseDialog(func(d *core.Body) bool {
+		sm.body = ed.Lines.String()
+		if !isNew || done || decided || (!changed && sm.contents() == initial) {
+			return false
+		}
+		d.SetTitle("Save draft?")
+		core.NewText(d).SetType(core.TextSupporting).SetText("Save the message in Drafts, to finish it later, or discard it?")
+		d.AddBottomBar(func(bar *core.Frame) {
+			core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).OnClick(func(e events.Event) {
+				discard()
+				b.Close()
+			})
+			d.AddOK(bar).SetText("Save draft").OnClick(func(e events.Event) {
+				decided = true
+				b.Close()
+			})
+		})
+		return true
 	})
 
 	b.AddTopBar(func(bar *core.Frame) {
@@ -271,17 +343,12 @@ func (a *App) compose(title string) *core.Body {
 		}
 		core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).
 			OnClick(func(e events.Event) {
-				stopTimer()
-				done = true
-				withApp(func(c *SendMessage) {
-					if d := sm.draft; d != nil {
-						a.removeDraft(d)
-						a.Update()
-					}
-				})
+				discard()
 				b.Close()
 			})
-		b.AddCancel(bar).SetText("Save draft")
+		b.AddCancel(bar).SetText("Save draft").OnClick(func(e events.Event) {
+			decided = true
+		})
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
 			stopTimer()
 			done = true
@@ -326,7 +393,7 @@ func (a *App) Send() error { //types:add
 // whether it has changed.
 func (sm *SendMessage) contents() string {
 	var b strings.Builder
-	fmt.Fprintln(&b, sm.From)
+	fmt.Fprintln(&b, sm.Sender.From, sm.Sender.Signature)
 	for _, as := range [][]*mail.Address{sm.To, sm.Cc, sm.Bcc} {
 		for _, ad := range as {
 			if ad != nil {

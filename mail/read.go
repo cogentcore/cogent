@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -308,8 +309,11 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 				}
 			case "text/html":
 				ctx := messageContext(dmf.Message)
-				err := htmlcore.ReadHTML(ctx, w, p.Body)
+				h, err := io.ReadAll(p.Body)
 				if err != nil {
+					return err
+				}
+				if err := htmlcore.ReadHTMLString(ctx, w, messageHTML(string(h))); err != nil {
 					return err
 				}
 				gotHTML = true
@@ -336,4 +340,20 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 		}
 	}
 	return nil
+}
+
+// bodyTag and styleAttr are the <body> tag of HTML and a style attribute.
+var (
+	bodyTag   = regexp.MustCompile(`(?i)<body\b[^>]*>`)
+	styleAttr = regexp.MustCompile(`(?i)\sstyle\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+)
+
+// messageHTML returns the given HTML of a message as it is shown, without
+// the style of its <body>, as Gmail and other mail programs show it, as
+// messages are written for: as the max-width of the body of messages of
+// Facebook, whose content is wider, which was shown to the right of it.
+func messageHTML(h string) string {
+	return bodyTag.ReplaceAllStringFunc(h, func(tag string) string {
+		return styleAttr.ReplaceAllString(tag, "")
+	})
 }

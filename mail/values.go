@@ -49,6 +49,9 @@ func (at *AddressTextField) WidgetValue() any { return &at.Address }
 func (at *AddressTextField) Init() {
 	at.TextField.Init()
 	at.SetPasteFilter(linkAddress) // as a mailto: link copied from a page
+	at.Styler(func(s *styles.Style) {
+		s.Max.X.Ch(80) // wider than other text fields: long names and addresses do not wrap
+	})
 	if !at.IsReadOnly() {
 		// completing the names and addresses of the contacts and the mail
 		at.SetCompleter(at, func(data any, text string, posLine, posChar int) complete.Matches {

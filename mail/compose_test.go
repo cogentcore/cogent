@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/textcore"
@@ -49,7 +50,7 @@ func TestComposeTabAndSender(t *testing.T) {
 					from, _ = w.(*core.Chooser)
 				}
 			}
-			assert.Equal(t, "From", fields[len(fields)-1], "last")
+			assert.Equal(t, []string{"From", "Signature"}, fields[len(fields)-2:], "last, side by side")
 			require.NotNil(t, from, "a chooser")
 			assert.Len(t, from.Items, 2, "of the accounts")
 			require.NotNil(t, to)
@@ -72,7 +73,7 @@ func TestSwitchSender(t *testing.T) {
 	Settings.AutoBCC = true
 	b := core.NewBody()
 	ed := textcore.NewEditor(b)
-	sm := &SendMessage{From: "work@x.test", Bcc: []*gomail.Address{{Address: "work@x.test"}}}
+	sm := &SendMessage{Sender: MessageSender{From: "work@x.test", Signature: "Work"}, Bcc: []*gomail.Address{{Address: "work@x.test"}}}
 	sm.body = "Hello\n\n" + signatureText("work@x.test") + "\n> quoted\n"
 	ed.Lines.SetString(sm.body)
 	switchSender(sm, ed, "work@x.test", "home@x.test")
@@ -81,4 +82,67 @@ func TestSwitchSender(t *testing.T) {
 	assert.Contains(t, sm.body, "> quoted")
 	assert.Equal(t, sm.body, ed.Lines.String(), "in the editor")
 	assert.Equal(t, "home@x.test", sm.Bcc[0].Address, "the Bcc to the sender")
+	assert.Equal(t, SignatureName("Home"), sm.Sender.Signature, "the default one of the account")
+
+	// choosing another signature
+	switchSignature(sm, ed, "Home", "Work")
+	assert.Contains(t, sm.body, "Dr. Me")
+	assert.NotContains(t, sm.body, "- Me")
+	switchSignature(sm, ed, "Work", "")
+	assert.NotContains(t, sm.body, "Dr. Me", "none")
+	assert.Contains(t, sm.body, "> quoted")
+}
+
+// TestSenderName tests the names of the senders of messages: in the
+// chooser of the account, and in the From of the messages sent: that of the
+// contact with its address, or else the name in the messages sent from it.
+func TestSenderName(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		assert.Equal(t, "Me", a.senderName(testEmail), "in the messages sent from it")
+		ch := SenderAccount("").Widget().(*core.Chooser)
+		require.Len(t, ch.Items, 1)
+		assert.Equal(t, "Me <me@example.com>", ch.Items[0].Text, "in the chooser")
+
+		sm := &SendMessage{Sender: MessageSender{From: SenderAccount(testEmail)}, To: []*gomail.Address{{Address: "zed@example.com"}}, Subject: "Hi"}
+		require.NoError(t, a.saveDraft(sm))
+		msg, err := buildMessage(sm.draft, false)
+		require.NoError(t, err)
+		assert.Regexp(t, `From: "?Me"? <me@example.com>`, string(msg), "in the message")
+
+		// a contact with the address: authoritative
+		cs := a.contactsStore()
+		require.NotNil(t, cs)
+		c := cs.New()
+		c.Name = "Dr. Me"
+		c.Emails = []contacts.Labeled{{Value: "ME@example.com"}}
+		require.NoError(t, cs.Save(c))
+		assert.Equal(t, "Dr. Me", a.senderName(testEmail), "the name of the contact")
+	}))
+}
+
+// TestMessagesOnly tests that the Drafts, Sent, and Trash show each of
+// their messages on its own, not their conversations.
+func TestMessagesOnly(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		assert.False(t, a.flatList(), "conversations by default")
+		for _, l := range []string{"[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Trash", "Drafts", outboxLabel} {
+			assert.True(t, messagesOnly(l), l)
+		}
+		assert.False(t, messagesOnly("INBOX"))
+		hello := messageBySubject(a, "Hello")
+		hello.Labels = append(hello.Labels, Label{Name: "[Gmail]/Trash"}) // of a conversation
+		a.showMailbox(testEmail, "[Gmail]/Trash")
+		assert.True(t, a.flatList())
+		require.NotEmpty(t, a.listRows)
+		for _, mr := range a.listRows {
+			assert.False(t, mr.conversation, "each message on its own")
+			assert.True(t, a.hasLabel(mr.message), "only those in the mailbox")
+		}
+	}))
 }

@@ -154,7 +154,18 @@ func (a *App) listViews() ListViews {
 // own, instead of grouped into conversations.
 func (a *App) flatList() bool {
 	v := a.listViews()
-	return !v.HasFlag(ViewConversations)
+	return !v.HasFlag(ViewConversations) || messagesOnly(a.showLabel)
+}
+
+// messagesOnly returns whether the mailbox with the given label shows each
+// of its messages on its own, not their conversations, as those of the
+// Drafts, Sent, and Trash, whose own messages are what is wanted there.
+func messagesOnly(label string) bool {
+	switch friendlyLabelName(label) {
+	case "Drafts", "Sent", "Trash", outboxLabel:
+		return true
+	}
+	return false
 }
 
 // compactList returns whether the list of messages is compact, as set in
@@ -436,7 +447,7 @@ func (a *App) updateList() {
 func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
 	w.ReadOnlyKeyNav = true
-	w.ShowField = a.listField // before the items
+	w.ShowField = a.listField                                                                     // before the items
 	w.HeaderIcons = map[string]icons.Icon{"Attachments": icons.AttachFile, "Starred": icons.Star} // narrow columns
 	w.FitWidth = a.compactList()
 	w.ContextMenus = nil // only that of the messages

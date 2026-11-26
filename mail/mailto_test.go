@@ -90,7 +90,7 @@ func TestReplyMailto(t *testing.T) {
 
 // TestAddReplyAll tests the recipients added by a reply to all.
 func TestAddReplyAll(t *testing.T) {
-	sm := &SendMessage{From: "me@x.test", To: []*gomail.Address{{Address: "zed@x.test"}},
+	sm := &SendMessage{Sender: MessageSender{From: "me@x.test"}, To: []*gomail.Address{{Address: "zed@x.test"}},
 		replyAll: &replyAll{
 			to: []*gomail.Address{{Name: "Al", Address: "al@x.test"}, {Address: "ME@x.test"}, {Address: "zed@x.test"}},
 			cc: []*gomail.Address{{Address: "bo@x.test"}, {Address: "al@x.test"}},
@@ -163,4 +163,13 @@ func TestPasteAddress(t *testing.T) {
 		at.HandleEvent(events.NewKey(events.KeyChord, 0, key.CodeV, key.Meta))
 		assert.Equal(t, "zed@example.com", at.Text())
 	}))
+}
+
+// TestMessageHTML tests that the style of the body of the HTML of a message
+// is not used, as in other mail programs.
+func TestMessageHTML(t *testing.T) {
+	assert.Equal(t, `<html><body dir="ltr" bgcolor="#ffffff"><p style="color:red">Hi</p></body></html>`,
+		messageHTML(`<html><body style="max-width:420px;margin:0 auto;" dir="ltr" bgcolor="#ffffff"><p style="color:red">Hi</p></body></html>`))
+	assert.Equal(t, `<BODY>x`, messageHTML(`<BODY STYLE='margin:0'>x`))
+	assert.Equal(t, `<p>no body</p>`, messageHTML(`<p>no body</p>`))
 }

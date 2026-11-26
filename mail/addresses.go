@@ -116,7 +116,7 @@ func (a *App) addressMatches(text string) complete.Matches {
 	for _, c := range contacts.Match(a.addressCandidates(), text, 20) {
 		label := addressText(&mail.Address{Name: c.Name, Address: c.Address})
 		icon := icons.Mail
-		if c.Score >= contacts.ContactScore {
+		if c.Contact != "" {
 			icon = icons.Person
 		}
 		md.Matches = append(md.Matches, complete.Completion{Text: label, Label: label, Icon: icon})
@@ -180,4 +180,38 @@ func parseAddressText(text string) (*mail.Address, error) {
 		return nil, errors.New("invalid email address")
 	}
 	return &mail.Address{Address: text}, nil
+}
+
+// senderName returns the name that messages from the given account are sent
+// with: that of the contact with its address, which is authoritative, or
+// else the name in the most messages sent from it, found once (or "" for
+// none). It must be called with the lock of the window.
+func (a *App) senderName(email string) string {
+	if s := a.contactsStore(); s != nil {
+		if name := s.NameOf(email); name != "" {
+			return name
+		}
+	}
+	if name, ok := a.senderNames[email]; ok {
+		return name
+	}
+	counts := map[string]int{}
+	for _, cm := range a.cache[email] {
+		if len(cm.From) > 0 && strings.EqualFold(cm.From[0].Addr(), email) && cm.From[0].Name != "" {
+			counts[cm.From[0].Name]++
+		}
+	}
+	name, n := "", 0
+	for nm, c := range counts {
+		if c > n || (c == n && nm < name) {
+			name, n = nm, c
+		}
+	}
+	if a.senderNames == nil {
+		a.senderNames = map[string]string{}
+	}
+	if len(a.cache[email]) > 0 { // found again once the mail is there
+		a.senderNames[email] = name
+	}
+	return name
 }

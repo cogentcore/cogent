@@ -280,3 +280,17 @@ func (s *Store) ImportFile(file string) (int, error) {
 	defer f.Close()
 	return s.Import(f)
 }
+
+// NameOf returns the name of the contact with the given email address,
+// ignoring case, or "" if there is none.
+func (s *Store) NameOf(email string) string {
+	email = strings.TrimSpace(email)
+	for _, c := range s.Contacts() {
+		for _, e := range c.Emails {
+			if strings.EqualFold(strings.TrimSpace(e.Value), email) {
+				return c.Name
+			}
+		}
+	}
+	return ""
+}

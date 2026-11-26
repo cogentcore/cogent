@@ -73,8 +73,16 @@ func (br *Browser) Init() {
 	br.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
+	loadSettings()
 	tree.AddChild(br, func(w *core.Splits) {
-		w.SetSplits(0.35, 0.65)
+		w.SetSplits(0.2, 0.8)
+		if len(Settings.Splits) == 2 { // as the user set them
+			w.SetSplits(Settings.Splits...)
+		}
+		w.OnChange(func(e events.Event) {
+			Settings.Splits = w.Splits()
+			saveSettings()
+		})
 		tree.AddChild(w, func(w *core.Frame) { // the search and the list
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column

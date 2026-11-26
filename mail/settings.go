@@ -102,6 +102,7 @@ func (sd *SettingsData) Apply() {
 		if _, ok := sd.DefaultSignatures[account]; !ok {
 			sd.DefaultSignatures[account] = ""
 		}
+
 	}
 }
 
@@ -192,7 +193,13 @@ type SignatureText string
 // account, with a line break at the end of each line, or "" if it has none.
 // No "-- " separator line is added: the signature can include one.
 func signatureText(email string) string {
-	name := string(Settings.DefaultSignatures[email])
+	return signatureNamed(Settings.DefaultSignatures[email])
+}
+
+// signatureNamed returns the text of the signature with the given name, as
+// [signatureText], or "" for none.
+func signatureNamed(sn SignatureName) string {
+	name := string(sn)
 	if name == "" {
 		return ""
 	}

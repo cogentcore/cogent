@@ -666,6 +666,14 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 	}
 	c, mu := a.imapClient[email], a.imapMu[email]
 	dir := a.messagesDir(email)
+	reading := false // whether the message being read is downloaded
+	defer func() {
+		if reading { // shown in place of "Downloading the message...", now
+			a.AsyncLock()
+			a.updateReading()
+			a.AsyncUnlock()
+		}
+	}()
 	for mailbox, byUID := range byMailbox {
 		var uids imap.UIDSet
 		for uid := range byUID {
@@ -717,6 +725,9 @@ func (a *App) downloadMessages(email string, msgs []*CacheMessage, progress func
 			cm.Filename = filename
 			if docErr == nil {
 				cm.Attachments, cm.AttachmentsCounted = doc.attachments, true
+			}
+			if cm == a.readMessage {
+				reading = true
 			}
 			a.AsyncUnlock()
 			k := cm.key

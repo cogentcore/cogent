@@ -96,7 +96,7 @@ func TestDraftsOutbox(t *testing.T) {
 	var sm *SendMessage
 	var drafts string
 	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
-		sm = &SendMessage{From: SenderAccount(you), To: []*gomail.Address{{Address: alice}},
+		sm = &SendMessage{Sender: MessageSender{From: SenderAccount(you)}, To: []*gomail.Address{{Address: alice}},
 			Subject: "Plans", body: "Let's *go*"}
 		require.NoError(t, a.saveDraft(sm))
 		drafts = a.draftsLabel(you)
@@ -157,7 +157,7 @@ func TestDraftsOutbox(t *testing.T) {
 		files, _ := os.ReadDir(a.localDir(you))
 		assert.Empty(t, files, "its files")
 	}, core.Locked(b, func() {
-		other := &SendMessage{From: SenderAccount(you), Subject: "Never mind"}
+		other := &SendMessage{Sender: MessageSender{From: SenderAccount(you)}, Subject: "Never mind"}
 		require.NoError(t, a.saveDraft(other))
 		a.readMessage = findSubject(a, you, "Never mind", drafts)
 		a.readSingle = true
@@ -168,8 +168,9 @@ func TestDraftsOutbox(t *testing.T) {
 }
 
 // TestComposeDraft tests that the message being written in a compose
-// window is saved as a draft when the window is closed, once it is
-// changed, and not if it is not.
+// window, once it is changed, is saved as a draft when the window is
+// closed and Save draft is chosen in the dialog asking about it, not if
+// Discard is, and that nothing is asked or saved if it is not changed.
 func TestComposeDraft(t *testing.T) {
 	b, a := newTestingApp(t)
 	you := Settings.Accounts[0]
@@ -183,6 +184,37 @@ func TestComposeDraft(t *testing.T) {
 		return res
 	}
 	var cb *core.Body
+	// write writes the given text in the message and closes its window,
+	// which asks whether to save it as a draft
+	write := func(text string) func() {
+		return func() {
+			core.Locked(cb, func() {
+				var ed *textcore.Editor
+				for w := range cb.AllWidgets() {
+					if e, ok := w.(*textcore.Editor); ok {
+						ed = e
+					}
+				}
+				require.NotNil(t, ed)
+				ed.Lines.SetString(text)
+				ed.Send(events.Input)
+				cb.Scene.Close()
+			})()
+		}
+	}
+	// answer clicks the given button of the dialog asking to save it
+	answer := func(button string) func() {
+		return func() {
+			core.Locked(cb, func() {
+				d := core.TopScene(cb)
+				require.NotNil(t, d)
+				require.NotEqual(t, cb.Scene, d, "the dialog")
+				bt := core.ButtonByText(d, button)
+				require.NotNil(t, bt)
+				bt.Send(events.Click)
+			})()
+		}
+	}
 	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
 		a.composeMessage = &SendMessage{To: []*gomail.Address{{}}}
 		cb = a.compose("Compose")
@@ -192,20 +224,7 @@ func TestComposeDraft(t *testing.T) {
 		assert.Empty(t, locals(), "not saved without changes")
 		a.composeMessage = &SendMessage{To: []*gomail.Address{{}}}
 		cb = a.compose("Compose")
-	}), func() {
-		core.Locked(cb, func() {
-			var ed *textcore.Editor
-			for w := range cb.AllWidgets() {
-				if e, ok := w.(*textcore.Editor); ok {
-					ed = e
-				}
-			}
-			require.NotNil(t, ed)
-			ed.Lines.SetString("Back *soon*")
-			ed.Send(events.Input)
-			cb.Scene.Close()
-		})()
-	}, func() {
+	}), write("Back *soon*"), answer("Save draft"), func() {
 		// saved in the background, with the lock of the app
 		require.Eventually(t, func() bool {
 			a.AsyncLock()
@@ -219,7 +238,15 @@ func TestComposeDraft(t *testing.T) {
 		require.NotNil(t, d)
 		assert.Equal(t, "Back *soon*", strings.TrimSpace(d.Body))
 		assert.False(t, d.Queued)
-	}))
+		a.composeMessage = &SendMessage{To: []*gomail.Address{{}}}
+		cb = a.compose("Compose")
+	}), write("Never mind"), answer("Discard"), func() {
+		time.Sleep(draftSaveDelay + 200*time.Millisecond) // as if it was saved while written
+		a.AsyncLock()
+		defer a.AsyncUnlock()
+		require.Len(t, locals(), 1, "not saved: discarded")
+		assert.Equal(t, "Back *soon*", strings.TrimSpace(a.draftOf(locals()[0]).Body))
+	})
 }
 
 // TestStartupOpen tests that the accounts are open in the tree of

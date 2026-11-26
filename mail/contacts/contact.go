@@ -6,6 +6,13 @@
 // files), with a browser to look them up and edit them, as in the
 // Contacts app of the Mac, and the candidates for completing the
 // addresses of email messages (see [Match]).
+//
+// The contacts are the authoritative record of the names and addresses of
+// people: when there is a contact for an address, its name, and the order
+// of its addresses (its first one is the default), are used over anything
+// derived from the mail (as the names in messages, or how often addresses
+// are used), which is only used when there is no contact (see [Match] and
+// [Store.NameOf]).
 package contacts
 
 //go:generate core generate
