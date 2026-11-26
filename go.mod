@@ -18,6 +18,7 @@ require (
 	github.com/emersion/go-message v0.18.2
 	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
 	github.com/emersion/go-smtp v0.21.1
+	github.com/emersion/go-vcard v0.1.0
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904
@@ -27,6 +28,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/font v0.0.0-20261010204837-88a7f6b56918
 	github.com/yuin/goldmark v1.8.5
+	github.com/zalando/go-keyring v0.2.8
 	go.etcd.io/bbolt v1.5.0
 	golang.org/x/net v0.61.0
 	golang.org/x/oauth2 v0.28.0
@@ -82,6 +84,7 @@ require (
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2/v2 v2.11.0 // indirect
+	github.com/emersion/go-webdav v0.8.0
 	github.com/faiface/beep v1.1.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -126,7 +129,6 @@ require (
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yuin/goldmark/v2 v2.1.16 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zalando/go-keyring v0.2.8
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.28.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
