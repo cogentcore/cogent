@@ -20,11 +20,13 @@ import (
 
 // Reminders are notifications of the operating system for the dates of
 // the items in the date fields with the [Remind] flag, as for due dates,
-// at the time of day of the list type (see [ListType.Reminder]), or of
-// the [ReminderSettings], for dates without times. They are scheduled
-// with [system.Notifier.Sync] whenever the lists change, so that the
-// operating system shows them even when the app is not running (except
-// on Linux and the web). A click on one opens its list.
+// at the reminder times of the list type (see [ListType.Reminders]), or of
+// the [ReminderSettings]: each is a number of days before the date, at a
+// time of day, such as 1 day before at 9:00pm, and on the day at 9:00am.
+// A date and time also reminds at that time. They are scheduled with
+// [system.Notifier.Sync] whenever the lists change, so that the operating
+// system shows them even when the app is not running (except on Linux and
+// the web). A click on one opens its list.
 
 // ReminderSettings are the settings for reminders.
 type ReminderSettings struct {
@@ -34,10 +36,28 @@ type ReminderSettings struct {
 	// permission to show notifications, if it is not given yet.
 	On bool `default:"true"`
 
-	// Time is the time of day of the reminders, such as 9:00 or 5:30pm,
-	// for the dates without times, for the list types without their own
-	// reminder time.
-	Time string `default:"9:00"`
+	// Times are the times of the reminders, each a number of days before
+	// the date, at a time of day, for the list types without their own
+	// reminder times. They are 1 day before at 9:00pm and on the day at
+	// 9:00am by default.
+	Times []ReminderTime
+}
+
+// ReminderTime is a time of reminders: a number of days before a date,
+// at a time of day.
+type ReminderTime struct {
+
+	// Days is the number of days before the date, 0 for on the day.
+	Days int `min:"0"`
+
+	// Time is the time of day, such as 9:00 or 5:30pm.
+	Time string
+}
+
+// defaultReminderTimes returns the default times of reminders:
+// 1 day before at 9:00pm, and on the day at 9:00am.
+func defaultReminderTimes() []ReminderTime {
+	return []ReminderTime{{Days: 1, Time: "9:00pm"}, {Days: 0, Time: "9:00am"}}
 }
 
 // reminderLayouts are the layouts of the times of day of reminders.
@@ -55,21 +75,28 @@ func parseTimeOfDay(s string) (time.Duration, error) {
 	return 0, fmt.Errorf("invalid time of day %q: it must be like 9:00 or 5:30pm", s)
 }
 
-// reminderTime returns the time of day of the reminders of the list type.
-func (lt *ListType) reminderTime() time.Duration {
-	for _, s := range []string{lt.Reminder, Settings.Reminders.Time} {
-		if strings.TrimSpace(s) == "" {
-			continue
-		}
-		if d, err := parseTimeOfDay(s); err == nil {
-			return d
-		}
+// reminderTimes returns the times of the reminders of the list type:
+// its own, or those of the settings.
+func (lt *ListType) reminderTimes() []ReminderTime {
+	if len(lt.Reminders) > 0 {
+		return lt.Reminders
 	}
-	return 9 * time.Hour
+	return Settings.Reminders.Times
+}
+
+// at returns the time of the reminder for the given day, in local time,
+// and false if its time of day is not valid.
+func (rt ReminderTime) at(day time.Time) (time.Time, bool) {
+	d, err := parseTimeOfDay(rt.Time)
+	if err != nil {
+		return time.Time{}, false
+	}
+	y, m, dd := day.Date()
+	return time.Date(y, m, dd-rt.Days, 0, 0, 0, 0, time.Local).Add(d), true
 }
 
 // reminderSep separates the parts of the IDs of reminders:
-// the ID of the list, of the item, and the name of the field.
+// the ID of the list, of the item, the name of the field, and the time.
 const reminderSep = "/"
 
 // reminders returns the reminders of the lists, if they are on, for the
@@ -116,24 +143,35 @@ func (lt *ListType) itemReminders(l *List, it *Item, now time.Time) []*system.No
 		if !f.Flags.HasFlag(Remind) || (f.Type != Date && f.Type != DateTime) {
 			continue
 		}
-		var t time.Time
-		if json.Unmarshal(it.Values[f.Name], &t) != nil || t.IsZero() {
+		var date time.Time
+		if json.Unmarshal(it.Values[f.Name], &date) != nil || date.IsZero() {
 			continue
 		}
-		t = t.Local()
-		if f.Type == Date {
-			y, m, d := t.Date()
-			t = time.Date(y, m, d, 0, 0, 0, 0, time.Local).Add(lt.reminderTime())
+		date = date.Local()
+		due := date.Format("Mon Jan 2")
+		var times []time.Time
+		if f.Type == DateTime {
+			due += date.Format(" 3:04pm")
+			times = append(times, date)
 		}
-		if !t.After(now) {
-			continue
+		for _, rt := range lt.reminderTimes() {
+			if t, ok := rt.at(date); ok && (f.Type == Date || t.Before(date)) {
+				times = append(times, t)
+			}
 		}
-		ns = append(ns, &system.Notification{
-			ID:    l.ID + reminderSep + it.ID + reminderSep + f.Name,
-			Title: lt.itemTitle(it),
-			Body:  l.Name + ": " + f.Name + " " + t.Format("Mon Jan 2"),
-			Time:  t,
-		})
+		slices.SortFunc(times, func(a, b time.Time) int { return a.Compare(b) })
+		times = slices.CompactFunc(times, time.Time.Equal)
+		for _, t := range times {
+			if !t.After(now) {
+				continue
+			}
+			ns = append(ns, &system.Notification{
+				ID:    l.ID + reminderSep + it.ID + reminderSep + f.Name + reminderSep + t.Format("20060102T1504"),
+				Title: lt.itemTitle(it),
+				Body:  l.Name + ": " + f.Name + " " + due,
+				Time:  t,
+			})
+		}
 	}
 	return ns
 }

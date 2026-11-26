@@ -104,7 +104,7 @@ const (
 
 	// Remind is for a date field whose dates have reminders, which are
 	// notifications of the operating system, as for due dates
-	// (see [ListType.Reminder]), for the items that are not done
+	// (see [ListType.Reminders]), for the items that are not done
 	// (that are hidden when the list is filtered: see [Field.Filter]).
 	Remind
 )
@@ -118,15 +118,15 @@ type ListType struct { //types:add
 	// Name is the name of the list type.
 	Name string
 
-	// Reminder is the time of day of the reminders of the items of the
-	// lists, such as 9:00 or 5:30pm, for the date fields with the Remind
-	// flag (see [Field.Flags]) that have dates without times. If it is
-	// empty, the time in the reminder settings is used.
-	Reminder string
-
 	// Fields are the fields of the items, the columns of the lists,
 	// which are reordered by dragging them.
 	Fields []*Field `drag-moves:"+"`
+
+	// Reminders are the times of the reminders of the items of the lists,
+	// for the date fields with the Remind flag (see [Field.Flags]), each a
+	// number of days before the date, at a time of day. If there are none,
+	// the times in the reminder settings are used.
+	Reminders []ReminderTime
 }
 
 func (lt *ListType) Label() string { return lt.Name }

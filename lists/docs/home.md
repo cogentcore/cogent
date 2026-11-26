@@ -39,13 +39,14 @@ Each field has:
 * **Filter**: a value, such as `true` for a check field like Done, for which the items are hidden when the list is filtered. Items with a filter value are also *done*, for reminders.
 * **Flags**: **Detail** for a field that is only in the form of an item, which its edit button opens, as for notes; **Remind** for a date field whose dates have reminders, as for Due.
 
-A list type also has a **Reminder** time (see below).
+A list type also has its own **Reminders** times (see below).
 
 ## Reminders
 
 The items that are not done remind you of the dates of their fields with the **Remind** flag, such as Due in the Todo and Project types, with the notifications of your device. A notification shows the item and its list, and clicking it opens the list. The operating system shows them even when the app is not running, except on Linux and the web, where they are only shown while the app is running.
 
-* A date without a time reminds you at the **Reminder** time of the list type, such as `9:00` or `5:30pm`, or, if it is empty, at the time in the **Reminders** settings (9:00 by default). A date and time reminds you at that time.
+* The reminder times are in the **Reminders** settings: each is a number of **Days** before the date (0 for on the day), at a **Time** of day, such as `9:00` or `5:30pm`. By default, you are reminded 1 day before at 9:00pm, and on the day at 9:00am. A list type can have its own **Reminders** times, which are used instead of those of the settings for its lists.
+* A date and time also reminds you at that time, and the times on its day after it are left out.
 * Turn reminders off or on in the **Reminders** settings (in the app's Settings). Turning them on asks for permission to show notifications, if it is not given yet; you can also allow them in the settings of your system.
 * On macOS, the app must be in `/Applications` or `~/Applications` for its notifications to be allowed.
 

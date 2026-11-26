@@ -6,8 +6,10 @@ package lists
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,7 +47,9 @@ func TestFieldsDragMoves(t *testing.T) {
 		var lb *core.ListButton
 		tb.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
 			if x, ok := cw.(*core.ListButton); ok && lb == nil {
-				lb = x
+				if _, fields := reflectx.Underlying(reflect.ValueOf(x.Slice)).Interface().([]*Field); fields {
+					lb = x
+				}
 			}
 			return lb == nil
 		})

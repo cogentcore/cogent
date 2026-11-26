@@ -56,7 +56,7 @@ const FieldFlagsN FieldFlags = 2
 
 var _FieldFlagsValueMap = map[string]FieldFlags{`Detail`: 0, `Remind`: 1}
 
-var _FieldFlagsDescMap = map[FieldFlags]string{0: `Detail is for a field that is only in the form of an item, which its edit button opens, and not in the table, as for notes.`, 1: `Remind is for a date field whose dates have reminders, which are notifications of the operating system, as for due dates (see [ListType.Reminder]), for the items that are not done (that are hidden when the list is filtered: see [Field.Filter]).`}
+var _FieldFlagsDescMap = map[FieldFlags]string{0: `Detail is for a field that is only in the form of an item, which its edit button opens, and not in the table, as for notes.`, 1: `Remind is for a date field whose dates have reminders, which are notifications of the operating system, as for due dates (see [ListType.Reminders]), for the items that are not done (that are hidden when the list is filtered: see [Field.Filter]).`}
 
 var _FieldFlagsMap = map[FieldFlags]string{0: `Detail`, 1: `Remind`}
 

@@ -40,6 +40,11 @@ type SettingsData struct { //types:add
 	Reminders ReminderSettings
 }
 
+// Defaults sets the defaults of the settings that have no default tags.
+func (sd *SettingsData) Defaults() {
+	sd.Reminders.Times = defaultReminderTimes()
+}
+
 // Apply applies the settings, after they are edited.
 func (sd *SettingsData) Apply() {
 	if theLists != nil && theLists.Scene != nil {
