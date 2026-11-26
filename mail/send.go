@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/textcore"
 	"github.com/emersion/go-message/mail"
@@ -31,13 +32,16 @@ import (
 )
 
 // SendMessage represents the data necessary for the user to send a message.
+// Its fields are shown in its compose window in this order, with the
+// sender last, as it is usually the default one; Tab goes from To to the
+// Subject and then the message, skipping the others, which are clicked.
 type SendMessage struct {
-	From        []*mail.Address `display:"inline"`
 	To          []*mail.Address `display:"inline"`
-	Cc          []*mail.Address `display:"inline"`
-	Bcc         []*mail.Address `display:"inline"`
+	Cc          []*mail.Address `display:"inline" tab:"-"`
+	Bcc         []*mail.Address `display:"inline" tab:"-"`
 	Subject     string
-	Attachments []core.Filename `display:"inline"`
+	Attachments []core.Filename `display:"inline" tab:"-"`
+	From        SenderAccount   `tab:"-"`
 
 	body       string
 	inReplyTo  string
@@ -84,9 +88,45 @@ func (sm *SendMessage) snapshot(seq int) *SendMessage {
 		}
 		return res
 	}
-	return &SendMessage{From: cp(sm.From), To: cp(sm.To), Cc: cp(sm.Cc), Bcc: cp(sm.Bcc),
+	return &SendMessage{From: sm.From, To: cp(sm.To), Cc: cp(sm.Cc), Bcc: cp(sm.Bcc),
 		Subject: sm.Subject, Attachments: slices.Clone(sm.Attachments), body: sm.body,
 		inReplyTo: sm.inReplyTo, references: slices.Clone(sm.references), orig: sm, seq: seq}
+}
+
+// SenderAccount is the account that a message is sent from, chosen from
+// the accounts.
+type SenderAccount string
+
+func (sa SenderAccount) Widget() core.Value {
+	ch := core.NewChooser()
+	for _, account := range Settings.Accounts {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: SenderAccount(account), Text: account})
+	}
+	return ch
+}
+
+// switchSender changes the signature and the automatic Bcc of the given
+// message being written in the given editor from those of the given old
+// account to those of the new one, as when its sender is changed.
+func switchSender(sm *SendMessage, ed *textcore.Editor, old, new string) {
+	body := ed.Lines.String()
+	if os, ns := signatureText(old), signatureText(new); os != ns {
+		switch {
+		case os != "" && strings.Contains(body, os):
+			body = strings.Replace(body, os, ns, 1)
+		case os == "" && ns != "": // as a new message has it
+			body = "\n\n" + ns + body
+		}
+		ed.Lines.SetString(body)
+		sm.body = body
+	}
+	if Settings.AutoBCC {
+		for _, ad := range sm.Bcc {
+			if ad != nil && strings.EqualFold(ad.Address, old) {
+				ad.Address = new
+			}
+		}
+	}
 }
 
 // Compose opens a dialog to send a new message.
@@ -108,7 +148,7 @@ func (a *App) compose(title string) *core.Body {
 		if from == "" && len(Settings.Accounts) > 0 {
 			from = Settings.Accounts[0]
 		}
-		sm.From = []*mail.Address{{Address: from}}
+		sm.From = SenderAccount(from)
 		if Settings.AutoBCC { // shown, so that it can be removed for a message
 			sm.Bcc = append(sm.Bcc, &mail.Address{Address: from})
 		}
@@ -178,6 +218,26 @@ func (a *App) compose(title string) *core.Body {
 			}
 		})
 	}
+	// the + buttons for more recipients are clicked, not tabbed to, so that
+	// Tab goes from To to the Subject
+	form.FinalUpdater(func() {
+		for w := range form.AllWidgets() {
+			if w.AsTree().Name == "add-button" && w.AsWidget().Property("skip-tab") == nil {
+				w.AsWidget().SetProperty("skip-tab", true)
+				w.AsWidget().FirstStyler(func(s *styles.Style) {
+					s.SetAbilities(true, abilities.SkipTab)
+				})
+			}
+		}
+	})
+	sender := string(sm.From)
+	form.OnChange(func(e events.Event) {
+		if new := string(sm.From); new != sender { // its signature and Bcc
+			switchSender(sm, ed, sender, new)
+			sender = new
+			form.Update()
+		}
+	})
 	form.OnChange(change)
 	form.OnInput(change)
 	ed.OnInput(change)
@@ -266,7 +326,8 @@ func (a *App) Send() error { //types:add
 // whether it has changed.
 func (sm *SendMessage) contents() string {
 	var b strings.Builder
-	for _, as := range [][]*mail.Address{sm.From, sm.To, sm.Cc, sm.Bcc} {
+	fmt.Fprintln(&b, sm.From)
+	for _, as := range [][]*mail.Address{sm.To, sm.Cc, sm.Bcc} {
 		for _, ad := range as {
 			if ad != nil {
 				fmt.Fprintf(&b, "%s <%s>,", ad.Name, ad.Address)

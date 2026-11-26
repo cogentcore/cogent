@@ -96,7 +96,7 @@ func TestDraftsOutbox(t *testing.T) {
 	var sm *SendMessage
 	var drafts string
 	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
-		sm = &SendMessage{From: []*gomail.Address{{Address: you}}, To: []*gomail.Address{{Address: alice}},
+		sm = &SendMessage{From: SenderAccount(you), To: []*gomail.Address{{Address: alice}},
 			Subject: "Plans", body: "Let's *go*"}
 		require.NoError(t, a.saveDraft(sm))
 		drafts = a.draftsLabel(you)
@@ -157,7 +157,7 @@ func TestDraftsOutbox(t *testing.T) {
 		files, _ := os.ReadDir(a.localDir(you))
 		assert.Empty(t, files, "its files")
 	}, core.Locked(b, func() {
-		other := &SendMessage{From: []*gomail.Address{{Address: you}}, Subject: "Never mind"}
+		other := &SendMessage{From: SenderAccount(you), Subject: "Never mind"}
 		require.NoError(t, a.saveDraft(other))
 		a.readMessage = findSubject(a, you, "Never mind", drafts)
 		a.readSingle = true

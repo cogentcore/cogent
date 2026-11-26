@@ -90,8 +90,7 @@ func TestReplyMailto(t *testing.T) {
 
 // TestAddReplyAll tests the recipients added by a reply to all.
 func TestAddReplyAll(t *testing.T) {
-	me := &gomail.Address{Address: "me@x.test"}
-	sm := &SendMessage{From: []*gomail.Address{me}, To: []*gomail.Address{{Address: "zed@x.test"}},
+	sm := &SendMessage{From: "me@x.test", To: []*gomail.Address{{Address: "zed@x.test"}},
 		replyAll: &replyAll{
 			to: []*gomail.Address{{Name: "Al", Address: "al@x.test"}, {Address: "ME@x.test"}, {Address: "zed@x.test"}},
 			cc: []*gomail.Address{{Address: "bo@x.test"}, {Address: "al@x.test"}},

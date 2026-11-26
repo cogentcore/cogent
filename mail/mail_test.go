@@ -423,9 +423,9 @@ func TestReplySend(t *testing.T) {
 		assert.Contains(t, msg, "<em>news</em>", "the HTML version")
 		assert.Contains(t, msg, `filename=notes.txt`)
 
-		a.composeMessage.From = nil
+		a.composeMessage.From = ""
 		assert.Error(t, a.Send(), "no sender")
-		a.composeMessage.From = []*gomail.Address{{Address: testEmail}}
+		a.composeMessage.From = testEmail
 		a.composeMessage.Attachments = []core.Filename{"none.txt"}
 		assert.Error(t, a.Send(), "no attachment")
 	}))
@@ -485,7 +485,7 @@ func TestTestingMode(t *testing.T) {
 
 		a.showMailbox(you, "INBOX")
 		a.Compose()
-		assert.Equal(t, you, a.composeMessage.From[0].Address)
+		assert.Equal(t, SenderAccount(you), a.composeMessage.From)
 		a.composeMessage.To[0].Address = alice
 		a.composeMessage.Subject = "Testing mode"
 		a.composeMessage.body = "Hello *Alice*"

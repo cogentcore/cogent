@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -253,14 +254,19 @@ func (a *App) removeDraft(d *draft) {
 
 // setDraft sets the given draft from the given message being written.
 func (sm *SendMessage) setDraft(d *draft) {
-	d.From, d.To, d.Cc, d.Bcc = sm.From, sm.To, sm.Cc, sm.Bcc
+	d.From = []*mail.Address{{Address: string(sm.From)}}
+	d.To, d.Cc, d.Bcc = sm.To, sm.Cc, sm.Bcc
 	d.Subject, d.Attachments, d.Body = sm.Subject, sm.Attachments, sm.body
 	d.InReplyTo, d.References = sm.inReplyTo, sm.references
 }
 
 // sendMessage returns the message being written of the draft.
 func (d *draft) sendMessage() *SendMessage {
-	return &SendMessage{From: d.From, To: d.To, Cc: d.Cc, Bcc: d.Bcc, Subject: d.Subject,
+	var from SenderAccount
+	if len(d.From) > 0 && d.From[0] != nil {
+		from = SenderAccount(d.From[0].Address)
+	}
+	return &SendMessage{From: from, To: d.To, Cc: d.Cc, Bcc: d.Bcc, Subject: d.Subject,
 		Attachments: d.Attachments, body: d.Body, inReplyTo: d.InReplyTo, references: d.References, draft: d}
 }
 
@@ -285,8 +291,8 @@ func (a *App) saveDraft(sm *SendMessage) error {
 	}
 	a.draftsMu.Unlock()
 	from := a.currentEmail
-	if len(sm.From) > 0 && sm.From[0] != nil && sm.From[0].Address != "" {
-		from = sm.From[0].Address
+	if sm.From != "" {
+		from = string(sm.From)
 	}
 	if d.Account != "" && d.Account != from { // moved to another account
 		a.removeDraft(d)
@@ -313,8 +319,8 @@ func (a *App) saveDraft(sm *SendMessage) error {
 // its draft. If it cannot be sent, it is saved as a draft, and the error
 // is returned. It must be called with the lock of the window.
 func (a *App) queue(sm *SendMessage) (*draft, error) {
-	if len(sm.From) != 1 {
-		return nil, fmt.Errorf("expected 1 sender, but got %d", len(sm.From))
+	if sm.From == "" {
+		return nil, errors.New("no sender")
 	}
 	if err := a.saveDraft(sm); err != nil {
 		return nil, err

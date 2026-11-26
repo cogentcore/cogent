@@ -37,13 +37,11 @@ func init() {
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
+// When it is edited, it shows the address with its name, if any, as
+// Name <address>, as which it can be typed, or just the address.
 type AddressTextField struct {
 	core.TextField
 	Address mail.Address
-
-	// completed is the address that was completed, whose name is that of
-	// the completion, until the text is changed (see [completeAddress]).
-	completed string
 }
 
 func (at *AddressTextField) WidgetValue() any { return &at.Address }
@@ -59,7 +57,7 @@ func (at *AddressTextField) Init() {
 			}
 			return theApp.addressMatches(text)
 		}, func(data any, text string, cursorPos int, c complete.Completion, seed string) complete.Edit {
-			return completeAddress(at, text, cursorPos, c)
+			return completeAddress(text, c)
 		})
 	}
 	at.Updater(func() {
@@ -67,18 +65,14 @@ func (at *AddressTextField) Init() {
 			at.SetText(fmt.Sprintf("%s (%s)", at.Address.Name, at.Address.Address))
 			return
 		}
-		at.SetText(at.Address.Address)
+		at.SetText(addressText(&at.Address))
 	})
 	at.SetValidator(func() error {
-		text := at.Text()
-		if !strings.Contains(text, "@") && !strings.Contains(text, ".") {
-			return fmt.Errorf("invalid email address")
+		ad, err := parseAddressText(at.Text())
+		if err != nil {
+			return err
 		}
-		if at.completed != "" && text != at.completed {
-			at.Address.Name = "" // that of another address
-			at.completed = ""
-		}
-		at.Address.Address = text
+		at.Address = *ad
 		return nil
 	})
 }

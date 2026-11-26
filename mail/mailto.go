@@ -126,7 +126,10 @@ func (sm *SendMessage) addReplyAll() {
 		return
 	}
 	has := func(addr string) bool {
-		for _, as := range [][]*mail.Address{sm.From, sm.To, sm.Cc, sm.Bcc} {
+		if strings.EqualFold(string(sm.From), addr) {
+			return true
+		}
+		for _, as := range [][]*mail.Address{sm.To, sm.Cc, sm.Bcc} {
 			if slices.ContainsFunc(as, func(ad *mail.Address) bool {
 				return ad != nil && strings.EqualFold(strings.TrimSpace(ad.Address), addr)
 			}) {

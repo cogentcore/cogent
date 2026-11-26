@@ -26,6 +26,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
@@ -227,6 +228,10 @@ type App struct {
 	readPanel *core.Frame
 	toolbar   *core.Toolbar
 
+	// readShown is the message last shown in the read panel, for
+	// scrolling it to the top when another one is shown.
+	readShown *CacheMessage
+
 	// sidebar is the panel of the mailboxes and the status, and listPanel
 	// is that of the list of messages (see [App.updateMail]).
 	sidebar, listPanel *core.Frame
@@ -320,6 +325,12 @@ func (a *App) Init() {
 			a.readPanel = w
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
+			})
+			w.Updater(func() {
+				if a.readMessage != a.readShown { // a new message: from its top
+					a.readShown = a.readMessage
+					w.Defer(func() { w.ScrollDimToContentStart(math32.Y) })
+				}
 			})
 			w.Maker(func(p *tree.Plan) {
 				if a.readMessage == nil {

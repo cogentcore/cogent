@@ -5,12 +5,16 @@
 package mail
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/math32"
 	"github.com/cogentcore/go-imap/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -92,4 +96,38 @@ func TestMarkReadRightAway(t *testing.T) {
 			return slices.Contains(serverFlags(t, a, "Work", hello.Labels[len(hello.Labels)-1].UID), imap.FlagSeen)
 		}, 5*time.Second, 10*time.Millisecond, "on the server")
 	})
+}
+
+// TestReadScrollTop tests that another message is shown from its top,
+// not at the scroll position of the one before, and that updating the
+// same message keeps its position.
+func TestReadScrollTop(t *testing.T) {
+	b, a := newTestApp(t, nil)
+	require.NoError(t, os.MkdirAll(a.messagesDir(testEmail), 0o700))
+	long := func(name string) *CacheMessage {
+		msg := "From: a@example.com\r\nSubject: " + name + "\r\nContent-Type: text/plain\r\n\r\n" +
+			strings.Repeat("A line of the message.\n\n", 200)
+		require.NoError(t, os.WriteFile(filepath.Join(a.messagesDir(testEmail), name), []byte(msg), 0o600))
+		return &CacheMessage{key: name, Filename: name, Envelope: imap.Envelope{Subject: name, Date: time.Now()},
+			Labels: []Label{{Name: "INBOX", UID: 1}}, Flags: []imap.Flag{imap.FlagSeen}}
+	}
+	one, two := long("one"), long("two")
+	a.cache[testEmail] = map[string]*CacheMessage{"one": one, "two": two}
+	atStart := func() bool { return a.readPanel.IsDimAtContentStart(math32.Y) }
+	core.RenderImage(b, core.Locked(b, func() {
+		a.readMessage, a.readSingle = one, true
+		a.updateReading()
+	}), core.Locked(b, func() {
+		require.True(t, a.readPanel.HasScroll[math32.Y], "long enough to scroll")
+		a.readPanel.ScrollDimToContentEnd(math32.Y)
+	}), core.Locked(b, func() {
+		require.False(t, atStart(), "scrolled down")
+		a.updateReading()
+	}), core.Locked(b, func() {
+		assert.False(t, atStart(), "the same message: kept")
+		a.readMessage = two
+		a.updateReading()
+	}), core.Locked(b, func() {
+		assert.True(t, atStart(), "another message: from its top")
+	}))
 }

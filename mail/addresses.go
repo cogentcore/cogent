@@ -6,11 +6,14 @@ package mail
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/core/core"
@@ -111,10 +114,7 @@ func (a *App) candidatesFromMail() []contacts.Candidate {
 func (a *App) addressMatches(text string) complete.Matches {
 	md := complete.Matches{Seed: text}
 	for _, c := range contacts.Match(a.addressCandidates(), text, 20) {
-		label := c.Address
-		if c.Name != "" && !strings.EqualFold(c.Name, c.Address) {
-			label = c.Name + " <" + c.Address + ">"
-		}
+		label := addressText(&mail.Address{Name: c.Name, Address: c.Address})
 		icon := icons.Mail
 		if c.Score >= contacts.ContactScore {
 			icon = icons.Person
@@ -144,14 +144,40 @@ func (a *App) Contacts() { //types:add
 }
 
 // completeAddress returns the edit of an address field for the given
-// completion (see [App.addressMatches]): its address, which replaces all
-// of the text, setting the name of the address of the field.
-func completeAddress(at *AddressTextField, text string, cursorPos int, c complete.Completion) complete.Edit {
-	ad, err := mail.ParseAddress(c.Text)
-	if err != nil {
-		ad = &mail.Address{Address: c.Text}
+// completion (see [App.addressMatches]), whose text is the address with its
+// name (see [addressText]), which replaces all of the given text of the
+// field, as the text being completed.
+func completeAddress(text string, c complete.Completion) complete.Edit {
+	return complete.Edit{NewText: c.Text, ForwardDelete: utf8.RuneCountInString(text)}
+}
+
+// addressText returns the given address as it is edited in an address
+// field: Name <address>, with the name in quotes if it has characters
+// that need them (as a comma), or just the address without a name.
+func addressText(ad *mail.Address) string {
+	name, addr := strings.TrimSpace(ad.Name), strings.TrimSpace(ad.Address)
+	if name == "" || strings.EqualFold(name, addr) {
+		return addr
 	}
-	at.Address.Name = ad.Name
-	at.completed = ad.Address
-	return complete.Edit{NewText: ad.Address, ForwardDelete: len([]rune(text)) - cursorPos}
+	if strings.ContainsAny(name, `,;:<>@()[]\".`) {
+		name = strconv.Quote(name)
+	}
+	return name + " <" + addr + ">"
+}
+
+// parseAddressText returns the address of the given text of an address
+// field: Name <address>, or just the address.
+func parseAddressText(text string) (*mail.Address, error) {
+	text = strings.TrimSpace(text)
+	if strings.Contains(text, "<") {
+		ad, err := mail.ParseAddress(text)
+		if err != nil {
+			return nil, fmt.Errorf("invalid email address: %w", err)
+		}
+		return ad, nil
+	}
+	if !strings.Contains(text, "@") && !strings.Contains(text, ".") {
+		return nil, errors.New("invalid email address")
+	}
+	return &mail.Address{Address: text}, nil
 }
