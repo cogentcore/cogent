@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -735,5 +736,104 @@ func TestToolbarItemButtons(t *testing.T) {
 		ls.Undo()
 		require.Len(t, gr.Items, n)
 		assert.Equal(t, first, string(gr.Items[0].Values["Item"]), "undo the delete")
+	})
+}
+
+// tableRows returns the values of the first field of the rows of the table
+// of the items of the current list, indented by their depth.
+func tableRows(ls *Lists) []string {
+	rows := reflectx.Underlying(reflect.ValueOf(ls.table.Slice))
+	var names []string
+	for i := range ls.table.SliceSize {
+		names = append(names, rows.Index(i).Elem().Field(0).String())
+	}
+	return names
+}
+
+// TestSearch tests searching the items of a list with the search field,
+// which shows the items that match, whether they are filtered or not, and
+// adds an item with the text of the search with Enter when none match.
+func TestSearch(t *testing.T) {
+	b := core.NewBody()
+	ls := testLists(t, b)
+	gr := findList(ls, "Groceries") // before the window, which fits it
+	ls.Current = gr
+	gr.Filtered = true
+	core.AssertRender(t, b, "search", func() {
+		b.AsyncLock()
+		var tf *core.TextField
+		ls.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if x, ok := cw.(*core.TextField); ok && x.Placeholder == "Search" {
+				tf = x
+			}
+			return tf == nil
+		})
+		require.NotNil(t, tf)
+		assert.Equal(t, []string{"Produce", "Apples", "Dairy", "Milk", "Yogurt", "Bakery", "Bread"}, tableRows(ls), "without Spinach, which is got")
+		b.AsyncUnlock()
+
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		click := func() { // in the search field, where it is now
+			b.AsyncLock()
+			bb := tf.Geom.TotalBBox
+			b.AsyncUnlock()
+			pt := bb.Min.Add(bb.Size().Div(2))
+			src.MouseButton(events.MouseDown, events.Left, pt, 0)
+			src.MouseButton(events.MouseUp, events.Left, pt, 0)
+			time.Sleep(200 * time.Millisecond)
+		}
+		click()
+		typeText := func(s string) {
+			for _, r := range s {
+				src.Key(events.KeyDown, r, 0, 0)
+				src.Key(events.KeyUp, r, 0, 0)
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
+		enter := func() {
+			src.Key(events.KeyDown, '\r', key.CodeReturnEnter, 0)
+			src.Key(events.KeyUp, '\r', key.CodeReturnEnter, 0)
+			time.Sleep(200 * time.Millisecond)
+		}
+		typeText("SPIN")
+		b.AsyncLock()
+		assert.Equal(t, []string{"Produce", "Spinach"}, tableRows(ls), "found, although it is filtered")
+		// not got: it stays while searching, and is shown when filtered
+		reflect.ValueOf(ls.table.Slice).Elem().Index(1).Elem().Field(1).SetBool(false)
+		ls.itemsChanged()
+		assert.Equal(t, []string{"Produce", "Spinach"}, tableRows(ls))
+		tf.SetText("")
+		ls.setSearch("")
+		assert.Contains(t, tableRows(ls), "Spinach")
+		b.AsyncUnlock()
+
+		// Enter goes to the first item found, not the category it is in
+		click()
+		typeText("yog")
+		enter()
+		b.AsyncLock()
+		assert.Equal(t, []string{"Dairy", "Yogurt"}, tableRows(ls))
+		assert.Equal(t, 1, ls.table.SelectedIndex)
+		tf.SetText("")
+		ls.setSearch("")
+		b.AsyncUnlock()
+
+		// with none found, Enter adds an item with the text, at the end, as
+		// none is selected, as none is shown, and ends the search
+		click()
+		typeText("Cheese")
+		b.AsyncLock()
+		assert.Empty(t, tableRows(ls))
+		b.AsyncUnlock()
+		enter()
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, "", ls.search)
+		assert.Equal(t, "", tf.Text())
+		rows := tableRows(ls)
+		assert.Equal(t, "Cheese", rows[len(rows)-1])
+		assert.Equal(t, len(rows)-1, ls.table.SelectedIndex)
+		require.Len(t, gr.Items, 4)
+		assert.JSONEq(t, `"Cheese"`, string(gr.Items[3].Values["Item"]), "saved")
 	})
 }

@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"image"
 	"reflect"
+	"strings"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -107,6 +109,11 @@ type Lists struct {
 
 	// tableList is the list whose column widths and sort the table has.
 	tableList *List
+
+	// search is the text that the items of the current list are searched
+	// for, in the search field, which shows only the items that match,
+	// whether they are filtered or not (see [Lists.makeSearch]).
+	search string
 
 	// items is the body of the items of the current list,
 	// in the mobile layout, while it is open (see [Lists.openItems]).
@@ -214,6 +221,7 @@ func (ls *Lists) SetCurrent(l *List) {
 		return
 	}
 	ls.Current = l
+	ls.search = ""
 	if tt := ls.table; tt != nil { // which keeps its view for items of the same type
 		tt.SelectedIndex = -1
 		tt.ResetSelectedIndexes()
@@ -350,6 +358,7 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 		w.Styler(func(s *styles.Style) {
 			s.Align.Items = styles.Center
 			s.Gap.X.Em(1)
+			s.Grow.Set(1, 0) // for the search field
 		})
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetType(core.TextHeadlineSmall)
@@ -361,7 +370,113 @@ func (ls *Lists) makeListHeader(p *tree.Plan) {
 			})
 		})
 		w.Maker(ls.makeFilterSwitch)
+		w.Maker(ls.makeSearch)
 	})
+}
+
+// makeSearch adds the field for searching the items of the current list
+// to the given plan, with a button for adding an item with its text, as
+// when it is not found, as for adding an item to a shopping list that is
+// not already in it, where the items that are found can be checked again
+// instead (see [Lists.search]).
+func (ls *Lists) makeSearch(p *tree.Plan) {
+	tree.AddAt(p, "search", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Align.Items = styles.Center
+			s.Grow.Set(1, 0)
+			s.Gap.X.Em(0.5)
+		})
+		tree.AddChild(w, func(w *core.TextField) {
+			w.SetPlaceholder("Search")
+			w.SetTooltip("Search the items, showing those that match, including those that are filtered; Enter adds an item with the text if none match")
+			w.SetLeadingIcon(icons.Search)
+			w.SetTrailingIcon(icons.Close, func(e events.Event) {
+				w.SetText("")
+				ls.setSearch("")
+			})
+			w.Styler(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
+				s.Min.X.Em(8)
+				s.Max.X.Em(24)
+			})
+			w.OnInput(func(e events.Event) {
+				ls.setSearch(w.Text())
+			})
+			w.OnFirst(events.KeyChord, func(e events.Event) {
+				if keymap.Of(e.KeyChord()) != keymap.Enter || strings.TrimSpace(ls.search) == "" {
+					return
+				}
+				e.SetHandled()
+				if i := ls.firstFound(); i >= 0 {
+					ls.table.SelectIndexEvent(i, events.SelectOne) // which focuses it
+					return
+				}
+				ls.addSearched()
+			})
+			w.Updater(func() {
+				if w.Text() != ls.search {
+					w.SetText(ls.search)
+				}
+			})
+		})
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetIcon(icons.Add).SetType(core.ButtonTonal)
+			w.SetTooltip("Add an item with the text of the search, after the selected one, or at the end")
+			w.OnClick(func(e events.Event) {
+				ls.addSearched()
+			})
+		})
+	})
+}
+
+// firstFound returns the row index of the first item of the table that
+// matches the search, and not only has items in it that do, or -1 if none.
+func (ls *Lists) firstFound() int {
+	tt := ls.table
+	lt := ls.TypeOf(ls.Current)
+	if tt == nil || lt == nil {
+		return -1
+	}
+	match := lt.matchItem(ls.search)
+	rows := reflectx.Underlying(reflect.ValueOf(tt.Slice))
+	for i := range tt.SliceSize {
+		if match(rows.Index(i).Interface()) {
+			return i
+		}
+	}
+	return -1
+}
+
+// setSearch sets the text that the items of the current list are
+// searched for (see [Lists.search]).
+func (ls *Lists) setSearch(s string) {
+	if s == ls.search {
+		return
+	}
+	ls.search = s
+	if ls.table != nil {
+		ls.table.Update()
+	}
+}
+
+// addSearched adds an item with the text of the search in its first
+// field, after the selected item, or at the end, and ends the search,
+// so that the items are shown as before, with the new item selected.
+func (ls *Lists) addSearched() {
+	tt := ls.table
+	lt := ls.TypeOf(ls.Current)
+	if tt == nil || lt == nil {
+		return
+	}
+	text := strings.TrimSpace(ls.search)
+	ls.search = ""
+	tt.Update() // the items without the search, keeping the selection
+	item := tt.NewItem()
+	if text != "" && len(lt.Fields) > 0 && lt.Fields[0].Type == Text {
+		reflect.ValueOf(item).Elem().Field(0).SetString(text)
+	}
+	tt.InsertItemAfter(tt.SelectedIndex, item)
+	ls.Update() // the search field, which is empty
 }
 
 // makeFilterSwitch adds the switch for filtering the items of the current
@@ -444,8 +559,12 @@ func (ls *Lists) initTable(w *core.TreeTable) {
 		}
 		w.SetItems(ls.values(ls.Current))
 		w.HideGroupValues = ls.Current.HideGroupValues
-		w.ShowItem = nil
-		if lt := ls.TypeOf(ls.Current); ls.Current.Filtered && lt.hasFilter() {
+		w.ShowItem, w.MatchItem = nil, nil
+		lt := ls.TypeOf(ls.Current)
+		switch {
+		case strings.TrimSpace(ls.search) != "": // searching, whether filtered or not
+			w.MatchItem = lt.matchItem(ls.search)
+		case ls.Current.Filtered && lt.hasFilter():
 			w.ShowItem = lt.showItem
 		}
 		if ls.tableList != ls.Current { // the table has those of the list after

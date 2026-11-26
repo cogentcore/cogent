@@ -25,6 +25,14 @@ Cogent Lists runs on macOS, Windows, Linux, iOS, Android, and the web. On phones
 * Click a column header to sort the items by it, and drag the handle after a header to set the width of the column (double click it to make it automatic again).
 * The **Filter** switch hides the items with the filter values of the fields, such as those that are done.
 
+## Search
+
+The **Search** field above the items shows only the items that match what you type, in any of their text fields, with the categories they are in, including the items that the **Filter** hides. This is the way to add something to a list, such as a shopping list, without making a duplicate: search for it, and if it is there, uncheck it (as for Got or Done), so that it is shown again when the search ends; if it is not, add it with the **+** button after the field, which adds an item with the text of the search, after the selected item, or at the end, and ends the search.
+
+* `Enter` in the search field goes to the first item found, or adds an item with the text if none is found.
+* The **x** button clears the search, which shows the items as before.
+* The search ends when another list is shown.
+
 ## List types
 
 **List settings** sets the type of the current list, and whether the items with items in them, such as categories, show only their first field. **Edit type** edits the fields of the type of the current list, and **List types** edits the library of types: drag the fields or types by their index to reorder them. A new list has the type of the current list, or the first type when no list is current. The standard types are Todo, Shopping, Project, Reading, and Simple.

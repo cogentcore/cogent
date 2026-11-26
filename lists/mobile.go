@@ -57,6 +57,7 @@ func (ls *Lists) openItems() {
 			return
 		}
 		ls.makeListHeader(p)
+		ls.makeSearch(p) // in the header in the desktop layout
 		tree.AddAt(p, "table", ls.initTable)
 	})
 	b.Updater(func() {

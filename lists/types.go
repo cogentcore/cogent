@@ -391,6 +391,22 @@ func (lt *ListType) showItem(item any) bool {
 	return true
 }
 
+// matchItem returns a function that returns whether an item, a pointer
+// to a struct of this type, matches the given search text: whether the
+// value of one of its text fields contains it, ignoring case.
+func (lt *ListType) matchItem(search string) func(item any) bool {
+	search = strings.ToLower(strings.TrimSpace(search))
+	return func(item any) bool {
+		v := reflect.ValueOf(item).Elem()
+		for i, f := range lt.Fields {
+			if f.Type == Text && i < v.NumField() && strings.Contains(strings.ToLower(v.Field(i).String()), search) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // renameField renames the values of the field with the old name to
 // the new name in the given saved items.
 func renameField(items []*Item, old, new string) {
