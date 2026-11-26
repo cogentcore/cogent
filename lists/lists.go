@@ -115,6 +115,10 @@ type Lists struct {
 	// whether they are filtered or not (see [Lists.makeSearch]).
 	search string
 
+	// searchField is the search field, which is in the window of the
+	// items in the mobile layout (see [Lists.makeSearch]).
+	searchField *core.TextField
+
 	// items is the body of the items of the current list,
 	// in the mobile layout, while it is open (see [Lists.openItems]).
 	items *core.Body
@@ -386,6 +390,7 @@ func (ls *Lists) makeSearch(p *tree.Plan) {
 			s.Gap.X.Em(0.5)
 		})
 		tree.AddChild(w, func(w *core.TextField) {
+			ls.searchField = w
 			w.SetPlaceholder("Search")
 			w.SetTooltip("Search the items, showing those that match, including those that are filtered; Enter adds an item with the text if none match")
 			w.SetLeadingIcon(icons.Search)
@@ -475,7 +480,9 @@ func (ls *Lists) addSearched() {
 		reflect.ValueOf(item).Elem().Field(0).SetString(text)
 	}
 	tt.InsertItemAfter(tt.SelectedIndex, item)
-	ls.Update() // the search field, which is empty
+	if sf := ls.searchField; sf != nil {
+		sf.SetText("")
+	}
 }
 
 // makeFilterSwitch adds the switch for filtering the items of the current

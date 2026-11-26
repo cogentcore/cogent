@@ -231,3 +231,41 @@ func TestMobileChecklist(t *testing.T) {
 		assert.Equal(t, 2, nw-idxOff, "the item and the check, without an edit button")
 	})
 }
+
+// TestMobileSearchAdd tests that adding an item with the text of the
+// search, with the + button, clears the search field, which is in the
+// window of the items in the mobile layout.
+func TestMobileSearchAdd(t *testing.T) {
+	b := core.NewBody()
+	ls := testMobile(t, b)
+	core.AssertRender(t, b, "mobile-search-add", func() {
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		b.AsyncLock()
+		tr := ls.tree.FindSyncNode(findList(ls, "Groceries"))
+		b.AsyncUnlock()
+		click(src, tr)
+
+		b.AsyncLock()
+		require.NotNil(t, ls.items, "the items are open")
+		var tf *core.TextField
+		var add *core.Button
+		ls.items.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if x, ok := cw.(*core.TextField); ok && x.Placeholder == "Search" {
+				tf = x
+				add = x.Parent.AsTree().Child(1).(*core.Button)
+			}
+			return tf == nil
+		})
+		require.NotNil(t, tf)
+		tf.SetText("Cheese")
+		ls.setSearch("Cheese")
+		b.AsyncUnlock()
+		click(src, add)
+
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, "", ls.search)
+		assert.Equal(t, "", tf.Text(), "the search field is cleared")
+		assert.Equal(t, "Cheese", tableRows(ls)[len(tableRows(ls))-1])
+	})
+}
