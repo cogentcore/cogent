@@ -460,8 +460,8 @@ func (lib *Library) writeExif(ph *Photo) error {
 // Rotate rotates the given photo by the given degrees clockwise (a
 // multiple of 90), and saves it. Its thumbnail is made again.
 func (lib *Library) Rotate(ph *Photo, degrees int) error {
-	if ph.IsVideo() { // (playing does not rotate yet)
-		return fmt.Errorf("%s: videos cannot be rotated yet", ph.Filename())
+	if ph.IsVideo() {
+		return lib.rotateVideo(ph, degrees)
 	}
 	lib.mu.Lock()
 	ph.Rotation = ((ph.Rotation+degrees)%360 + 360) % 360

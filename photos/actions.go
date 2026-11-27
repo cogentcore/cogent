@@ -112,14 +112,34 @@ func (a *App) RotateRight() { //types:add
 }
 
 // rotate rotates the selected photos by the given degrees clockwise.
+// Videos are rotated in the background, as their files are copied.
 func (a *App) rotate(degrees int) {
-	var errs []error
-	for _, ph := range a.selected() {
-		errs = append(errs, a.lib.Rotate(ph, degrees))
-		a.grid.Forget(ph)
+	phs := a.selected()
+	if len(phs) == 0 {
+		return
 	}
-	core.ErrorSnackbar(a, errors.Join(errs...))
-	a.viewer.SetPhoto(a.grid.CurrentPhoto())
+	a.viewer.stopVideo() // (its file is replaced)
+	go func() {
+		a.busy.Lock()
+		defer a.busy.Unlock()
+		var errs []error
+		progress := a.progress("Rotating")
+		for i, ph := range phs {
+			if len(phs) > 1 {
+				progress(i, len(phs))
+			}
+			errs = append(errs, a.lib.Rotate(ph, degrees))
+		}
+		a.AsyncLock()
+		defer a.AsyncUnlock()
+		a.statusText = ""
+		for _, ph := range phs {
+			a.grid.Forget(ph)
+		}
+		core.ErrorSnackbar(a, errors.Join(errs...), "Error rotating")
+		a.viewer.SetPhoto(a.grid.CurrentPhoto())
+		a.status.Update()
+	}()
 }
 
 // Tag adds a tag to the selected photos, chosen from the tags, or a new

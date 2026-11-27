@@ -149,3 +149,65 @@ func TestVideoNames(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, map[string]bool{vname: true}, res)
 }
+
+// TestRotateVideos tests rotating videos: in their files, with ffmpeg, for
+// MOV (with Apple metadata) and MP4, keeping their dates and locations,
+// and in the library for AVI.
+func TestRotateVideos(t *testing.T) {
+	if ffmpegPath() == "" {
+		t.Skip("no ffmpeg")
+	}
+	home, _ := os.UserHomeDir()
+	src := filepath.Join(home, "Pictures", "CogentPhotos", "All")
+	ents, err := os.ReadDir(src)
+	if err != nil {
+		t.Skip("no real library")
+	}
+	pick := map[string]string{}
+	for _, e := range ents {
+		n := e.Name()
+		switch {
+		case pick["mov"] == "" && strings.HasPrefix(n, "vid_2015_08_10") && strings.HasSuffix(n, ".mov"):
+			pick["mov"] = n
+		case pick["mp4"] == "" && strings.HasPrefix(n, "vid_2014_08_17") && strings.HasSuffix(n, ".mp4"):
+			pick["mp4"] = n
+		case pick["avi"] == "" && strings.HasPrefix(n, "vid_2004_01_11") && strings.HasSuffix(n, ".avi"):
+			pick["avi"] = n
+		}
+	}
+	if len(pick) < 3 {
+		t.Skip("not the real videos", pick)
+	}
+	lib := smallLibrary(t, 1)
+	for _, n := range pick {
+		require.NoError(t, copyFile(filepath.Join(lib.Dir, "All", n), filepath.Join(src, n)))
+	}
+	require.NoError(t, lib.Scan(nil, nil))
+	for kind, n := range pick {
+		name, _ := splitExt(n)
+		ph := lib.Photo(name)
+		require.NotNil(t, ph, n)
+		size, gps := ph.Size, ph.GPS
+		was := &Photo{Ext: ph.Ext} // as read from the file, without the name
+		require.NoError(t, was.readVideo(lib.PhotoFile(ph)))
+		require.NoError(t, lib.Rotate(ph, 90), n)
+		if kind == "avi" {
+			assert.Equal(t, 90, ph.Rotation, "in the library")
+			assert.Equal(t, image.Pt(size.Y, size.X), ph.DisplaySize())
+		} else {
+			assert.Equal(t, 0, ph.Rotation, "in the file")
+			assert.Equal(t, image.Pt(size.Y, size.X), ph.Size)
+			fp := &Photo{Ext: ph.Ext}
+			require.NoError(t, fp.readVideo(lib.PhotoFile(ph)))
+			assert.Equal(t, was.DateTaken, fp.DateTaken, "the date is kept: "+n)
+			assert.Equal(t, gps, fp.GPS, "the location is kept: "+n)
+			assert.Equal(t, ph.Size, fp.Size)
+		}
+		img, err := lib.Thumb(ph)
+		require.NoError(t, err)
+		assert.Greater(t, img.Bounds().Dy(), img.Bounds().Dx(), "a portrait thumbnail: "+n)
+		require.NoError(t, lib.Rotate(ph, 270), n) // back
+		assert.Equal(t, size, ph.DisplaySize(), n)
+		t.Log(kind, n, ph.Size, ph.Rotation, ph.DateTaken)
+	}
+}

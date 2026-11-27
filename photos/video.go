@@ -14,10 +14,12 @@ import (
 	"log/slog"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"cogentcore.org/core/video"
@@ -72,7 +74,7 @@ func (ph *Photo) readVideo(filename string) error {
 	ph.Size = image.Pt(m.Width, m.Height) // (turned by its rotation)
 	ph.Orient = NoOrient
 	ph.Duration = m.Duration
-	md := m.Metadata
+	md := videoMetadata(m.Metadata)
 	first := func(keys ...string) string {
 		for _, k := range keys {
 			if v := strings.TrimSpace(md[k]); v != "" {
@@ -96,6 +98,18 @@ func (ph *Photo) readVideo(filename string) error {
 		}
 	}
 	return nil
+}
+
+// videoMetadata returns the given metadata of a video with the first of
+// the values of tags that have several (separated by ;), as files that
+// FFmpeg has written can have the same tag twice.
+func videoMetadata(md map[string]string) map[string]string {
+	res := make(map[string]string, len(md))
+	for k, v := range md {
+		v, _, _ = strings.Cut(v, ";")
+		res[k] = v
+	}
+	return res
 }
 
 // videoDate returns the date a video was taken, as the local time where
@@ -344,4 +358,99 @@ func (lib *Library) updateVideoThumbs() error {
 		os.Remove(lib.thumbFile(ph))
 	}
 	return lib.store.setMeta("videoThumbs", videoThumbsVersion)
+}
+
+// rotationExts are the extensions of the files of videos that have their
+// rotation in their metadata (the display matrix of MP4 and QuickTime).
+var rotationExts = map[string]bool{".mov": true, ".mp4": true, ".m4v": true, ".3gp": true}
+
+// rotateVideo rotates the given video by the given degrees clockwise (a
+// multiple of 90), and saves it: in the metadata of its file, as phones
+// do, if it has it (see [rotateVideoFile]), and otherwise in the library,
+// for its thumbnail and playing it.
+func (lib *Library) rotateVideo(ph *Photo, degrees int) error {
+	lib.mu.Lock()
+	defer lib.mu.Unlock()
+	file := lib.PhotoFile(ph)
+	if rotationExts[strings.ToLower(ph.Ext)] && ffmpegPath() != "" {
+		if err := rotateVideoFile(ph, file, degrees); err != nil {
+			return err
+		}
+	} else {
+		ph.Rotation = ((ph.Rotation+degrees)%360 + 360) % 360
+	}
+	os.Remove(lib.thumbFile(ph)) // made again
+	return lib.store.put(ph)
+}
+
+// ffmpegPath returns the path of the ffmpeg command, also where Homebrew
+// installs it, as apps started from the Finder do not have the PATH of
+// the shell, or "" if it is not found.
+var ffmpegPath = sync.OnceValue(func() string {
+	if p, err := exec.LookPath("ffmpeg"); err == nil {
+		return p
+	}
+	for _, p := range []string{"/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"} {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return ""
+})
+
+// rotateVideoFile rotates the video in the given file by the given degrees
+// clockwise, in its metadata, with ffmpeg, which copies the video and
+// audio as they are, keeping its other metadata. The file is replaced by
+// the rotated one after it is checked: its rotation, and its date and size.
+func rotateVideoFile(ph *Photo, file string, degrees int) error {
+	base := filepath.Base(file)
+	m, err := video.OpenMedia(file, nil)
+	if err != nil {
+		return err
+	}
+	rot := ((m.Rotation+degrees)%360 + 360) % 360
+	apple := false
+	for k := range m.Metadata {
+		if strings.HasPrefix(k, "com.apple.") {
+			apple = true
+		}
+	}
+	m.Close()
+	before := &Photo{Ext: ph.Ext}
+	before.readVideo(file)
+
+	tmp := strings.TrimSuffix(file, filepath.Ext(file)) + ".tmp-rotate" + filepath.Ext(file)
+	// the display rotation of ffmpeg is counterclockwise
+	args := []string{"-v", "error", "-y", "-display_rotation", strconv.Itoa((360 - rot) % 360),
+		"-i", file, "-map", "0", "-c", "copy", "-map_metadata", "0"}
+	if apple { // its own tags, as its local date, which are not kept otherwise
+		args = append(args, "-movflags", "use_metadata_tags")
+	}
+	args = append(args, tmp)
+	if out, err := exec.Command(ffmpegPath(), args...).CombinedOutput(); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("%s: rotating: %w: %s", base, err, strings.TrimSpace(string(out)))
+	}
+	after := &Photo{Ext: ph.Ext}
+	after.readVideo(tmp)
+	rm, err := video.OpenMedia(tmp, nil)
+	if err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("%s: the rotated video cannot be opened: %w", base, err)
+	}
+	gotRot := rm.Rotation
+	rm.Close()
+	swapped := image.Pt(before.Size.Y, before.Size.X)
+	if degrees%180 == 0 {
+		swapped = before.Size
+	}
+	if gotRot != rot || !after.DateTaken.Equal(before.DateTaken) || after.Size != swapped {
+		os.Remove(tmp)
+		return fmt.Errorf("%s: the rotated video has rotation %d, date %v, and size %v, instead of %d, %v, and %v", base, gotRot, after.DateTaken, after.Size, rot, before.DateTaken, swapped)
+	}
+	if err := os.Rename(tmp, file); err != nil {
+		return err
+	}
+	ph.Size, ph.FileMod, ph.Rotation = after.Size, after.FileMod, 0
+	return nil
 }

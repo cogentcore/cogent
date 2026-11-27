@@ -266,6 +266,7 @@ func (v *Viewer) SetPhoto(ph *Photo) {
 		v.image.NeedsRender()
 	}
 	if ph.IsVideo() {
+		v.player.rotation = ph.Rotation
 		go v.player.open(lib.PhotoFile(ph), show)
 		return
 	}
@@ -301,6 +302,11 @@ type viewerPlayer struct {
 	// whether it is closed, under mu.
 	playWanted, closed bool
 
+	// rotation is the rotation of the video in the library, in degrees
+	// clockwise, by which its frames are rotated, for videos whose files
+	// cannot have it (see [Library.rotateVideo]).
+	rotation int
+
 	mu sync.Mutex
 }
 
@@ -330,7 +336,7 @@ func (vp *viewerPlayer) open(filename string, show func(img image.Image, err err
 	if play {
 		vp.play()
 	} else if img, err := m.FirstFrame(width, 0); err == nil {
-		show(img, nil)
+		show(orientImage(img, NoOrient, vp.rotation), nil)
 	}
 	vp.refresh()
 }
@@ -348,7 +354,11 @@ func (vp *viewerPlayer) showFrame(f video.Frame) {
 	if v.image == nil || v.player != vp {
 		return
 	}
-	v.image.SetImage(f.Image)
+	if vp.rotation != 0 {
+		v.image.SetImage(orientImage(f.Image, NoOrient, vp.rotation))
+	} else {
+		v.image.SetImage(f.Image)
+	}
 	v.image.NeedsRender()
 	if v.controls != nil {
 		v.controls.SetTime(f.Time)
