@@ -6,8 +6,8 @@ package photos
 
 import (
 	"fmt"
-	"os"
 	"image"
+	"os"
 	"testing"
 	"time"
 

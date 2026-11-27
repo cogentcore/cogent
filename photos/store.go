@@ -22,6 +22,10 @@ var (
 	// metaBucket has information about the library, such as whether the
 	// folders of GoPix were imported.
 	metaBucket = []byte("meta")
+
+	// importedBucket has the keys of the photos imported from devices, as
+	// cameras and phones, so that they are not imported again (see [deviceKey]).
+	importedBucket = []byte("imported")
 )
 
 // store is the store of the information about the photos of a library:
@@ -40,7 +44,7 @@ func openStore(filename string) (*store, error) {
 		return nil, fmt.Errorf("opening the store of photos: %w", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, b := range [][]byte{photosBucket, metaBucket} {
+		for _, b := range [][]byte{photosBucket, metaBucket, importedBucket} {
 			if _, err := tx.CreateBucketIfNotExists(b); err != nil {
 				return err
 			}
@@ -168,5 +172,25 @@ func (st *store) meta(key string) string {
 func (st *store) setMeta(key, value string) error {
 	return st.db.Update(func(tx *bolt.Tx) error {
 		return tx.Bucket(metaBucket).Put([]byte(key), []byte(value))
+	})
+}
+
+// imported returns the keys of the photos imported from devices.
+func (st *store) imported() map[string]bool {
+	res := map[string]bool{}
+	st.db.View(func(tx *bolt.Tx) error {
+		return tx.Bucket(importedBucket).ForEach(func(k, v []byte) error {
+			res[string(k)] = true
+			return nil
+		})
+	})
+	return res
+}
+
+// setImported records that the photo with the given key was imported
+// from a device.
+func (st *store) setImported(key string) error {
+	return st.db.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket(importedBucket).Put([]byte(key), []byte(time.Now().Format(time.RFC3339)))
 	})
 }

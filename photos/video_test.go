@@ -7,8 +7,8 @@ package photos
 import (
 	"image"
 	"os"
-	"strconv"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"

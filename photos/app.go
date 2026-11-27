@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"cogentcore.org/cogent/photos/imagecapture"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -56,8 +57,8 @@ type App struct {
 	// tagRows are the rows of the tree of tags.
 	tagRows []*tagRow
 
-	splits  *core.Splits
-	tags    *core.TreeTable
+	splits *core.Splits
+	tags   *core.TreeTable
 
 	// grid is the grid of the tab shown, which the actions on photos
 	// act on, and main is that of the first tab, of the tag shown, in
@@ -88,6 +89,9 @@ type App struct {
 
 	// syncCancel stops the sync with Google Photos in progress, if any.
 	syncCancel func()
+
+	// importCancel stops the import from a camera or phone in progress, if any.
+	importCancel func()
 
 	// busy is held during long operations on the library, as scans.
 	busy sync.Mutex
@@ -256,6 +260,15 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Rescan).SetIcon(icons.Refresh)
 	})
+	if a.importCancel != nil {
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.CancelImport).SetIcon(icons.Cancel)
+		})
+	} else {
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.ImportFromCamera).SetText("Camera").SetIcon(icons.PhotoCamera)
+		})
+	}
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.ImportFolder).SetIcon(icons.Download)
 	})
@@ -335,6 +348,7 @@ func (a *App) Start() {
 			a.AsyncUnlock()
 			return
 		}
+		imagecapture.Start() // finding devices takes a moment
 		core.TheApp.AddQuitCleanFunc(func() {
 			a.saveView() // for the next start
 			core.SaveSettings(Settings)

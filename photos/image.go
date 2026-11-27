@@ -16,9 +16,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	_ "image/gif"
 	_ "image/png"

@@ -280,9 +280,9 @@ func (lib *Library) Scan(old map[string]*Photo, progress ScanProgress) error {
 	}
 	lib.mu.RLock()
 	seen := map[string]bool{}
-	var todo []*Photo     // to read
-	var adding []*Photo   // new
-	var changed []*Photo  // existing, to read again
+	var todo []*Photo    // to read
+	var adding []*Photo  // new
+	var changed []*Photo // existing, to read again
 	for _, e := range ents {
 		fn := e.Name()
 		if e.IsDir() || strings.HasPrefix(fn, ".") || !isMediaFile(fn) {
