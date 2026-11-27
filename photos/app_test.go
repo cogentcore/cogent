@@ -295,3 +295,115 @@ func TestDragToTag(t *testing.T) {
 		assert.Equal(t, 3, lib.Tags()["Target"], "the two dragged are tagged")
 	})
 }
+
+// TestYearToggle tests that a click on the branch of a year in the tree of
+// tags opens it, while All is shown, with no tag selected.
+func TestYearToggle(t *testing.T) {
+	lib := smallLibrary(t, 60)
+	phs := lib.Photos(nil)
+	for i, ph := range phs { // many years, as in a real library, more than fit
+		require.NoError(t, lib.AddTag(fmt.Sprintf("%d_Tag%d", 1990+i/2, i%2), ph))
+	}
+	Settings.ClosedYears = nil
+	b := core.NewBody()
+	a := NewApp(b)
+	a.Styler(func(s *styles.Style) {
+		s.Min.Set(units.Dp(1200), units.Dp(600))
+	})
+	a.shown = allKey
+	branch := func(year string) (core.Widget, int) { // its widget, and visible row
+		rows := *a.tags.Slice.(*[]*tagRow)
+		nw, _ := a.tags.RowWidgetNs()
+		for i, r := range rows {
+			if r.year == year {
+				w := i - a.tags.StartIndex
+				cell := a.tags.ListGrid.Child(w * nw).(core.Widget)
+				return cell.AsWidget().Child(0).(core.Widget), i
+			}
+		}
+		return nil, -1
+	}
+	var year *tagRow
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.refresh()
+	}, func() {
+		b.AsyncLock()
+		bb := a.tags.ListGrid.Geom.ContentBBox
+		b.AsyncUnlock()
+		for range 4 { // scrolled down
+			b.Scene.RenderWindow().SystemWindow.Events().Scroll(bb.Min.Add(bb.Size().Div(2)), math32.Vec2(0, 30))
+			time.Sleep(100 * time.Millisecond)
+		}
+		b.AsyncLock()
+		t.Log("start", a.tags.StartIndex)
+		br, i := branch("2010") // down in the tree
+		require.NotNil(t, br)
+		year = (*a.tags.Slice.(*[]*tagRow))[i]
+		require.True(t, year.Closed, "closed at first")
+		pt := br.AsWidget().Geom.ContentBBox.Min.Add(br.AsWidget().Geom.ContentBBox.Size().Div(2))
+		photo := a.grid.cellRect(1).Min.Add(image.Pt(10, 10))
+		t.Log("row", i, "visible", a.tags.VisibleRows, "start", a.tags.StartIndex, "pt", pt, "tree", a.tags.Geom.ContentBBox, "grid", a.tags.ListGrid.Geom.ContentBBox)
+		b.AsyncUnlock()
+		ev := a.SystemEvents()
+		click := func(p image.Point) {
+			ev.MouseButton(events.MouseDown, events.Left, p, 0)
+			ev.MouseButton(events.MouseUp, events.Left, p, 0)
+			time.Sleep(600 * time.Millisecond)
+		}
+		click(photo) // the grid has the focus
+		click(pt)
+		b.AsyncLock()
+		assert.False(t, year.Closed, "opened by its branch")
+		assert.Equal(t, allKey, a.shown, "still All")
+		b.AsyncUnlock()
+		click(pt)
+		b.AsyncLock()
+		assert.True(t, year.Closed, "closed again")
+		b.AsyncUnlock()
+	})
+}
+
+// TestShowInAll tests showing the current photo of a tag in All, where it
+// is current and in view, with the photos around it.
+func TestShowInAll(t *testing.T) {
+	lib := smallLibrary(t, 200)
+	phs := lib.Photos(nil)
+	require.NoError(t, lib.AddTag("2020_Some", phs[100], phs[150]))
+	Settings.Views = nil
+	b := core.NewBody()
+	a := NewApp(b)
+	a.Styler(func(s *styles.Style) {
+		s.Min.Set(units.Dp(1200), units.Dp(600))
+		s.Max.Set(units.Dp(1200), units.Dp(600))
+	})
+	a.shown = "tag:2020_Some"
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.refresh()
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.Len(t, a.grid.Photos, 2)
+		a.grid.SelectIndex(1)
+		a.ShowInAll()
+	}, func() {
+		waitFor(t, b, func() bool { return a.shown == allKey && a.gridFrame().HasScroll[math32.Y] })
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		require.Equal(t, allKey, a.shown)
+		cur := a.grid.CurrentPhoto()
+		require.NotNil(t, cur)
+		assert.Contains(t, []string{phs[100].Name, phs[150].Name}, cur.Name)
+		assert.Equal(t, 200, len(a.grid.Photos))
+		r := a.grid.cellRect(a.grid.Current)
+		vis := a.gridFrame().Geom.ContentBBox
+		assert.True(t, r.Overlaps(vis), "in view: %v in %v", r, vis)
+	})
+}

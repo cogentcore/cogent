@@ -78,6 +78,11 @@ type Grid struct {
 
 	// renderPending is whether a render is pending for loaded thumbnails.
 	renderPending bool
+
+	// done is closed when the grid is destroyed, which stops the loaders,
+	// and onDestroy is called then, if set.
+	done      chan struct{}
+	onDestroy func()
 }
 
 func (g *Grid) Init() {
@@ -89,6 +94,7 @@ func (g *Grid) Init() {
 	g.loading = map[string]bool{}
 	g.scaled = map[string]image.Image{}
 	g.wake = make(chan struct{}, 1)
+	g.done = make(chan struct{})
 	for range max(2, runtime.NumCPU()-2) {
 		go g.loader()
 	}
@@ -406,7 +412,11 @@ func (g *Grid) loader() {
 		n := len(g.queue)
 		if n == 0 {
 			g.thumbsMu.Unlock()
-			<-g.wake
+			select {
+			case <-g.wake:
+			case <-g.done:
+				return
+			}
 			continue
 		}
 		ph := g.queue[n-1]
@@ -553,4 +563,24 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// scrollToCenter scrolls the frame of the grid so that the photo at the
+// given index is in the middle of the view.
+func (g *Grid) scrollToCenter(idx int) {
+	fr, ok := g.Parent.(*core.Frame)
+	if !ok || g.cols == 0 || idx < 0 {
+		return
+	}
+	r := g.cellRect(idx)
+	fr.ScrollDimToCenter(math32.Y, (r.Min.Y+r.Max.Y)/2)
+	g.NeedsRender()
+}
+
+func (g *Grid) Destroy() {
+	close(g.done)
+	if g.onDestroy != nil {
+		g.onDestroy()
+	}
+	g.WidgetBase.Destroy()
 }

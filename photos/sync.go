@@ -78,7 +78,7 @@ func (a *App) SyncGoogle() { //types:add
 			core.MessageSnackbar(a, res.String())
 			if len(res.Added) > 0 && a.shown != allKey {
 				a.shown = allKey // where they are, at the top
-				a.grid.SetPhotos(nil)
+				a.main.SetPhotos(nil)
 			}
 		}
 		saveSettings(a)

@@ -58,7 +58,19 @@ type App struct {
 
 	splits  *core.Splits
 	tags    *core.TreeTable
+
+	// grid is the grid of the tab shown, which the actions on photos
+	// act on, and main is that of the first tab, of the tag shown, in
+	// mainTab, of tabs. The other tabs have the photos of other searches,
+	// as of those nearby (see [App.PhotosNearby]).
 	grid    *Grid
+	main    *Grid
+	tabs    *core.Tabs
+	mainTab *core.Tab
+
+	// nearby are the tabs of photos nearby others.
+	nearby []*nearbyView
+
 	viewer  *Viewer
 	status  *core.Text
 	search  *core.TextField
@@ -207,34 +219,23 @@ func (a *App) Init() {
 					w.SetTooltip("The order of the photos, by the date they were taken")
 					w.OnChange(func(e events.Event) {
 						saveSettings(a)
-						a.grid.SetPhotos(nil) // from the start
+						a.main.SetPhotos(nil) // from the start
 						a.refresh()
 					})
 				})
 			})
-			tree.AddChild(w, func(w *core.Frame) {
+			tree.AddChild(w, func(w *core.Tabs) {
+				a.tabs = w
+				w.SetType(core.FunctionalTabs)
 				w.Styler(func(s *styles.Style) {
-					s.Direction = styles.Column
 					s.Grow.Set(1, 1)
-					s.Overflow.Set(styles.OverflowAuto)
-					s.Min.Set(units.Em(10))
 				})
-				tree.AddChild(w, func(w *Grid) {
-					a.grid = w
-					w.CellSize = units.Dp(Settings.ThumbSize)
-					w.OnSelect(func(e events.Event) {
-						a.viewer.SetPhoto(w.CurrentPhoto())
-						for _, v := range a.windows {
-							v.SetPhoto(w.CurrentPhoto())
-						}
-						a.updateToolbar()
-					})
-					w.OnDoubleClick(func(e events.Event) {
-						a.OpenWindow()
-					})
-					w.AddContextMenu(a.photoMenu)
-					a.dropFiles(w, a.shownTag)
-				})
+				fr, tab := w.NewTab("All")
+				a.mainTab = tab
+				tab.SetCloseIcon(icons.None) // always there
+				g := a.newGridIn(fr)
+				a.main, a.grid = g, g
+				a.dropFiles(g, a.shownTag)
 			})
 		})
 		tree.AddChild(w, func(w *Viewer) {
@@ -341,7 +342,7 @@ func (a *App) Start() {
 		})
 		a.AsyncLock()
 		a.lib = lib
-		a.grid.lib = lib
+		a.main.lib = lib
 		a.refresh()
 		a.restoreView()
 		a.AsyncUnlock()
@@ -397,34 +398,100 @@ func (a *App) setStatus(text string) {
 }
 
 // refresh updates the tags and the photos shown, as after they change,
-// keeping the current photo and the selected ones.
+// keeping the current photo and the selected ones, in all of the tabs.
 func (a *App) refresh() {
 	if a.lib == nil {
 		return
 	}
 	a.updateTags()
-	cur := a.grid.CurrentPhoto()
-	sel := a.grid.SelectedPhotos()
-	phs := a.shownPhotos()
-	a.grid.SetPhotos(phs)
-	if len(sel) > 0 {
-		for i, ph := range phs {
-			if slices.Contains(sel, ph) {
-				a.grid.Selected[i] = true
-			}
-			if ph == cur {
-				a.grid.Current = i
-			}
-		}
+	setGridPhotos(a.main, a.shownPhotos())
+	if a.mainTab != nil {
+		a.mainTab.SetText(a.shownName())
 	}
-	if a.grid.Current < 0 && len(phs) > 0 {
-		a.grid.Current = 0
-		a.grid.Selected[0] = true
+	for _, nv := range a.nearby {
+		nv.update()
 	}
 	a.viewer.SetPhoto(a.grid.CurrentPhoto())
 	a.updateToolbar()
 	a.Update()
-	a.grid.Defer(func() { a.grid.scrollToIndex(max(a.grid.Current, 0)) })
+	g := a.main
+	g.Defer(func() { g.scrollToIndex(max(g.Current, 0)) })
+}
+
+// setGridPhotos sets the photos of the given grid, keeping its current
+// photo and the selected ones, or the first one current if there were none.
+func setGridPhotos(g *Grid, phs []*Photo) {
+	cur := g.CurrentPhoto()
+	sel := g.SelectedPhotos()
+	g.SetPhotos(phs)
+	if len(sel) > 0 {
+		for i, ph := range phs {
+			if slices.Contains(sel, ph) {
+				g.Selected[i] = true
+			}
+			if ph == cur {
+				g.Current = i
+			}
+		}
+	}
+	if g.Current < 0 && len(phs) > 0 {
+		g.Current = 0
+		g.Selected[0] = true
+	}
+}
+
+// shownName returns the name of the tag shown, for its tab.
+func (a *App) shownName() string {
+	switch {
+	case a.shown == trashKey:
+		return "Trash"
+	case strings.HasPrefix(a.shown, "tag:"):
+		y, n := splitYearTag(strings.TrimPrefix(a.shown, "tag:"))
+		return strings.TrimSpace(y + " " + n)
+	case strings.HasPrefix(a.shown, "year:"):
+		return strings.TrimPrefix(a.shown, "year:")
+	}
+	return "All"
+}
+
+// newGridIn adds a new grid of photos in a scrolling frame to the given
+// frame of a tab, which is the grid of the actions when the tab is shown.
+func (a *App) newGridIn(tab *core.Frame) *Grid {
+	tab.Styler(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+	fr := core.NewFrame(tab)
+	fr.Styler(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
+		s.Overflow.Set(styles.OverflowAuto)
+		s.Min.Set(units.Em(10))
+	})
+	g := NewGrid(fr)
+	g.lib = a.lib
+	g.CellSize = units.Dp(Settings.ThumbSize)
+	g.OnSelect(func(e events.Event) {
+		if a.grid != g {
+			return
+		}
+		a.viewer.SetPhoto(g.CurrentPhoto())
+		for _, v := range a.windows {
+			v.SetPhoto(g.CurrentPhoto())
+		}
+		a.updateToolbar()
+	})
+	g.OnDoubleClick(func(e events.Event) {
+		a.OpenWindow()
+	})
+	g.AddContextMenu(a.photoMenu)
+	tab.OnShow(func(e events.Event) { // its grid is the one of the actions
+		if a.grid != g {
+			a.grid = g
+			a.viewer.SetPhoto(g.CurrentPhoto())
+			a.updateToolbar()
+		}
+	})
+	return g
 }
 
 // shownPhotos returns the photos of the tag shown, that match the search.
@@ -492,7 +559,7 @@ func (a *App) showTag(key string) {
 	a.shown = key
 	Settings.ShownTag = key
 	saveSettings(a)
-	a.grid.SetPhotos(nil)
+	a.main.SetPhotos(nil)
 	a.refresh()
 	a.restoreView()
 }
@@ -501,7 +568,8 @@ func (a *App) showTag(key string) {
 // position of the grid, and the current photo, for going back there.
 type TagView struct {
 
-	// Scroll is the scroll position of the grid, in dots.
+	// Scroll is the scroll position of the grid, in dots, or a positive
+	// value for the current photo in the middle of the view.
 	Scroll float32
 
 	// Current is the name of the current photo.
@@ -510,7 +578,7 @@ type TagView struct {
 
 // gridFrame returns the scrolling frame of the grid.
 func (a *App) gridFrame() *core.Frame {
-	fr, _ := a.grid.Parent.(*core.Frame)
+	fr, _ := a.main.Parent.(*core.Frame)
 	return fr
 }
 
@@ -524,7 +592,7 @@ func (a *App) saveView() {
 		Settings.Views = map[string]TagView{}
 	}
 	tv := TagView{Scroll: fr.Geom.Scroll.Y}
-	if ph := a.grid.CurrentPhoto(); ph != nil {
+	if ph := a.main.CurrentPhoto(); ph != nil {
 		tv.Current = ph.Name
 	}
 	Settings.Views[a.shown] = tv
@@ -538,7 +606,7 @@ func (a *App) restoreView() {
 	if !ok || fr == nil {
 		return
 	}
-	g := a.grid
+	g := a.main
 	for i, ph := range g.Photos {
 		if ph.Name == tv.Current {
 			g.Current = i
@@ -549,6 +617,10 @@ func (a *App) restoreView() {
 		}
 	}
 	g.Defer(func() { // after the scroll to the current photo in refresh
+		if tv.Scroll > 0 { // to the current photo, in the middle
+			g.scrollToCenter(g.Current)
+			return
+		}
 		fr.Geom.Scroll.Y = tv.Scroll
 		fr.ScrollUpdateFromGeom(math32.Y)
 		g.NeedsRender()
@@ -809,7 +881,13 @@ func (a *App) zoomThumbs(factor float32) {
 // current photo in view.
 func (a *App) setThumbSize(size float32) {
 	Settings.ThumbSize = max(48, min(512, size))
-	a.grid.CellSize = units.Dp(Settings.ThumbSize)
-	a.grid.NeedsLayout()
-	a.grid.Defer(func() { a.grid.scrollToIndex(max(a.grid.Current, 0)) })
+	grids := []*Grid{a.main}
+	for _, nv := range a.nearby {
+		grids = append(grids, nv.grid)
+	}
+	for _, g := range grids {
+		g.CellSize = units.Dp(Settings.ThumbSize)
+		g.NeedsLayout()
+		g.Defer(func() { g.scrollToIndex(max(g.Current, 0)) })
+	}
 }

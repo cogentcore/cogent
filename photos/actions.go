@@ -304,6 +304,12 @@ func (a *App) photoMenu(m *core.Scene, pos image.Point) {
 		a.grid.SelectIndex(idx)
 	}
 	core.NewFuncButton(m).SetFunc(a.OpenWindow).SetIcon(icons.OpenInFull)
+	if a.shown != allKey || a.searchResults != nil || a.grid != a.main {
+		core.NewFuncButton(m).SetFunc(a.ShowInAll).SetIcon(icons.PhotoLibrary)
+	}
+	if ph := a.grid.CurrentPhoto(); ph != nil && !ph.GPS.IsZero() {
+		core.NewFuncButton(m).SetFunc(a.PhotosNearby).SetIcon(icons.MyLocation)
+	}
 	core.NewFuncButton(m).SetFunc(a.Info).SetIcon(icons.Info)
 	core.NewFuncButton(m).SetFunc(a.Tag).SetIcon(icons.Label)
 	if strings.HasPrefix(a.shown, "tag:") {
@@ -426,4 +432,29 @@ func (a *App) SaveMetadata(allPhotos, convert bool) { //types:add
 		core.MessageSnackbar(a, msg)
 		a.refresh()
 	}()
+}
+
+// ShowInAll shows the current photo in All, with the photos taken at
+// about the same time around it.
+func (a *App) ShowInAll() { //types:add
+	ph := a.current()
+	if ph == nil {
+		return
+	}
+	a.searchText, a.searchResults = "", nil // all of them
+	if a.search != nil {
+		a.search.SetText("")
+	}
+	if Settings.Views == nil {
+		Settings.Views = map[string]TagView{}
+	}
+	// the photo is current in All, which is scrolled to it (see [App.restoreView])
+	Settings.Views[allKey] = TagView{Current: ph.Name, Scroll: 1}
+	a.tabs.SelectTabIndex(0)
+	if a.shown == allKey {
+		a.refresh()
+		a.restoreView()
+		return
+	}
+	a.showTag(allKey)
 }
