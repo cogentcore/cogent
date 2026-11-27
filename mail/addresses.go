@@ -80,7 +80,7 @@ func (a *App) addressCandidates() []contacts.Candidate {
 func (a *App) candidatesFromMail() []contacts.Candidate {
 	now := time.Now()
 	mine := func(addr string) bool {
-		return slices.ContainsFunc(Settings.Accounts, func(acct string) bool { return strings.EqualFold(acct, addr) })
+		return slices.ContainsFunc(Settings.Emails(), func(acct string) bool { return strings.EqualFold(acct, addr) })
 	}
 	var res []contacts.Candidate
 	add := func(addrs []imap.Address, weight float64, date time.Time) {
@@ -188,6 +188,9 @@ func parseAddressText(text string) (*mail.Address, error) {
 // none). It must be called with the lock of the window.
 func (a *App) senderName(email string) string {
 	if s := a.contactsStore(); s != nil {
+		if me := s.MyCard(); me != nil && me.Name != "" { // the user, from any address
+			return me.Name
+		}
 		if name := s.NameOf(email); name != "" {
 			return name
 		}
@@ -214,4 +217,16 @@ func (a *App) senderName(email string) string {
 		a.senderNames[email] = name
 	}
 	return name
+}
+
+// isMe returns whether the given email address is one of the user: of one
+// of their accounts, or of their contact (see [contacts.Store.MyCard]),
+// ignoring case.
+func (a *App) isMe(email string) bool {
+	email = strings.TrimSpace(email)
+	if slices.ContainsFunc(Settings.Emails(), func(ac string) bool { return strings.EqualFold(ac, email) }) {
+		return true
+	}
+	s := a.contactsStore()
+	return s != nil && s.IsMine(email)
 }

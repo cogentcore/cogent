@@ -81,7 +81,10 @@ func (a *App) StartTesting(opts TestingOptions) error {
 	if err := tomlx.Open(Settings, Settings.Filename()); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		slog.Error("mail: loading the settings of testing mode", "err", err)
 	}
-	Settings.Accounts = srv.Accounts
+	Settings.Accounts = nil
+	for _, account := range srv.Accounts {
+		Settings.Accounts = append(Settings.Accounts, Account{Type: Gmail, Email: account})
+	}
 	Settings.Apply()
 	for _, account := range srv.Accounts {
 		a.servers[account] = Server{IMAP: srv.IMAPAddr, SMTP: srv.SMTPAddr, Insecure: true, Password: testserver.Password}

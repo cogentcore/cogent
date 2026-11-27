@@ -120,13 +120,14 @@ type replyAll struct {
 }
 
 // addReplyAll adds the recipients of [SendMessage.replyAll] to the message,
-// those that are not already among its recipients, nor its sender.
+// those that are not already among its recipients, nor its sender, nor
+// any of the addresses of the user.
 func (sm *SendMessage) addReplyAll() {
 	if sm.replyAll == nil {
 		return
 	}
 	has := func(addr string) bool {
-		if strings.EqualFold(string(sm.Sender.From), addr) {
+		if strings.EqualFold(string(sm.Sender.From), addr) || (theApp != nil && theApp.isMe(addr)) {
 			return true
 		}
 		for _, as := range [][]*mail.Address{sm.To, sm.Cc, sm.Bcc} {

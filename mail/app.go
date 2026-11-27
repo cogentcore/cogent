@@ -50,6 +50,22 @@ type App struct {
 	// authMu is the mutex of tokens and authErrs, which the sync uses.
 	authMu sync.Mutex
 
+	// signInShown are the accounts with a dialog for signing in to them
+	// open, which is not opened again for them (see [App.offerSignIn]),
+	// under the lock of the window.
+	signInShown map[string]bool
+
+	// passwords are the passwords of the accounts that sign in with one,
+	// from the keychain, under authMu (see [App.password]).
+	passwords map[string]string
+
+	// started is whether the app has signed in to the accounts at its
+	// start, after which those added in the settings are signed in to
+	// (see [App.accountsAdded]), and knownAccounts are the accounts then,
+	// with those added since, under the lock of the window.
+	started       bool
+	knownAccounts map[string]bool
+
 	// drafts are the messages being written and those in the outbox,
 	// waiting to be sent, by their IDs, under draftsMu (see [draft]).
 	drafts map[string]*draft
@@ -91,7 +107,8 @@ type App struct {
 	readMessage *CacheMessage
 
 	// searchText is the text of the current search, if any, and
-	// searchResults are the keys of the messages it found, or nil
+	// searchResults are the keys of the messages it found (see
+	// [searchKey]), or nil
 	// if there is no search (see [App.SearchMessages]).
 	searchText    string
 	searchResults map[string]bool
@@ -144,6 +161,12 @@ type App struct {
 	// showLabel is the current label to show messages for.
 	showLabel string
 
+	// allInboxes is whether the list of messages shows the inboxes of all
+	// of the accounts together, with showLabel "INBOX", in which case
+	// currentEmail is that of the message being read, which the actions on
+	// it use (see [App.ShowAllInboxes]).
+	allInboxes bool
+
 	// servers are the server configurations of the accounts that are not
 	// Gmail, by email address.
 	servers map[string]Server
@@ -158,6 +181,10 @@ type App struct {
 	// syncNow is sent to to sync the messages now instead of after
 	// [App.syncInterval].
 	syncNow chan struct{}
+
+	// syncInbox is sent to to sync the inboxes now instead of after
+	// [inboxSyncInterval] (see [App.quickSyncLoop]).
+	syncInbox chan struct{}
 
 	// syncInterval is the time between syncs of the messages.
 	syncInterval time.Duration
@@ -260,6 +287,8 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.tokens = map[string]oauth2.TokenSource{}
 	a.authErrs = map[string]error{}
+	a.signInShown = map[string]bool{}
+	a.passwords = map[string]string{}
 	a.drafts = map[string]*draft{}
 	a.imapClient = map[string]*imapclient.Client{}
 	a.imapMu = map[string]*sync.Mutex{}
@@ -280,10 +309,13 @@ func (a *App) Init() {
 	a.status.progress = -1
 	a.trash = map[string]string{}
 	a.syncNow = make(chan struct{}, 1)
+	a.syncInbox = make(chan struct{}, 1)
 	a.syncInterval = time.Minute
 	a.showLabel = "INBOX"
-	if slices.Contains(Settings.Accounts, Settings.ShownAccount) && Settings.ShownMailbox != "" {
+	if Settings.hasAccount(Settings.ShownAccount) && Settings.ShownMailbox != "" {
 		a.currentEmail, a.showLabel = Settings.ShownAccount, Settings.ShownMailbox // as last shown
+	} else if Settings.ShownAccount == allInboxesShown && len(Settings.Accounts) > 0 {
+		a.allInboxes = true
 	}
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
@@ -384,17 +416,19 @@ func (a *App) saveSettings() {
 
 // showMailbox shows the messages of the given mailbox of the given account.
 func (a *App) showMailbox(email, mailbox string) {
-	if email != a.currentEmail || mailbox != a.showLabel {
+	if a.allInboxes || email != a.currentEmail || mailbox != a.showLabel {
 		a.selectedRows = nil
 		a.searchResults = nil // back to the mailbox
 		if a.searchField != nil {
 			a.searchField.SetText("")
 		}
 	}
+	a.offerSignIn(email) // when clicked, if it is not signed in
 	if email != a.currentEmail {
 		a.currentEmail = email
 		a.readMessage = nil
 	}
+	a.allInboxes = false
 	a.showLabel = mailbox
 	if Settings.ShownAccount != email || Settings.ShownMailbox != mailbox {
 		Settings.ShownAccount, Settings.ShownMailbox = email, mailbox
@@ -445,8 +479,11 @@ func (a *App) GetMail() {
 			} else if len(need) > 0 {
 				a.signInDialog(need)
 			}
+			a.started = true // accounts added in the settings are signed in to now
+			a.accountsAdded(Settings.Emails())
 			a.AsyncUnlock()
 		}
+		go a.quickSyncLoop()
 		// We keep caching messages forever to stay in sync.
 		for {
 			a.syncMore = false
@@ -455,7 +492,7 @@ func (a *App) GetMail() {
 				slog.Error("caching messages", "err", err)
 			}
 			a.syncDone(err) // the error is shown in the status
-			for _, email := range slices.Clone(Settings.Accounts) {
+			for _, email := range Settings.Emails() {
 				if a.imapClient[email] != nil { // connected, so it can idle
 					a.startIdle(email)
 				}

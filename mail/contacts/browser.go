@@ -121,6 +121,18 @@ func (br *Browser) Init() {
 						SetEnabled(br.current != nil).OnClick(func(e events.Event) {
 						br.confirmDelete()
 					})
+					core.NewSeparator(m)
+					if br.current != nil && br.current == br.Store.MyCard() {
+						core.NewButton(m).SetText("Not my card").SetIcon(icons.PersonOff).OnClick(func(e events.Event) {
+							br.SetMyCard(nil)
+						})
+					} else {
+						core.NewButton(m).SetText("Make this my card").SetIcon(icons.Person).
+							SetTooltip("Your name in the mail you send, from any of the addresses of the contact, which are all yours").
+							SetEnabled(br.current != nil).OnClick(func(e events.Event) {
+							br.SetMyCard(br.current)
+						})
+					}
 				})
 				// the Delete keys of the key map (as Control+D in Emacs)
 				w.OnFirst(events.KeyChord, func(e events.Event) {
@@ -149,6 +161,11 @@ func (br *Browser) Init() {
 					w.SetType(core.TextHeadlineSmall)
 					w.Updater(func() { w.SetText(c.Name) })
 				})
+				if c == br.Store.MyCard() {
+					tree.AddAt(p, "my-card-"+c.uid, func(w *core.Text) {
+						w.SetType(core.TextSupporting).SetText("My card")
+					})
+				}
 				tree.AddAt(p, "form-"+c.uid, func(w *core.Form) {
 					w.SetStruct(c)
 					w.OnChange(func(e events.Event) {
@@ -180,10 +197,14 @@ func (br *Browser) updateShown() {
 	}
 	br.shown = br.Store.Search(br.search)
 	br.names = br.names[:0]
+	me := br.Store.MyCard()
 	for _, c := range br.shown {
 		name := c.Name
 		if name == "" {
 			name = "(no name)"
+		}
+		if c == me {
+			name += "  (me)"
 		}
 		br.names = append(br.names, name)
 	}
@@ -204,6 +225,14 @@ func (br *Browser) Select(c *Contact) {
 	if br.toolbar != nil {
 		br.toolbar.Update() // as Delete contact
 	}
+}
+
+// SetMyCard makes the given contact that of the user, or none for nil
+// (see [Store.MyCard]).
+func (br *Browser) SetMyCard(c *Contact) {
+	br.Store.SetMyCard(c)
+	br.updateShown()
+	br.Update()
 }
 
 // NewContact adds a new contact, and shows it to be edited.

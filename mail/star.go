@@ -50,7 +50,9 @@ func (a *App) Star() { //types:add
 		return
 	}
 	star := slices.ContainsFunc(msgs, func(cm *CacheMessage) bool { return !cm.isStarred() })
-	a.setStarred(a.currentEmail, msgs, star)
+	a.byAccount(msgs, func(email string, msgs []*CacheMessage, then ...func()) {
+		a.setStarred(email, msgs, star)
+	})
 }
 
 // setStarred stars or unstars the given messages of the given account

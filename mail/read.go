@@ -5,25 +5,34 @@
 package mail
 
 import (
+	"bytes"
 	"fmt"
 	"html"
+	"image/png"
 	"io"
+	"mime"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
+	"github.com/emersion/go-message"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -38,6 +47,17 @@ type readMessageParsed struct {
 
 	// attachments are the attachments.
 	attachments []*Attachment
+
+	// removed are the names of the attachments that were removed from it
+	// (see [App.RemoveAttachments]).
+	removed []string
+}
+
+// shownMessage is a message as shown, with its file, which is another
+// once its attachments are removed, when it is shown again.
+type shownMessage struct {
+	message  *CacheMessage
+	filename string
 }
 
 // Attachment represents an email attachment when reading a message.
@@ -87,7 +107,7 @@ func (dmf *DisplayMessageFrame) Init() {
 				theApp.downloadNow(theApp.currentEmail, dmf.Message)
 				return
 			}
-			if dmf.Message != w.Property("readMessage") {
+			if (shownMessage{dmf.Message, dmf.Message.Filename}) != w.Property("readMessage") {
 				core.ErrorSnackbar(w, dmf.displayMessageContents(w), "Error reading message")
 				header.Update() // with the attachments, which are now parsed
 			}
@@ -231,7 +251,7 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 				})
 			})
 		}
-		if len(cm.parsed.attachments) > 0 {
+		if len(cm.parsed.attachments) > 0 || len(cm.parsed.removed) > 0 {
 			field("Attachments", func(p *tree.Plan) {
 				tree.AddAt(p, "Attachments", func(w *core.Frame) {
 					w.Styler(func(s *styles.Style) {
@@ -245,6 +265,16 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 								w.Updater(func() { w.Attachment = at })
 							})
 						}
+						for i, name := range dmf.Message.parsed.removed {
+							tree.AddAt(p, "removed-"+strconv.Itoa(i), func(w *core.Text) {
+								w.SetType(core.TextBodySmall).SetText(name + " (removed)")
+								w.SetTooltip("This attachment was removed from the message")
+								w.Styler(func(s *styles.Style) {
+									s.Color = colors.Scheme.OnSurfaceVariant
+									s.Align.Self = styles.Center
+								})
+							})
+						}
 					})
 				})
 			})
@@ -255,7 +285,7 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 // displayMessageContents updates the given frame to display the contents of
 // the current message, if it does not already.
 func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
-	w.SetProperty("readMessage", dmf.Message)
+	w.SetProperty("readMessage", shownMessage{dmf.Message, dmf.Message.Filename})
 	w.DeleteChildren()
 
 	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.currentEmail), dmf.Message.Filename))
@@ -276,8 +306,11 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 	dmf.Message.parsed.references = refs
 
 	dmf.Message.parsed.attachments = nil
+	dmf.Message.parsed.removed = nil
 	dmf.Message.parsed.plain = ""
-	gotHTML := false
+	var htmls []string
+	images := map[string]*partImage{} // by their Content-IDs
+	var order []string                // the IDs of the images, in order
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {
@@ -286,6 +319,17 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 			return err
 		}
 
+		if im, err := readPartImage(p); err != nil {
+			return err
+		} else if im != nil { // inline or attached, shown in the message
+			id := im.id
+			if id == "" {
+				id = "part-" + strconv.Itoa(len(images))
+			}
+			images[id] = im
+			order = append(order, id)
+			continue
+		}
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
 			ct, _, err := h.ContentType()
@@ -293,8 +337,15 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 				return err
 			}
 
-			switch ct {
-			case "text/plain":
+			if name := h.Get(removedHeader); name != "" { // shown with the attachments
+				if dec, err := new(mime.WordDecoder).DecodeHeader(name); err == nil {
+					name = dec
+				}
+				dmf.Message.parsed.removed = append(dmf.Message.parsed.removed, name)
+				continue
+			}
+			switch {
+			case ct == "text/plain":
 				b, err := io.ReadAll(p.Body)
 				if err != nil {
 					return err
@@ -307,16 +358,12 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 					}
 					dmf.Message.parsed.plain += text
 				}
-			case "text/html":
-				ctx := messageContext(dmf.Message)
+			case ct == "text/html":
 				h, err := io.ReadAll(p.Body)
 				if err != nil {
 					return err
 				}
-				if err := htmlcore.ReadHTMLString(ctx, w, messageHTML(string(h))); err != nil {
-					return err
-				}
-				gotHTML = true
+				htmls = append(htmls, string(h))
 			}
 		case *mail.AttachmentHeader:
 			fname, err := h.Filename()
@@ -332,14 +379,163 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 		}
 	}
 
+	// the images that the HTML does not show are attachments, shown after
+	// the body, as photos sent from phones
+	all := strings.Join(htmls, "")
+	var shown []string
+	for _, id := range order {
+		if im := images[id]; im.id == "" || !strings.Contains(all, "cid:"+id) {
+			dmf.Message.parsed.attachments = append(dmf.Message.parsed.attachments, &Attachment{Filename: im.name, Data: im.data})
+			shown = append(shown, id)
+		}
+	}
+
+	prefix := dmf.Message.Filename + "/" // unique, as images are cached by URL
+	ctx := messageImagesContext(messageContext(dmf.Message), prefix, images)
+	for _, h := range htmls {
+		if err := htmlcore.ReadHTMLString(ctx, w, messageHTML(cidSrc.ReplaceAllString(h, "${1}cid:"+prefix))); err != nil {
+			return err
+		}
+	}
 	// we only handle the plain version if there is no HTML version
-	if !gotHTML {
-		err := htmlcore.ReadMDString(messageContext(dmf.Message), w, dmf.Message.parsed.plain)
+	if len(htmls) == 0 {
+		err := htmlcore.ReadMDString(ctx, w, dmf.Message.parsed.plain)
 		if err != nil {
 			return err
 		}
 	}
+	if len(shown) > 0 {
+		var b strings.Builder
+		for _, id := range shown {
+			fmt.Fprintf(&b, `<p><img src="cid:%s" alt="%s" style="max-width: 100%%"></p>`, html.EscapeString(prefix+id), html.EscapeString(images[id].name))
+		}
+		if err := htmlcore.ReadHTMLString(ctx, w, b.String()); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+// dragImage makes the given image of a message draggable, as a file, to a
+// message being written or other apps: that of the message, for an image
+// at a cid: URL with the given prefix (see [messageImagesContext]), and
+// otherwise a PNG of it.
+func dragImage(im *core.Image, prefix string, images map[string]*partImage) {
+	im.Styler(func(s *styles.Style) { s.SetAbilities(true, abilities.Draggable) })
+	im.On(events.DragStart, func(e events.Event) {
+		src, _ := im.Property("src").(string)
+		at, err := imageAttachment(im, src, prefix, images)
+		if err != nil || at == nil {
+			return
+		}
+		fname, err := at.tempFile()
+		if err != nil {
+			core.ErrorSnackbar(im, err, "Error dragging image")
+			return
+		}
+		e.SetHandled()
+		im.Scene.Events.DragStart(im.This.(core.Widget), mimedata.NewText(fname), e)
+		im.Scene.Events.SetDragFiles(fname)
+	})
+}
+
+// imageAttachment returns the given image of a message, at the given URL,
+// as an attachment (see [dragImage]), or nil if it has no image yet.
+func imageAttachment(im *core.Image, src, prefix string, images map[string]*partImage) (*Attachment, error) {
+	if rest, ok := strings.CutPrefix(src, "cid:"); ok {
+		id, _ := strings.CutPrefix(rest, prefix)
+		if un, err := url.PathUnescape(id); err == nil {
+			id = un
+		}
+		if pi := images[id]; pi != nil {
+			return &Attachment{Filename: pi.name, Data: pi.data}, nil
+		}
+	}
+	if im.Image == nil {
+		return nil, nil
+	}
+	var b bytes.Buffer
+	if err := png.Encode(&b, im.Image); err != nil {
+		return nil, err
+	}
+	name := "image"
+	if u, err := url.Parse(src); err == nil && !strings.HasPrefix(src, "data:") {
+		if base := path.Base(u.Path); base != "." && base != "/" && base != "" {
+			name = strings.TrimSuffix(base, path.Ext(base))
+		}
+	}
+	return &Attachment{Filename: name + ".png", Data: b.Bytes()}, nil
+}
+
+// partImage is an image in a part of a message, inline or attached, shown
+// in the message (see [messageImagesContext]), with its Content-ID, if any.
+type partImage struct {
+	contentType, name, id string
+	data                  []byte
+}
+
+// readPartImage returns the image of the given part of a message, if it
+// is one, with a name: its file name, or one of its type.
+func readPartImage(p *mail.Part) (*partImage, error) {
+	var h message.Header
+	switch ph := p.Header.(type) {
+	case *mail.InlineHeader:
+		h = ph.Header
+	case *mail.AttachmentHeader:
+		h = ph.Header
+	default:
+		return nil, nil
+	}
+	ct, params, err := h.ContentType()
+	if err != nil || !strings.HasPrefix(ct, "image/") {
+		return nil, nil
+	}
+	data, err := io.ReadAll(p.Body)
+	if err != nil {
+		return nil, err
+	}
+	name := params["name"]
+	if _, dp, err := h.ContentDisposition(); err == nil && dp["filename"] != "" {
+		name = dp["filename"]
+	}
+	if name == "" {
+		name = "image." + strings.TrimPrefix(ct, "image/")
+	}
+	return &partImage{contentType: ct, name: name, id: strings.Trim(h.Get("Content-Id"), "<> "), data: data}, nil
+}
+
+// cidSrc matches the start of a cid: URL of the src of an image in HTML.
+var cidSrc = regexp.MustCompile(`(?i)(\bsrc\s*=\s*["']?)cid:`)
+
+// messageImagesContext returns the given context for reading a message,
+// getting the images of its parts at cid: URLs with the given prefix (the
+// file of the message, as images are cached by their URLs, and other
+// messages can have the same Content-IDs) from the given images, by their
+// Content-IDs.
+func messageImagesContext(ctx *htmlcore.Context, prefix string, images map[string]*partImage) *htmlcore.Context {
+	ctx.AddWidgetHandler(func(w core.Widget) {
+		if im, ok := w.(*core.Image); ok {
+			dragImage(im, prefix, images)
+		}
+	})
+	get := ctx.GetURL()
+	return ctx.SetGetURL(func(u string) (*http.Response, error) {
+		rest, ok := strings.CutPrefix(u, "cid:")
+		if !ok {
+			return get(u)
+		}
+		id, _ := strings.CutPrefix(rest, prefix)
+		if un, err := url.PathUnescape(id); err == nil {
+			id = un
+		}
+		im := images[id]
+		if im == nil {
+			return &http.Response{StatusCode: http.StatusNotFound, Status: "404 Not Found", Body: io.NopCloser(strings.NewReader(""))}, nil
+		}
+		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK",
+			Header: http.Header{"Content-Type": {im.contentType}},
+			Body:   io.NopCloser(bytes.NewReader(im.data)), ContentLength: int64(len(im.data))}, nil
+	})
 }
 
 // bodyTag and styleAttr are the <body> tag of HTML and a style attribute.

@@ -181,7 +181,7 @@ func (a *App) syncAccount(email string) error {
 		}
 	}
 	for _, mb := range sync {
-		if err := a.syncMailbox(email, mb); err != nil {
+		if err := a.syncMailbox(email, mb, false); err != nil {
 			return fmt.Errorf("syncing mailbox %q: %w", mb, err)
 		}
 	}
@@ -283,14 +283,22 @@ func (a *App) countMessages(email string) {
 // syncMailbox syncs the messages of the given mailbox of the given account:
 // the new ones, the changes of their flags (and labels), and those that are
 // gone, as described in the doc of the package. With Gmail, the mailbox is
-// All Mail, the Trash, or the Spam.
-func (a *App) syncMailbox(email, mailbox string) error {
+// All Mail, the Trash, or the Spam. A quiet sync, as the quick ones of
+// [App.quickSyncLoop], does not show what it does in the status.
+func (a *App) syncMailbox(email, mailbox string, quiet bool) error {
+	a.AsyncLock() // as a quick sync runs along with the regular one
 	c := a.imapClient[email]
 	mu := a.imapMu[email]
 	st := a.stores[email]
 	gmail, condStore := a.gmail[email], a.condStore[email]
+	a.AsyncUnlock()
+	if c == nil || st == nil {
+		return errNotConnected
+	}
 
-	a.setStatus(fmt.Sprintf("%s: syncing %s", email, friendlyLabelName(mailbox)), -1)
+	if !quiet {
+		a.setStatus(fmt.Sprintf("%s: syncing %s", email, friendlyLabelName(mailbox)), -1)
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	// always selected again, for its current state
@@ -331,6 +339,9 @@ func (a *App) syncMailbox(email, mailbox string) error {
 		var uids imap.UIDSet
 		uids.AddRange(start, 0)                                    // start:*
 		total := int(sd.NumMessages) - a.countUIDs(email, mailbox) // about
+		if quiet {
+			total = -1
+		}
 		if err := a.fetchMessages(c, email, mailbox, uids, &opts, start, total); err != nil {
 			return fmt.Errorf("fetching new messages: %w", err)
 		}
@@ -393,7 +404,8 @@ func (a *App) countUIDs(email, mailbox string) int {
 // fetchMessages fetches the messages with the given UIDs (from the given
 // first one) in the given mailbox, adding them to the cache and the store
 // in batches, or adding the mailbox to their labels if they are cached,
-// showing the progress of the given (approximate) total in the status.
+// showing the progress of the given (approximate) total in the status,
+// unless it is negative.
 func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids imap.UIDSet, options *imap.FetchOptions, first imap.UID, total int) error {
 	cmd := c.Fetch(uids, options)
 	n := 0
@@ -435,7 +447,9 @@ func (a *App) fetchMessages(c *imapclient.Client, email, mailbox string, uids im
 		a.AsyncUnlock()
 		batch[key] = cm
 		n++
-		a.progressStatus(email, "listing messages in "+friendlyLabelName(mailbox), n, max(total, n), 200)
+		if total >= 0 {
+			a.progressStatus(email, "listing messages in "+friendlyLabelName(mailbox), n, max(total, n), 200)
+		}
 		if len(batch) >= 200 {
 			if err := flush(); err != nil {
 				cmd.Close()

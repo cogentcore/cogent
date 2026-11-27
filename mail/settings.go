@@ -6,6 +6,7 @@ package mail
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"cogentcore.org/core/core"
@@ -26,8 +27,11 @@ var Settings = &SettingsData{
 type SettingsData struct { //types:add
 	core.SettingsBase
 
-	// Accounts are the email accounts the user is signed into.
-	Accounts []string
+	// Accounts are the email accounts, added with Add account in the
+	// menu of an account.
+	// Those of earlier versions are email addresses, which are read as
+	// Gmail accounts (see [Account.UnmarshalText]).
+	Accounts []Account `display:"no-inline"`
 
 	// ListViews are the options of the view of the list of messages,
 	// also set in its view menu.
@@ -77,32 +81,60 @@ type SettingsData struct { //types:add
 	// Google Contacts, by email address (see [App.SetSyncContacts]).
 	SyncContacts map[string]bool `display:"-"`
 
+	// Keys are the keyboard shortcuts of the actions in the main window,
+	// by their chords, with Command for Meta on the Mac and Control
+	// elsewhere.
+	Keys KeyMap
+
+	// KeysKnown are the actions whose default keyboard shortcuts have been
+	// added to [SettingsData.Keys], so that those of actions added in later
+	// versions are added, but not again those that were removed.
+	KeysKnown []KeyFunctions `display:"-"`
+
 	// ShownAccount and ShownMailbox are the account and mailbox shown
 	// last, which are shown when the app starts again.
 	ShownAccount, ShownMailbox string `display:"-"`
 }
 
 // Defaults sets the default settings: the list of messages groups them
-// into conversations.
+// into conversations. The keyboard shortcuts are [DefaultKeys], set in
+// [SettingsData.Apply] if there are none, as the saved ones would be
+// merged into them, so that removed ones would come back.
 func (sd *SettingsData) Defaults() {
 	sd.ListViews.SetFlag(true, ViewConversations)
 	sd.ListViews.SetFlag(true, ViewStars)
 }
 
 // Apply makes sure that each account has an entry in the
-// [SettingsData.DefaultSignatures], so that it can be set.
+// [SettingsData.DefaultSignatures], so that it can be set, without those
+// of blank accounts (as one just added in the settings, before its
+// address is typed) or unset ones of accounts that are gone.
 func (sd *SettingsData) Apply() {
 	if theApp != nil && theApp.contacts != nil { // as the account of new contacts changes
 		theApp.contacts.NewAccount = newContactsAccount()
 	}
+	sd.addDefaultKeys()
 	if sd.DefaultSignatures == nil {
 		sd.DefaultSignatures = map[string]SignatureName{}
 	}
-	for _, account := range sd.Accounts {
+	emails := sd.Emails()
+	for account, sig := range sd.DefaultSignatures {
+		if strings.TrimSpace(account) == "" || (sig == "" && !slices.Contains(emails, account)) {
+			delete(sd.DefaultSignatures, account)
+		}
+	}
+	for _, account := range emails {
 		if _, ok := sd.DefaultSignatures[account]; !ok {
 			sd.DefaultSignatures[account] = ""
 		}
-
+	}
+	if theApp != nil && sd == Settings { // an account added here is signed in to
+		accounts := emails
+		go func() {
+			theApp.AsyncLock()
+			defer theApp.AsyncUnlock()
+			theApp.accountsAdded(accounts)
+		}()
 	}
 }
 
@@ -139,7 +171,7 @@ type AccountName string
 func (an AccountName) Widget() core.Value {
 	ch := core.NewChooser()
 	ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(""), Text: "(the account of the message)"})
-	for _, account := range Settings.Accounts {
+	for _, account := range Settings.Emails() {
 		ch.Items = append(ch.Items, core.ChooserItem{Value: AccountName(account), Text: account})
 	}
 	return ch
@@ -152,7 +184,7 @@ type ContactsAccountName string
 func (an ContactsAccountName) Widget() core.Value {
 	ch := core.NewChooser()
 	ch.Items = append(ch.Items, core.ChooserItem{Value: ContactsAccountName(""), Text: "(the first that syncs contacts)"})
-	for _, account := range Settings.Accounts {
+	for _, account := range Settings.Emails() {
 		if Settings.SyncContacts[account] {
 			ch.Items = append(ch.Items, core.ChooserItem{Value: ContactsAccountName(account), Text: account})
 		}
@@ -227,6 +259,11 @@ func friendlyLabelName(name string) string {
 var friendlyLabelNames = map[string]string{
 	"INBOX":     "Inbox",
 	"Sent Mail": "Sent",
+	// the names of other servers, as iCloud
+	"Sent Messages":    "Sent",
+	"Sent Items":       "Sent",
+	"Deleted Messages": "Trash",
+	"Deleted Items":    "Trash",
 }
 
 // skipLabels are a temporary set of labels that should not be cached or displayed.

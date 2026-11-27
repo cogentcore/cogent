@@ -50,6 +50,10 @@ type SendMessage struct {
 	// draft is its draft, once it is saved, as it is written.
 	draft *draft
 
+	// original is the message that this is a reply to or a forward of,
+	// if any, whose attachments can be included (see [App.includeAttachments]).
+	original *CacheMessage
+
 	// replyAll, if set, are the recipients to add for a reply to all,
 	// with the Reply all button of its compose window, as for a reply
 	// to the address of a mailto: link (see [App.replyMailto]).
@@ -112,7 +116,7 @@ type SenderAccount string
 
 func (sa SenderAccount) Widget() core.Value {
 	ch := core.NewChooser()
-	for _, account := range Settings.Accounts {
+	for _, account := range Settings.Emails() {
 		text := account
 		if theApp != nil { // with its name, as Name <address>
 			text = addressText(&mail.Address{Name: theApp.senderName(account), Address: account})
@@ -177,7 +181,7 @@ func (a *App) compose(title string) *core.Body {
 	if sm.draft == nil { // a new message
 		from := a.currentEmail
 		if from == "" && len(Settings.Accounts) > 0 {
-			from = Settings.Accounts[0]
+			from = Settings.Accounts[0].Email
 		}
 		sm.Sender.From = SenderAccount(from)
 		sm.Sender.Signature = Settings.DefaultSignatures[from]
@@ -282,15 +286,19 @@ func (a *App) compose(title string) *core.Body {
 	b.OnClose(func(e events.Event) {
 		stopTimer()
 		save()
+		if !changed && !done { // never saved: its attachments are not needed
+			a.removeForwarded(sm.Attachments)
+		}
 	})
 	discard := func() {
 		stopTimer()
 		done = true
 		withApp(func(c *SendMessage) {
 			if d := sm.draft; d != nil {
-				a.removeDraft(d)
+				a.deleteDraft(d)
 				a.Update()
 			}
+			a.removeForwarded(c.Attachments) // also those added since it was saved
 		})
 	}
 	// A new message that is closed without being sent asks whether to save
@@ -319,6 +327,15 @@ func (a *App) compose(title string) *core.Body {
 		return true
 	})
 
+	// files dropped on the message are attached, as the attachments of
+	// other messages, dragged from them, also on the editor, before it
+	// inserts their names
+	a.attachDropped(sm, func(e events.Event, err error) {
+		core.ErrorSnackbar(b, err, "Error attaching files")
+		form.Update()
+		change(e)
+	}, b, ed)
+
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
 		core.NewButton(tb).SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).
@@ -331,6 +348,16 @@ func (a *App) compose(title string) *core.Body {
 		})
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
+		// including the attachments of the message replied to or forwarded
+		inc := core.NewSwitch(bar).SetText("Attachments")
+		inc.SetTooltip("Include the attachments of the message being replied to or forwarded")
+		inc.SetChecked(slices.ContainsFunc(sm.Attachments, a.isForwarded))
+		inc.SetEnabled(sm.original != nil && len(sm.original.parsed.attachments) > 0)
+		inc.OnChange(func(e events.Event) {
+			core.ErrorSnackbar(b, a.includeAttachments(sm, inc.IsChecked()), "Error including attachments")
+			form.Update()
+			change(e)
+		})
 		if sm.replyAll != nil { // a reply to a link, which can be to all
 			all := core.NewButton(bar).SetType(core.ButtonText).SetText("Reply all").SetIcon(icons.ReplyAll)
 			all.SetTooltip("Reply to all of the message, adding its sender and recipients")
@@ -379,7 +406,7 @@ func (a *App) Send() error { //types:add
 	}
 	err = a.sendDraft(d)
 	if err == nil {
-		a.removeDraft(d)
+		a.deleteDraft(d)
 		a.SyncNow() // to show it in the sent mailbox
 	}
 	a.Update()
@@ -549,3 +576,121 @@ var smtpAddress = "smtp.gmail.com:587"
 
 // sendMail sends a message with SMTP, which tests replace.
 var sendMail = smtp.SendMail
+
+// forwardedDir returns the directory of the attachments of the messages
+// replied to or forwarded that are included in messages being written,
+// each in a directory of its own, until they are sent or discarded.
+func (a *App) forwardedDir() string {
+	return filepath.Join(a.dataDir(), "forwarded")
+}
+
+// isForwarded returns whether the given attachment is one of a message
+// replied to or forwarded (see [App.forwardedDir]).
+func (a *App) isForwarded(fname core.Filename) bool {
+	return strings.HasPrefix(string(fname), a.forwardedDir()+string(filepath.Separator))
+}
+
+// removeForwarded removes the files of the given attachments that are
+// of messages replied to or forwarded, once they are not needed.
+func (a *App) removeForwarded(fnames []core.Filename) {
+	for _, f := range fnames {
+		if a.isForwarded(f) {
+			os.RemoveAll(filepath.Dir(string(f)))
+		}
+	}
+}
+
+// deleteDraft removes the given draft, which is sent or discarded,
+// with the files of its attachments from messages replied to or forwarded.
+func (a *App) deleteDraft(d *draft) {
+	a.removeDraft(d)
+	a.removeForwarded(d.Attachments)
+}
+
+// includeAttachments adds the attachments of the message that the given
+// message replies to or forwards to it, as files (see [App.forwardedDir]),
+// or removes them.
+func (a *App) includeAttachments(sm *SendMessage, include bool) error {
+	if !include {
+		a.removeForwarded(sm.Attachments)
+		sm.Attachments = slices.DeleteFunc(sm.Attachments, a.isForwarded)
+		return nil
+	}
+	if sm.original == nil || slices.ContainsFunc(sm.Attachments, a.isForwarded) {
+		return nil
+	}
+	sm.Attachments = slices.DeleteFunc(sm.Attachments, func(f core.Filename) bool { return f == "" })
+	if err := os.MkdirAll(a.forwardedDir(), 0o700); err != nil {
+		return err
+	}
+	for _, at := range sm.original.parsed.attachments {
+		dir, err := os.MkdirTemp(a.forwardedDir(), "")
+		if err != nil {
+			return err
+		}
+		name := filepath.Base(at.Filename)
+		if name == "." || name == string(filepath.Separator) || name == "" {
+			name = "attachment"
+		}
+		fname := filepath.Join(dir, name)
+		if err := os.WriteFile(fname, at.Data, 0o600); err != nil {
+			return err
+		}
+		sm.Attachments = append(sm.Attachments, core.Filename(fname))
+	}
+	return nil
+}
+
+// attachDropped makes the given widgets take drops of files, which are
+// attached to the given message (see [App.dropAttachments]), calling the
+// given function after each.
+func (a *App) attachDropped(sm *SendMessage, done func(e events.Event, err error), ws ...core.Widget) {
+	for _, w := range ws {
+		wb := w.AsWidget()
+		wb.Styler(func(s *styles.Style) { s.SetAbilities(true, abilities.Droppable) })
+		wb.On(events.Drop, func(e events.Event) {
+			ok, err := a.dropAttachments(sm, e.(*events.DragDrop))
+			if !ok {
+				return
+			}
+			e.SetHandled()
+			done(e, err)
+		})
+	}
+}
+
+// dropAttachments attaches the files of the given drop to the given
+// message, if it has any, returning whether it did: the attachments of
+// other messages, which are in temporary files (see [attachmentsDir]), as
+// copies (see [App.forwardedDir]), which are removed with it, and other
+// files as they are.
+func (a *App) dropAttachments(sm *SendMessage, de *events.DragDrop) (bool, error) {
+	files := core.DroppedFiles(de)
+	if len(files) == 0 {
+		return false, nil
+	}
+	sm.Attachments = slices.DeleteFunc(sm.Attachments, func(f core.Filename) bool { return f == "" })
+	for _, f := range files {
+		if attachmentsDir == "" || !strings.HasPrefix(f, attachmentsDir+string(filepath.Separator)) {
+			sm.Attachments = append(sm.Attachments, core.Filename(f))
+			continue
+		}
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return true, err
+		}
+		if err := os.MkdirAll(a.forwardedDir(), 0o700); err != nil {
+			return true, err
+		}
+		dir, err := os.MkdirTemp(a.forwardedDir(), "")
+		if err != nil {
+			return true, err
+		}
+		fname := filepath.Join(dir, filepath.Base(f))
+		if err := os.WriteFile(fname, data, 0o600); err != nil {
+			return true, err
+		}
+		sm.Attachments = append(sm.Attachments, core.Filename(fname))
+	}
+	return true, nil
+}

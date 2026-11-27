@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/mail"
 	"os"
-	"slices"
 	"sync/atomic"
 	"time"
 
@@ -53,6 +52,11 @@ type CacheMessage struct {
 	// key is the key of the message in the cache and the store.
 	key string
 
+	// account is the email address of the account of the message, set
+	// when the list of messages is made (see [App.updateConversations]),
+	// as it can show those of all of the accounts (see [App.allInboxes]).
+	account string
+
 	// parsed contains data parsed from this message. This is populated live
 	// and not stored in the cache file.
 	parsed readMessageParsed
@@ -88,7 +92,7 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 
 // cacheMessages syncs the messages of all of the accounts with their servers.
 func (a *App) cacheMessages() error {
-	accounts := slices.Clone(Settings.Accounts) // as one may be added
+	accounts := Settings.Emails() // (a copy, as one may be added)
 	var errs []error
 	for _, account := range accounts {
 		if !a.signedIn(account) {
@@ -141,13 +145,7 @@ func (a *App) listMailboxes(c *imapclient.Client, email string) ([]*imap.ListDat
 		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
 	}
 	a.trash[email] = findTrash(mailboxes)
-	su := map[imap.MailboxAttr]string{}
-	for _, mb := range mailboxes {
-		for _, attr := range mb.Attrs {
-			su[attr] = mb.Mailbox
-		}
-	}
-	a.specialUse[email] = su
+	a.specialUse[email] = specialUses(mailboxes)
 	a.AsyncUnlock()
 	return mailboxes, nil
 }

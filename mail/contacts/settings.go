@@ -22,6 +22,12 @@ type SettingsData struct { //types:add
 	// Splits are the proportions of the list of the contacts and the
 	// editor of the selected one in the browser, as set by the user.
 	Splits []float32 `display:"-"`
+
+	// MyCard is the UID of the contact of the user, as the My Card of the
+	// Contacts app of the Mac, whose name is the name of the user in the
+	// mail sent from any of their addresses, all of which are theirs (see
+	// [Store.MyCard]). It is set in the context menu of the contacts.
+	MyCard string `display:"-"`
 }
 
 // Settings are the settings of the contacts (see [SettingsData]).

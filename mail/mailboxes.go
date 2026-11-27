@@ -42,6 +42,10 @@ type MailboxTree struct {
 	// account is whether it is the node of the account.
 	account bool
 
+	// inboxes is whether it is the node of the inboxes of all of the
+	// accounts, at the top (see [App.initMailboxes]).
+	inboxes bool
+
 	// openApplied is whether the saved open state has been applied.
 	openApplied bool
 
@@ -61,6 +65,9 @@ func mailboxKey(email, label string) string {
 
 // key returns the key of the node in [SettingsData.OpenMailboxes].
 func (mt *MailboxTree) key() string {
+	if mt.inboxes {
+		return "Inboxes"
+	}
 	if mt.account {
 		return mailboxKey(mt.mailbox.email, "")
 	}
@@ -83,7 +90,7 @@ func (mt *MailboxTree) setOpenFromSettings() {
 		}
 		open, ok := Settings.OpenMailboxes[mt.key()]
 		if !ok {
-			open = mt.account
+			open = mt.account || mt.inboxes
 		}
 		slog.Debug("mail: opened the mailbox node", "key", mt.key(), "open", open, "saved", ok, "children", len(mt.Children))
 		mt.applying = true
@@ -125,9 +132,10 @@ func (mt *MailboxTree) saveOpen(open bool) {
 	errors.Log(core.SaveSettings(Settings))
 }
 
-// initMailboxes initializes the tree of the accounts and their mailboxes.
-// The mailbox being shown is always selected. Selecting an account shows
-// its INBOX.
+// initMailboxes initializes the tree of the accounts and their mailboxes:
+// the inboxes of all of the accounts first, and then the accounts with
+// their other mailboxes. The mailbox being shown is always selected.
+// Selecting an account shows its INBOX.
 func (a *App) initMailboxes(w *core.Tree) {
 	w.SetText("Accounts")
 	w.ContextMenus = nil // only those of the mailboxes
@@ -135,7 +143,8 @@ func (a *App) initMailboxes(w *core.Tree) {
 	a.mailboxes = w
 	w.Updater(a.countUnread)
 	w.Maker(func(p *tree.Plan) {
-		for _, email := range Settings.Accounts {
+		tree.AddAt(p, "Inboxes", a.initInboxes)
+		for _, email := range Settings.Emails() {
 			tree.AddAt(p, email, func(w *MailboxTree) {
 				w.mailbox = mailboxID{email, "INBOX"}
 				w.account = true
@@ -158,6 +167,59 @@ func (a *App) initMailboxes(w *core.Tree) {
 	})
 }
 
+// initInboxes initializes the node of the inboxes of all of the accounts,
+// with the unread messages in all of them, which is open unless closed,
+// and shows them all together when selected (see [App.ShowAllInboxes]).
+func (a *App) initInboxes(w *MailboxTree) {
+	w.inboxes = true
+	w.SetIcon(icons.Inbox)
+	w.ContextMenus = nil
+	w.OnSelect(func(e events.Event) {
+		if !w.StateIs(states.Selected) {
+			return
+		}
+		if a.allInboxes {
+			a.mailboxes.Update() // to keep the selection on it
+			return
+		}
+		a.ShowAllInboxes()
+	})
+	w.Updater(func() {
+		if !w.openApplied && len(Settings.Accounts) > 0 {
+			w.setOpenFromSettings()
+		}
+		n := 0
+		for _, email := range Settings.Emails() {
+			n += a.unread[email]["INBOX"]
+		}
+		w.SetText(withCount("Inboxes", n))
+		if a.allInboxes {
+			w.selectOnly()
+		} else if w.StateIs(states.Selected) {
+			w.Unselect()
+		}
+	})
+	w.Maker(func(p *tree.Plan) {
+		for _, email := range Settings.Emails() {
+			tree.AddAt(p, email, func(w *MailboxTree) {
+				w.mailbox = mailboxID{email, "INBOX"}
+				w.SetIcon(icons.Inbox)
+				w.ContextMenus = nil
+				w.AddContextMenu(a.mailboxMenu(email, "INBOX"))
+				w.OnSelect(func(e events.Event) { a.mailboxSelected(w) })
+				w.Updater(func() {
+					w.SetText(withCount(email, a.unread[email]["INBOX"]))
+					if !a.allInboxes && email == a.currentEmail && a.showLabel == "INBOX" {
+						w.selectOnly()
+					} else if w.StateIs(states.Selected) {
+						w.Unselect()
+					}
+				})
+			})
+		}
+	})
+}
+
 // mailboxSelected handles a select event on the node of a mailbox (by a
 // click or moving with the keyboard), showing its mailbox if it is selected.
 func (a *App) mailboxSelected(mt *MailboxTree) {
@@ -165,7 +227,7 @@ func (a *App) mailboxSelected(mt *MailboxTree) {
 		return
 	}
 	mb := mt.mailbox
-	if mb.email == a.currentEmail && mb.label == a.showLabel {
+	if !a.allInboxes && mb.email == a.currentEmail && mb.label == a.showLabel {
 		a.mailboxes.Update() // to keep the selection on the mailbox being shown
 		return
 	}
@@ -246,7 +308,7 @@ func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 		friendlyParentLabel := friendlyLabelName(parentLabel)
 		labels := sortedLabels(a.mailboxLabels(email))
 		for _, label := range labels {
-			if skipLabels[label] {
+			if skipLabels[label] || label == "INBOX" { // in the inboxes at the top
 				continue
 			}
 			friendlyLabel := friendlyLabelName(label)
@@ -283,7 +345,7 @@ func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 					}
 					w.SetText(withCount(name, a.unread[email][label]))
 					// The mailbox being shown is always selected.
-					current := email == a.currentEmail && label == a.showLabel
+					current := !a.allInboxes && email == a.currentEmail && label == a.showLabel
 					if current {
 						w.selectOnly()
 					} else if w.StateIs(states.Selected) {

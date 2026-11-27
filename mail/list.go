@@ -242,24 +242,38 @@ func senderName(cm *CacheMessage, email string) string {
 	return f.Addr()
 }
 
-// updateConversations sets the replies of the messages of the current
+// updateConversations sets the replies of the messages of the accounts
+// shown (see [App.listAccounts]), and returns the starts of the
+// conversations, and the number of messages with the label being shown
+// (see [App.accountConversations]).
+func (a *App) updateConversations() (starts []*CacheMessage, shown int) {
+	for _, email := range a.listAccounts() {
+		s, n := a.accountConversations(email)
+		starts = append(starts, s...)
+		shown += n
+	}
+	return starts, shown
+}
+
+// accountConversations sets the replies of the messages of the given
 // account, and returns the starts of the conversations, and the number of
 // messages with the label being shown. On Gmail, the conversations are its
 // threads (by X-GM-THRID), whose first message is the start, and only those
 // with a message with the label being shown are made, as there can be very
 // many messages; elsewhere, a conversation starts with the message that the
 // others reply to (by [CacheMessage.InReplyTo]).
-func (a *App) updateConversations() (starts []*CacheMessage, shown int) {
-	mp := a.cache[a.currentEmail]
+func (a *App) accountConversations(email string) (starts []*CacheMessage, shown int) {
+	mp := a.cache[email]
 	want := map[uint64]bool{} // the threads with the label, on Gmail
 	for _, cm := range mp {
+		cm.account = email
 		cm.replies = nil
 		if a.hasLabel(cm) {
 			shown++
 			want[cm.GmailThreadID] = true
 		}
 	}
-	if a.gmail[a.currentEmail] {
+	if a.gmail[email] {
 		threads := map[uint64][]*CacheMessage{}
 		for _, cm := range mp {
 			if !want[cm.GmailThreadID] {
@@ -318,7 +332,7 @@ func (a *App) updateList() {
 	defer func() {
 		if d := time.Since(start); d > 50*time.Millisecond {
 			slog.Debug("mail: updating the list of messages took a while", "took", d,
-				"account", a.currentEmail, "messages", len(a.cache[a.currentEmail]), "rows", len(a.listRows))
+				"accounts", a.listAccounts(), "rows", len(a.listRows))
 		}
 	}()
 	a.listCache = nil
@@ -331,7 +345,6 @@ func (a *App) updateList() {
 	if !flat { // else they are kept for when it is not
 		a.conversationRows = map[*CacheMessage]*messageRow{}
 	}
-	email := a.currentEmail
 	showLabels, showAttachments, showStars := a.labelsShown(), a.attachmentsShown(), a.starsShown()
 
 	rowOf := func(cm *CacheMessage) *messageRow {
@@ -340,7 +353,7 @@ func (a *App) updateList() {
 			mr = &messageRow{message: cm}
 		}
 		mr.elsewhere = false
-		mr.From = senderName(cm, email)
+		mr.From = senderName(cm, cm.account)
 		mr.Subject = cm.Subject
 		mr.Date = cm.Date.Local().Format(listDateFormat)
 		mr.Labels = friendlyLabels(otherLabels(cm))
@@ -353,8 +366,12 @@ func (a *App) updateList() {
 
 	rows := a.listRows[:0]
 	if a.searchResults != nil { // each message found, on its own
-		for _, cm := range a.cache[email] {
-			if a.searchResults[cm.key] {
+		for _, email := range a.listAccounts() {
+			for _, cm := range a.cache[email] {
+				cm.account = email
+				if !a.searchResults[searchKey(email, cm.key)] {
+					continue
+				}
 				a.listCache = append(a.listCache, cm)
 				rows = append(rows, rowOf(cm))
 				if !slices.Contains(cm.Flags, imap.FlagSeen) {
@@ -404,7 +421,7 @@ func (a *App) updateList() {
 		// the senders in the order they joined the conversation
 		var senders []string
 		for _, cm := range slices.Backward(msgs) {
-			if s := senderName(cm, email); !slices.Contains(senders, s) {
+			if s := senderName(cm, cm.account); !slices.Contains(senders, s) {
 				senders = append(senders, s)
 			}
 		}
@@ -500,6 +517,9 @@ func (a *App) initList(w *core.TreeTable) {
 		// selected rows, and those on one message, such as replying,
 		// to the last one selected.
 		a.readMessage = mr.message
+		if a.allInboxes { // the actions on it are in its account
+			a.currentEmail = a.accountOf(mr.message)
+		}
 		// a message row is shown on its own, a conversation with all of its messages
 		a.readSingle = !mr.conversation
 		if len(a.selectedRows) <= 1 { // only when reading it
@@ -588,11 +608,16 @@ func (a *App) makeListPanel(p *tree.Plan) {
 		tree.AddChild(w, func(w *core.Text) {
 			w.SetType(core.TextTitleMedium)
 			w.Updater(func() {
-				if a.searchResults != nil {
+				switch {
+				case a.searchResults != nil && a.allInboxes:
+					w.SetText("Search: all accounts")
+				case a.searchResults != nil:
 					w.SetText("Search: " + a.currentEmail)
-					return
+				case a.allInboxes:
+					w.SetText("Inboxes")
+				default:
+					w.SetText(friendlyLabelName(a.showLabel))
 				}
-				w.SetText(friendlyLabelName(a.showLabel))
 			})
 		})
 		tree.AddChild(w, func(w *core.Text) { // the count, after the name
@@ -610,7 +635,10 @@ func (a *App) makeListPanel(p *tree.Plan) {
 					}
 					return
 				}
-				total := a.totalMessages[a.currentEmail][a.showLabel]
+				total := 0
+				for _, email := range a.listAccounts() {
+					total += a.totalMessages[email][a.showLabel]
+				}
 				if a.shownMessages < total { // still syncing
 					w.Text += fmt.Sprintf("%d of ", a.shownMessages)
 				}
@@ -622,6 +650,11 @@ func (a *App) makeListPanel(p *tree.Plan) {
 					w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 				}
 			})
+		})
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetType(core.ButtonAction).SetIcon(icons.Refresh)
+			w.SetTooltip("Check for new messages in this mailbox now")
+			w.OnClick(func(e events.Event) { a.Refresh() })
 		})
 		tree.AddChild(w, func(w *core.Button) {
 			w.SetType(core.ButtonAction).SetIcon(icons.Tune)
@@ -670,7 +703,8 @@ func (a *App) viewMenu(m *core.Scene, pos image.Point) {
 // searchLimit is the maximum number of messages found by a search.
 var searchLimit = 1000
 
-// SearchMessages shows the messages of the current account that match the given
+// SearchMessages shows the messages of the current account (or of all of
+// them, for all of the inboxes) that match the given
 // search (see [searchIndex.query]), the newest first, or the messages of
 // the mailbox being shown again for an empty one.
 func (a *App) SearchMessages(search string) { //types:add
@@ -682,20 +716,35 @@ func (a *App) SearchMessages(search string) { //types:add
 		a.Update()
 		return
 	}
-	si := a.searches[a.currentEmail]
-	if si == nil {
+	results := map[string]bool{}
+	searched := false
+	for _, email := range a.listAccounts() {
+		si := a.searches[email]
+		if si == nil {
+			continue
+		}
+		searched = true
+		keys, err := si.search(search, searchLimit)
+		if err != nil {
+			core.ErrorSnackbar(a, err, "Error searching")
+			return
+		}
+		for _, k := range keys {
+			results[searchKey(email, k)] = true
+		}
+	}
+	if !searched {
 		return
 	}
-	keys, err := si.search(search, searchLimit)
-	if err != nil {
-		core.ErrorSnackbar(a, err, "Error searching")
-		return
-	}
-	a.searchResults = map[string]bool{}
-	for _, k := range keys {
-		a.searchResults[k] = true
-	}
+	a.searchResults = results
 	a.Update()
+}
+
+// searchKey returns the key of the message of the given account with the
+// given key in [App.searchResults], which can have those of all of the
+// accounts (see [App.allInboxes]).
+func searchKey(email, key string) string {
+	return email + "\x00" + key
 }
 
 // FocusSearch moves the keyboard focus to the search field.

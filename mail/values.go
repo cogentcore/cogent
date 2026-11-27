@@ -14,12 +14,14 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/rich"
@@ -34,6 +36,53 @@ func init() {
 	core.AddValueType[SignatureText, SignatureButton]()
 	core.AddValueType[messageSummary, MessageSummaryView]()
 	core.AddValueType[starMark, StarIcon]()
+	core.AddValueType[KeyMap, KeyMapButton]()
+}
+
+// KeyMapButton represents a [KeyMap] with a [core.Button] that opens a
+// dialog to edit its keyboard shortcuts: the chords (with Command for
+// Meta on the Mac and Control elsewhere), each with its action, which can
+// be added, removed, and reset to the defaults.
+type KeyMapButton struct {
+	core.Button
+	Keys *KeyMap
+}
+
+func (kb *KeyMapButton) WidgetValue() any { return &kb.Keys }
+
+func (kb *KeyMapButton) Init() {
+	kb.Button.Init()
+	kb.SetType(core.ButtonTonal).SetIcon(icons.Keyboard)
+	kb.SetTooltip("Edit the keyboard shortcuts of the actions in the main window")
+	kb.Updater(func() {
+		kb.SetText(fmt.Sprintf("Keyboard shortcuts (%d)", len(*kb.Keys)))
+	})
+	kb.OnClick(func(e events.Event) {
+		d := core.NewBody("Keyboard shortcuts")
+		keysEditor(d, kb.Keys, func() {
+			kb.Update()
+			kb.SendChange()
+		})
+		d.RunWindowDialog(kb)
+	})
+}
+
+// keysEditor adds an editor of the given keyboard shortcuts to the given
+// dialog, calling the given function after each change.
+func keysEditor(d *core.Body, keys *KeyMap, changed func()) {
+	core.NewText(d).SetType(core.TextSupporting).SetText("The shortcuts of the actions in the main window: click a chord to change it by pressing the new one (with Command for Control on other platforms than the Mac), and choose its action. The context menu of a row adds or deletes shortcuts.")
+	kl := core.NewKeyedList(d).SetMap(keys)
+	kl.Styler(func(s *styles.Style) { s.Min.Y.Em(20) })
+	kl.OnChange(func(e events.Event) { changed() })
+	d.AddBottomBar(func(bar *core.Frame) {
+		core.NewButton(bar).SetType(core.ButtonText).SetText("Defaults").SetIcon(icons.Refresh).
+			SetTooltip("Reset the keyboard shortcuts to the defaults").OnClick(func(e events.Event) {
+			*keys = DefaultKeys()
+			kl.Update()
+			changed()
+		})
+		d.AddOK(bar)
+	})
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
@@ -91,7 +140,18 @@ func (ab *AttachmentButton) WidgetValue() any { return &ab.Attachment }
 func (ab *AttachmentButton) Init() {
 	ab.Button.Init()
 	ab.SetIcon(icons.Attachment).SetType(core.ButtonTonal)
-	ab.SetTooltip("Click to open; right-click to save")
+	ab.SetTooltip("Click to open; right-click to save; drag to a message being written, or to other apps")
+	ab.Styler(func(s *styles.Style) { s.SetAbilities(true, abilities.Draggable) })
+	ab.On(events.DragStart, func(e events.Event) {
+		fname, err := ab.Attachment.tempFile()
+		if err != nil {
+			core.ErrorSnackbar(ab, err, "Error dragging attachment")
+			return
+		}
+		e.SetHandled()
+		ab.Scene.Events.DragStart(ab.This.(core.Widget), mimedata.NewText(fname), e)
+		ab.Scene.Events.SetDragFiles(fname)
+	})
 	ab.Updater(func() {
 		ab.SetText(ab.Attachment.Filename)
 	})
@@ -128,17 +188,30 @@ var openURL = func(url string) { core.TheApp.OpenURL(url) }
 // Open opens the attachment in the default app for its type, as a file
 // in a new temporary directory, so that each has its own name.
 func (at *Attachment) Open() error {
+	fname, err := at.tempFile()
+	if err != nil {
+		return err
+	}
+	at.openedFile = fname
+	openURL(fsx.FileURL(fname))
+	return nil
+}
+
+// tempFile writes the attachment to a file in a new temporary directory
+// (in [attachmentsDir]), so that each has its own name, returning its
+// name, as for opening and dragging it.
+func (at *Attachment) tempFile() (string, error) {
 	if attachmentsDir == "" {
 		dir, err := os.MkdirTemp("", "cogent-mail-attachments-")
 		if err != nil {
-			return err
+			return "", err
 		}
 		attachmentsDir = dir
 		core.TheApp.AddQuitCleanFunc(func() { os.RemoveAll(dir) })
 	}
 	dir, err := os.MkdirTemp(attachmentsDir, "")
 	if err != nil {
-		return err
+		return "", err
 	}
 	name := filepath.Base(at.Filename)
 	if name == "." || name == "/" || name == "" {
@@ -146,11 +219,9 @@ func (at *Attachment) Open() error {
 	}
 	fname := filepath.Join(dir, name)
 	if err := os.WriteFile(fname, at.Data, 0o600); err != nil {
-		return err
+		return "", err
 	}
-	at.openedFile = fname
-	openURL(fsx.FileURL(fname))
-	return nil
+	return fname, nil
 }
 
 // SignatureButton represents a [SignatureText] with a [core.Button] that

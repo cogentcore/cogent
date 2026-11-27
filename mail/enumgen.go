@@ -6,6 +6,92 @@ import (
 	"cogentcore.org/core/enums"
 )
 
+var _AccountTypesValues = []AccountTypes{0, 1, 2, 3}
+
+// AccountTypesN is the highest valid value for type AccountTypes, plus one.
+const AccountTypesN AccountTypes = 4
+
+var _AccountTypesValueMap = map[string]AccountTypes{`Gmail`: 0, `Microsoft`: 1, `ICloud`: 2, `IMAP`: 3}
+
+var _AccountTypesDescMap = map[AccountTypes]string{0: `Gmail is a Google account, which is signed in to in the browser.`, 1: `Microsoft is a Microsoft 365 (Exchange Online) account of an organization, or a personal Outlook.com one, which is signed in to in the browser (as with the single sign-on of the organization). Its organization must allow IMAP, and may need to approve the app.`, 2: `ICloud is an iCloud account (as of an @icloud.com or @me.com address), which signs in with an app-specific password, made at account.apple.com under Sign-In and Security.`, 3: `IMAP is another account, which signs in with a password to its own IMAP and SMTP servers.`}
+
+var _AccountTypesMap = map[AccountTypes]string{0: `Gmail`, 1: `Microsoft`, 2: `ICloud`, 3: `IMAP`}
+
+// String returns the string representation of this AccountTypes value.
+func (i AccountTypes) String() string { return enums.String(i, _AccountTypesMap) }
+
+// SetString sets the AccountTypes value from its string representation,
+// and returns an error if the string is invalid.
+func (i *AccountTypes) SetString(s string) error {
+	return enums.SetString(i, s, _AccountTypesValueMap, "AccountTypes")
+}
+
+// Int64 returns the AccountTypes value as an int64.
+func (i AccountTypes) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the AccountTypes value from an int64.
+func (i *AccountTypes) SetInt64(in int64) { *i = AccountTypes(in) }
+
+// Desc returns the description of the AccountTypes value.
+func (i AccountTypes) Desc() string { return enums.Desc(i, _AccountTypesDescMap) }
+
+// AccountTypesValues returns all possible values for the type AccountTypes.
+func AccountTypesValues() []AccountTypes { return _AccountTypesValues }
+
+// Values returns all possible values for the type AccountTypes.
+func (i AccountTypes) Values() []enums.Enum { return enums.Values(_AccountTypesValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i AccountTypes) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *AccountTypes) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "AccountTypes")
+}
+
+var _KeyFunctionsValues = []KeyFunctions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+
+// KeyFunctionsN is the highest valid value for type KeyFunctions, plus one.
+const KeyFunctionsN KeyFunctions = 15
+
+var _KeyFunctionsValueMap = map[string]KeyFunctions{`Compose`: 0, `FocusSearch`: 1, `Reply`: 2, `ReplyAll`: 3, `Forward`: 4, `File`: 5, `Tag`: 6, `Delete`: 7, `MarkAsUnread`: 8, `Star`: 9, `RemoveAttachments`: 10, `MarkAsRead`: 11, `Refresh`: 12, `FocusNextPanel`: 13, `FocusPrevPanel`: 14}
+
+var _KeyFunctionsDescMap = map[KeyFunctions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``, 10: ``, 11: ``, 12: ``, 13: ``, 14: ``}
+
+var _KeyFunctionsMap = map[KeyFunctions]string{0: `Compose`, 1: `FocusSearch`, 2: `Reply`, 3: `ReplyAll`, 4: `Forward`, 5: `File`, 6: `Tag`, 7: `Delete`, 8: `MarkAsUnread`, 9: `Star`, 10: `RemoveAttachments`, 11: `MarkAsRead`, 12: `Refresh`, 13: `FocusNextPanel`, 14: `FocusPrevPanel`}
+
+// String returns the string representation of this KeyFunctions value.
+func (i KeyFunctions) String() string { return enums.String(i, _KeyFunctionsMap) }
+
+// SetString sets the KeyFunctions value from its string representation,
+// and returns an error if the string is invalid.
+func (i *KeyFunctions) SetString(s string) error {
+	return enums.SetString(i, s, _KeyFunctionsValueMap, "KeyFunctions")
+}
+
+// Int64 returns the KeyFunctions value as an int64.
+func (i KeyFunctions) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the KeyFunctions value from an int64.
+func (i *KeyFunctions) SetInt64(in int64) { *i = KeyFunctions(in) }
+
+// Desc returns the description of the KeyFunctions value.
+func (i KeyFunctions) Desc() string { return enums.Desc(i, _KeyFunctionsDescMap) }
+
+// KeyFunctionsValues returns all possible values for the type KeyFunctions.
+func KeyFunctionsValues() []KeyFunctions { return _KeyFunctionsValues }
+
+// Values returns all possible values for the type KeyFunctions.
+func (i KeyFunctions) Values() []enums.Enum { return enums.Values(_KeyFunctionsValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i KeyFunctions) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *KeyFunctions) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "KeyFunctions")
+}
+
 var _ListViewsValues = []ListViews{0, 1, 2, 3, 4}
 
 // ListViewsN is the highest valid value for type ListViews, plus one.

@@ -126,7 +126,7 @@ func (a *App) setAccountInfo(email string, info accountInfo) {
 // openAllLocal opens the local copy of the mail of each of the accounts
 // that is not open, to show it before connecting, logging any errors.
 func (a *App) openAllLocal() {
-	for _, email := range Settings.Accounts {
+	for _, email := range Settings.Emails() {
 		if a.stores[email] != nil {
 			continue
 		}

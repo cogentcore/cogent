@@ -129,19 +129,19 @@ func (a *App) idleLoop(ctx context.Context, email string) {
 }
 
 // idle keeps a second connection to the IMAP server of the given account
-// idling on its INBOX, syncing the account as soon as the server reports a
-// change there, as new mail, instead of waiting for the next regular sync.
-// It checks that the connection still works every [idleCheckInterval], as
-// after the computer sleeps, returning an error if not, and returns nil
-// when the context is done.
+// idling on its INBOX, syncing the inboxes (see [App.quickSyncLoop]) as
+// soon as the server reports a change there, as new mail, instead of
+// waiting for the next quick sync. It checks that the connection still
+// works every [idleCheckInterval], as after the computer sleeps, returning
+// an error if not, and returns nil when the context is done.
 func (a *App) idle(ctx context.Context, email string) error {
 	opts := *imapOptions
 	opts.UnilateralDataHandler = &imapclient.UnilateralDataHandler{
-		Mailbox: func(data *imapclient.UnilateralDataMailbox) { a.SyncNow() },
-		Expunge: func(seqNum uint32) { a.SyncNow() },
+		Mailbox: func(data *imapclient.UnilateralDataMailbox) { a.SyncInboxNow() },
+		Expunge: func(seqNum uint32) { a.SyncInboxNow() },
 		Fetch: func(msg *imapclient.FetchMessageData) {
 			msg.Collect() // the data must be read
-			a.SyncNow()
+			a.SyncInboxNow()
 		},
 	}
 	c, err := a.dialIMAPWith(email, &opts)

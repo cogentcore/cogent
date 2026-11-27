@@ -47,7 +47,9 @@ func (a *App) readMessages() []*CacheMessage {
 // automatically saves the cache after the action is completed. Any then
 // function is called after the app is updated, with the lock of the window.
 func (a *App) action(f func(c *imapclient.Client, cm *CacheMessage) error, then ...func()) {
-	a.actionOn(a.currentEmail, a.readMessages(), f, then...)
+	a.byAccount(a.readMessages(), func(email string, msgs []*CacheMessage, then ...func()) {
+		a.actionOn(email, msgs, f, then...)
+	}, then...)
 }
 
 // actionOn is [App.action] for the given messages of the given account.
@@ -182,7 +184,9 @@ func (a *App) label(newLabels []string) {
 // to those that the given function returns for it. Any then function
 // is called after, as for [App.action].
 func (a *App) setLabels(labelsFor func(cm *CacheMessage) []string, then ...func()) {
-	a.setLabelsOn(a.currentEmail, a.readMessages(), labelsFor, then...)
+	a.byAccount(a.readMessages(), func(email string, msgs []*CacheMessage, then ...func()) {
+		a.setLabelsOn(email, msgs, labelsFor, then...)
+	}, then...)
 }
 
 // setLabelsOn is [App.setLabels] for the given messages of the given account.
@@ -292,12 +296,17 @@ func (a *App) Delete() { //types:add
 			return
 		}
 	}
-	trash := a.trash[a.currentEmail]
-	if trash == "" {
-		core.ErrorSnackbar(a, fmt.Errorf("no trash mailbox for %s", a.currentEmail))
-		return
+	msgs := slices.DeleteFunc(a.readMessages(), (*CacheMessage).isLocal)
+	for _, cm := range msgs {
+		if email := a.accountOf(cm); a.trash[email] == "" {
+			core.ErrorSnackbar(a, fmt.Errorf("no trash mailbox for %s", email))
+			return
+		}
 	}
-	a.setLabels(func(cm *CacheMessage) []string { return []string{trash} }, a.selectNext())
+	a.byAccount(msgs, func(email string, msgs []*CacheMessage, then ...func()) {
+		trash := a.trash[email]
+		a.setLabelsOn(email, msgs, func(cm *CacheMessage) []string { return []string{trash} }, then...)
+	}, a.selectNext())
 }
 
 // Reply opens a dialog to reply to the current message.
@@ -305,7 +314,7 @@ func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
 	// If we sent the original message, reply to the original receiver instead of ourself.
-	if a.composeMessage.To[0].Address == a.currentEmail {
+	if a.isMe(a.composeMessage.To[0].Address) {
 		a.composeMessage.To = IMAPToMailAddresses(a.readMessage.To)
 	}
 	a.reply("Reply", false)
@@ -316,7 +325,7 @@ func (a *App) ReplyAll() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
 	a.composeMessage.Cc = slices.DeleteFunc(IMAPToMailAddresses(a.readMessage.Cc), func(ma *mail.Address) bool {
-		return ma.Address == a.currentEmail
+		return a.isMe(ma.Address)
 	})
 	a.reply("Reply all", false)
 }
@@ -340,10 +349,11 @@ func (a *App) reply(title string, forward bool) {
 // to the given message, or a forward of it, with its subject, references,
 // and quoted text.
 func (a *App) replyTo(cm *CacheMessage, title string, forward bool) {
-	// If we have more than one receiver, then we should not be one of them.
+	// If we have more than one receiver, then we should not be one of them
+	// (any of the addresses of the user).
 	if len(a.composeMessage.To) > 1 {
 		a.composeMessage.To = slices.DeleteFunc(a.composeMessage.To, func(ma *mail.Address) bool {
-			return ma.Address == a.currentEmail
+			return a.isMe(ma.Address)
 		})
 		// If all of the receivers were us, then we should reply to ourself.
 		if len(a.composeMessage.To) == 0 {
@@ -357,6 +367,10 @@ func (a *App) replyTo(cm *CacheMessage, title string, forward bool) {
 	}
 	if !strings.HasPrefix(a.composeMessage.Subject, prefix) {
 		a.composeMessage.Subject = prefix + a.composeMessage.Subject
+	}
+	a.composeMessage.original = cm
+	if forward { // with its attachments, which a reply has only if wanted
+		core.ErrorSnackbar(a, a.includeAttachments(a.composeMessage, true), "Error including attachments")
 	}
 	a.composeMessage.inReplyTo = cm.MessageID
 	a.composeMessage.references = append(slices.Clone(cm.parsed.references), cm.MessageID)
@@ -395,7 +409,9 @@ func (a *App) MarkAsUnread() { //types:add
 
 // markSeen sets the [imap.FlagSeen] flag of the messages being read.
 func (a *App) markSeen(seen bool) {
-	a.setFlagOn(a.currentEmail, a.readMessages(), imap.FlagSeen, seen)
+	a.byAccount(a.readMessages(), func(email string, msgs []*CacheMessage, then ...func()) {
+		a.setFlagOn(email, msgs, imap.FlagSeen, seen)
+	})
 }
 
 // viewLabel returns the label of the given message that has its UID, on

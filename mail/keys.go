@@ -20,8 +20,9 @@ func init() {
 	addPanelKeys(keymap.AvailableMaps)
 }
 
-// These are the key functions of Cogent Mail, in addition to the standard
-// [keymap.Functions], as in Cogent Files and Code.
+// These are the key functions of Cogent Mail for key sequences, in addition
+// to the standard [keymap.Functions], as in Cogent Files and Code; the
+// other shortcuts are in [SettingsData.Keys].
 const (
 	// KeyNextPanel moves the keyboard focus to the next panel.
 	KeyNextPanel keymap.Functions = keymap.FunctionsN + iota
@@ -31,8 +32,7 @@ const (
 )
 
 // addPanelKeys adds the key bindings of the key functions of Cogent Mail
-// to each of the given key maps: Control+Tab and Control+Shift+Tab, and
-// the key sequences of o and p (or Control+O and Control+P) after each of
+// to each of the given key maps: the key sequences of o and p (or Control+O and Control+P) after each of
 // the chords that start key sequences in it ([keymap.MultiA] and
 // [keymap.MultiB], such as Control+X on the Mac).
 func addPanelKeys(maps keymap.Maps) {
@@ -43,8 +43,6 @@ func addPanelKeys(maps keymap.Maps) {
 				starts = append(starts, c)
 			}
 		}
-		m.Map["Control+Tab"] = KeyNextPanel
-		m.Map["Control+Shift+Tab"] = KeyPrevPanel
 		for _, c := range starts {
 			m.Map[c+" o"] = KeyNextPanel
 			m.Map[c+" Control+O"] = KeyNextPanel
@@ -54,90 +52,176 @@ func addPanelKeys(maps keymap.Maps) {
 	}
 }
 
-// shortcut is a keyboard shortcut of an action of the main window.
-type shortcut struct {
-	// name is the name of the method of the action.
-	name string
+// KeyFunctions are the actions of the main window that have keyboard
+// shortcuts, in [SettingsData.Keys], named as their methods.
+type KeyFunctions int32 //enums:enum -trim-prefix Key
 
-	// chords are the chords of the shortcut, with Command for Meta
-	// on the Mac and Control elsewhere (see [key.Chord.PlatformChord]).
-	// The first one is shown on the buttons.
-	chords []key.Chord
+const (
+	KeyCompose KeyFunctions = iota
+	KeyFocusSearch
+	KeyReply
+	KeyReplyAll
+	KeyForward
+	KeyFile
+	KeyTag
+	KeyDelete
+	KeyMarkAsUnread
+	KeyStar
+	KeyRemoveAttachments
+	KeyMarkAsRead
+	KeyRefresh
+	KeyFocusNextPanel
+	KeyFocusPrevPanel
+)
+
+// KeyMap is a map of the keyboard shortcuts of the actions of the main
+// window, by their chords, with Command for Meta on the Mac and Control
+// elsewhere (see [key.Chord.PlatformChord]).
+type KeyMap map[key.Chord]KeyFunctions
+
+// DefaultKeys returns the default keyboard shortcuts of the actions of the
+// main window, as in Apple Mail, with Command+F for Forward and Command+W
+// for Reply all (wide reply), and Command+Alt+F for the search.
+func DefaultKeys() KeyMap {
+	return KeyMap{
+		"Command+N":         KeyCompose,
+		"Backspace":         KeyDelete,
+		"Delete":            KeyDelete,
+		"Control+D":         KeyDelete,
+		"Command+X":         KeyRemoveAttachments,
+		"Command+Shift+N":   KeyRefresh, // Get new mail in Apple Mail
+		"Control+Tab":       KeyFocusNextPanel,
+		"Control+Shift+Tab": KeyFocusPrevPanel,
+		"Command+Alt+F":     KeyFocusSearch,
+		"Command+R":         KeyReply,
+		"Command+W":         KeyReplyAll,
+		"Command+Shift+R":   KeyReplyAll,
+		"Command+F":         KeyForward,
+		"Command+Shift+F":   KeyForward,
+		"Control+O":         KeyFile,
+		"Control+T":         KeyTag,
+		"Command+Shift+U":   KeyMarkAsUnread,
+		"Command+Shift+L":   KeyStar, // as the flag of Apple Mail
+	}
+}
+
+// addDefaultKeys adds the default keyboard shortcuts ([DefaultKeys]) of the
+// actions that are not in [SettingsData.KeysKnown] to [SettingsData.Keys],
+// for chords that are free: all of them at first, and those of new actions
+// after.
+func (sd *SettingsData) addDefaultKeys() {
+	if sd.Keys == nil {
+		sd.Keys = KeyMap{}
+	}
+	for c, f := range DefaultKeys() {
+		if _, used := sd.Keys[c]; !used && !slices.Contains(sd.KeysKnown, f) {
+			sd.Keys[c] = f
+		}
+	}
+	sd.KeysKnown = KeyFunctionsValues()
+}
+
+// keys returns the keyboard shortcuts, [DefaultKeys] before they are set
+// (see [SettingsData.addDefaultKeys]).
+func (sd *SettingsData) keys() KeyMap {
+	if sd.Keys == nil {
+		return DefaultKeys()
+	}
+	return sd.Keys
+}
+
+// chords returns the chords of the given action in the key map, the
+// shortest first, as shown on the buttons.
+func (km KeyMap) chords(kf KeyFunctions) []key.Chord {
+	var res []key.Chord
+	for c, f := range km {
+		if f == kf {
+			res = append(res, c)
+		}
+	}
+	slices.SortFunc(res, func(a, b key.Chord) int {
+		if len(a) != len(b) {
+			return len(a) - len(b)
+		}
+		return strings.Compare(string(a), string(b))
+	})
+	return res
+}
+
+// shortcut is an action of the main window, which can have keyboard
+// shortcuts in [SettingsData.Keys].
+type shortcut struct {
+	// kf is the action, whose chords are in [SettingsData.Keys].
+	kf KeyFunctions
 
 	// fun is the action.
 	fun func(a *App)
 
 	// message is whether the action needs a message being read.
 	message bool
-
-	// keyFuns are the standard key functions of the shortcut, whose
-	// chords in the key map of the user are its chords, as Delete
-	// (Control+D in the Emacs key map) and Backspace for deleting. The
-	// first one is shown on the buttons, if it has no chords.
-	keyFuns []keymap.Functions
 }
 
-// shortcuts are the keyboard shortcuts of the actions of the main window,
+// shortcuts are the actions of the main window with keyboard shortcuts,
 // which only apply there, not in the compose windows (where Control+O
-// opens a line), so they are not in the key maps. Those with standard key
-// functions use the chords of the key map of the user; the others, which
-// have none, have their own chords.
+// opens a line and Command+F finds), so they are not in the key maps of
+// Cogent Core, but in [SettingsData.Keys].
 var shortcuts = []shortcut{
-	{"Compose", nil, (*App).Compose, false, []keymap.Functions{keymap.New}},
-	{"FocusSearch", nil, (*App).FocusSearch, false, []keymap.Functions{keymap.Find}},
-	{"Reply", []key.Chord{"Command+R"}, (*App).Reply, true, nil},
-	{"ReplyAll", []key.Chord{"Command+Shift+R"}, (*App).ReplyAll, true, nil},
-	{"Forward", []key.Chord{"Command+Shift+F"}, (*App).Forward, true, nil},
-	{"File", []key.Chord{"Control+O"}, (*App).File, true, nil},
-	{"Tag", []key.Chord{"Control+T"}, (*App).Tag, true, nil},
-	{"Delete", nil, (*App).Delete, true, []keymap.Functions{keymap.Delete, keymap.Backspace}},
-	{"MarkAsUnread", []key.Chord{"Command+Shift+U"}, (*App).MarkAsUnread, true, nil},
-	{"Star", []key.Chord{"Command+Shift+L"}, (*App).Star, true, nil}, // as the flag of Apple Mail
+	{KeyCompose, (*App).Compose, false},
+	{KeyFocusSearch, (*App).FocusSearch, false},
+	{KeyReply, (*App).Reply, true},
+	{KeyReplyAll, (*App).ReplyAll, true},
+	{KeyForward, (*App).Forward, true},
+	{KeyFile, (*App).File, true},
+	{KeyTag, (*App).Tag, true},
+	{KeyDelete, (*App).Delete, true},
+	{KeyMarkAsRead, (*App).MarkAsRead, true},
+	{KeyMarkAsUnread, (*App).MarkAsUnread, true},
+	{KeyStar, (*App).Star, true},
+	{KeyRemoveAttachments, (*App).RemoveAttachments, true},
+	{KeyRefresh, (*App).Refresh, false},
+	{KeyFocusNextPanel, (*App).FocusNextPanel, false},
+	{KeyFocusPrevPanel, (*App).FocusPrevPanel, false},
 }
 
-// textKey returns whether the shortcut is a key for editing text, as
-// Backspace, which is not a shortcut while typing in a text field.
-func (sc shortcut) textKey() bool {
-	for _, kf := range sc.keyFuns {
-		if kf == keymap.Delete || kf == keymap.Backspace {
-			return true
-		}
-	}
-	return len(sc.chords) > 0 && !strings.Contains(string(sc.chords[0]), "Command")
+// textKeys are the standard key functions of editing text, whose chords
+// are not shortcuts while typing in a text field, as Command+X for Cut.
+var textKeys = []keymap.Functions{keymap.Delete, keymap.Backspace, keymap.Cut, keymap.Copy,
+	keymap.Paste, keymap.SelectAll, keymap.Undo, keymap.Redo, keymap.Kill}
+
+// isTextKey returns whether the given chord (of the platform), of the
+// given chord of a shortcut in [SettingsData.Keys], is for editing text, as
+// Backspace or Cut, or one without Command, which is not a shortcut while
+// typing in a text field.
+func isTextKey(kc, c key.Chord) bool {
+	return slices.Contains(textKeys, keymap.Of(kc)) || !strings.Contains(string(c), "Command")
 }
 
 // shortcutOf returns the chord of the shortcut of the action with the
 // given name, as shown on its buttons, or "" if it has none.
 func shortcutOf(name string) key.Chord {
 	for _, sc := range shortcuts {
-		if sc.name != name {
-			continue
-		}
-		if len(sc.chords) > 0 {
-			return sc.chords[0]
-		}
-		if len(sc.keyFuns) > 0 {
-			return sc.keyFuns[0].Chord()
+		if sc.kf.String() == name {
+			if cs := Settings.keys().chords(sc.kf); len(cs) > 0 {
+				return cs[0]
+			}
 		}
 	}
 	return ""
 }
 
-// shortcutFor returns the shortcut with the given chord, or whose key
-// functions it is in the key map, if any.
-func shortcutFor(kc key.Chord) (shortcut, bool) {
-	kf := keymap.Of(kc)
-	for _, sc := range shortcuts {
-		for _, c := range sc.chords {
-			if c.PlatformChord() == kc {
-				return sc, true
+// shortcutFor returns the shortcut with the given chord (of the platform)
+// in [SettingsData.Keys], and its chord there, if any.
+func shortcutFor(kc key.Chord) (sc shortcut, chord key.Chord, ok bool) {
+	for c, f := range Settings.keys() {
+		if c.PlatformChord() == kc {
+			for _, sc := range shortcuts {
+				if sc.kf == f {
+					return sc, c, true
+				}
 			}
 		}
-		if slices.Contains(sc.keyFuns, kf) {
-			return sc, true
-		}
 	}
-	return shortcut{}, false
+	return shortcut{}, "", false
 }
 
 // mailKeys handles the keys of Cogent Mail for all of the widgets of the
@@ -162,25 +246,23 @@ func (a *App) mailKeys(e events.Event) {
 		a.keySeq1 = kc
 		return
 	}
+	if sc, c, ok := shortcutFor(kc); ok {
+		if a.typing() && isTextKey(kc, c) {
+			return // a key for the text, such as Backspace
+		}
+		e.SetHandled() // also without a message: not its standard function, as Command+W closing the window
+		if !sc.message || a.readMessage != nil {
+			sc.fun(a)
+		}
+		return
+	}
 	switch kf {
 	case KeyNextPanel:
 		e.SetHandled()
 		a.FocusNextPanel()
-		return
 	case KeyPrevPanel:
 		e.SetHandled()
 		a.FocusPrevPanel()
-		return
-	}
-	if sc, ok := shortcutFor(kc); ok {
-		if sc.message && a.readMessage == nil {
-			return
-		}
-		if a.typing() && sc.textKey() {
-			return // a key for the text, such as Backspace
-		}
-		e.SetHandled()
-		sc.fun(a)
 	}
 }
 

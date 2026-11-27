@@ -135,3 +135,28 @@ func TestNoName(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"555-0100", "Acme"}, []string{s.Contacts()[0].Name, s.Contacts()[1].Name})
 }
+
+// TestMyCard tests the contact of the user: its addresses are theirs, and
+// it is marked in the list of the browser.
+func TestMyCard(t *testing.T) {
+	s, err := Open(t.TempDir())
+	require.NoError(t, err)
+	c := s.New()
+	c.Name = "Randy"
+	c.Emails = []Labeled{{Value: "me@x.test"}, {Value: "alias@x.test"}}
+	require.NoError(t, s.Save(c))
+	assert.Nil(t, s.MyCard())
+	assert.False(t, s.IsMine("me@x.test"))
+
+	br := &Browser{}
+	br.SetStore(s)
+	br.SetMyCard(c)
+	t.Cleanup(func() { s.SetMyCard(nil) })
+	assert.Equal(t, c, s.MyCard())
+	assert.True(t, s.IsMine(" ALIAS@x.test"))
+	assert.False(t, s.IsMine("other@x.test"))
+	assert.Equal(t, []string{"Randy  (me)"}, br.names)
+
+	require.NoError(t, s.Delete(c))
+	assert.Nil(t, s.MyCard(), "deleted")
+}

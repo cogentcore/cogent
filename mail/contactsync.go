@@ -38,7 +38,7 @@ func newContactsAccount() string {
 	if ca := string(Settings.ContactsAccount); ca != "" && Settings.SyncContacts[ca] {
 		return ca
 	}
-	for _, email := range Settings.Accounts {
+	for _, email := range Settings.Emails() {
 		if Settings.SyncContacts[email] {
 			return email
 		}

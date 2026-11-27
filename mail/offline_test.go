@@ -45,7 +45,7 @@ func offlineServer() Server {
 // offline, and the actions on messages on the server are errors.
 func TestOffline(t *testing.T) {
 	b, a := newTestingApp(t)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	dir := a.dataDirectory
 	core.RenderImage(b, func() { syncAll(t, a) })
 	n, labels := len(a.cache[you]), a.labels[you]
@@ -56,7 +56,7 @@ func TestOffline(t *testing.T) {
 	b2 := core.NewBody()
 	a2 := NewApp(b2)
 	a2.dataDirectory = dir
-	for _, account := range Settings.Accounts {
+	for _, account := range Settings.Emails() {
 		a2.servers[account] = offlineServer()
 	}
 	a2.currentEmail = you
@@ -91,7 +91,7 @@ func TestOffline(t *testing.T) {
 // between runs, editing it again, and discarding a draft.
 func TestDraftsOutbox(t *testing.T) {
 	b, a := newTestingApp(t)
-	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
 	online := a.servers[you]
 	var sm *SendMessage
 	var drafts string
@@ -173,7 +173,7 @@ func TestDraftsOutbox(t *testing.T) {
 // Discard is, and that nothing is asked or saved if it is not changed.
 func TestComposeDraft(t *testing.T) {
 	b, a := newTestingApp(t)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	locals := func() []*CacheMessage {
 		var res []*CacheMessage
 		for _, cm := range a.cache[you] {
@@ -254,7 +254,7 @@ func TestComposeDraft(t *testing.T) {
 // showing their mailboxes.
 func TestStartupOpen(t *testing.T) {
 	b, a := newTestingApp(t)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	dir := a.dataDirectory
 	core.RenderImage(b, func() { syncAll(t, a) })
 	a.closeAccounts()
@@ -262,7 +262,7 @@ func TestStartupOpen(t *testing.T) {
 	b2 := core.NewBody()
 	a2 := NewApp(b2)
 	a2.dataDirectory = dir
-	for _, account := range Settings.Accounts {
+	for _, account := range Settings.Emails() {
 		a2.servers[account] = offlineServer()
 	}
 	a2.currentEmail = you
@@ -277,7 +277,7 @@ func TestStartupOpen(t *testing.T) {
 	core.RenderImage(b2, func() {
 		<-opened
 	}, core.Locked(b2, func() {
-		require.Len(t, a2.mailboxes.Children, len(Settings.Accounts))
+		require.Len(t, a2.mailboxes.Children, len(Settings.Accounts)+1, "with the inboxes")
 		for _, c := range a2.mailboxes.Children {
 			mt := c.(*MailboxTree)
 			assert.False(t, mt.Closed, mt.mailbox.email)

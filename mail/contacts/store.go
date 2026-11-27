@@ -294,3 +294,37 @@ func (s *Store) NameOf(email string) string {
 	}
 	return ""
 }
+
+// MyCard returns the contact of the user (see [SettingsData.MyCard]), or
+// nil if there is none.
+func (s *Store) MyCard() *Contact {
+	loadSettings()
+	if Settings.MyCard == "" {
+		return nil
+	}
+	return s.byUID(Settings.MyCard)
+}
+
+// SetMyCard sets the contact of the user to the given one, or none for nil,
+// saving it in the [Settings].
+func (s *Store) SetMyCard(c *Contact) {
+	loadSettings()
+	Settings.MyCard = ""
+	if c != nil {
+		Settings.MyCard = c.uid
+	}
+	saveSettings()
+}
+
+// IsMine returns whether the given email address is one of the user, of
+// their contact (see [Store.MyCard]), ignoring case.
+func (s *Store) IsMine(email string) bool {
+	c := s.MyCard()
+	if c == nil {
+		return false
+	}
+	email = strings.TrimSpace(email)
+	return slices.ContainsFunc(c.Emails, func(e Labeled) bool {
+		return strings.EqualFold(strings.TrimSpace(e.Value), email)
+	})
+}

@@ -22,7 +22,7 @@ import (
 // the accounts, last.
 func TestComposeTabAndSender(t *testing.T) {
 	b, a := newTestApp(t, nil)
-	Settings.Accounts = []string{testEmail, "other@example.com"}
+	Settings.Accounts = gmailAccounts(testEmail, "other@example.com")
 	var cb *core.Body
 	core.RenderImage(b, core.Locked(b, func() {
 		a.composeMessage = &SendMessage{To: []*gomail.Address{{}}}
@@ -120,6 +120,26 @@ func TestSenderName(t *testing.T) {
 		c.Emails = []contacts.Labeled{{Value: "ME@example.com"}}
 		require.NoError(t, cs.Save(c))
 		assert.Equal(t, "Dr. Me", a.senderName(testEmail), "the name of the contact")
+		assert.False(t, a.isMe("me@work.test"))
+
+		// My card: the name from any address, all of whose addresses are mine
+		mine := cs.New()
+		mine.Name = "Randy"
+		mine.Emails = []contacts.Labeled{{Value: "me@work.test"}}
+		require.NoError(t, cs.Save(mine))
+		cs.SetMyCard(mine)
+		t.Cleanup(func() { cs.SetMyCard(nil) })
+		assert.Equal(t, "Randy", a.senderName(testEmail), "the name of my card")
+		assert.True(t, a.isMe("Me@Work.test"), "an address of my card")
+		assert.True(t, a.isMe(testEmail), "an account")
+		assert.False(t, a.isMe("zed@example.com"))
+
+		// not a recipient of a reply to all
+		sm = &SendMessage{Sender: MessageSender{From: SenderAccount(testEmail)},
+			replyAll: &replyAll{to: []*gomail.Address{{Address: "me@work.test"}, {Address: "zed@example.com"}}}}
+		sm.addReplyAll()
+		require.Len(t, sm.To, 1)
+		assert.Equal(t, "zed@example.com", sm.To[0].Address)
 	}))
 }
 

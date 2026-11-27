@@ -139,7 +139,7 @@ func newIMAP(t *testing.T) *imapclient.Client {
 func newTestApp(t *testing.T, c *imapclient.Client) (*core.Body, *App) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
-	Settings.Accounts = []string{testEmail}
+	Settings.Accounts = gmailAccounts(testEmail)
 	Settings.ShownAccount, Settings.ShownMailbox = "", "" // not that of another test
 	t.Cleanup(core.TrackWindows())
 	b := core.NewBody()
@@ -442,6 +442,50 @@ func TestReplySend(t *testing.T) {
 	assert.Equal(t, 0, refused)
 }
 
+// TestForwardAttachments tests including the attachments of the message
+// forwarded or replied to: by default when forwarding, and not replying,
+// switching them on and off, and removing their files once sent.
+func TestForwardAttachments(t *testing.T) {
+	be := newSMTP(t)
+	b, a := newTestApp(t, newIMAP(t))
+	var hello *CacheMessage
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+		hello = messageBySubject(a, "Hello")
+	}, core.Locked(b, func() {
+		a.readMessage = hello
+		a.Update()
+	}), core.Locked(b, func() {
+		hello.parsed.attachments = []*Attachment{{Filename: "report.pdf", Data: []byte("the report")}}
+
+		a.Reply()
+		assert.Empty(t, a.composeMessage.Attachments, "not in a reply by default")
+		sm := a.composeMessage
+		require.NoError(t, a.includeAttachments(sm, true))
+		require.Len(t, sm.Attachments, 1)
+		f := string(sm.Attachments[0])
+		assert.Equal(t, "report.pdf", filepath.Base(f))
+		data, err := os.ReadFile(f)
+		require.NoError(t, err)
+		assert.Equal(t, "the report", string(data))
+		require.NoError(t, a.includeAttachments(sm, false))
+		assert.Empty(t, sm.Attachments)
+		assert.NoFileExists(t, f, "removed when switched off")
+
+		a.Forward()
+		require.Len(t, a.composeMessage.Attachments, 1, "in a forward by default")
+		f = string(a.composeMessage.Attachments[0])
+		assert.True(t, a.isForwarded(a.composeMessage.Attachments[0]))
+		a.composeMessage.To[0].Address = "dan@example.com"
+		require.NoError(t, a.Send())
+		be.mu.Lock()
+		defer be.mu.Unlock()
+		require.Len(t, be.data, 1)
+		assert.Contains(t, be.data[0], "filename=report.pdf")
+		assert.NoFileExists(t, f, "removed once sent")
+	}))
+}
+
 // TestTestingMode tests the testing mode: syncing the sample mail of all
 // of the accounts of the test server, switching between accounts,
 // sending a message from one to another, and receiving a test message.
@@ -454,7 +498,7 @@ func TestTestingMode(t *testing.T) {
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
-	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
 	assert.Equal(t, you, a.currentEmail)
 	assert.NotEqual(t, oldFile, Settings.File, "not the real settings")
 	assert.NotEqual(t, core.TheApp.AppDataDir(), a.dataDir(), "not the real data")
@@ -580,7 +624,7 @@ func TestSendBetweenAccounts(t *testing.T) {
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
-	you, bob := Settings.Accounts[0], Settings.Accounts[2]
+	you, bob := Settings.Accounts[0].Email, Settings.Accounts[2].Email
 	syncAll := func() {
 		for {
 			a.syncMore = false
@@ -627,7 +671,7 @@ func TestMailboxes(t *testing.T) {
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	node := func(parent tree.Node, name string) *core.Tree {
 		t.Helper()
 		n := parent.AsTree().ChildByName(name)
@@ -651,11 +695,19 @@ func TestMailboxes(t *testing.T) {
 		for _, c := range acct.Children {
 			names = append(names, c.AsTree().Name)
 		}
-		assert.Equal(t, []string{"INBOX", "[Gmail]/Starred", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
-			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names)
-		inbox = node(acct, "INBOX")
+		assert.Equal(t, []string{"[Gmail]/Starred", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
+			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names, "the INBOX is in the inboxes")
+		inboxes := node(a.mailboxes, "Inboxes")
+		assert.Equal(t, "Inboxes", a.mailboxes.Children[0].AsTree().Name, "first")
+		assert.False(t, inboxes.Closed)
+		inbox = node(inboxes, you)
 		assert.True(t, inbox.StateIs(states.Selected), "the mailbox shown")
-		assert.Equal(t, fmt.Sprintf("Inbox\u2002(%d)", a.unread[you]["INBOX"]), inbox.Text)
+		assert.Equal(t, fmt.Sprintf("%s\u2002(%d)", you, a.unread[you]["INBOX"]), inbox.Text)
+		n := 0
+		for _, email := range Settings.Emails() {
+			n += a.unread[email]["INBOX"]
+		}
+		assert.Equal(t, fmt.Sprintf("Inboxes\u2002(%d)", n), inboxes.Text, "all of the unread")
 		assert.NotZero(t, a.unread[you]["INBOX"])
 		assert.Contains(t, acct.Text, "you@mail.test\u2002(", "a wider space before the count")
 		assert.Equal(t, icons.Inbox, inbox.Icon)
@@ -666,11 +718,13 @@ func TestMailboxes(t *testing.T) {
 	}), func() {
 		b.Scene.RenderWindow().SystemWindow.Events().KeyChord(0, key.CodeDownArrow, 0)
 	}, core.Locked(b, func() {
-		assert.Equal(t, "[Gmail]/Starred", a.showLabel, "moved with the keyboard, to the next mailbox")
+		assert.Equal(t, Settings.Accounts[1].Email, a.currentEmail, "moved with the keyboard, to the next inbox")
+		assert.Equal(t, "INBOX", a.showLabel)
 		assert.False(t, inbox.StateIs(states.Selected))
-		a.showMailbox(Settings.Accounts[1], "INBOX")
+		a.showMailbox(you, "[Gmail]/Starred")
 	}), core.Locked(b, func() {
-		assert.True(t, node(node(a.mailboxes, Settings.Accounts[1]), "INBOX").StateIs(states.Selected))
+		assert.True(t, node(node(a.mailboxes, you), "[Gmail]/Starred").StateIs(states.Selected))
+		assert.False(t, node(node(a.mailboxes, "Inboxes"), Settings.Accounts[1].Email).StateIs(states.Selected))
 		assert.False(t, node(node(a.mailboxes, you), "[Gmail]/Drafts").StateIs(states.Selected))
 	}))
 }
@@ -809,7 +863,7 @@ func TestSignature(t *testing.T) {
 func TestSignatureSettings(t *testing.T) {
 	old := *Settings
 	t.Cleanup(func() { *Settings = old })
-	Settings.Accounts = []string{"a@x.test", "b@x.test"}
+	Settings.Accounts = gmailAccounts("a@x.test", "b@x.test")
 	Settings.DefaultSignatures = map[string]SignatureName{"b@x.test": "Work"}
 	Settings.Signatures = []Signature{{Name: "Work"}, {Name: "Home"}}
 	Settings.Apply()
@@ -889,8 +943,9 @@ func TestShortcuts(t *testing.T) {
 				shortcuts = append(shortcuts, bt.Text+"="+string(bt.Shortcut))
 			}
 		}
-		assert.Equal(t, []string{"Reply=Command+R", "Reply all=Command+Shift+R", "Forward=Command+Shift+F",
-			"File=Control+O", "Tag=Control+T", "Star=Command+Shift+L", "Delete=" + string(keymap.Delete.Chord()), "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
+		assert.Equal(t, []string{"Reply=Command+R", "Reply all=Command+W", "Forward=Command+F",
+			"File=Control+O", "Tag=Control+T", "Star=Command+Shift+L", "Delete=Delete",
+			"Remove attachments=Command+X", "Mark as read=", "Mark as unread=Command+Shift+U"}, shortcuts)
 	}))
 }
 
@@ -938,7 +993,7 @@ func TestFileToAccount(t *testing.T) {
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
-	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
 	require.NoError(t, a.testServer.CreateMailbox(alice, "Filed/Mail"))
 	Settings.FilingAccount = AccountName(alice)
 	syncAll := func() {
@@ -965,7 +1020,7 @@ func TestFileToAccount(t *testing.T) {
 		require.NotNil(t, conv)
 		subject = conv.message.Subject
 		n = len(a.readMessages())
-		assert.Equal(t, []string{alice, you, Settings.Accounts[2]}, a.filingAccounts())
+		assert.Equal(t, []string{alice, you, Settings.Accounts[2].Email}, a.filingAccounts())
 		a.File()
 	}), core.Locked(b, func() {
 		d := core.TopScene(b)
@@ -1026,7 +1081,7 @@ func TestMultiSelect(t *testing.T) {
 		assert.Contains(t, msgs, report)
 		assert.Contains(t, msgs, hello.replies[0])
 		assert.False(t, slices.Contains(hello.Flags, imap.FlagSeen), "not marked as read")
-		a.fileTo("Work", "[Gmail]/Trash")
+		a.fileTo(a.currentEmail, msgs, "Work", "[Gmail]/Trash", a.selectNext())
 	}), func() {
 		require.Eventually(t, func() bool {
 			a.AsyncLock() // as the labels are set, and the list updated
@@ -1107,7 +1162,7 @@ func TestFileOneOfConversation(t *testing.T) {
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
-	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
 	Settings.FilingAccount = AccountName(you)
 	syncAll := func() {
 		for {
@@ -1150,7 +1205,7 @@ func TestFileOneOfConversation(t *testing.T) {
 		}
 		require.NotNil(t, child)
 		require.Len(t, a.readMessages(), 1, "only the message of the row")
-		a.fileToAccount("INBOX", mailboxID{you, "Projects/Alpha"})
+		a.fileToAccount(a.currentEmail, a.readMessages(), "INBOX", mailboxID{you, "Projects/Alpha"}, a.selectNext())
 	}), func() {
 		require.Eventually(t, func() bool {
 			a.AsyncLock()
@@ -1191,7 +1246,7 @@ func TestGmailSync(t *testing.T) {
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
 	t.Cleanup(a.closeStores)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	syncAll := func() {
 		for {
 			a.syncMore = false
@@ -1298,7 +1353,7 @@ func TestSearchMessages(t *testing.T) {
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
 	t.Cleanup(a.closeStores)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	core.RenderImage(b, func() {
 		for {
 			a.syncMore = false
@@ -1381,9 +1436,9 @@ func TestAccounts(t *testing.T) {
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
 	t.Cleanup(a.testServer.Close)
 	t.Cleanup(a.closeStores)
-	you, alice := Settings.Accounts[0], Settings.Accounts[1]
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
 	gmail := "new@gmail.com" // signs in with OAuth
-	Settings.Accounts = append(Settings.Accounts, gmail)
+	Settings.addAccount(Account{Type: Gmail, Email: gmail})
 	core.RenderImage(b, func() {
 		assert.True(t, a.signedIn(you), "with a password")
 		assert.False(t, a.signedIn(gmail))
@@ -1397,8 +1452,8 @@ func TestAccounts(t *testing.T) {
 	}, core.Locked(b, func() {
 		a.showMailbox(alice, "INBOX")
 		a.RemoveAccount(alice)
-		assert.Equal(t, []string{you, Settings.Accounts[1], gmail}, Settings.Accounts)
-		assert.NotContains(t, Settings.Accounts, alice)
+		assert.Equal(t, []string{you, Settings.Accounts[1].Email, gmail}, Settings.Emails())
+		assert.NotContains(t, Settings.Emails(), alice)
 		assert.Equal(t, you, a.currentEmail, "the first account is shown")
 		assert.Nil(t, a.cache[alice])
 	}), func() {
@@ -1480,7 +1535,7 @@ func newTestingApp(t *testing.T) (*core.Body, *App) {
 // server is closed, as after the computer sleeps.
 func TestReconnect(t *testing.T) {
 	b, a := newTestingApp(t)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	core.RenderImage(b, func() {
 		a.syncMore = false
 		require.NoError(t, a.cacheMessages())
@@ -1495,7 +1550,7 @@ func TestReconnect(t *testing.T) {
 		// a failed sync drops the connection, for the next sync
 		c := a.imapClient[you]
 		a.selectedMailbox[you] = ""
-		assert.Error(t, a.syncMailbox(you, "No such mailbox"))
+		assert.Error(t, a.syncMailbox(you, "No such mailbox", false))
 		a.dropClient(you, c)
 		assert.Nil(t, a.imapClient[you])
 		a.syncMore = false
@@ -1508,7 +1563,7 @@ func TestReconnect(t *testing.T) {
 // when new mail comes.
 func TestIdle(t *testing.T) {
 	b, a := newTestingApp(t)
-	you := Settings.Accounts[0]
+	you := Settings.Accounts[0].Email
 	core.RenderImage(b, func() { // the lock of the window needs it shown
 		a.startIdle(you)
 		select {
@@ -1613,11 +1668,80 @@ func TestReadDownloading(t *testing.T) {
 		defer a.AsyncUnlock()
 		shown := false
 		a.readPanel.WalkDown(func(n tree.Node) bool {
-			if n.AsTree().Property("readMessage") == hello {
+			if sm, ok := n.AsTree().Property("readMessage").(shownMessage); ok && sm.message == hello {
 				shown = true
 			}
 			return !shown
 		})
 		assert.True(t, shown, "the message")
 	})
+}
+
+// TestMailKeys tests the key map of Cogent Mail ([SettingsData.Keys]):
+// Command+W replies to all, which does not close the window without a
+// message, Command+F forwards, and the keys can be changed.
+func TestMailKeys(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	old := Settings.Keys
+	t.Cleanup(func() { Settings.Keys = old })
+	Settings.Keys = DefaultKeys()
+	press := func(c key.Chord) func() {
+		return func() {
+			r, code, mods, err := c.PlatformChord().Decode()
+			require.NoError(t, err)
+			b.Scene.RenderWindow().SystemWindow.Events().KeyChord(r, code, mods)
+		}
+	}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.Update()
+		a.list.SetFocusQuiet()
+	}), press("Command+W"), core.Locked(b, func() {
+		assert.NotNil(t, b.Scene.RenderWindow(), "not closed")
+		assert.Nil(t, a.composeMessage, "no message")
+		a.list.SelectIndexEvent(0, events.SelectOne)
+	}), press("Command+W"), core.Locked(b, func() {
+		require.NotNil(t, a.composeMessage, "reply all")
+		assert.Equal(t, "Re: Hello", a.composeMessage.Subject)
+		sc, _, ok := shortcutFor(key.Chord("Command+F").PlatformChord())
+		assert.True(t, ok)
+		assert.Equal(t, KeyForward, sc.kf)
+		Settings.Keys = KeyMap{"Command+E": KeyReplyAll}
+		assert.Equal(t, key.Chord("Command+E"), shortcutOf("ReplyAll"))
+		assert.Empty(t, shortcutOf("Forward"))
+		sc, _, ok = shortcutFor(key.Chord("Command+E").PlatformChord())
+		assert.True(t, ok)
+		assert.Equal(t, KeyReplyAll, sc.kf)
+		_, _, ok = shortcutFor(key.Chord("Command+F").PlatformChord())
+		assert.False(t, ok, "not in the changed map")
+	}))
+}
+
+// TestDefaultKeys tests the defaults of the keyboard shortcuts: all of
+// them at first, those removed are not added again, those of new actions
+// are, for chords that are free, and text keys, as Command+X for Cut, are
+// not shortcuts while typing.
+func TestDefaultKeys(t *testing.T) {
+	sd := &SettingsData{}
+	sd.Defaults()
+	sd.addDefaultKeys()
+	assert.Equal(t, DefaultKeys(), sd.Keys)
+	delete(sd.Keys, "Command+X")
+	sd.addDefaultKeys()
+	assert.NotContains(t, sd.Keys, key.Chord("Command+X"), "removed")
+
+	sd.KeysKnown = slices.DeleteFunc(sd.KeysKnown, func(f KeyFunctions) bool { return f == KeyRefresh || f == KeyStar })
+	delete(sd.Keys, "Command+Shift+N")
+	sd.Keys["Command+Shift+L"] = KeyReply // its chord is used
+	sd.addDefaultKeys()
+	assert.Equal(t, KeyRefresh, sd.Keys["Command+Shift+N"], "a new action")
+	assert.Equal(t, KeyReply, sd.Keys["Command+Shift+L"], "not changed")
+
+	x := key.Chord("Command+X")
+	assert.True(t, isTextKey(x.PlatformChord(), x), "Cut")
+	r := key.Chord("Command+R")
+	assert.False(t, isTextKey(r.PlatformChord(), r))
+	o := key.Chord("Control+O")
+	assert.True(t, isTextKey(o.PlatformChord(), o), "without Command")
 }

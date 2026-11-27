@@ -69,17 +69,14 @@ func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Poi
 				core.NewButton(m).SetText("Sign in again").SetIcon(icons.Login).OnClick(func(e events.Event) {
 					a.SignInAgain(email)
 				})
-				if Settings.SyncContacts[email] {
-					core.NewButton(m).SetText("Stop syncing contacts").SetIcon(icons.SyncDisabled).OnClick(func(e events.Event) {
-						a.SetSyncContacts(email, false)
-					})
-				} else {
-					core.NewButton(m).SetText("Sync contacts").SetIcon(icons.Contacts).
-						SetTooltip("Sync the contacts with Google Contacts, which asks for the access to them").
-						OnClick(func(e events.Event) {
-							a.SetSyncContacts(email, true)
-						})
+				if accountType(email) == Gmail { // with Google Contacts
+					a.syncContactsButton(m, email)
 				}
+			}
+			if usesPassword(email) && a.testServer == nil {
+				core.NewButton(m).SetText("Change password").SetIcon(icons.Password).OnClick(func(e events.Event) {
+					a.changePassword(email)
+				})
 			}
 			a.addAccountButton(m)
 			core.NewButton(m).SetText("Remove account").SetIcon(icons.PersonRemove).OnClick(func(e events.Event) {
@@ -134,6 +131,9 @@ func (a *App) messageButtons(p *tree.Plan, toolbar bool) {
 	button(a.Tag, "Tag", icons.Label)
 	button(a.Star, "Star", icons.Star)
 	button(a.Delete, "Delete", icons.Delete)
+	if !toolbar {
+		button(a.RemoveAttachments, "RemoveAttachments", icons.ContentCut)
+	}
 	separator("sep-read")
 	if !toolbar {
 		button(a.MarkAsRead, "MarkAsRead", icons.MarkEmailRead)
@@ -343,11 +343,13 @@ func (a *App) MarkAllAsRead(email, label string) {
 func (a *App) File() { //types:add
 	from := a.showLabel
 	a.chooseMailbox("File", "Move to", a.filingAccounts(), mailboxID{a.currentEmail, from}, func(target mailboxID) {
-		if target.email == a.currentEmail {
-			a.fileTo(from, target.label)
-		} else {
-			a.fileToAccount(from, target)
-		}
+		a.byAccount(a.readMessages(), func(email string, msgs []*CacheMessage, then ...func()) {
+			if target.email == email {
+				a.fileTo(email, msgs, from, target.label, then...)
+			} else {
+				a.fileToAccount(email, msgs, from, target, then...)
+			}
+		}, a.selectNext())
 	})
 }
 
@@ -364,11 +366,11 @@ func (a *App) Tag() { //types:add
 // current account, and then the others.
 func (a *App) filingAccounts() []string {
 	first := a.currentEmail
-	if fa := string(Settings.FilingAccount); fa != "" && slices.Contains(Settings.Accounts, fa) {
+	if fa := string(Settings.FilingAccount); fa != "" && Settings.hasAccount(fa) {
 		first = fa
 	}
 	res := []string{first}
-	for _, acct := range Settings.Accounts {
+	for _, acct := range Settings.Emails() {
 		if acct != first {
 			res = append(res, acct)
 		}
@@ -376,10 +378,10 @@ func (a *App) filingAccounts() []string {
 	return res
 }
 
-// fileTo moves the messages being read from the given mailbox to the
-// target mailbox, keeping their other labels.
-func (a *App) fileTo(from, target string) {
-	a.setLabels(func(cm *CacheMessage) []string {
+// fileTo moves the given messages of the given account from the given
+// mailbox to the target mailbox, keeping their other labels.
+func (a *App) fileTo(email string, msgs []*CacheMessage, from, target string, then ...func()) {
+	a.setLabelsOn(email, msgs, func(cm *CacheMessage) []string {
 		var res []string
 		for _, l := range cm.Labels {
 			if l.Name != from && l.Name != target {
@@ -387,17 +389,16 @@ func (a *App) fileTo(from, target string) {
 			}
 		}
 		return append(res, target)
-	}, a.selectNext())
+	}, then...)
 }
 
-// fileToAccount moves the messages being read from the given mailbox to
-// the target mailbox of another account: it appends a copy of each of
-// them to it, with its flags and date, from the cached message, and once
-// they are all there, removes them from the given mailbox of the current
-// account, keeping their other labels (as Gmail keeps them in All Mail).
-func (a *App) fileToAccount(from string, target mailboxID) {
-	email := a.currentEmail
-	msgs := a.readMessages()
+// fileToAccount moves the given messages of the given account from the
+// given mailbox to the target mailbox of another account: it appends a
+// copy of each of them to it, with its flags and date, from the cached
+// message, and once they are all there, removes them from the given
+// mailbox of their account, keeping their other labels (as Gmail keeps
+// them in All Mail).
+func (a *App) fileToAccount(email string, msgs []*CacheMessage, from string, target mailboxID, then ...func()) {
 	if a.imapMu[target.email] == nil || a.imapClient[target.email] == nil {
 		core.ErrorSnackbar(a, fmt.Errorf("%s is not connected yet", target.email))
 		return
@@ -416,10 +417,11 @@ func (a *App) fileToAccount(from string, target mailboxID) {
 	for _, cm := range msgs {
 		targets[cm] = labelsFor(cm)
 	}
-	next := a.selectNext()
 	a.setPending(targets)
 	a.Update()
-	next()
+	for _, f := range then {
+		f()
+	}
 	go func() {
 		mu, c := a.imapMu[target.email], a.imapClient[target.email]
 		var err error
@@ -468,9 +470,11 @@ func (a *App) appendMessages(c *imapclient.Client, email string, msgs []*CacheMe
 	return nil
 }
 
-// tagWith adds the given label to the messages being read.
+// tagWith adds the given label to the messages being read of the current
+// account, whose labels are offered (see [App.Tag]).
 func (a *App) tagWith(target string) {
-	a.setLabels(func(cm *CacheMessage) []string {
+	msgs := slices.DeleteFunc(a.readMessages(), func(cm *CacheMessage) bool { return a.accountOf(cm) != a.currentEmail })
+	a.setLabelsOn(a.currentEmail, msgs, func(cm *CacheMessage) []string {
 		var res []string
 		for _, l := range cm.Labels {
 			if l.Name != target {
@@ -518,4 +522,20 @@ func (a *App) chooseMailbox(title, prompt string, accounts []string, except mail
 		d.AddCancel(bar)
 	})
 	d.RunDialog(a)
+}
+
+// syncContactsButton adds the button for syncing the contacts of the given
+// Gmail account with Google Contacts, or for stopping it.
+func (a *App) syncContactsButton(m *core.Scene, email string) {
+	if Settings.SyncContacts[email] {
+		core.NewButton(m).SetText("Stop syncing contacts").SetIcon(icons.SyncDisabled).OnClick(func(e events.Event) {
+			a.SetSyncContacts(email, false)
+		})
+		return
+	}
+	core.NewButton(m).SetText("Sync contacts").SetIcon(icons.Contacts).
+		SetTooltip("Sync the contacts with Google Contacts, which asks for the access to them").
+		OnClick(func(e events.Event) {
+			a.SetSyncContacts(email, true)
+		})
 }

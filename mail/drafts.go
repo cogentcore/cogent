@@ -237,8 +237,9 @@ func (a *App) writeDraft(d *draft) error {
 	return os.WriteFile(filepath.Join(dir, d.ID+".json"), data, 0o600)
 }
 
-// removeDraft removes the given draft, with its files, as after it is
-// sent or discarded. It must be called with the lock of the window.
+// removeDraft removes the given draft, with its files, as after it is sent
+// or discarded (see [App.deleteDraft]) or moved to another account.
+// It must be called with the lock of the window.
 func (a *App) removeDraft(d *draft) {
 	a.draftsMu.Lock()
 	delete(a.drafts, d.ID)
@@ -375,6 +376,9 @@ func (a *App) sendDraft(d *draft) error {
 	}
 	to := recipients(d.Account, d.sendMessage())
 	err = a.send(d.Account, to, strings.NewReader(string(msg)))
+	if err == nil {
+		go a.saveSent(d.Account, msg, d.MessageID)
+	}
 	if err != nil && !isOffline(err) {
 		a.draftsMu.Lock()
 		d.Error = err.Error()
@@ -432,7 +436,7 @@ func (a *App) sendOutbox(email string) error {
 		err := a.sendDraft(d)
 		a.AsyncLock()
 		if err == nil {
-			a.removeDraft(d)
+			a.deleteDraft(d)
 			sent = true
 		}
 		a.Update()
@@ -499,7 +503,7 @@ func (a *App) DiscardDraft() { //types:add
 			core.MessageSnackbar(a, "The message is being sent")
 			continue
 		}
-		a.removeDraft(d)
+		a.deleteDraft(d)
 	}
 	a.Update()
 }

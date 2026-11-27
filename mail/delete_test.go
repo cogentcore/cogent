@@ -77,9 +77,9 @@ func TestDeleteRightAway(t *testing.T) {
 		a.readMessage, a.readSingle = hello, true
 		report = hello
 		assert.Equal(t, keymap.Delete, keymap.Of("Control+D"))
-		sc, ok := shortcutFor("Control+D")
+		sc, _, ok := shortcutFor("Control+D")
 		assert.True(t, ok)
-		assert.Equal(t, "Delete", sc.name)
+		assert.Equal(t, KeyDelete, sc.kf)
 	}), func() {
 		r, code, mods, err := key.Chord("Control+D").Decode()
 		require.NoError(t, err)
