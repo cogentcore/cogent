@@ -98,7 +98,7 @@ func TestRemoveAttachments(t *testing.T) {
 			assert.Equal(t, 1, n, mb)
 		}
 		require.NoError(t, c.Unselect().Wait())
-		a.selectedMailbox[testEmail] = ""
+		a.setSelected(testEmail, "")
 
 		// syncing again: the same message
 		require.NoError(t, a.cacheMessages())

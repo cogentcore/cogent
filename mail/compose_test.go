@@ -11,6 +11,7 @@ import (
 
 	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/textcore"
 	gomail "github.com/emersion/go-message/mail"
@@ -193,4 +194,49 @@ func TestSignatureDash(t *testing.T) {
 	assert.Equal(t, "Randy  \n\\- x  \nHi", escapeLoneItems("Randy  \n- x  \nHi"))
 	assert.Equal(t, "  \\* x", escapeLoneItems("  * x"))
 	assert.Equal(t, "-- \nMe", escapeLoneItems("-- \nMe"), "the delimiter is not an item")
+}
+
+// TestComposeQuoteButtons tests the buttons for quoting the text of a
+// message being written, which are at the end of the line of the sender,
+// after its signature, and quote the line of the cursor.
+func TestComposeQuoteButtons(t *testing.T) {
+	b, a := newTestApp(t, nil)
+	Settings.Accounts = gmailAccounts(testEmail)
+	var cb *core.Body
+	core.RenderImage(b, core.Locked(b, func() {
+		a.composeMessage = &SendMessage{To: []*gomail.Address{{}}, body: "Hello"}
+		cb = a.compose("Compose")
+	}), core.Locked(b, func() {
+		core.Locked(cb, func() {
+			var sender core.Widget
+			var ed *textcore.Editor
+			for w := range cb.AllWidgets() {
+				if strings.HasPrefix(w.AsTree().Name, "value-Sender-") {
+					sender = w
+				}
+				if e, ok := w.(*textcore.Editor); ok {
+					ed = e
+				}
+			}
+			require.NotNil(t, sender, "the line of the sender")
+			require.NotNil(t, ed)
+			var names []string
+			for _, c := range sender.AsTree().Children {
+				names = append(names, c.AsTree().Name)
+			}
+			require.GreaterOrEqual(t, len(names), 2)
+			assert.Equal(t, []string{"increase-quote", "decrease-quote"}, names[len(names)-2:], "at the end, after the signature: %v", names)
+			assert.Contains(t, strings.Join(names, " "), "value-Signature", "on the same line")
+			sg := sender.AsWidget().Geom
+			assert.LessOrEqual(t, sg.Pos.Total.X+sg.Size.Actual.Total.X, cb.Scene.Geom.Size.Actual.Total.X, "fits in the window")
+			inc := sender.AsTree().ChildByName("increase-quote").(*core.Button)
+			dec := sender.AsTree().ChildByName("decrease-quote").(*core.Button)
+
+			inc.Send(events.Click)
+			assert.True(t, strings.HasPrefix(ed.Lines.String(), "> Hello"), ed.Lines.String())
+			dec.Send(events.Click)
+			assert.True(t, strings.HasPrefix(ed.Lines.String(), "Hello"), ed.Lines.String())
+			cb.Scene.Close()
+		})()
+	}))
 }

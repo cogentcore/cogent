@@ -20,8 +20,9 @@ import (
 // messages in a window of their own, as when it is double-clicked, so that
 // several can be seen at once: its message, or all of those of its
 // conversation, the newest first. The window scrolls with the keys, and is
-// updated with the app, as when the message is downloaded. Its toolbar
-// replies to and forwards its message, the newest of a conversation.
+// updated with the app, as when the message is downloaded. Its toolbar, at
+// the bottom, replies to and forwards its message, the newest of a
+// conversation.
 func (a *App) openMessageWindow(mr *messageRow) {
 	msgs := rowMessages(mr)
 	slices.SortFunc(msgs, func(x, y *CacheMessage) int {
@@ -43,7 +44,7 @@ func (a *App) openMessageWindow(mr *messageRow) {
 	if len(msgs) > 1 {
 		which = "the newest message of this conversation"
 	}
-	b.AddTopBar(func(bar *core.Frame) {
+	b.AddBottomBar(func(bar *core.Frame) { // below the message, as its title can be long
 		tb := core.NewToolbar(bar)
 		button := func(p *tree.Plan, text string, icon icons.Icon, name, tooltip string, f func()) {
 			tree.AddAt(p, name, func(w *core.Button) {
@@ -103,13 +104,14 @@ func (a *App) updateMessageWindows() {
 // window, which has it, or else in the background, as for a widget of a
 // window of messages (see [App.openMessageWindow]).
 func inApp(w core.Widget, f func()) {
-	if w.AsWidget().Scene == theApp.Scene {
+	a := theApp // that of now, as another one can be made after (in tests)
+	if w.AsWidget().Scene == a.Scene {
 		f()
 		return
 	}
 	go func() {
-		theApp.AsyncLock()
-		defer theApp.AsyncUnlock()
+		a.AsyncLock()
+		defer a.AsyncUnlock()
 		f()
 	}()
 }

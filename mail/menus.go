@@ -203,11 +203,11 @@ func (a *App) RenameMailbox(email, old, name string) {
 		return
 	}
 	a.mailboxAction(email, func(c *imapclient.Client) error {
-		if a.selectedMailbox[email] == old || strings.HasPrefix(a.selectedMailbox[email], old+"/") {
+		if sel := a.selected(email); sel == old || strings.HasPrefix(sel, old+"/") {
 			if err := c.Unselect().Wait(); err != nil {
 				return err
 			}
-			a.selectedMailbox[email] = ""
+			a.setSelected(email, "")
 		}
 		if err := c.Rename(old, name, nil).Wait(); err != nil {
 			return err
@@ -280,11 +280,11 @@ func (a *App) DeleteMailbox(email, label string) {
 	// the subfolders first
 	slices.SortFunc(names, func(x, y string) int { return strings.Count(y, "/") - strings.Count(x, "/") })
 	a.mailboxAction(email, func(c *imapclient.Client) error {
-		if slices.Contains(names, a.selectedMailbox[email]) {
+		if slices.Contains(names, a.selected(email)) {
 			if err := c.Unselect().Wait(); err != nil {
 				return err
 			}
-			a.selectedMailbox[email] = ""
+			a.setSelected(email, "")
 		}
 		for _, name := range names {
 			if err := c.Delete(name).Wait(); err != nil {

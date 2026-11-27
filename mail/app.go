@@ -152,8 +152,13 @@ type App struct {
 	// currentEmail is the current email account.
 	currentEmail string
 
-	// selectedMailbox is the currently selected mailbox for each email account in IMAP.
+	// selectedMailbox is the currently selected mailbox for each email
+	// account in IMAP, under selectedMu, as the syncs of the accounts,
+	// which can run at the same time (see [App.quickSyncLoop]), each with
+	// only the IMAP mutex of its account, set it (see [App.selected] and
+	// [App.setSelected]).
 	selectedMailbox map[string]string
+	selectedMu      sync.Mutex
 
 	// labels are all of the possible labels that messages can have in
 	// each email account.
@@ -527,18 +532,32 @@ func (a *App) SyncNow() {
 	}
 }
 
+// selected returns the mailbox selected in IMAP for the given account.
+func (a *App) selected(email string) string {
+	a.selectedMu.Lock()
+	defer a.selectedMu.Unlock()
+	return a.selectedMailbox[email]
+}
+
+// setSelected sets the mailbox selected in IMAP for the given account.
+func (a *App) setSelected(email, mailbox string) {
+	a.selectedMu.Lock()
+	defer a.selectedMu.Unlock()
+	a.selectedMailbox[email] = mailbox
+}
+
 // selectMailbox selects the given mailbox for the given email for the given client.
 // It does nothing if the given mailbox is already selected. It must be called
 // with the IMAP mutex of the account held, and not the lock of the window.
 func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) error {
-	if a.selectedMailbox[email] == mailbox {
+	if a.selected(email) == mailbox {
 		return nil // already selected
 	}
 	sd, err := c.Select(mailbox, nil).Wait()
 	if err != nil {
 		return fmt.Errorf("selecting mailbox: %w", err)
 	}
-	a.selectedMailbox[email] = mailbox
+	a.setSelected(email, mailbox)
 	// with the lock of the window, which shows the number of messages
 	a.AsyncLock()
 	a.totalMessages[email][mailbox] = int(sd.NumMessages)

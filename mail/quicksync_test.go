@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"errors"
 	"testing"
 
 	"cogentcore.org/core/core"
@@ -91,10 +92,26 @@ func TestQuickSyncConcurrent(t *testing.T) {
 				assert.NoError(t, a.quickSync(email, "INBOX"))
 			}
 		}()
+		// the inboxes of all of the accounts, while the regular syncs sync
+		// the other ones, each with only the IMAP mutex of its account (as
+		// the selected mailboxes of all of them were in one map without a
+		// mutex of its own: a fatal concurrent map write)
+		others := make(chan struct{})
+		go func() {
+			defer close(others)
+			for range 10 {
+				for _, e := range Settings.Emails() {
+					if err := a.quickSync(e, "INBOX"); err != nil && !errors.Is(err, errNotConnected) {
+						assert.NoError(t, err)
+					}
+				}
+			}
+		}()
 		for range 3 {
 			require.NoError(t, a.cacheMessages())
 		}
 		<-done
+		<-others
 		require.NoError(t, a.cacheMessages())
 	})
 }

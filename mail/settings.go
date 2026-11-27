@@ -130,10 +130,11 @@ func (sd *SettingsData) Apply() {
 	}
 	if theApp != nil && sd == Settings { // an account added here is signed in to
 		accounts := emails
+		a := theApp // that of now, as another one can be made after (in tests)
 		go func() {
-			theApp.AsyncLock()
-			defer theApp.AsyncUnlock()
-			theApp.accountsAdded(accounts)
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			a.accountsAdded(accounts)
 		}()
 	}
 }

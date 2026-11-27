@@ -82,10 +82,10 @@ func TestReplyMailto(t *testing.T) {
 			assert.True(t, all.IsDisabled(), "used")
 			cb.Scene.Close()
 		})()
+	}), core.Locked(b, func() { // as from the window
+		// a bad link is an error, not a window
+		assert.Nil(t, a.replyMailto("mailto:not an address", messageBySubject(a, "Hello")))
 	}))
-
-	// a bad link is an error, not a window
-	assert.Nil(t, a.replyMailto("mailto:not an address", messageBySubject(a, "Hello")))
 }
 
 // TestAddReplyAll tests the recipients added by a reply to all.

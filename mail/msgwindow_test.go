@@ -11,12 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/datasize"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
+	gomail "github.com/emersion/go-message/mail"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -219,4 +221,55 @@ func TestMessageWindowReply(t *testing.T) {
 		assert.Equal(t, "Fwd: Report", sm.Subject)
 		assert.Equal(t, report, sm.original)
 	})
+}
+
+// TestDoubleClickDraft tests that double-clicking a draft opens it for
+// writing it more, not in a window for reading it.
+func TestDoubleClickDraft(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
+		require.NoError(t, a.saveDraft(&SendMessage{Sender: MessageSender{From: SenderAccount(you)},
+			To: []*gomail.Address{{Address: "zed@example.com"}}, Subject: "Unfinished", body: "Almost done"}))
+		a.showMailbox(you, a.draftsLabel(you))
+		var row int = -1
+		for i := 0; a.rowAt(i) != nil; i++ {
+			if a.rowAt(i).message.Subject == "Unfinished" {
+				row = i
+			}
+		}
+		require.GreaterOrEqual(t, row, 0, "in the drafts")
+		a.list.SelectIndexEvent(row, events.SelectOne)
+		a.composeMessage = nil
+		a.list.Send(events.DoubleClick)
+		require.NotNil(t, a.composeMessage, "written more")
+		assert.Equal(t, "Unfinished", a.composeMessage.Subject)
+		assert.Contains(t, a.composeMessage.body, "Almost done")
+		assert.Empty(t, a.messageWindows, "not a window for reading it")
+	}))
+}
+
+// TestHeaderSize tests that the header of a message shows its size, on
+// the line of its date.
+func TestHeaderSize(t *testing.T) {
+	b, a := newTestApp(t, nil)
+	longMessages(t, a, "one")
+	core.RenderImage(b, core.Locked(b, func() {
+		a.showMailbox(testEmail, "INBOX")
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		require.NotNil(t, a.readMessage)
+	}), core.Locked(b, func() {
+		var date string
+		a.readPanel.WalkDown(func(n tree.Node) bool {
+			if n.AsTree().Name == "Date" {
+				date = n.(*core.Text).Text
+			}
+			return true
+		})
+		size := messageSize(a.readMessage)
+		require.Greater(t, size, datasize.Size(1000))
+		assert.Contains(t, date, "<b>Size</b>")
+		assert.Contains(t, date, size.String(), "in user-friendly units")
+		assert.Contains(t, size.String(), "KB")
+	}))
 }

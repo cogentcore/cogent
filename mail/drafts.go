@@ -465,6 +465,19 @@ func joinErrors(errs []error) error {
 	return fmt.Errorf("%w (and %d more)", errs[0], len(errs)-1)
 }
 
+// isDraft returns whether the given message is a draft, being written,
+// not one in the outbox, waiting to be sent, which double-clicking edits
+// (see [App.EditDraft]) instead of showing in a window of its own.
+func (a *App) isDraft(cm *CacheMessage) bool {
+	d := a.draftOf(cm)
+	if d == nil {
+		return false
+	}
+	a.draftsMu.Lock()
+	defer a.draftsMu.Unlock()
+	return !d.Queued && !d.sending
+}
+
 // EditDraft opens the draft being read for writing it more. A message in
 // the outbox goes back to the drafts until it is sent again.
 func (a *App) EditDraft() { //types:add

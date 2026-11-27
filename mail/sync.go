@@ -302,12 +302,12 @@ func (a *App) syncMailbox(email, mailbox string, quiet bool) error {
 	mu.Lock()
 	defer mu.Unlock()
 	// always selected again, for its current state
-	a.selectedMailbox[email] = ""
+	a.setSelected(email, "")
 	sd, err := c.Select(mailbox, &imap.SelectOptions{CondStore: condStore}).Wait()
 	if err != nil {
 		return fmt.Errorf("selecting: %w", err)
 	}
-	a.selectedMailbox[email] = mailbox
+	a.setSelected(email, mailbox)
 	if !gmail {
 		a.AsyncLock()
 		a.totalMessages[email][mailbox] = int(sd.NumMessages)

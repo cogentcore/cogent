@@ -72,7 +72,7 @@ func (a *App) dropClient(email string, c *imapclient.Client) {
 	defer a.AsyncUnlock()
 	if a.imapClient[email] == c {
 		delete(a.imapClient, email)
-		a.selectedMailbox[email] = ""
+		a.setSelected(email, "")
 	}
 }
 

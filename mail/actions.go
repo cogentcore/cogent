@@ -75,7 +75,9 @@ func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.
 	}
 	go func() {
 		mu.Lock()
+		a.AsyncLock() // the clients are changed with the lock of the window
 		c := a.imapClient[email]
+		a.AsyncUnlock()
 		if c == nil { // dropped while waiting
 			mu.Unlock()
 			a.AsyncLock()
@@ -84,17 +86,17 @@ func (a *App) actionOn(email string, msgs []*CacheMessage, f func(c *imapclient.
 			a.AsyncUnlock()
 			return
 		}
+		var err error
 		for _, cm := range msgs {
-			err := f(c, cm)
-			if err != nil {
-				core.ErrorSnackbar(a, err, "Error performing action")
+			if err = f(c, cm); err != nil {
 				break
 			}
 		}
-		err := a.saveMessages(email, msgs...)
-		core.ErrorSnackbar(a, err, "Error saving messages")
+		serr := a.saveMessages(email, msgs...)
 		mu.Unlock()
-		a.AsyncLock()
+		a.AsyncLock() // also for the snackbars
+		core.ErrorSnackbar(a, err, "Error performing action")
+		core.ErrorSnackbar(a, serr, "Error saving messages")
 		a.updateMail()
 		for _, f := range then {
 			f()

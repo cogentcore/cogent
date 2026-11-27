@@ -13,6 +13,7 @@ import (
 
 	"cogentcore.org/cogent/mail"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 )
@@ -27,6 +28,7 @@ func main() {
 	flag.Parse()
 
 	core.AppIcon = appIcon
+	content.SetAppHelp(mail.Docs) // the Help of the app menu
 	b := core.NewBody("Cogent Mail")
 	a := mail.NewApp(b)
 	if *testing {

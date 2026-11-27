@@ -1526,6 +1526,11 @@ func newTestingApp(t *testing.T) (*core.Body, *App) {
 	b := core.NewBody()
 	a := NewApp(b)
 	require.NoError(t, a.StartTesting(TestingOptions{Seed: 1}))
+	// the settings of testing mode are kept between runs, in the data of
+	// the app (shared by the tests, and the testing mode of the user): a
+	// file of this test's own, and not the mailbox shown by another one
+	Settings.File = filepath.Join(t.TempDir(), "settings.toml")
+	Settings.ShownAccount, Settings.ShownMailbox = "", ""
 	t.Cleanup(a.testServer.Close)
 	t.Cleanup(a.closeStores)
 	return b, a
@@ -1549,7 +1554,7 @@ func TestReconnect(t *testing.T) {
 
 		// a failed sync drops the connection, for the next sync
 		c := a.imapClient[you]
-		a.selectedMailbox[you] = ""
+		a.setSelected(you, "")
 		assert.Error(t, a.syncMailbox(you, "No such mailbox", false))
 		a.dropClient(you, c)
 		assert.Nil(t, a.imapClient[you])

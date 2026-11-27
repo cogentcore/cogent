@@ -99,7 +99,8 @@ func (sm *SendMessage) snapshot(seq int) *SendMessage {
 }
 
 // MessageSender is the sender of a message being written: the account that
-// it is from, and its signature, shown side by side.
+// it is from, and its signature, shown side by side, with the buttons for
+// quoting the text after them (see [MessageSender.Widget]).
 type MessageSender struct {
 
 	// From is the account that the message is sent from.
@@ -109,6 +110,40 @@ type MessageSender struct {
 	// account by default, and which is changed in the message when it is
 	// changed (see [switchSignature]).
 	Signature SignatureName
+
+	// quote changes the quote level of the lines of the selection (or the
+	// cursor) in the editor of the message by the given delta (see
+	// [ChangeQuoteLevel]), if it is being written.
+	quote func(delta int)
+}
+
+// Widget returns the line of the sender: its fields, side by side, and the
+// buttons for quoting the text of the message at the end of it.
+func (ms *MessageSender) Widget() core.Value {
+	fm := core.NewForm()
+	fm.Inline = true
+	fm.Styler(func(s *styles.Style) {
+		s.Wrap = true // the buttons go below on a narrow window
+	})
+	fm.Maker(func(p *tree.Plan) {
+		if ms.quote == nil {
+			return
+		}
+		tree.AddAt(p, "increase-quote", func(w *core.Button) {
+			// icons, to fit on the line: their tooltips say what they do
+			w.SetType(core.ButtonAction).SetIcon(icons.FormatIndentIncrease).SetShortcut("Command+'")
+			w.SetTooltip("Increase quote: quote the selected lines, or the line of the cursor, one more level, with >")
+			w.FirstStyler(func(s *styles.Style) { s.SetAbilities(true, abilities.SkipTab) })
+			w.OnClick(func(e events.Event) { ms.quote(1) })
+		})
+		tree.AddAt(p, "decrease-quote", func(w *core.Button) {
+			w.SetType(core.ButtonAction).SetIcon(icons.FormatIndentDecrease).SetShortcut("Command+Alt+'")
+			w.SetTooltip("Decrease quote: quote the selected lines, or the line of the cursor, one less level")
+			w.FirstStyler(func(s *styles.Style) { s.SetAbilities(true, abilities.SkipTab) })
+			w.OnClick(func(e events.Event) { ms.quote(-1) })
+		})
+	})
+	return fm
 }
 
 // SenderAccount is the account that a message is sent from, chosen from
@@ -203,6 +238,7 @@ func (a *App) compose(title string) *core.Body {
 	form := core.NewForm(b).SetStruct(sm)
 	ed := textcore.NewEditor(b)
 	core.Bind(&sm.body, ed)
+	sm.Sender.quote = func(delta int) { ChangeQuoteLevel(ed, delta) } // its buttons
 	ed.Lines.SetLanguage(fileinfo.Markdown)
 	ed.Lines.Settings.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
@@ -338,25 +374,6 @@ func (a *App) compose(title string) *core.Body {
 		change(e)
 	}, b, ed)
 
-	b.AddTopBar(func(bar *core.Frame) {
-		tb := core.NewToolbar(bar)
-		tb.Maker(func(p *tree.Plan) { // a toolbar keeps the children of its plan
-			tree.Add(p, func(w *core.Button) {
-				w.SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).SetShortcut("Command+'")
-				w.SetTooltip("Quote the selected lines, or the line of the cursor, one more level, with >")
-				w.OnClick(func(e events.Event) {
-					ChangeQuoteLevel(ed, 1)
-				})
-			})
-			tree.Add(p, func(w *core.Button) {
-				w.SetText("Decrease quote").SetIcon(icons.FormatIndentDecrease).SetShortcut("Command+Alt+'")
-				w.SetTooltip("Quote the selected lines, or the line of the cursor, one less level")
-				w.OnClick(func(e events.Event) {
-					ChangeQuoteLevel(ed, -1)
-				})
-			})
-		})
-	})
 	b.AddBottomBar(func(bar *core.Frame) {
 		// including the attachments of the message replied to or forwarded
 		inc := core.NewSwitch(bar).SetText("Attachments")

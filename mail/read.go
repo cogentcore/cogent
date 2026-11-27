@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cogentcore.org/core/base/datasize"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -142,6 +143,20 @@ func messageContext(cm *CacheMessage) *htmlcore.Context {
 		})
 }
 
+// messageSize returns the size of the given message, as downloaded, with
+// its attachments (or the notes of those removed), or 0 if it is not
+// downloaded.
+func messageSize(cm *CacheMessage) datasize.Size {
+	if cm.Filename == "" {
+		return 0
+	}
+	fi, err := os.Stat(filepath.Join(theApp.messagesDir(theApp.accountOf(cm)), cm.Filename))
+	if err != nil {
+		return 0
+	}
+	return datasize.Size(fi.Size())
+}
+
 // headerDateFormat is the format of the date in the header of a message.
 const headerDateFormat = "Mon, Jan 2, 2006 at 3:04 PM"
 
@@ -208,8 +223,8 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 					})
 					// a mailto: link of an address replies to the message
 					w.HandleTextClick(func(tl *rich.Hyperlink, e events.Event) {
-						if isMailto(tl.URL) {
-							theApp.replyMailto(tl.URL, dmf.Message)
+						if isMailto(tl.URL) { // also from a window of messages
+							inApp(w, func() { theApp.replyMailto(tl.URL, dmf.Message) })
 							return
 						}
 						core.TheApp.OpenURL(tl.URL)
@@ -228,7 +243,14 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 		addresses("To", func(cm *CacheMessage) []imap.Address { return cm.To })
 		addresses("Cc", func(cm *CacheMessage) []imap.Address { return cm.Cc })
 		text("Subject", func(cm *CacheMessage) string { return cm.Subject })
-		text("Date", func(cm *CacheMessage) string { return cm.Date.Local().Format(headerDateFormat) })
+		// the date, with the size of the message, once it is downloaded
+		htmlText("Date", func(cm *CacheMessage) string {
+			date := html.EscapeString(cm.Date.Local().Format(headerDateFormat))
+			if size := messageSize(cm); size > 0 {
+				date += "\u2003<b>Size</b>\u2002" + html.EscapeString(size.String())
+			}
+			return date
+		})
 		if cm.isLocal() {
 			text("Status", func(cm *CacheMessage) string { return theApp.draftStatus(cm) })
 			addresses("Bcc", func(cm *CacheMessage) []imap.Address { return cm.Bcc })

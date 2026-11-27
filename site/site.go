@@ -16,6 +16,7 @@ import (
 	codedocs "cogentcore.org/cogent/code/docs"
 	filesdocs "cogentcore.org/cogent/files/docs"
 	listsdocs "cogentcore.org/cogent/lists/docs"
+	maildocs "cogentcore.org/cogent/mail/docs"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/colors"
@@ -65,6 +66,7 @@ var Apps = []*App{
 	{Name: "Canvas", Path: "canvas", About: "A vector graphics editor"},
 	{Name: "Lists", Path: "lists", About: "All of your lists", Docs: listsdocs.FS},
 	{Name: "Files", Path: "files", About: "A file explorer", Docs: filesdocs.FS},
+	{Name: "Mail", Path: "mail", About: "Email for all of your accounts", Docs: maildocs.FS},
 	{Name: "Chess", Path: "chess", About: "Play chess"},
 	{Name: "Marbles", Path: "marbles", About: "Marbles bouncing on graphs of equations"},
 }

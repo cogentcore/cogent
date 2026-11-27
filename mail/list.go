@@ -514,9 +514,16 @@ func (a *App) initList(w *core.TreeTable) {
 		}
 	})
 	w.OnDoubleClick(func(e events.Event) {
-		if mr := a.rowAt(w.SelectedIndex); mr != nil {
-			a.openMessageWindow(mr)
+		mr := a.rowAt(w.SelectedIndex)
+		if mr == nil {
+			return
 		}
+		if !mr.conversation && a.isDraft(mr.message) { // written more, not just read
+			a.readMessage, a.readSingle = mr.message, true
+			a.EditDraft()
+			return
+		}
+		a.openMessageWindow(mr)
 	})
 	a.list = w
 }
