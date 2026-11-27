@@ -26,6 +26,7 @@ import (
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/tree"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-smtp"
 	"github.com/yuin/goldmark"
@@ -339,15 +340,21 @@ func (a *App) compose(title string) *core.Body {
 
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
-		core.NewButton(tb).SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).
-			SetShortcut("Command+'").
-			SetTooltip("Quote the selected lines, or the line of the cursor, one more level, with >").OnClick(func(e events.Event) {
-			ChangeQuoteLevel(ed, 1)
-		})
-		core.NewButton(tb).SetText("Decrease quote").SetIcon(icons.FormatIndentDecrease).
-			SetShortcut("Command+Alt+'").
-			SetTooltip("Quote the selected lines, or the line of the cursor, one less level").OnClick(func(e events.Event) {
-			ChangeQuoteLevel(ed, -1)
+		tb.Maker(func(p *tree.Plan) { // a toolbar keeps the children of its plan
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).SetShortcut("Command+'")
+				w.SetTooltip("Quote the selected lines, or the line of the cursor, one more level, with >")
+				w.OnClick(func(e events.Event) {
+					ChangeQuoteLevel(ed, 1)
+				})
+			})
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Decrease quote").SetIcon(icons.FormatIndentDecrease).SetShortcut("Command+Alt+'")
+				w.SetTooltip("Quote the selected lines, or the line of the cursor, one less level")
+				w.OnClick(func(e events.Event) {
+					ChangeQuoteLevel(ed, -1)
+				})
+			})
 		})
 	})
 	b.AddBottomBar(func(bar *core.Frame) {

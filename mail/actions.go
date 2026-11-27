@@ -311,38 +311,60 @@ func (a *App) Delete() { //types:add
 
 // Reply opens a dialog to reply to the current message.
 func (a *App) Reply() { //types:add
-	a.composeMessage = &SendMessage{}
-	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
-	// If we sent the original message, reply to the original receiver instead of ourself.
-	if a.isMe(a.composeMessage.To[0].Address) {
-		a.composeMessage.To = IMAPToMailAddresses(a.readMessage.To)
-	}
-	a.reply("Reply", false)
+	a.replyMessage(a.readMessage, false)
 }
 
 // ReplyAll opens a dialog to reply to all people involved in the current message.
 func (a *App) ReplyAll() { //types:add
-	a.composeMessage = &SendMessage{}
-	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
-	a.composeMessage.Cc = slices.DeleteFunc(IMAPToMailAddresses(a.readMessage.Cc), func(ma *mail.Address) bool {
-		return a.isMe(ma.Address)
-	})
-	a.reply("Reply all", false)
+	a.replyMessage(a.readMessage, true)
 }
 
 // Forward opens a dialog to forward the current message to others.
 func (a *App) Forward() { //types:add
-	a.composeMessage = &SendMessage{}
-	a.composeMessage.To = []*mail.Address{{}}
-	a.reply("Forward", true)
+	a.forwardMessage(a.readMessage)
 }
 
-// reply is the implementation of the email reply dialog,
-// used by other higher-level functions. forward is whether
-// this is actually a forward instead of a reply.
-func (a *App) reply(title string, forward bool) {
-	a.replyTo(a.readMessage, title, forward)
+// replyMessage opens a dialog to reply to the given message, from its
+// account, as from a window of messages (see [App.openMessageWindow]):
+// to its sender, or to all of the people involved in it if all.
+func (a *App) replyMessage(cm *CacheMessage, all bool) {
+	defer a.inAccountOf(cm)()
+	a.composeMessage = &SendMessage{}
+	title := "Reply"
+	if all {
+		title = "Reply all"
+		a.composeMessage.To = append(IMAPToMailAddresses(cm.From), IMAPToMailAddresses(cm.To)...)
+		a.composeMessage.Cc = slices.DeleteFunc(IMAPToMailAddresses(cm.Cc), func(ma *mail.Address) bool {
+			return a.isMe(ma.Address)
+		})
+	} else {
+		a.composeMessage.To = IMAPToMailAddresses(cm.From)
+		// If we sent the original message, reply to the original receiver instead of ourself.
+		if len(a.composeMessage.To) == 0 || a.isMe(a.composeMessage.To[0].Address) {
+			a.composeMessage.To = IMAPToMailAddresses(cm.To)
+		}
+	}
+	a.replyTo(cm, title, false)
 	a.compose(title)
+}
+
+// forwardMessage opens a dialog to forward the given message to others,
+// from its account, as from a window of messages.
+func (a *App) forwardMessage(cm *CacheMessage) {
+	defer a.inAccountOf(cm)()
+	a.composeMessage = &SendMessage{}
+	a.composeMessage.To = []*mail.Address{{}}
+	a.replyTo(cm, "Forward", true)
+	a.compose("Forward")
+}
+
+// inAccountOf makes the account of the given message the current one, as
+// for replying to it from it, returning the function that makes the
+// current one current again.
+func (a *App) inAccountOf(cm *CacheMessage) func() {
+	old := a.currentEmail
+	a.currentEmail = a.accountOf(cm)
+	return func() { a.currentEmail = old }
 }
 
 // replyTo sets [App.composeMessage], whose recipients are set, to a reply

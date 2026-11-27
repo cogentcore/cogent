@@ -153,3 +153,70 @@ func TestShowMailboxReads(t *testing.T) {
 		assert.Empty(t, a.list.SelectedIndexes)
 	}))
 }
+
+// TestMessageWindowReply tests the Reply, Reply all, and Forward buttons of
+// a window of a message, which apply to its message, not to the message
+// being read in the main window.
+func TestMessageWindowReply(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	var report *CacheMessage
+	var w *core.Body
+	buttons := map[string]*core.Button{}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		report = messageBySubject(a, "Report")
+		a.showMailbox(testEmail, "Work")
+		for i := 0; a.rowAt(i) != nil; i++ {
+			if a.rowAt(i).message == report {
+				a.openMessageWindow(a.rowAt(i))
+			} else {
+				a.list.SelectIndexEvent(i, events.SelectOne) // another one read
+			}
+		}
+		require.Len(t, a.messageWindows, 1)
+		require.NotEqual(t, report, a.readMessage)
+		w = a.messageWindows[0]
+	}), func() {
+		require.Eventually(t, func() bool {
+			if !w.AsyncLockIfShown() {
+				return false
+			}
+			defer w.AsyncUnlock()
+			for n := range w.Scene.AllWidgets() {
+				if bt, ok := n.(*core.Button); ok {
+					buttons[bt.Text] = bt
+				}
+			}
+			return buttons["Forward"] != nil
+		}, 5*time.Second, 10*time.Millisecond, "the buttons")
+		click := func(text string) *SendMessage {
+			a.AsyncLock()
+			a.composeMessage = nil
+			a.AsyncUnlock()
+			w.AsyncLock()
+			buttons[text].Send(events.Click)
+			w.AsyncUnlock()
+			var sm *SendMessage
+			require.Eventually(t, func() bool {
+				a.AsyncLock()
+				defer a.AsyncUnlock()
+				sm = a.composeMessage
+				return sm != nil
+			}, 5*time.Second, 10*time.Millisecond, text)
+			return sm
+		}
+		sm := click("Reply")
+		assert.Equal(t, "Re: Report", sm.Subject)
+		require.NotEmpty(t, sm.To)
+		assert.Equal(t, "carol@example.com", sm.To[0].Address)
+		assert.Equal(t, report, sm.original, "the message of the window")
+		assert.Equal(t, testEmail, string(sm.Sender.From))
+		assert.Contains(t, sm.body, "Carol")
+		sm = click("Reply all")
+		assert.Equal(t, "Re: Report", sm.Subject)
+		sm = click("Forward")
+		assert.Equal(t, "Fwd: Report", sm.Subject)
+		assert.Equal(t, report, sm.original)
+	})
+}
