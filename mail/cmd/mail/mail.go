@@ -6,22 +6,39 @@
 package main
 
 import (
+	"flag"
+	"log"
+
+	_ "embed"
+
 	"cogentcore.org/cogent/mail"
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/content"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	_ "embed"
 )
 
-// appIcon is the icon of the app, which core build also sets, but go
-// install does not, as for an app installed with AppGoSymlink.
-//
 //go:embed icon.svg
 var appIcon string
 
 func main() {
+	testing := flag.Bool("testing", false, "use a local simulated mail server with sample mail for several accounts, instead of the real accounts")
+	keep := flag.Bool("keep", false, "with -testing, keep the mail of the test server between runs")
+	plain := flag.Bool("plain", false, "with -testing, use a plain IMAP server instead of one like Gmail")
+	flag.Parse()
+
 	core.AppIcon = appIcon
+	content.SetAppHelp(mail.Docs) // the Help of the app menu
 	b := core.NewBody("Cogent Mail")
 	a := mail.NewApp(b)
+	if *testing {
+		// never fall back to the real accounts
+		err := errors.Log(a.StartTesting(mail.TestingOptions{Keep: *keep, Plain: *plain}))
+		if err != nil {
+			log.Fatalln("starting testing mode:", err)
+		}
+	}
+	errors.Log(a.StartDebugLog())
 	b.AddTopBar(func(bar *core.Frame) {
 		core.NewToolbar(bar).Maker(a.MakeToolbar)
 	})

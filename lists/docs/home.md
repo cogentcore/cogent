@@ -25,6 +25,14 @@ Cogent Lists runs on macOS, Windows, Linux, iOS, Android, and the web. On phones
 * Click a column header to sort the items by it, and drag the handle after a header to set the width of the column (double click it to make it automatic again).
 * The **Filter** switch hides the items with the filter values of the fields, such as those that are done.
 
+## Search
+
+The **Search** field above the items shows only the items that match what you type, in any of their text fields, with the categories they are in, including the items that the **Filter** hides. This is the way to add something to a list, such as a shopping list, without making a duplicate: search for it, and if it is there, uncheck it (as for Got or Done), so that it is shown again when the search ends; if it is not, add it with the **+** button after the field, which adds an item with the text of the search, after the selected item, or at the end, and ends the search.
+
+* `Enter` in the search field goes to the first item found, or adds an item with the text if none is found.
+* The **x** button clears the search, which shows the items as before.
+* The search ends when another list is shown.
+
 ## List types
 
 **List settings** sets the type of the current list, and whether the items with items in them, such as categories, show only their first field. **Edit type** edits the fields of the type of the current list, and **List types** edits the library of types: drag the fields or types by their index to reorder them. A new list has the type of the current list, or the first type when no list is current. The standard types are Todo, Shopping, Project, Reading, and Simple.
@@ -39,13 +47,15 @@ Each field has:
 * **Filter**: a value, such as `true` for a check field like Done, for which the items are hidden when the list is filtered. Items with a filter value are also *done*, for reminders.
 * **Flags**: **Detail** for a field that is only in the form of an item, which its edit button opens, as for notes; **Remind** for a date field whose dates have reminders, as for Due.
 
-A list type also has a **Reminder** time (see below).
+A list type also has its own **Reminders** times (see below).
 
 ## Reminders
 
 The items that are not done remind you of the dates of their fields with the **Remind** flag, such as Due in the Todo and Project types, with the notifications of your device. A notification shows the item and its list, and clicking it opens the list. The operating system shows them even when the app is not running, except on Linux and the web, where they are only shown while the app is running.
 
-* A date without a time reminds you at the **Reminder** time of the list type, such as `9:00` or `5:30pm`, or, if it is empty, at the time in the **Reminders** settings (9:00 by default). A date and time reminds you at that time.
+* The reminder times are in the **Reminders** settings: each is a number of **Days prior** to the date (0 for on the day), at a **Time** of day, which the clock button of the time edits with a time picker. By default, you are reminded 1 day before at 9:00pm, and on the day at 9:00am. A list type can have its own **Reminders** times, which are used instead of those of the settings for its lists.
+* A date and time also reminds you at that time, and the times on its day after it are left out.
+* An item that is **overdue**, after its date (or its date and time) and not done, reminds you at all of the times of day of the reminders, every day, until it is done. These are scheduled for 2 days ahead, and again whenever the app runs; the system keeps the soonest 64 reminders of the app.
 * Turn reminders off or on in the **Reminders** settings (in the app's Settings). Turning them on asks for permission to show notifications, if it is not given yet; you can also allow them in the settings of your system.
 * On macOS, the app must be in `/Applications` or `~/Applications` for its notifications to be allowed.
 

@@ -5,60 +5,427 @@
 package mail
 
 import (
-	"encoding/base32"
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"cogentcore.org/cogent/mail/xoauth2"
 	"cogentcore.org/core/base/auth"
-	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/auth/cicons"
+	cerrors "cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"github.com/coreos/go-oidc/v3/oidc"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"github.com/emersion/go-sasl"
+	"github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
 )
 
-// auth authorizes access to the user's mail and sets [App.AuthClient].
-// If the user does not already have a saved auth token, it calls [SignIn].
-func (a *App) auth() error {
-	email, err := a.signIn()
-	if err != nil {
-		return err
-	}
+// gmailScopes are the OAuth scopes of the access to Gmail: all of the
+// mail, with IMAP and SMTP.
+var gmailScopes = []string{"https://mail.google.com/"}
 
-	a.authClient[email] = xoauth2.NewXoauth2Client(email, a.authToken[email].AccessToken)
-	return nil
+// tokenFile returns the file of the saved OAuth token of the given account.
+func (a *App) tokenFile(email string) string {
+	if email == "" {
+		return ""
+	}
+	return filepath.Join(a.dataDir(), "auth", accountName(email), "google-token.json")
 }
 
-// signIn displays a dialog for the user to sign in with the platform of their choice.
-// It returns the user's email address.
-func (a *App) signIn() (string, error) {
-	d := core.NewBody("Sign in")
-	email := make(chan string)
-	fun := func(token *oauth2.Token, userInfo *oidc.UserInfo) {
-		if !slices.Contains(Settings.Accounts, userInfo.Email) {
-			Settings.Accounts = append(Settings.Accounts, userInfo.Email)
-			errors.Log(core.SaveSettings(Settings))
-		}
-		a.currentEmail = userInfo.Email
-		a.authToken[userInfo.Email] = token
-		d.Close()
-		email <- userInfo.Email
+// authConfig returns the configuration of signing in to the given
+// account, of its type, or to a new one for "".
+func (a *App) authConfig(ctx context.Context, email string) *auth.AuthConfig {
+	return a.authConfigFor(ctx, email, accountType(email))
+}
+
+// authConfigFor returns the configuration of signing in to the given
+// account of the given type, or to a new one for "".
+func (a *App) authConfigFor(ctx context.Context, email string, t AccountTypes) *auth.AuthConfig {
+	scopes := authScopes(email)
+	if t == Microsoft {
+		scopes = microsoftScopes
 	}
-	auth.Buttons(d, &auth.ButtonsConfig{
-		SuccessFunc: fun,
-		TokenFile: func(provider, email string) string {
-			return filepath.Join(core.TheApp.AppDataDir(), "auth", filenameBase32(email), provider+"-token.json")
-		},
-		Accounts: Settings.Accounts,
-		Scopes: map[string][]string{
-			"google": {"https://mail.google.com/"},
-		},
+	ac := &auth.AuthConfig{
+		Ctx:       ctx,
+		TokenFile: a.tokenFile,
+		Scopes:    scopes,
+	}
+	if email == "" {
+		ac.SelectAccount = true
+	} else {
+		ac.Accounts = []string{email}
+		ac.LoginHint = email
+	}
+	return ac
+}
+
+// usesOAuth returns whether the given account signs in with OAuth,
+// as Gmail does, instead of a password.
+func (a *App) usesOAuth(email string) bool {
+	return !usesPassword(email) && a.server(email).Password == ""
+}
+
+// signedIn returns whether the given account can connect to its server:
+// it is connected, or it has a password, or a token from signing in.
+func (a *App) signedIn(email string) bool {
+	if !a.usesOAuth(email) {
+		return true
+	}
+	if a.imapClient[email] != nil {
+		return true
+	}
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+	return a.tokens[email] != nil
+}
+
+// setTokens sets the source of the OAuth tokens of the given account.
+func (a *App) setTokens(email string, ts oauth2.TokenSource) {
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+	a.tokens[email] = ts
+}
+
+// saslClient returns the SASL client for signing in to the servers of the
+// given account with OAuth, with an access token that is valid now, as
+// they expire after an hour.
+func (a *App) saslClient(email string) (sasl.Client, error) {
+	a.authMu.Lock()
+	ts := a.tokens[email]
+	a.authMu.Unlock()
+	if ts == nil {
+		return nil, fmt.Errorf("not signed in to %s", email)
+	}
+	token, err := ts.Token()
+	if err != nil {
+		slog.Debug("mail: getting the access token failed", "account", email, "err", err)
+		return nil, fmt.Errorf("signing in to %s: %w", email, err)
+	}
+	slog.Debug("mail: access token for signing in to the server", "account", email,
+		"expiry", token.Expiry, "grantedScopes", token.Extra("scope"))
+	return xoauth2.NewXoauth2Client(email, token.AccessToken), nil
+}
+
+// signInSaved signs in to each of the accounts that use OAuth with its
+// saved token, returning those that need the user to sign in again,
+// without a saved token that works. Those whose saved token could not be
+// checked, as when offline, are not among them: they are tried again in
+// each sync (see [App.authErrs]).
+func (a *App) signInSaved() []string {
+	var need []string
+	for _, email := range Settings.Emails() {
+		if !a.usesOAuth(email) || a.signedIn(email) {
+			continue
+		}
+		if n, _ := a.signInSavedTo(email); n {
+			need = append(need, email)
+		}
+	}
+	return need
+}
+
+// signInSavedTo signs in to the given account with its saved token,
+// returning whether the user needs to sign in again, without a saved
+// token that works, and any error, which is in [App.authErrs] if it is
+// of not being able to check the token, as when offline.
+func (a *App) signInSavedTo(email string) (need bool, err error) {
+	ac := a.authConfig(context.Background(), email)
+	ac.NoPrompt = true
+	ts, userInfo, err := tokenSource(accountType(email), ac)
+	if err == nil && userInfo.Email != email {
+		err = fmt.Errorf("the saved token of %s is for %s", email, userInfo.Email)
+	}
+	offline := isOffline(err)
+	slog.Debug("mail: signing in with the saved token", "account", email, "err", err, "offline", offline)
+	a.authMu.Lock()
+	if offline {
+		a.authErrs[email] = err
+	} else {
+		delete(a.authErrs, email)
+	}
+	a.authMu.Unlock()
+	switch {
+	case offline:
+		return false, err
+	case errors.Is(err, auth.ErrNoToken):
+		return true, err
+	case err != nil:
+		cerrors.Log(err)
+		return true, err
+	}
+	a.setTokens(email, ts)
+	return false, nil
+}
+
+// authErr returns the error of not being able to sign in to the given
+// account with its saved token, as when offline, if any.
+func (a *App) authErr(email string) error {
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+	return a.authErrs[email]
+}
+
+// signedInTo records that the user signed in to the given account with
+// the given tokens, adding it to the accounts if it is new, and syncs it.
+// It must be called with the lock of the window.
+func (a *App) signedInTo(email string, t AccountTypes, ts oauth2.TokenSource) {
+	slog.Debug("mail: signed in to the account", "account", email, "type", t, "new", !Settings.hasAccount(email))
+	a.setTokens(email, ts)
+	if !Settings.hasAccount(email) {
+		Settings.addAccount(Account{Type: t, Email: email})
+		a.saveSettings()
+	}
+	if a.currentEmail == "" {
+		a.currentEmail = email
+	}
+	a.Update()
+	a.SyncNow()
+}
+
+// offerSignIn opens the dialog for signing in to the given account, if it
+// signs in with OAuth and is not signed in, as for an account added in the
+// settings or clicked in the tree of mailboxes, after trying its saved
+// sign-in, if any. It does not when its saved sign-in could not be
+// checked, as when offline, or when the dialog for it is open.
+func (a *App) offerSignIn(email string) {
+	if usesPassword(email) && a.testServer == nil && !a.signInShown[email] {
+		if a.password(email) == "" { // as not in this keychain
+			a.changePassword(email)
+		}
+		return
+	}
+	if a.testServer != nil || email == "" || a.signInShown[email] || !a.usesOAuth(email) ||
+		a.signedIn(email) || a.authErr(email) != nil {
+		return
+	}
+	slog.Debug("mail: offering to sign in", "account", email)
+	go func() {
+		need, err := a.signInSavedTo(email)
+		if !need {
+			if err == nil {
+				a.SyncNow()
+			}
+			return
+		}
+		a.AsyncLock()
+		defer a.AsyncUnlock()
+		if !a.signedIn(email) {
+			a.signInDialogFor([]string{email}, "Sign in to "+email+" in your browser to get its mail.")
+		}
+	}()
+}
+
+// accountsAdded offers to sign in to those of the given accounts, of the
+// settings, that were added since the app started, once (see
+// [App.offerSignIn]), as an account added in the settings instead of with
+// [App.AddAccount]. It must be called with the lock of the window.
+func (a *App) accountsAdded(accounts []string) {
+	if !a.started {
+		return
+	}
+	first := a.knownAccounts == nil
+	if first {
+		a.knownAccounts = map[string]bool{}
+	}
+	for _, email := range accounts {
+		email = strings.TrimSpace(email)
+		if email == "" || a.knownAccounts[email] {
+			continue
+		}
+		a.knownAccounts[email] = true
+		if !first {
+			a.offerSignIn(email)
+		}
+	}
+}
+
+// SignInAgain signs in to the given account again in the browser, as
+// when its saved sign-in no longer works.
+func (a *App) SignInAgain(email string) {
+	a.signInDialog([]string{email})
+}
+
+// allowAccess tells the user to allow the access to Gmail when signing in,
+// as Google's page asks for it with a box that is not checked.
+const allowAccess = "On Google's page, check the box that allows Cogent Mail to read, compose, send, and delete your email, which it needs to show and send your mail."
+
+// signInDialog opens a dialog for signing in in the browser to each of
+// the given accounts, or to a new one, chosen there, for none.
+func (a *App) signInDialog(accounts []string) {
+	a.signInDialogFor(accounts, "Sign in again in your browser, as the saved sign-in no longer works.")
+}
+
+// signInDialogFor is [App.signInDialog] with the given reason for signing
+// in again to the given accounts.
+func (a *App) signInDialogFor(accounts []string, reason string) {
+	title := "Add account"
+	if len(accounts) > 0 {
+		title = "Sign in"
+	}
+	accounts = slices.DeleteFunc(slices.Clone(accounts), func(email string) bool { return a.signInShown[email] })
+	if len(accounts) == 0 && title == "Sign in" {
+		return // the dialogs for them are open
+	}
+	for _, email := range accounts {
+		a.signInShown[email] = true
+	}
+	d := core.NewBody(title)
+	ctx, cancel := context.WithCancel(context.Background())
+	d.OnClose(func(e events.Event) {
+		cancel()
+		for _, email := range accounts {
+			delete(a.signInShown, email)
+		}
+	})
+	if len(accounts) == 0 {
+		core.NewText(d).SetText("Sign in to the Gmail account to add in your browser.")
+		accounts = []string{""}
+	} else {
+		core.NewText(d).SetText(reason)
+	}
+	core.NewText(d).SetType(core.TextSupporting).SetText(allowAccess)
+	status := core.NewText(d)
+	left := len(accounts)
+	for _, email := range accounts {
+		bt := core.NewButton(d).SetType(core.ButtonOutlined).SetIcon(cicons.SignInWithGoogle)
+		if accountType(email) == Microsoft {
+			bt.SetIcon(icons.Login)
+		}
+		text := "Sign in with Google"
+		if email != "" {
+			text = "Sign in to " + email
+		}
+		bt.SetText(text)
+		bt.OnClick(func(e events.Event) {
+			slog.Debug("mail: signing in", "account", email)
+			bt.SetEnabled(false).Update()
+			status.SetText("Waiting for you to sign in in the browser...").Update()
+			go func() {
+				ts, userInfo, err := tokenSource(accountType(email), a.authConfig(ctx, email))
+				if err != nil {
+					slog.Debug("mail: signing in failed", "account", email, "err", err)
+				} else {
+					slog.Debug("mail: signed in", "account", email, "as", userInfo.Email)
+				}
+				if errors.Is(err, context.Canceled) {
+					return // the dialog was closed
+				}
+				d.AsyncLock()
+				defer d.AsyncUnlock()
+				if err != nil {
+					bt.SetEnabled(true).Update()
+					if _, ok := errors.AsType[*auth.ScopesError](err); ok {
+						status.SetText("Not signed in: the access to Gmail was not allowed. Sign in again, and check the box to allow it.").Update()
+						return
+					}
+					status.SetText("").Update()
+					core.ErrorDialog(d, err, "Error signing in")
+					return
+				}
+				a.signedInTo(userInfo.Email, accountType(email), ts)
+				left--
+				if left == 0 {
+					d.Close()
+					return
+				}
+				status.SetText("Signed in to " + userInfo.Email).Update()
+				bt.SetText("Signed in").SetIcon(icons.Check).Update()
+			}()
+		})
+	}
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
 	})
 	d.RunDialog(a)
-	return <-email, nil
 }
 
-// filenameBase32 converts the given string to a filename-safe base32 version.
-func filenameBase32(s string) string {
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(s))
+// confirmRemoveAccount asks whether to remove the given account,
+// and removes it if so.
+func (a *App) confirmRemoveAccount(email string) {
+	d := core.NewBody("Remove account")
+	core.NewText(d).SetText("Remove " + email + " from Cogent Mail? Its mail stays on the server; the copy here is deleted.")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Remove").OnClick(func(e events.Event) {
+			a.RemoveAccount(email)
+		})
+	})
+	d.RunDialog(a)
+}
+
+// RemoveAccount removes the given account from the app: its sign-in, and
+// its local copy of the mail, which stays on the server.
+func (a *App) RemoveAccount(email string) {
+	isPassword := usesPassword(email)
+	Settings.removeAccount(email)
+	if Settings.FilingAccount == AccountName(email) {
+		Settings.FilingAccount = ""
+	}
+	a.saveSettings()
+	if a.currentEmail == email {
+		a.currentEmail = ""
+		if len(Settings.Accounts) > 0 {
+			a.currentEmail = Settings.Accounts[0].Email
+		}
+		a.showLabel = "INBOX"
+		a.readMessage = nil
+	}
+	c, mu := a.imapClient[email], a.imapMu[email]
+	st, si := a.stores[email], a.searches[email]
+	delete(a.imapClient, email)
+	delete(a.imapMu, email)
+	delete(a.stores, email)
+	delete(a.searches, email)
+	delete(a.cache, email)
+	delete(a.totalMessages, email)
+	a.stopIdle(email)
+	a.authMu.Lock()
+	delete(a.tokens, email)
+	delete(a.authErrs, email)
+	delete(a.passwords, email)
+	a.authMu.Unlock()
+	if isPassword { // with its password in the keychain
+		if err := keyring.Delete(passwordService, email); err != nil && !errors.Is(err, keyring.ErrNotFound) {
+			slog.Error("mail: deleting the password of an account from the keychain", "account", email, "err", err)
+		}
+	}
+	if Settings.SyncContacts[email] {
+		delete(Settings.SyncContacts, email)
+		a.saveSettings()
+	}
+	a.draftsMu.Lock()
+	for id, d := range a.drafts {
+		if d.Account == email {
+			delete(a.drafts, id)
+		}
+	}
+	a.draftsMu.Unlock()
+	a.Update()
+	go func() { // after any sync of it
+		if mu != nil {
+			mu.Lock()
+			defer mu.Unlock()
+		}
+		if c != nil {
+			c.Logout().Wait()
+			c.Close()
+		}
+		if st != nil {
+			st.Close()
+		}
+		if si != nil {
+			si.Close()
+		}
+		cerrors.Log(auth.DeleteToken(a.tokenFile(email)))
+		for _, f := range []string{a.messagesDir(email), a.storeFile(email), a.searchDir(email),
+			filepath.Dir(a.tokenFile(email))} {
+			cerrors.Log(os.RemoveAll(f))
+		}
+	}()
 }
