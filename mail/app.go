@@ -423,7 +423,8 @@ func (a *App) saveSettings() {
 
 // showMailbox shows the messages of the given mailbox of the given account.
 func (a *App) showMailbox(email, mailbox string) {
-	if a.allInboxes || email != a.currentEmail || mailbox != a.showLabel {
+	changed := a.allInboxes || email != a.currentEmail || mailbox != a.showLabel
+	if changed {
 		a.selectedRows = nil
 		a.searchResults = nil // back to the mailbox
 		if a.searchField != nil {
@@ -442,6 +443,9 @@ func (a *App) showMailbox(email, mailbox string) {
 		a.saveSettings() // shown when the app starts again
 	}
 	a.Update()
+	if changed { // its first message, as selected
+		a.selectFirst()
+	}
 }
 
 func (a *App) MakeToolbar(p *tree.Plan) {

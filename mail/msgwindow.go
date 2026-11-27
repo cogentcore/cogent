@@ -29,7 +29,9 @@ func (a *App) openMessageWindow(mr *messageRow) {
 	if title == "" {
 		title = "(no subject)"
 	}
-	b := core.NewBody(title)
+	// "View Message:" windows share their remembered size and position,
+	// by the part of the title before the colon
+	b := core.NewBody("View Message: " + title)
 	b.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.SetAbilities(true, abilities.Focusable) // to scroll with the keys

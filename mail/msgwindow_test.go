@@ -111,3 +111,45 @@ func TestMessageWindow(t *testing.T) {
 		}, 5*time.Second, 10*time.Millisecond, "no longer updated")
 	})
 }
+
+// TestShowMailboxReads tests that showing another mailbox selects its first
+// message and shows it in the panel of the message being read, without
+// moving the keyboard focus into the list, and shows nothing for an empty
+// mailbox.
+func TestShowMailboxReads(t *testing.T) {
+	b, a := newTestApp(t, newIMAP(t))
+	shown := func() []*CacheMessage { // newest first, for a conversation
+		var res []*CacheMessage
+		a.readPanel.WalkDown(func(n tree.Node) bool {
+			if dmf, ok := n.(*DisplayMessageFrame); ok {
+				res = append(res, dmf.Message)
+			}
+			return true
+		})
+		return res
+	}
+	core.RenderImage(b, func() {
+		require.NoError(t, a.cacheMessages())
+	}, core.Locked(b, func() {
+		a.showMailbox(testEmail, "INBOX")
+		a.mailboxes.SetFocusQuiet()
+		a.showMailbox(testEmail, "Work")
+		require.NotNil(t, a.rowAt(0))
+		assert.Equal(t, a.rowAt(0).message, a.readMessage, "the first message")
+		assert.Equal(t, 0, a.list.SelectedIndex)
+		assert.Len(t, a.list.SelectedIndexes, 1)
+		assert.Contains(t, shown(), a.readMessage, "in the panel")
+		assert.False(t, a.list.ContainsFocus(), "the focus stays")
+		work := a.readMessage
+		a.showMailbox(testEmail, "INBOX")
+		require.NotNil(t, a.rowAt(0))
+		assert.Equal(t, a.rowAt(0).message, a.readMessage, "that of the other mailbox")
+		assert.Contains(t, shown(), a.readMessage)
+		a.showMailbox(testEmail, "Work")
+		assert.Equal(t, work, a.readMessage, "the first again")
+		a.showMailbox(testEmail, "[Gmail]/Trash")
+		assert.Nil(t, a.readMessage, "none in an empty mailbox")
+		assert.Empty(t, shown())
+		assert.Empty(t, a.list.SelectedIndexes)
+	}))
+}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,15 @@ func TestDeleteRightAway(t *testing.T) {
 		report = messageBySubject(a, "Report")
 		a.showMailbox(testEmail, "Work")
 		require.True(t, listed(a, report))
-		a.readMessage, a.readSingle = report, true
+		selectReport := func() { // as clicked
+			for i := 0; a.rowAt(i) != nil; i++ {
+				if a.rowAt(i).message == report {
+					a.list.SelectIndexEvent(i, events.SelectOne)
+				}
+			}
+			require.Equal(t, report, a.readMessage)
+		}
+		selectReport()
 
 		// not connected: an error, and back in the list
 		c := a.imapClient[testEmail]
@@ -54,6 +63,7 @@ func TestDeleteRightAway(t *testing.T) {
 		assert.True(t, listed(a, report), "back")
 		assert.Empty(t, a.pendingLabels)
 
+		selectReport() // the next one was selected when it was gone
 		a.Delete()
 		assert.False(t, listed(a, report), "gone right away, with the lock still held")
 	}), func() {

@@ -315,11 +315,12 @@ func (a *App) compose(title string) *core.Body {
 		d.SetTitle("Save draft?")
 		core.NewText(d).SetType(core.TextSupporting).SetText("Save the message in Drafts, to finish it later, or discard it?")
 		d.AddBottomBar(func(bar *core.Frame) {
-			core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).OnClick(func(e events.Event) {
+			core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).
+				SetTooltip("Delete the message, without saving it").OnClick(func(e events.Event) {
 				discard()
 				b.Close()
 			})
-			d.AddOK(bar).SetText("Save draft").OnClick(func(e events.Event) {
+			d.AddOK(bar).SetText("Save draft").SetTooltip("Save the message in Drafts, to finish and send it later").OnClick(func(e events.Event) {
 				decided = true
 				b.Close()
 			})
@@ -339,11 +340,13 @@ func (a *App) compose(title string) *core.Body {
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
 		core.NewButton(tb).SetText("Increase quote").SetIcon(icons.FormatIndentIncrease).
-			SetShortcut("Command+'").OnClick(func(e events.Event) {
+			SetShortcut("Command+'").
+			SetTooltip("Quote the selected lines, or the line of the cursor, one more level, with >").OnClick(func(e events.Event) {
 			ChangeQuoteLevel(ed, 1)
 		})
 		core.NewButton(tb).SetText("Decrease quote").SetIcon(icons.FormatIndentDecrease).
-			SetShortcut("Command+Alt+'").OnClick(func(e events.Event) {
+			SetShortcut("Command+Alt+'").
+			SetTooltip("Quote the selected lines, or the line of the cursor, one less level").OnClick(func(e events.Event) {
 			ChangeQuoteLevel(ed, -1)
 		})
 	})
@@ -369,25 +372,30 @@ func (a *App) compose(title string) *core.Body {
 			})
 		}
 		core.NewButton(bar).SetType(core.ButtonText).SetText("Discard").SetIcon(icons.Delete).
+			SetTooltip("Delete the message and its draft, and close the window").
 			OnClick(func(e events.Event) {
 				discard()
 				b.Close()
 			})
-		b.AddCancel(bar).SetText("Save draft").OnClick(func(e events.Event) {
-			decided = true
-		})
-		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
-			stopTimer()
-			done = true
-			withApp(func(c *SendMessage) {
-				d, err := a.queue(c)
-				if err != nil {
-					core.ErrorSnackbar(a, err, "Error sending message (it is in Drafts)")
-					return
-				}
-				go a.sendOutboxShowing(d.Account)
+		b.AddCancel(bar).SetText("Save draft").
+			SetTooltip("Close the window, keeping the message in Drafts, to finish and send it later").
+			OnClick(func(e events.Event) {
+				decided = true
 			})
-		})
+		b.AddOK(bar).SetText("Send").
+			SetTooltip("Send the message now; if it cannot be sent, as when offline, it waits in the Outbox and is sent later").
+			OnClick(func(e events.Event) {
+				stopTimer()
+				done = true
+				withApp(func(c *SendMessage) {
+					d, err := a.queue(c)
+					if err != nil {
+						core.ErrorSnackbar(a, err, "Error sending message (it is in Drafts)")
+						return
+					}
+					go a.sendOutboxShowing(d.Account)
+				})
+			})
 	})
 	b.RunWindowDialog(a)
 	return b

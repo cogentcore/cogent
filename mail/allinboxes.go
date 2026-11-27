@@ -15,7 +15,8 @@ const allInboxesShown = "*"
 // ShowAllInboxes shows the messages in the inboxes of all of the accounts
 // together, the newest first.
 func (a *App) ShowAllInboxes() {
-	if !a.allInboxes {
+	changed := !a.allInboxes
+	if changed {
 		a.selectedRows = nil
 		a.searchResults = nil // back to the mailbox
 		if a.searchField != nil {
@@ -32,6 +33,9 @@ func (a *App) ShowAllInboxes() {
 		a.saveSettings() // shown when the app starts again
 	}
 	a.Update()
+	if changed { // its first message, as selected
+		a.selectFirst()
+	}
 }
 
 // listAccounts returns the accounts whose messages the list of messages

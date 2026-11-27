@@ -509,23 +509,9 @@ func (a *App) initList(w *core.TreeTable) {
 	}
 	w.OnSelect(func(e events.Event) {
 		a.selectedRows = a.rowsSelected()
-		mr := a.rowAt(w.SelectedIndex)
-		if mr == nil {
-			return
+		if mr := a.rowAt(w.SelectedIndex); mr != nil {
+			a.readRow(mr, true)
 		}
-		// The actions on messages, such as filing, apply to all of the
-		// selected rows, and those on one message, such as replying,
-		// to the last one selected.
-		a.readMessage = mr.message
-		if a.allInboxes { // the actions on it are in its account
-			a.currentEmail = a.accountOf(mr.message)
-		}
-		// a message row is shown on its own, a conversation with all of its messages
-		a.readSingle = !mr.conversation
-		if len(a.selectedRows) <= 1 { // only when reading it
-			a.MarkAsRead()
-		}
-		a.updateReading()
 	})
 	w.OnDoubleClick(func(e events.Event) {
 		if mr := a.rowAt(w.SelectedIndex); mr != nil {
@@ -533,6 +519,46 @@ func (a *App) initList(w *core.TreeTable) {
 		}
 	})
 	a.list = w
+}
+
+// readRow reads the message (or conversation) of the given row, the last
+// one selected, which is marked as read if markRead and it is the only one
+// selected. The actions on messages, such as filing, apply to all of the
+// selected rows, and those on one message, such as replying, to the last
+// one selected.
+func (a *App) readRow(mr *messageRow, markRead bool) {
+	a.readMessage = mr.message
+	if a.allInboxes { // the actions on it are in its account
+		a.currentEmail = a.accountOf(mr.message)
+	}
+	// a message row is shown on its own, a conversation with all of its messages
+	a.readSingle = !mr.conversation
+	if markRead && len(a.selectedRows) <= 1 { // only when reading it
+		a.MarkAsRead()
+	}
+	a.updateReading()
+}
+
+// selectFirst selects the first row of the list of messages and reads it,
+// as when another mailbox is shown, or nothing if the list is empty,
+// without moving the keyboard focus (as from the mailboxes) into the list,
+// and without marking it as read, which going through the mailboxes would
+// do to all of their first messages: that is done when it is clicked.
+func (a *App) selectFirst() {
+	a.readMessage, a.selectedRows = nil, nil
+	if a.list != nil {
+		a.list.ResetSelectedIndexes()
+		a.list.SelectedIndex = -1
+		if mr := a.rowAt(0); mr != nil {
+			a.list.SelectedIndex = 0
+			a.list.SelectIndex(0)
+			a.selectedRows = []*messageRow{mr}
+			a.readRow(mr, false)
+			return
+		}
+		a.list.NeedsRender()
+	}
+	a.updateReading()
 }
 
 // rowsSelected returns the selected rows of the list of messages, in order.
