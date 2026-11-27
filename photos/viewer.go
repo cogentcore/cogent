@@ -157,7 +157,7 @@ func (v *Viewer) Init() {
 		}
 		tree.AddAt(p, "info", func(w *core.Text) {
 			v.info = w
-			w.SetType(core.TextSupporting)
+			w.SetType(core.TextBodyLarge) // regular text
 			w.Updater(func() {
 				w.SetText(v.infoText())
 			})
