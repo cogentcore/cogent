@@ -241,3 +241,57 @@ func TestFixedButtons(t *testing.T) {
 		assert.Contains(t, trash.Text, "Trash")
 	})
 }
+
+// TestDragToTag tests dragging selected photos from the grid onto a tag
+// in the tree of tags, which tags them.
+func TestDragToTag(t *testing.T) {
+	lib := smallLibrary(t, 8)
+	phs := lib.Photos(nil)
+	require.NoError(t, lib.AddTag("Other", phs[7]))
+	require.NoError(t, lib.AddTag("Target", phs[6]))
+	b := core.NewBody()
+	a := NewApp(b)
+	a.Styler(func(s *styles.Style) {
+		s.Min.Set(units.Dp(1200), units.Dp(600))
+	})
+	a.shown = allKey
+	Settings.Sort = OldestFirst
+	defer func() { Settings.Sort = NewestFirst }()
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.grid.CellSize = units.Dp(80)
+		a.refresh()
+		a.grid.Selected = map[int]bool{0: true, 1: true}
+		a.grid.Current = 1
+		b.AsyncUnlock()
+	}, func() {
+		b.AsyncLock()
+		from := a.grid.cellRect(1).Min.Add(image.Pt(10, 10))
+		var to image.Point
+		rows := *a.tags.Slice.(*[]*tagRow)
+		for i, r := range rows {
+			if r.tag == "Target" {
+				nw, _ := a.tags.RowWidgetNs()
+				cell := a.tags.ListGrid.Child(i * nw).(core.Widget).AsWidget()
+				to = cell.Geom.ContentBBox.Min.Add(image.Pt(20, 5))
+			}
+		}
+		require.NotEqual(t, image.Point{}, to)
+		b.AsyncUnlock()
+		ev := a.grid.SystemEvents()
+		ev.MouseButton(events.MouseDown, events.Left, from, 0)
+		time.Sleep(200 * time.Millisecond)
+		for i := 1; i <= 10; i++ {
+			ev.MouseMove(from.Add(to.Sub(from).Mul(i).Div(10)))
+			time.Sleep(30 * time.Millisecond)
+		}
+		ev.MouseButton(events.MouseUp, events.Left, to, 0)
+		time.Sleep(300 * time.Millisecond)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, 3, lib.Tags()["Target"], "the two dragged are tagged")
+	})
+}

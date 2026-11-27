@@ -578,6 +578,9 @@ func (a *App) initTags(w *core.TreeTable) {
 			a.showTag(r.key)
 		}
 	})
+	w.Styler(func(s *styles.Style) { // (not as a read-only tree table)
+		s.SetAbilities(true, abilities.Droppable)
+	})
 	w.On(events.Drop, a.dropOnTags) // before that of the tree table
 }
 
