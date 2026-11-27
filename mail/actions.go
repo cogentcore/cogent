@@ -123,7 +123,7 @@ func (a *App) Label() { //types:add
 	var tb *core.Table
 	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
 	for _, label := range a.labels[a.currentEmail] {
-		ch.Items = append(ch.Items, core.ChooserItem{Value: label, Text: friendlyLabelName(label)})
+		ch.Items = append(ch.Items, core.ChooserItem{Value: label, Text: a.mailboxName(a.currentEmail, label)})
 	}
 	ch.OnChange(func(e events.Event) {
 		labels = append(labels, tableLabel{name: ch.CurrentItem.Value.(string), On: true, Label: ch.CurrentItem.Text})

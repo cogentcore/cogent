@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"math/rand/v2"
 	"net"
 	"os"
 	"path/filepath"
@@ -695,7 +696,7 @@ func TestMailboxes(t *testing.T) {
 		for _, c := range acct.Children {
 			names = append(names, c.AsTree().Name)
 		}
-		assert.Equal(t, []string{"[Gmail]/Starred", "[Gmail]/Drafts", "[Gmail]/Sent Mail", "[Gmail]/Spam", "[Gmail]/Trash",
+		assert.Equal(t, []string{"[Gmail]/Starred", "[Gmail]/Drafts", "[Gmail]/Sent Mail", untaggedLabel, "[Gmail]/Spam", "[Gmail]/Trash",
 			"Admin", "Family", "Lists", "Newsletters", "Projects"}, names, "the INBOX is in the inboxes")
 		inboxes := node(a.mailboxes, "Inboxes")
 		assert.Equal(t, "Inboxes", a.mailboxes.Children[0].AsTree().Name, "first")
@@ -1749,4 +1750,36 @@ func TestDefaultKeys(t *testing.T) {
 	assert.False(t, isTextKey(r.PlatformChord(), r))
 	o := key.Chord("Control+O")
 	assert.True(t, isTextKey(o.PlatformChord(), o), "without Command")
+}
+
+// TestBuiltinCredentials tests that the built-in OAuth client of Google is
+// used when the environment does not set one, decoded, and not otherwise.
+func TestBuiltinCredentials(t *testing.T) {
+	t.Setenv("GOOGLE_OAUTH2_CLIENT_ID", "")
+	t.Setenv("GOOGLE_OAUTH2_CLIENT_SECRET", "")
+	useBuiltinCredentials()
+	id := os.Getenv("GOOGLE_OAUTH2_CLIENT_ID")
+	assert.True(t, strings.HasSuffix(id, ".apps.googleusercontent.com"), "a Google client ID")
+	assert.True(t, strings.HasPrefix(os.Getenv("GOOGLE_OAUTH2_CLIENT_SECRET"), "GOCSPX"), "a Google client secret")
+	t.Setenv("GOOGLE_OAUTH2_CLIENT_ID", "mine")
+	useBuiltinCredentials()
+	assert.Equal(t, "mine", os.Getenv("GOOGLE_OAUTH2_CLIENT_ID"), "one's own, if set")
+}
+
+// TestNewestFirst tests the order of the rows of the list of messages:
+// the newest first by their whole times, not the minutes shown, and then
+// by their keys, so that the order is the same each time.
+func TestNewestFirst(t *testing.T) {
+	now := time.Now().Truncate(time.Minute)
+	row := func(key string, d time.Duration) *messageRow {
+		cm := &CacheMessage{key: key, Envelope: imap.Envelope{Date: now.Add(d)}}
+		return &messageRow{message: cm, Date: cm.Date.Format(listDateFormat)}
+	}
+	a, b, c := row("a", 10*time.Second), row("b", 30*time.Second), row("c", 10*time.Second)
+	for range 20 {
+		rows := []*messageRow{a, c, b}
+		rand.Shuffle(len(rows), func(i, j int) { rows[i], rows[j] = rows[j], rows[i] })
+		slices.SortFunc(rows, newestFirst)
+		assert.Equal(t, []*messageRow{b, a, c}, rows, "the same minute, in the same order")
+	}
 }

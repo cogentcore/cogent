@@ -5,16 +5,20 @@
 package mail
 
 import (
+	"image"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"cogentcore.org/core/base/datasize"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
@@ -272,4 +276,291 @@ func TestHeaderSize(t *testing.T) {
 		assert.Contains(t, date, size.String(), "in user-friendly units")
 		assert.Contains(t, size.String(), "KB")
 	}))
+}
+
+// TestMultiSelectMouse tests selecting several messages with the mouse
+// (Shift and a click), which shows the first of them, and filing all of
+// them at once, and that the File dialog chooses the mailbox filed into
+// last at first, for filing more there with its File button.
+func TestMultiSelectMouse(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	old := Settings.LastFiled
+	t.Cleanup(func() { Settings.LastFiled = old })
+	Settings.LastFiled = ""
+	click := func(row int, mods key.Modifiers) func() {
+		return func() {
+			var at image.Point
+			core.Locked(b, func() {
+				for w := range a.list.AllWidgets() {
+					if tf, ok := w.(*core.TextField); ok && tf.Text() == a.rowAt(row).From { // (read-only cells), in the tree column
+						bb := tf.Geom.TotalBBox // on its text, as clicked
+						at = image.Pt(bb.Min.X+bb.Dx()/3, (bb.Min.Y+bb.Max.Y)/2)
+						break
+					}
+				}
+			})()
+			require.NotEqual(t, image.Point{}, at, "the row %d", row)
+			src := b.Scene.RenderWindow().SystemWindow.Events()
+			src.MouseButton(events.MouseDown, events.Left, at, mods)
+			src.MouseButton(events.MouseUp, events.Left, at, mods)
+		}
+	}
+	var shift key.Modifiers
+	shift.SetFlag(true, key.Shift)
+	var first, second *CacheMessage
+	var chooser *core.Chooser
+	dialog := func() *core.Body {
+		d := core.TopScene(b)
+		require.NotEqual(t, b.Scene, d, "the dialog")
+		chooser = nil
+		for w := range d.AllWidgets() {
+			if ch, ok := w.(*core.Chooser); ok {
+				chooser = ch
+			}
+		}
+		require.NotNil(t, chooser)
+		return d.Body
+	}
+	views := Settings.ListViews
+	t.Cleanup(func() { Settings.ListViews = views })
+	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
+		// a flat list and all of the inboxes, then each conversation
+		Settings.ListViews.SetFlag(false, ViewConversations)
+		a.ShowAllInboxes()
+		a.Update()
+	}), click(0, 0), click(2, shift), core.Locked(b, func() {
+		t.Log("inboxes", a.list.SelectedIndexes, len(a.selectedRows))
+		assert.Len(t, a.selectedRows, 3, "three in a flat list of the inboxes")
+		Settings.ListViews.SetFlag(true, ViewConversations)
+		a.showMailbox(you, "INBOX")
+		require.NotNil(t, a.rowAt(2), "at least 3 rows")
+	}), click(0, 0), core.Locked(b, func() {
+		a.updateMail() // as after marking it read, or a sync
+	}), click(1, shift), core.Locked(b, func() {
+		require.Len(t, a.selectedRows, 2, "two selected")
+		// both shown as selected, with the background of a selected row
+		// (in a read-only list, only with ReadOnlyMultiSelect)
+		for row := range 2 {
+			var cell core.Widget
+			for _, k := range a.list.ListGrid.Children {
+				if r, ok := k.AsTree().Property(core.ListRowProperty).(int); ok && r == row {
+					cell = k.(core.Widget)
+					break
+				}
+			}
+			require.NotNil(t, cell)
+			assert.Equal(t, colors.Scheme.Select.Container, a.list.ListGrid.ChildBackground(cell), "row %d shown selected", row)
+		}
+		a.updateMail() // as from the syncs, while selected
+	}), core.Locked(b, func() {
+		t.Log("after update", a.list.SelectedIndexes, a.list.SelectedIndex, len(a.selectedRows), len(a.rowsSelected()))
+		require.Len(t, a.rowsSelected(), 2, "still two selected")
+		assert.Equal(t, a.rowAt(0).message, a.readMessage, "the first one shown")
+		first, second = a.rowAt(0).message, a.rowAt(1).message
+		var note string
+		a.readPanel.WalkDown(func(n tree.Node) bool {
+			if n.AsTree().Name == "selected" {
+				note = n.(*core.Text).Text
+			}
+			return true
+		})
+		assert.Contains(t, note, "2 selected")
+		a.File()
+	}), core.Locked(b, func() {
+		dialog()
+		chooser.SetCurrentValue(mailboxID{you, "Family"})
+		chooser.SendChange()
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return !inMailbox(first, "INBOX") && !inMailbox(second, "INBOX")
+		}, 5*time.Second, 10*time.Millisecond, "both filed")
+		assert.Equal(t, mailboxKey(you, "Family"), Settings.LastFiled, "remembered")
+	}, click(0, 0), core.Locked(b, func() {
+		require.NotNil(t, a.readMessage)
+		first = a.readMessage
+		a.File()
+	}), core.Locked(b, func() {
+		d := dialog()
+		assert.Equal(t, mailboxID{you, "Family"}, chooser.CurrentItem.Value, "the last one at first")
+		_ = d
+	}), func() { // Return, in the chooser, which has the focus
+		src := b.Scene.RenderWindow().SystemWindow.Events()
+		src.KeyChord(0, key.CodeReturnEnter, 0)
+	}, func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return inMailbox(first, "Family")
+		}, 5*time.Second, 10*time.Millisecond, "filed there again")
+	})
+}
+
+// inMailbox returns whether the given message has the given label.
+func inMailbox(cm *CacheMessage, label string) bool {
+	return slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == label })
+}
+
+// TestDuplicateMailboxNames tests that labels with the names of special
+// mailboxes on Gmail (as "Drafts", "Sent Messages", and "Deleted Messages"
+// made by Apple Mail) are shown with their own names, as labels, not as
+// second Drafts, Sent, and Trash mailboxes, and that the Drafts mailbox
+// shows the number of drafts.
+func TestDuplicateMailboxNames(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	for _, mb := range []string{"Drafts", "Sent Messages", "Deleted Messages"} {
+		require.NoError(t, a.testServer.CreateMailbox(you, mb))
+	}
+	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
+		require.NoError(t, a.saveDraft(&SendMessage{Sender: MessageSender{From: SenderAccount(you)}, Subject: "Unfinished"}))
+	}), func() {
+		a.countMessages(you) // with the lock of the window
+	}, core.Locked(b, func() {
+		a.Update()
+	}), core.Locked(b, func() {
+		var account *MailboxTree
+		for _, n := range a.mailboxes.Children {
+			if mt, ok := n.(*MailboxTree); ok && mt.account && mt.mailbox.email == you {
+				account = mt
+			}
+		}
+		require.NotNil(t, account)
+		names := map[string]int{}
+		icon := map[string]icons.Icon{}
+		for _, n := range account.Children {
+			mt := n.(*MailboxTree)
+			names[mt.Text]++
+			icon[mt.mailbox.label] = mt.Icon
+		}
+		for name, n := range names {
+			assert.Equal(t, 1, n, "one %q: %v", name, names)
+		}
+		assert.Contains(t, names, "Sent")
+		assert.Contains(t, names, "Trash")
+		assert.Contains(t, names, "Sent Messages", "a label, by its own name")
+		assert.Contains(t, names, "Deleted Messages")
+		assert.Equal(t, icons.Label, icon["Sent Messages"])
+		assert.Equal(t, icons.Label, icon["Drafts"], "a label")
+		assert.Equal(t, icons.Draft, icon[a.draftsLabel(you)], "the Drafts mailbox")
+		assert.Contains(t, names, withCount("Drafts", 1), "with the number of drafts: %v", names)
+	}))
+}
+
+// TestFileDialogTyping tests that the mailbox filed into last starts
+// selected in the File dialog, so that typing another replaces it.
+func TestFileDialogTyping(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	old := Settings.LastFiled
+	t.Cleanup(func() { Settings.LastFiled = old })
+	Settings.LastFiled = mailboxKey(you, "Family")
+	var tf *core.TextField
+	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
+		a.showMailbox(you, "INBOX")
+		a.list.SelectIndexEvent(0, events.SelectOne)
+		a.File()
+	}), core.Locked(b, func() {
+		d := core.TopScene(b)
+		require.NotEqual(t, b.Scene, d, "the dialog")
+		for w := range d.AllWidgets() {
+			if ch, ok := w.(*core.Chooser); ok {
+				tf = ch.TextField()
+			}
+		}
+		require.NotNil(t, tf)
+		assert.Equal(t, "Family", tf.Text())
+	}), func() {
+		b.Scene.RenderWindow().SystemWindow.Events().KeyChord('W', key.CodeW, 0)
+	}, core.Locked(b, func() {
+		assert.Equal(t, "W", tf.Text(), "typing replaces it")
+	}))
+}
+
+// TestDeleteLabelWithSpecialName tests that labels with the names of
+// special mailboxes that are not them (as "Sent Messages" of Apple Mail on
+// Gmail) can be deleted, unlike the special mailboxes themselves, and that
+// deleting one removes it from the server and the tree.
+func TestDeleteLabelWithSpecialName(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	for _, mb := range []string{"Drafts", "Sent Messages", "Deleted Messages"} {
+		require.NoError(t, a.testServer.CreateMailbox(you, mb))
+	}
+	core.RenderImage(b, func() { syncAll(t, a) }, core.Locked(b, func() {
+		for _, mb := range []string{"Drafts", "Sent Messages", "Deleted Messages", "Family"} {
+			assert.True(t, a.isUserMailbox(you, mb), "%s can be deleted", mb)
+		}
+		for _, mb := range []string{"INBOX", "[Gmail]/Sent Mail", "[Gmail]/Trash", "[Gmail]/Drafts", a.starredLabel(you), outboxLabel} {
+			assert.False(t, a.isUserMailbox(you, mb), "%s cannot", mb)
+		}
+		a.DeleteMailbox(you, "Sent Messages")
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return !slices.Contains(a.labels[you], "Sent Messages")
+		}, 5*time.Second, 10*time.Millisecond, "gone")
+		syncAll(t, a)
+		a.AsyncLock()
+		assert.NotContains(t, a.labels[you], "Sent Messages", "not on the server")
+		assert.Contains(t, a.labels[you], "Deleted Messages")
+		a.AsyncUnlock()
+	})
+}
+
+// TestEditServerDraft tests editing a draft on the server, as one written
+// in Gmail: double-clicking it opens it for writing, with its recipients,
+// subject, and text, and once saved here, the draft on the server is moved
+// to the trash, replaced by the draft of the app.
+func TestEditServerDraft(t *testing.T) {
+	b, a := newTestingApp(t)
+	you := Settings.Accounts[0].Email
+	var drafts string
+	var server *CacheMessage
+	core.RenderImage(b, func() {
+		syncAll(t, a)
+		a.AsyncLock()
+		drafts = a.draftsLabel(you)
+		a.AsyncUnlock()
+		msg := "From: " + you + "\r\nTo: zed@example.com\r\nCc: amy@example.com\r\nSubject: Written in Gmail\r\nContent-Type: text/plain\r\n\r\nAlmost finished, from the web.\r\n"
+		require.NoError(t, a.testServer.Append(you, []string{drafts}, []byte(msg), []imap.Flag{imap.FlagDraft, imap.FlagSeen}, time.Now()))
+		syncAll(t, a)
+	}, core.Locked(b, func() {
+		a.showMailbox(you, drafts)
+		row := -1
+		for i := 0; a.rowAt(i) != nil; i++ {
+			if a.rowAt(i).message.Subject == "Written in Gmail" {
+				row = i
+			}
+		}
+		require.GreaterOrEqual(t, row, 0, "in the drafts")
+		server = a.rowAt(row).message
+		assert.False(t, server.isLocal(), "on the server")
+		assert.True(t, a.isServerDraft(server))
+		a.list.SelectIndexEvent(row, events.SelectOne)
+		a.composeMessage = nil
+		a.list.Send(events.DoubleClick)
+		sm := a.composeMessage
+		require.NotNil(t, sm, "written more")
+		assert.Empty(t, a.messageWindows, "not a window for reading it")
+		assert.Equal(t, "Written in Gmail", sm.Subject)
+		assert.Equal(t, []string{"zed@example.com"}, addresses(sm.To))
+		assert.Equal(t, []string{"amy@example.com"}, addresses(sm.Cc))
+		assert.Contains(t, sm.body, "Almost finished, from the web.")
+		assert.Equal(t, SenderAccount(you), sm.Sender.From)
+		// saved here (as when it is changed), which replaces it
+		require.NoError(t, a.saveDraft(sm))
+		a.removeServerDraft(sm)
+	}), func() {
+		trash := ""
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			trash = a.trash[you]
+			return !inMailbox(server, drafts) && inMailbox(server, trash)
+		}, 5*time.Second, 10*time.Millisecond, "the server draft in the trash")
+	})
 }

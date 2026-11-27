@@ -276,6 +276,9 @@ func (a *App) countMessages(email string) {
 		for _, l := range cm.Labels {
 			counts[l.Name]++
 		}
+		if a.isUntagged(email, cm) {
+			counts[untaggedLabel]++
+		}
 	}
 	a.totalMessages[email] = counts
 }

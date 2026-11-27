@@ -5,11 +5,13 @@
 package mail
 
 import (
+	"cogentcore.org/core/events"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/core/core"
 	"github.com/cogentcore/go-imap/v2"
@@ -185,5 +187,63 @@ func TestRemoveAttachmentsGmail(t *testing.T) {
 		assert.ElementsMatch(t, names, after, "the same labels")
 		assert.ElementsMatch(t, flags, cm.Flags, "the same flags")
 		assert.Equal(t, 0, cm.Attachments)
+	})
+}
+
+// TestRemoveAttachmentsSelected tests removing the attachments of several
+// selected messages at once, of two accounts in all of the inboxes, each
+// in its own account.
+func TestRemoveAttachmentsSelected(t *testing.T) {
+	b, a := newTestingApp(t)
+	you, alice := Settings.Accounts[0].Email, Settings.Accounts[1].Email
+	withAttachment := func(to, subject string) []byte {
+		return []byte("From: zed@example.com\r\nTo: " + to + "\r\nSubject: " + subject +
+			"\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=XX\r\n\r\n" +
+			"--XX\r\nContent-Type: text/plain\r\n\r\nSee the notes.\r\n" +
+			"--XX\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=notes.txt\r\n\r\nsome secret notes\r\n--XX--\r\n")
+	}
+	var msgs []*CacheMessage
+	views := Settings.ListViews
+	t.Cleanup(func() { Settings.ListViews = views })
+	core.RenderImage(b, func() {
+		require.NoError(t, a.testServer.Append(you, []string{"INBOX"}, withAttachment(you, "Notes for you"), nil, time.Now()))
+		require.NoError(t, a.testServer.Append(alice, []string{"INBOX"}, withAttachment(alice, "Notes for Alice"), nil, time.Now()))
+		syncAll(t, a)
+	}, core.Locked(b, func() {
+		Settings.ListViews.SetFlag(false, ViewConversations) // each message on its own
+		a.ShowAllInboxes()
+		mode := events.SelectOne
+		for i := 0; a.rowAt(i) != nil; i++ {
+			if s := a.rowAt(i).message.Subject; s == "Notes for you" || s == "Notes for Alice" {
+				a.list.SelectIndexEvent(i, mode)
+				mode = events.ExtendOne
+				msgs = append(msgs, a.rowAt(i).message)
+			}
+		}
+		require.Len(t, msgs, 2)
+		require.Len(t, a.selectedRows, 2)
+		for _, cm := range msgs {
+			require.NotEmpty(t, cm.Filename, "downloaded")
+			require.Equal(t, 1, cm.Attachments)
+		}
+		a.RemoveAttachments()
+	}), core.Locked(b, func() {
+		d := core.TopScene(b)
+		require.NotEqual(t, b.Scene, d, "asking first")
+		bt := core.ButtonByText(d, "Remove")
+		require.NotNil(t, bt)
+		bt.Send(events.Click)
+	}), func() {
+		require.Eventually(t, func() bool {
+			a.AsyncLock()
+			defer a.AsyncUnlock()
+			return msgs[0].Attachments == 0 && msgs[1].Attachments == 0
+		}, 10*time.Second, 10*time.Millisecond, "both, in their accounts")
+		for _, cm := range msgs {
+			data, err := os.ReadFile(filepath.Join(a.messagesDir(cm.account), cm.Filename))
+			require.NoError(t, err)
+			assert.NotContains(t, string(data), "some secret notes", cm.Subject)
+			assert.Contains(t, string(data), "Attachment removed: notes.txt", cm.Subject)
+		}
 	})
 }

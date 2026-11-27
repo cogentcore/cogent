@@ -310,11 +310,26 @@ func (a *App) accountConversations(email string) (starts []*CacheMessage, shown 
 	return starts, shown
 }
 
+// labelsOf returns labels with the given names, without UIDs.
+func labelsOf(names []string) []Label {
+	res := make([]Label, len(names))
+	for i, n := range names {
+		res[i] = Label{Name: n}
+	}
+	return res
+}
+
 // hasLabel returns whether the given message has the label being shown,
 // with the labels it is getting, if any (see [App.pendingLabels]).
 func (a *App) hasLabel(cm *CacheMessage) bool {
 	if a.isStarredLabel(a.showLabel) { // by the flag, as soon as it is starred
 		return cm.isStarred()
+	}
+	if a.showLabel == untaggedLabel { // by the labels, also those it is getting
+		if labels, ok := a.pendingLabels[cm]; ok {
+			return a.isUntagged(a.accountOf(cm), &CacheMessage{Labels: labelsOf(labels), key: cm.key})
+		}
+		return a.isUntagged(a.accountOf(cm), cm)
 	}
 	if labels, ok := a.pendingLabels[cm]; ok {
 		return slices.Contains(labels, a.showLabel)
@@ -369,7 +384,7 @@ func (a *App) updateList() {
 		for _, email := range a.listAccounts() {
 			for _, cm := range a.cache[email] {
 				cm.account = email
-				if !a.searchResults[searchKey(email, cm.key)] {
+				if !a.searchResults[searchKey(email, cm.key)] || !a.unreadShown(cm, false) {
 					continue
 				}
 				a.listCache = append(a.listCache, cm)
@@ -380,21 +395,21 @@ func (a *App) updateList() {
 			}
 		}
 		a.shownMessages = len(a.listCache)
-		slices.SortFunc(rows, func(a, b *messageRow) int { return cmp.Compare(b.Date, a.Date) })
+		slices.SortFunc(rows, newestFirst)
 		a.listRows = rows
 		return
 	}
 	for _, start := range starts {
 		if flat {
 			for _, cm := range append([]*CacheMessage{start}, start.replies...) {
-				if a.hasLabel(cm) {
+				if a.hasLabel(cm) && a.unreadShown(cm, false) {
 					a.listCache = append(a.listCache, cm)
 					rows = append(rows, rowOf(cm))
 				}
 			}
 			continue
 		}
-		if !a.hasLabel(start) && !slices.ContainsFunc(start.replies, a.hasLabel) {
+		if !a.hasLabel(start) && !slices.ContainsFunc(start.replies, a.hasLabel) || !a.unreadShown(start, true) {
 			continue
 		}
 		a.listCache = append(a.listCache, start)
@@ -454,16 +469,58 @@ func (a *App) updateList() {
 			a.unreadMessages++
 		}
 	}
-	slices.SortFunc(rows, func(a, b *messageRow) int {
-		return cmp.Compare(b.Date, a.Date)
-	})
+	slices.SortFunc(rows, newestFirst)
 	a.listRows = rows
+}
+
+// unreadShown returns whether the list of messages shows the given message
+// (or conversation, of which it is the start) for [App.unreadOnly]: all of
+// them if it is off, and otherwise those that are unread (conversations
+// with any unread message), and those being read or selected, which stay
+// shown until another one is, rather than leaving the list when they are
+// read, as when they are clicked.
+func (a *App) unreadShown(cm *CacheMessage, conversation bool) bool {
+	if !a.unreadOnly || cm == a.readMessage {
+		return true
+	}
+	if slices.ContainsFunc(a.selectedRows, func(mr *messageRow) bool { return mr.message == cm }) {
+		return true
+	}
+	if conversation {
+		return !cm.isRead()
+	}
+	return !slices.Contains(cm.Flags, imap.FlagSeen)
+}
+
+// UnreadOnly sets whether the list of messages shows only the unread
+// messages (see [App.unreadOnly]).
+func (a *App) UnreadOnly(on bool) {
+	a.unreadOnly = on
+	a.Update()
+}
+
+// newestFirst compares the given rows of the list of messages for their
+// order, the newest first: by their whole times (those of the latest
+// messages of conversations), then their keys, so that rows of the same
+// minute, as shown, stay in the same order each time the list is updated,
+// instead of swapping (the sort of the list is stable), as the selection
+// of the rows did, with an unstable sort by the minutes.
+func newestFirst(x, y *messageRow) int {
+	tx, ty := x.message.Date, y.message.Date
+	if x.conversation {
+		tx = x.message.latestDate()
+	}
+	if y.conversation {
+		ty = y.message.latestDate()
+	}
+	return cmp.Or(ty.Compare(tx), cmp.Compare(x.message.key, y.message.key))
 }
 
 // initList initializes the tree table of the list of messages.
 func (a *App) initList(w *core.TreeTable) {
 	w.SetReadOnly(true)
 	w.ReadOnlyKeyNav = true
+	w.ReadOnlyMultiSelect = true                                                                  // several selected rows are shown as selected
 	w.ShowField = a.listField                                                                     // before the items
 	w.HeaderIcons = map[string]icons.Icon{"Attachments": icons.AttachFile, "Starred": icons.Star} // narrow columns
 	w.FitWidth = a.compactList()
@@ -507,8 +564,17 @@ func (a *App) initList(w *core.TreeTable) {
 			}
 		}
 	}
+	// the clicks and selections, in the debug log, as for selecting several
+	w.OnFirst(events.Click, func(e events.Event) {
+		slog.Debug("mail: click on the list", "mods", e.Modifiers().String(), "mode", e.SelectMode().String(), "selected", len(w.SelectedIndexes))
+	})
 	w.OnSelect(func(e events.Event) {
 		a.selectedRows = a.rowsSelected()
+		slog.Debug("mail: selected in the list", "rows", len(a.selectedRows), "index", w.SelectedIndex)
+		if len(a.selectedRows) > 1 { // the first selected is read, not marked read
+			a.readRow(a.selectedRows[0], false)
+			return
+		}
 		if mr := a.rowAt(w.SelectedIndex); mr != nil {
 			a.readRow(mr, true)
 		}
@@ -654,7 +720,7 @@ func (a *App) makeListPanel(p *tree.Plan) {
 				case a.allInboxes:
 					w.SetText("Inboxes")
 				default:
-					w.SetText(friendlyLabelName(a.showLabel))
+					w.SetText(a.mailboxName(a.currentEmail, a.showLabel))
 				}
 			})
 		})
@@ -687,7 +753,21 @@ func (a *App) makeListPanel(p *tree.Plan) {
 				if a.unreadMessages > 0 {
 					w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 				}
+				if a.unreadOnly {
+					w.Text += " (showing the unread)"
+				}
 			})
+		})
+		tree.AddChild(w, func(w *core.Button) {
+			w.SetIcon(icons.FilterList)
+			w.Updater(func() {
+				if a.unreadOnly { // shown as on
+					w.SetType(core.ButtonTonal).SetTooltip("Showing only the unread messages: click to show all of them")
+				} else {
+					w.SetType(core.ButtonAction).SetTooltip("Show only the unread messages")
+				}
+			})
+			w.OnClick(func(e events.Event) { a.UnreadOnly(!a.unreadOnly) })
 		})
 		tree.AddChild(w, func(w *core.Button) {
 			w.SetType(core.ButtonAction).SetIcon(icons.Refresh)

@@ -267,6 +267,9 @@ func (a *App) countUnread() {
 			if cm.isStarred() { // by the flag, as the Starred mailbox shows
 				counts[starred]++
 			}
+			if a.isUntagged(email, cm) {
+				counts[untaggedLabel]++
+			}
 		}
 		a.unread[email] = counts
 	}
@@ -282,7 +285,7 @@ func labelRank(label string) int {
 		return 1
 	case "Drafts", outboxLabel:
 		return 2
-	case "Sent":
+	case "Sent", untaggedLabel: // (Sent first, by name)
 		return 3
 	case "Spam", "Junk":
 		return 4
@@ -290,6 +293,61 @@ func labelRank(label string) int {
 		return 5
 	}
 	return 10
+}
+
+// isSpecial returns whether the given mailbox of the given account is one
+// of its special mailboxes, as the server says (with SPECIAL-USE): its
+// Inbox, Drafts, Sent, Spam, Trash, and Starred, or the outbox, which are
+// shown with their friendly names and icons, first. Others with names of
+// special mailboxes are ordinary labels, as those that other apps made on
+// Gmail ("Drafts", "Sent Messages", and "Deleted Messages" of Apple Mail,
+// besides [Gmail]/Drafts, Sent Mail, and Trash), which were shown twice
+// with the same names. Without the special mailboxes of the server, all are
+// special by their names.
+func (a *App) isSpecial(email, label string) bool {
+	if label == "INBOX" || label == outboxLabel || label == untaggedLabel || label == a.starredLabel(email) || label == a.draftsLabel(email) {
+		return true
+	}
+	su := a.specialUse[email]
+	if len(su) == 0 {
+		return true
+	}
+	for _, mb := range su {
+		if mb == label {
+			return true
+		}
+	}
+	return false
+}
+
+// mailboxName returns the name of the given mailbox of the given account as
+// shown: the friendly name of a special one (see [App.isSpecial]), as
+// Sent for [Gmail]/Sent Mail, or else its own name.
+func (a *App) mailboxName(email, label string) string {
+	if a.isSpecial(email, label) {
+		return friendlyLabelName(label)
+	}
+	return label
+}
+
+// mailboxRank is [labelRank] for the given mailbox of the given account,
+// which is that of the labels for one that is not special.
+func (a *App) mailboxRank(email, label string) int {
+	if !a.isSpecial(email, label) {
+		return 10
+	}
+	return labelRank(label)
+}
+
+// sortedMailboxes returns the given labels of the given account in the
+// order of its mailboxes: the special ones first, then the others by name.
+func (a *App) sortedMailboxes(email string, labels []string) []string {
+	labels = slices.Clone(labels)
+	slices.SortStableFunc(labels, func(x, y string) int {
+		return cmp.Or(cmp.Compare(a.mailboxRank(email, x), a.mailboxRank(email, y)),
+			cmp.Compare(strings.ToLower(a.mailboxName(email, x)), strings.ToLower(a.mailboxName(email, y))))
+	})
+	return labels
 }
 
 // sortedLabels returns the given labels in the order of the mailboxes.
@@ -305,13 +363,13 @@ func sortedLabels(labels []string) []string {
 // makeLabelTree recursively adds a Maker to the given tree to form a nested tree of labels.
 func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 	w.Maker(func(p *tree.Plan) {
-		friendlyParentLabel := friendlyLabelName(parentLabel)
-		labels := sortedLabels(a.mailboxLabels(email))
+		friendlyParentLabel := a.mailboxName(email, parentLabel)
+		labels := a.sortedMailboxes(email, a.mailboxLabels(email))
 		for _, label := range labels {
 			if skipLabels[label] || label == "INBOX" { // in the inboxes at the top
 				continue
 			}
-			friendlyLabel := friendlyLabelName(label)
+			friendlyLabel := a.mailboxName(email, label)
 			// Skip labels that are not directly nested under the parent label.
 			if parentLabel == "" && strings.Contains(friendlyLabel, "/") {
 				continue
@@ -322,7 +380,7 @@ func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 				}
 			}
 			hasChildren := slices.ContainsFunc(labels, func(l string) bool {
-				return !skipLabels[l] && strings.HasPrefix(friendlyLabelName(l), friendlyLabel+"/")
+				return !skipLabels[l] && strings.HasPrefix(a.mailboxName(email, l), friendlyLabel+"/")
 			})
 			tree.AddAt(p, label, func(w *MailboxTree) {
 				w.mailbox = mailboxID{email, label}
@@ -335,15 +393,19 @@ func (a *App) makeLabelTree(w *MailboxTree, email, parentLabel string) {
 				a.makeLabelTree(w, email, label)
 				w.Updater(func() {
 					// Recompute the friendly labels in case they have changed.
-					name := strings.TrimPrefix(friendlyLabelName(label), friendlyLabelName(parentLabel)+"/")
-					if ic, ok := labelIcons[name]; ok && parentLabel == "" {
+					name := strings.TrimPrefix(a.mailboxName(email, label), a.mailboxName(email, parentLabel)+"/")
+					if ic, ok := labelIcons[name]; ok && parentLabel == "" && a.isSpecial(email, label) {
 						w.SetIcon(ic)
 					} else if hasChildren {
 						w.SetIcon(icons.Folder)
 					} else {
 						w.SetIcon(icons.Label)
 					}
-					w.SetText(withCount(name, a.unread[email][label]))
+					n := a.unread[email][label]
+					if label == a.draftsLabel(email) { // the drafts, not unread
+						n = a.totalMessages[email][label]
+					}
+					w.SetText(withCount(name, n))
 					// The mailbox being shown is always selected.
 					current := !a.allInboxes && email == a.currentEmail && label == a.showLabel
 					if current {

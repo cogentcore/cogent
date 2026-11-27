@@ -64,14 +64,20 @@ func (a *App) RemoveAttachments() { //types:add
 			what = "the attachment of the message"
 		}
 	}
-	core.NewText(d).SetType(core.TextSupporting).SetText("Remove " + what +
-		", here and on the server, to save space? Each is replaced with a note of its name and size. They cannot be recovered.")
+	text := "Remove " + what + ", here and on the server, to save space? Each is replaced with a note of its name and size. They cannot be recovered."
+	if notDownloaded > 0 {
+		text += fmt.Sprintf(" (%d of the messages are not downloaded yet, and are skipped.)", notDownloaded)
+	}
+	core.NewText(d).SetType(core.TextSupporting).SetText(text)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Remove").OnClick(func(e events.Event) {
-			email := a.currentEmail
-			a.actionOn(email, msgs, func(c *imapclient.Client, cm *CacheMessage) error {
-				return a.removeAttachments(c, email, cm)
+			// each in its account, as of the selected messages of all of
+			// the inboxes
+			a.byAccount(msgs, func(email string, msgs []*CacheMessage, then ...func()) {
+				a.actionOn(email, msgs, func(c *imapclient.Client, cm *CacheMessage) error {
+					return a.removeAttachments(c, email, cm)
+				}, then...)
 			}, a.updateReading)
 		})
 	})

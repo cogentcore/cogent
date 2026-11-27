@@ -15,15 +15,26 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
 	"github.com/cogentcore/go-imap/v2/imapclient"
 )
 
-// isUserMailbox returns whether the given mailbox is one of the user,
-// which can be renamed and deleted, rather than a standard one.
-func isUserMailbox(label string) bool {
-	return label != "INBOX" && !strings.HasPrefix(label, "[Gmail]") && labelRank(label) == 10
+// isUserMailbox returns whether the given mailbox of the given account is
+// one of the user, which can be renamed and deleted, rather than a special
+// one (see [App.isSpecial]): also one with the name of a special mailbox
+// that is not one, as the "Drafts", "Sent Messages", and "Deleted
+// Messages" labels that Apple Mail made on Gmail. Without the special
+// mailboxes of the server, the special ones are those with their names.
+func (a *App) isUserMailbox(email, label string) bool {
+	if label == "" || label == "INBOX" || label == outboxLabel || strings.HasPrefix(label, "[Gmail]") {
+		return false
+	}
+	if len(a.specialUse[email]) == 0 {
+		return labelRank(label) == 10
+	}
+	return !a.isSpecial(email, label)
 }
 
 // mailboxMenu returns the context menu of the node of the given mailbox
@@ -31,7 +42,7 @@ func isUserMailbox(label string) bool {
 // itself for an empty label.
 func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Point) {
 	return func(m *core.Scene, pos image.Point) {
-		if label == "" || isUserMailbox(label) {
+		if label == "" || a.isUserMailbox(email, label) {
 			core.NewButton(m).SetText("New folder").SetIcon(icons.CreateNewFolder).OnClick(func(e events.Event) {
 				a.promptName("New folder", "Name of the new folder", "", "Create", func(name string) {
 					if label != "" {
@@ -41,13 +52,13 @@ func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Poi
 				})
 			})
 		}
-		if isUserMailbox(label) {
+		if a.isUserMailbox(email, label) {
 			core.NewButton(m).SetText("Rename folder").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 				parent, base := "", label
 				if i := strings.LastIndex(label, "/"); i >= 0 {
 					parent, base = label[:i+1], label[i+1:]
 				}
-				a.promptName("Rename folder", "New name of "+friendlyLabelName(label), base, "Rename", func(name string) {
+				a.promptName("Rename folder", "New name of "+a.mailboxName(email, label), base, "Rename", func(name string) {
 					a.RenameMailbox(email, label, parent+name)
 				})
 			})
@@ -58,6 +69,10 @@ func (a *App) mailboxMenu(email, label string) func(m *core.Scene, pos image.Poi
 		if label != "" {
 			core.NewSeparator(m)
 			core.NewButton(m).SetText("Mark all as read").SetIcon(icons.MarkEmailRead).OnClick(func(e events.Event) {
+				if label == untaggedLabel { // not a mailbox on the server
+					a.markUntaggedRead(email)
+					return
+				}
 				a.MarkAllAsRead(email, label)
 			})
 		} else {
@@ -103,7 +118,7 @@ func (a *App) messageMenu(m *core.Scene, pos image.Point) {
 		return
 	}
 	p := tree.Plan{}
-	if a.readMessage.isLocal() && len(a.selectedRows) <= 1 {
+	if (a.readMessage.isLocal() || a.isServerDraft(a.readMessage)) && len(a.selectedRows) <= 1 {
 		a.draftButtons(&p)
 	} else {
 		a.messageButtons(&p, false)
@@ -249,7 +264,7 @@ func (a *App) confirmDeleteMailbox(email, label string) {
 			subs++
 		}
 	}
-	msg := fmt.Sprintf("Delete the folder %s", friendlyLabelName(label))
+	msg := fmt.Sprintf("Delete the folder %s", a.mailboxName(email, label))
 	if subs > 0 {
 		msg += fmt.Sprintf(" and its %d subfolders", subs)
 	}
@@ -342,7 +357,7 @@ func (a *App) MarkAllAsRead(email, label string) {
 // accounts, which the messages are copied to.
 func (a *App) File() { //types:add
 	from := a.showLabel
-	a.chooseMailbox("File", "Move to", a.filingAccounts(), mailboxID{a.currentEmail, from}, func(target mailboxID) {
+	a.chooseMailbox("File", "Move to", a.filingAccounts(), mailboxID{a.currentEmail, from}, &Settings.LastFiled, func(target mailboxID) {
 		a.byAccount(a.readMessages(), func(email string, msgs []*CacheMessage, then ...func()) {
 			if target.email == email {
 				a.fileTo(email, msgs, from, target.label, then...)
@@ -356,7 +371,7 @@ func (a *App) File() { //types:add
 // Tag adds another label (mailbox) to the current message or conversation,
 // which stays in the mailbox being shown.
 func (a *App) Tag() { //types:add
-	a.chooseMailbox("Tag", "Add the label", []string{a.currentEmail}, mailboxID{}, func(target mailboxID) {
+	a.chooseMailbox("Tag", "Add the label", []string{a.currentEmail}, mailboxID{}, nil, func(target mailboxID) {
 		a.tagWith(target.label)
 	})
 }
@@ -489,37 +504,76 @@ func (a *App) tagWith(target string) {
 // one of the mailboxes of the given accounts, other than the given one,
 // calling the given function with it. Those of the first account have
 // their names, and those of the others have the account first.
-func (a *App) chooseMailbox(title, prompt string, accounts []string, except mailboxID, fun func(target mailboxID)) {
+//
+// If last is not nil, it is the mailbox chosen last (as by [mailboxKey]),
+// which is chosen at first, for choosing it again with the button of the
+// title (or Return), as for filing many messages into the same mailbox,
+// and the mailbox chosen is saved in it.
+func (a *App) chooseMailbox(title, prompt string, accounts []string, except mailboxID, last *string, fun func(target mailboxID)) {
 	if a.readMessage == nil {
 		return
+	}
+	choose := func(d *core.Body, mb mailboxID) {
+		d.Close()
+		if last != nil && *last != mailboxKey(mb.email, mb.label) {
+			*last = mailboxKey(mb.email, mb.label)
+			a.saveSettings() // also for the next run
+		}
+		fun(mb)
 	}
 	d := core.NewBody(title)
 	core.NewText(d).SetText(prompt)
 	ch := core.NewChooser(d).SetEditable(true).SetPlaceholder("Mailbox")
 	for i, email := range accounts {
-		for _, label := range sortedLabels(a.labels[email]) {
+		for _, label := range a.sortedMailboxes(email, a.labels[email]) {
 			mb := mailboxID{email, label}
-			if r := labelRank(label); skipLabels[label] || mb == except || r == 1 || r == 2 { // not Starred or Drafts
+			if r := a.mailboxRank(email, label); skipLabels[label] || mb == except || r == 1 || r == 2 { // not Starred or Drafts
 				continue
 			}
-			text := friendlyLabelName(label)
+			text := a.mailboxName(email, label)
 			if i > 0 {
 				text = email + ": " + text
 			}
 			ch.Items = append(ch.Items, core.ChooserItem{Value: mb, Text: text})
+			if last != nil && *last == mailboxKey(mb.email, mb.label) {
+				ch.SetCurrentValue(mb) // the one chosen last, at first
+			}
 		}
 	}
-	ch.OnShow(func(e events.Event) { ch.SetFocus() })
+	ch.OnShow(func(e events.Event) {
+		ch.SetFocus()
+		// the one chosen last is selected, so that typing replaces it
+		if tf := ch.TextField(); tf != nil && ch.CurrentItem.Text != "" {
+			tf.SelectAll()
+		}
+	})
+	if last != nil { // Return chooses the current one (the last), not the menu
+		ch.OnFirst(events.KeyChord, func(e events.Event) {
+			if keymap.Of(e.KeyChord()) != keymap.Enter {
+				return
+			}
+			if mb, ok := ch.CurrentItem.Value.(mailboxID); ok && mb.label != "" {
+				e.SetHandled()
+				choose(d, mb)
+			}
+		})
+	}
 	ch.OnChange(func(e events.Event) {
 		mb, ok := ch.CurrentItem.Value.(mailboxID)
 		if !ok || mb.label == "" {
 			return
 		}
-		d.Close()
-		fun(mb)
+		choose(d, mb)
 	})
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
+		if last != nil { // the current one, as the one chosen last
+			d.AddOK(bar).SetText(title).OnClick(func(e events.Event) {
+				if mb, ok := ch.CurrentItem.Value.(mailboxID); ok && mb.label != "" {
+					choose(d, mb)
+				}
+			})
+		}
 	})
 	d.RunDialog(a)
 }

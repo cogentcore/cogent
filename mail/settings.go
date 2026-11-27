@@ -43,6 +43,11 @@ type SettingsData struct { //types:add
 	// of the message.
 	FilingAccount AccountName
 
+	// LastFiled is the mailbox that messages were filed into last, which
+	// the File dialog chooses at first, for filing more messages there
+	// (see [mailboxKey]).
+	LastFiled string `display:"-"`
+
 	// ContactsAccount is the account whose Google Contacts the contacts
 	// made here are added to, of those whose contacts are synced (in the
 	// menu of the account). By default it is the first of them.
@@ -277,12 +282,13 @@ var skipLabels = map[string]bool{
 
 // labelIcons are the icons for each friendly label name.
 var labelIcons = map[string]icons.Icon{
-	"Inbox":   icons.Inbox,
-	"Drafts":  icons.Draft,
-	"Outbox":  icons.Outbox,
-	"Sent":    icons.Send,
-	"Starred": icons.Star,
-	"Spam":    icons.Report,
-	"Junk":    icons.Report,
-	"Trash":   icons.Delete,
+	"Inbox":       icons.Inbox,
+	"Drafts":      icons.Draft,
+	"Outbox":      icons.Outbox,
+	"Sent":        icons.Send,
+	"Starred":     icons.Star,
+	"Spam":        icons.Report,
+	"Junk":        icons.Report,
+	"Trash":       icons.Delete,
+	untaggedLabel: icons.Archive,
 }

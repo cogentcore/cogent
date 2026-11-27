@@ -55,6 +55,12 @@ type SendMessage struct {
 	// if any, whose attachments can be included (see [App.includeAttachments]).
 	original *CacheMessage
 
+	// serverDraft is the draft on the server that this is written from, as
+	// one written in Gmail, which is moved to the trash once this is
+	// saved, sent, or discarded, as this replaces it (see
+	// [App.removeServerDraft]). It is that of the holder of a copy.
+	serverDraft *CacheMessage
+
 	// replyAll, if set, are the recipients to add for a reply to all,
 	// with the Reply all button of its compose window, as for a reply
 	// to the address of a mailto: link (see [App.replyMailto]).
@@ -273,7 +279,11 @@ func (a *App) compose(title string) *core.Body {
 		}
 		changed = true
 		withApp(func(c *SendMessage) {
-			core.ErrorSnackbar(a, a.saveDraft(c), "Error saving draft")
+			err := a.saveDraft(c)
+			core.ErrorSnackbar(a, err, "Error saving draft")
+			if err == nil {
+				a.removeServerDraft(c) // replaced by this one
+			}
 		})
 	}
 	var timer *time.Timer
@@ -335,6 +345,7 @@ func (a *App) compose(title string) *core.Body {
 				a.deleteDraft(d)
 				a.Update()
 			}
+			a.removeServerDraft(c)           // discarded too
 			a.removeForwarded(c.Attachments) // also those added since it was saved
 		})
 	}
@@ -417,6 +428,7 @@ func (a *App) compose(title string) *core.Body {
 						core.ErrorSnackbar(a, err, "Error sending message (it is in Drafts)")
 						return
 					}
+					a.removeServerDraft(c) // sent instead
 					go a.sendOutboxShowing(d.Account)
 				})
 			})

@@ -266,8 +266,9 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 					w.Maker(func(p *tree.Plan) {
 						for _, label := range otherLabels(dmf.Message) {
 							tree.AddAt(p, label, func(w *core.Button) {
-								w.SetType(core.ButtonTonal).SetText(friendlyLabelName(label)).SetIcon(icons.Label)
-								w.SetTooltip("Show the messages of " + friendlyLabelName(label))
+								name := theApp.mailboxName(theApp.accountOf(dmf.Message), label)
+								w.SetType(core.ButtonTonal).SetText(name).SetIcon(icons.Label)
+								w.SetTooltip("Show the messages of " + name)
 								w.OnClick(func(e events.Event) {
 									inApp(w, func() { theApp.showMailbox(theApp.accountOf(dmf.Message), label) })
 								})
@@ -308,45 +309,45 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 	})
 }
 
-// displayMessageContents updates the given frame to display the contents of
-// the current message, if it does not already.
-func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
-	w.SetProperty("readMessage", shownMessage{dmf.Message, dmf.Message.Filename})
-	w.DeleteChildren()
-
-	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.accountOf(dmf.Message)), dmf.Message.Filename))
+// parseMessage parses the downloaded contents of the given message: it sets
+// its [readMessageParsed], its plain text, attachments (with the images that
+// its HTML does not show), and references, and returns its HTML parts, its
+// images by their Content-IDs, and the IDs of the images shown after it, as
+// attachments (see [DisplayMessageFrame.displayMessageContents]). It is
+// also used to edit a draft of the server (see [App.editServerDraft]).
+func parseMessage(cm *CacheMessage) (htmls []string, images map[string]*partImage, shown []string, err error) {
+	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.accountOf(cm)), cm.Filename))
 	if err != nil {
-		return err
+		return
 	}
 	defer f.Close()
 
 	mr, err := mail.CreateReader(f)
 	if err != nil {
-		return err
+		return
 	}
 
 	refs, err := mr.Header.MsgIDList("References")
 	if err != nil {
-		return err
+		return
 	}
-	dmf.Message.parsed.references = refs
+	cm.parsed.references = refs
 
-	dmf.Message.parsed.attachments = nil
-	dmf.Message.parsed.removed = nil
-	dmf.Message.parsed.plain = ""
-	var htmls []string
-	images := map[string]*partImage{} // by their Content-IDs
-	var order []string                // the IDs of the images, in order
+	cm.parsed.attachments = nil
+	cm.parsed.removed = nil
+	cm.parsed.plain = ""
+	images = map[string]*partImage{} // by their Content-IDs
+	var order []string               // the IDs of the images, in order
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			return nil, nil, nil, err
 		}
 
 		if im, err := readPartImage(p); err != nil {
-			return err
+			return nil, nil, nil, err
 		} else if im != nil { // inline or attached, shown in the message
 			id := im.id
 			if id == "" {
@@ -360,62 +361,72 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 		case *mail.InlineHeader:
 			ct, _, err := h.ContentType()
 			if err != nil {
-				return err
+				return nil, nil, nil, err
 			}
 
 			if name := h.Get(removedHeader); name != "" { // shown with the attachments
 				if dec, err := new(mime.WordDecoder).DecodeHeader(name); err == nil {
 					name = dec
 				}
-				dmf.Message.parsed.removed = append(dmf.Message.parsed.removed, name)
+				cm.parsed.removed = append(cm.parsed.removed, name)
 				continue
 			}
 			switch {
 			case ct == "text/plain":
 				b, err := io.ReadAll(p.Body)
 				if err != nil {
-					return err
+					return nil, nil, nil, err
 				}
 				// all of the text parts, in order, as Apple Mail sends
 				// text, then attachments, then more (often blank) text
 				if text := string(b); strings.TrimSpace(text) != "" {
-					if dmf.Message.parsed.plain != "" {
-						dmf.Message.parsed.plain += "\n\n"
+					if cm.parsed.plain != "" {
+						cm.parsed.plain += "\n\n"
 					}
-					dmf.Message.parsed.plain += text
+					cm.parsed.plain += text
 				}
 			case ct == "text/html":
 				h, err := io.ReadAll(p.Body)
 				if err != nil {
-					return err
+					return nil, nil, nil, err
 				}
 				htmls = append(htmls, string(h))
 			}
 		case *mail.AttachmentHeader:
 			fname, err := h.Filename()
 			if err != nil {
-				return err
+				return nil, nil, nil, err
 			}
 			at := &Attachment{Filename: fname}
 			at.Data, err = io.ReadAll(p.Body)
 			if err != nil {
-				return err
+				return nil, nil, nil, err
 			}
-			dmf.Message.parsed.attachments = append(dmf.Message.parsed.attachments, at)
+			cm.parsed.attachments = append(cm.parsed.attachments, at)
 		}
 	}
 
 	// the images that the HTML does not show are attachments, shown after
 	// the body, as photos sent from phones
 	all := strings.Join(htmls, "")
-	var shown []string
 	for _, id := range order {
 		if im := images[id]; im.id == "" || !strings.Contains(all, "cid:"+id) {
-			dmf.Message.parsed.attachments = append(dmf.Message.parsed.attachments, &Attachment{Filename: im.name, Data: im.data})
+			cm.parsed.attachments = append(cm.parsed.attachments, &Attachment{Filename: im.name, Data: im.data})
 			shown = append(shown, id)
 		}
 	}
+	return htmls, images, shown, nil
+}
 
+// displayMessageContents updates the given frame to display the contents of
+// the current message, if it does not already.
+func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
+	w.SetProperty("readMessage", shownMessage{dmf.Message, dmf.Message.Filename})
+	w.DeleteChildren()
+	htmls, images, shown, err := parseMessage(dmf.Message)
+	if err != nil {
+		return err
+	}
 	prefix := dmf.Message.Filename + "/" // unique, as images are cached by URL
 	ctx := messageImagesContext(messageContext(dmf.Message), prefix, images)
 	for _, h := range htmls {

@@ -16,6 +16,8 @@ The first time you start Cogent Mail, it asks you to add an account. You can add
 - **iCloud**: you sign in with an *app-specific password*, which you make at [account.apple.com](https://account.apple.com), under Sign-In and Security.
 - **IMAP**: any other account, with the addresses of its IMAP and SMTP servers (as `imap.example.com:993` and `smtp.example.com:587`), and its password.
 
+Cogent Mail signs in to Gmail with its own client registered with Google, which is built into the app, also when you build it from the source code. To use a client of your own instead, set the environment variables `GOOGLE_OAUTH2_CLIENT_ID` and `GOOGLE_OAUTH2_CLIENT_SECRET`. Microsoft accounts need the client ID of an app registered with Microsoft, in `MICROSOFT_OAUTH2_CLIENT_ID`.
+
 Passwords are kept in the keychain of your system, not in the settings. If a password changes, use **Change password** in the context menu of the account; if signing in expires, use **Sign in again**. **Remove account** removes the account and its mail from Cogent Mail (not from the server).
 
 ## Layout
@@ -25,6 +27,8 @@ The window has three panels, side by side, which you can resize by dragging the 
 - **Mailboxes** (left): **Inboxes** at the top, with the inbox of each account, and then each account with its mailboxes (folders). The numbers are the unread messages. Below them, the status shows what is being synced.
 - **Messages** (middle): the messages of the mailbox, with its name and the numbers of its messages above them, and a search field.
 - **Message** (right): the message or conversation you are reading.
+
+Each Gmail account also has **Untagged**: the messages that no other mailbox shows, without any label (other than Important), not sent by you, and not starred, as those archived in Gmail, and those whose only label was deleted, which would otherwise not be shown, as Gmail keeps them in All Mail. File a message out of it to give it a label.
 
 Click **Inboxes** to see the inboxes of all of your accounts together, the newest first. Replying to, filing, or deleting a message there acts in its own account.
 
@@ -42,9 +46,9 @@ The view button (the tune icon) above the list sets what it shows:
 - **Attachments**: the number of attachments of each message.
 - **Stars**: the stars of the starred messages.
 
-The refresh button checks for new messages in the mailbox now. Inboxes are also checked every 15 seconds, and right away when the server reports new mail; the other mailboxes are synced every minute.
+The filter button, before the refresh button, shows only the unread messages (or conversations with any), and shows all of them again when clicked again. The message you read stays in the list until you read another one. The refresh button checks for new messages in the mailbox now. Inboxes are also checked every 15 seconds, and right away when the server reports new mail; the other mailboxes are synced every minute.
 
-You can select several messages with `Shift` or `Command` and a click, and then file, tag, star, delete, or mark them all at once. Double-click a message to open it in a window of its own, so that you can see several messages at the same time; its toolbar, at the bottom, has **Reply**, **Reply all**, and **Forward**. Double-clicking a draft opens it for writing it more.
+You can select several messages with `Shift` or `Command` and a click, and then file, tag, star, delete, or mark them all at once. The first of them is shown in the message panel. Double-click a message to open it in a window of its own, so that you can see several messages at the same time; its toolbar, at the bottom, has **Reply**, **Reply all**, and **Forward**. Double-clicking a draft opens it for writing it more.
 
 ### Reading messages
 
@@ -59,14 +63,14 @@ The **Date** line of the header also has the **Size** of the message, with its a
 The context menu of a message (and the toolbar) has these actions, which apply to all of the selected messages:
 
 - **Reply** (`Command+R`), **Reply all** (`Command+W` or `Command+Shift+R`), and **Forward** (`Command+F` or `Command+Shift+F`). A forward includes the attachments.
-- **File** (`Control+O`): moves the messages to another mailbox, out of the one shown. You can file into a mailbox of another account, which copies the messages there. The **FilingAccount** setting puts the mailboxes of one account first, as for filing all of your mail into the folders of one account.
+- **File** (`Control+O`): moves the messages to another mailbox, out of the one shown. You can file into a mailbox of another account, which copies the messages there. The **FilingAccount** setting puts the mailboxes of one account first, as for filing all of your mail into the folders of one account. The dialog starts on the mailbox you filed into last, so that you can file more there with its **File** button (or `Return`).
 - **Tag** (`Control+T`): adds another label (mailbox) to the messages, which stay in the mailbox shown. On Gmail, mailboxes are labels, and a message can be in several of them.
 - **Star** (`Command+Shift+L`): stars the messages, or unstars them if they are all starred. The **Starred** mailbox has all of the starred messages.
 - **Delete** (`Delete`, `Backspace`, or `Control+D`): moves the messages to the trash. The next message is selected.
 - **Mark as read** and **Mark as unread** (`Command+Shift+U`).
 - **Remove attachments** (`Command+X`): removes the attachments of the messages, to save space, both here and on the server, replacing each with a note of its name and size. The attachments cannot be recovered, so it asks first.
 
-The context menu of a mailbox has **Sync now**, **Mark all as read**, **New folder**, **Rename folder**, and **Delete folder**.
+The context menu of a mailbox has **Mark all as read**, and for your own mailboxes (folders and labels) **New folder**, **Rename folder**, and **Delete folder**. The standard mailboxes of the server (Inbox, Drafts, Sent, Spam, Trash, and Starred) cannot be renamed or deleted, but other mailboxes with the same names can, such as the "Sent Messages" and "Deleted Messages" labels that other mail apps make on Gmail, which are shown with their own names. The context menu of an account has **Sync now**.
 
 ## Search
 
@@ -86,7 +90,7 @@ Click **Compose** in the toolbar (`Command+N`) to write a new message. The windo
 - **Formatting**: the message is markdown, so `*italic*`, `**bold**`, lists, and links are formatted when it is sent. Lines starting with `>` are quoted. The buttons at the end of the From line quote the selected lines one more level (`Command+'`) or one less (`Command+Alt+'`).
 - **Replies** quote the message replied to, below the signature. In a reply to a `mailto:` link, **Reply all** adds everyone in the message. The **Attachments** switch includes the attachments of the message replied to.
 - **Attachments**: drop files on the window, from the Finder or from other messages, to attach them.
-- **Drafts**: the message is saved in Drafts as you write. **Save draft** closes the window and keeps it there; **Discard** deletes it. To keep writing a draft, double-click it in Drafts, or select it and choose **Edit draft**. Closing a new message asks whether to save it.
+- **Drafts**: the message is saved in Drafts as you write. **Save draft** closes the window and keeps it there; **Discard** deletes it. To keep writing a draft, double-click it in Drafts, or select it and choose **Edit draft**. This also works for drafts written elsewhere, as in Gmail on the web or on your phone: once you save, send, or discard it here, the draft on the server is moved to the trash, as the one here replaces it. Closing a new message asks whether to save it.
 - **Send** (`Command+Return`): the message goes to the **Outbox** first, and is sent from there. If it cannot be sent, as when you are offline, it waits there and is sent once you are connected; if the server refuses it, it stays there with the reason, and you can **Edit draft** or **Send again**.
 
 Changing the From account changes the signature to its default one, and the automatic Bcc.

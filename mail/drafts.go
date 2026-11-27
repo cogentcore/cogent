@@ -104,6 +104,9 @@ func (a *App) mailboxLabels(email string) []string {
 	if st := a.starredLabel(email); len(labels) > 0 && !slices.Contains(labels, st) {
 		labels = append(slices.Clone(labels), st) // a local one, by the flag
 	}
+	if a.gmail[email] && len(labels) > 0 { // the messages without labels
+		labels = append(slices.Clone(labels), untaggedLabel)
+	}
 	a.draftsMu.Lock()
 	defer a.draftsMu.Unlock()
 	for _, d := range a.drafts {
@@ -465,10 +468,82 @@ func joinErrors(errs []error) error {
 	return fmt.Errorf("%w (and %d more)", errs[0], len(errs)-1)
 }
 
+// isServerDraft returns whether the given message is a draft on the server,
+// in the Drafts mailbox of its account, as one written in Gmail or on a
+// phone, not a draft of this app (which are local).
+func (a *App) isServerDraft(cm *CacheMessage) bool {
+	if cm == nil || cm.isLocal() {
+		return false
+	}
+	drafts := a.draftsLabel(a.accountOf(cm))
+	return slices.ContainsFunc(cm.Labels, func(l Label) bool { return l.Name == drafts })
+}
+
+// editServerDraft opens the given draft on the server for writing it more,
+// from its account, with its recipients, subject, text, and attachments.
+// Once it is saved here (as it is written), sent, or discarded, the draft
+// on the server is moved to the trash, as the draft of this app replaces it
+// (see [App.removeServerDraft]); closing it without changes keeps it.
+func (a *App) editServerDraft(cm *CacheMessage) {
+	if cm.Filename == "" {
+		core.MessageSnackbar(a, "The draft is not downloaded yet")
+		return
+	}
+	if _, _, _, err := parseMessage(cm); err != nil {
+		core.ErrorSnackbar(a, err, "Error reading the draft")
+		return
+	}
+	defer a.inAccountOf(cm)()
+	email := a.accountOf(cm)
+	sm := &SendMessage{To: IMAPToMailAddresses(cm.To), Cc: IMAPToMailAddresses(cm.Cc),
+		Bcc: IMAPToMailAddresses(cm.Bcc), Subject: cm.Subject, body: cm.parsed.plain,
+		inReplyTo: firstOf(cm.InReplyTo), references: cm.parsed.references, serverDraft: cm}
+	if len(sm.To) == 0 {
+		sm.To = []*mail.Address{{}}
+	}
+	sm.Sender.From = SenderAccount(email)
+	sm.Sender.Signature = "" // as written, with any signature already in it
+	a.composeMessage = sm
+	sm.original = cm // its attachments, as for a forward
+	core.ErrorSnackbar(a, a.includeAttachments(sm, true), "Error including attachments")
+	sm.original = nil
+	a.compose("Draft")
+}
+
+// firstOf returns the first of the given strings, or "".
+func firstOf(s []string) string {
+	if len(s) == 0 {
+		return ""
+	}
+	return s[0]
+}
+
+// removeServerDraft moves the draft on the server that the given message
+// was written from, if any (see [SendMessage.serverDraft]), to the trash,
+// once, as the message replaces it. It must be called with the lock of the
+// window.
+func (a *App) removeServerDraft(sm *SendMessage) {
+	h := sm.holder()
+	cm := h.serverDraft
+	if cm == nil {
+		return
+	}
+	h.serverDraft = nil
+	email := a.accountOf(cm)
+	trash := a.trash[email]
+	if trash == "" {
+		return
+	}
+	a.setLabelsOn(email, []*CacheMessage{cm}, func(*CacheMessage) []string { return []string{trash} })
+}
+
 // isDraft returns whether the given message is a draft, being written,
 // not one in the outbox, waiting to be sent, which double-clicking edits
 // (see [App.EditDraft]) instead of showing in a window of its own.
 func (a *App) isDraft(cm *CacheMessage) bool {
+	if a.isServerDraft(cm) {
+		return true
+	}
 	d := a.draftOf(cm)
 	if d == nil {
 		return false
@@ -479,8 +554,14 @@ func (a *App) isDraft(cm *CacheMessage) bool {
 }
 
 // EditDraft opens the draft being read for writing it more. A message in
-// the outbox goes back to the drafts until it is sent again.
+// the outbox goes back to the drafts until it is sent again. A draft on
+// the server, as one written in Gmail, is written here, and then replaced
+// by the draft of this app (see [App.editServerDraft]).
 func (a *App) EditDraft() { //types:add
+	if a.isServerDraft(a.readMessage) {
+		a.editServerDraft(a.readMessage)
+		return
+	}
 	d := a.draftOf(a.readMessage)
 	if d == nil {
 		return
@@ -559,6 +640,10 @@ func (a *App) draftButtons(p *tree.Plan) {
 		})
 	}
 	tree.AddAt(p, "DiscardDraft", func(w *core.FuncButton) {
+		if !a.readMessage.isLocal() { // a draft on the server, to the trash
+			w.SetFunc(a.Delete).SetText("Discard").SetIcon(icons.Delete).SetShortcut(shortcutOf("Delete"))
+			return
+		}
 		w.SetFunc(a.DiscardDraft).SetText("Discard").SetIcon(icons.Delete).SetShortcut(shortcutOf("Delete"))
 	})
 }

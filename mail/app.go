@@ -22,6 +22,7 @@ import (
 	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/cogent/mail/testserver"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -171,6 +172,11 @@ type App struct {
 	// [App.openMessageWindow]), under the lock of the main window.
 	messageWindows []*core.Body
 
+	// unreadOnly is whether the list of messages shows only the unread
+	// messages (or conversations with any), with its filter button (see
+	// [App.unreadShown]).
+	unreadOnly bool
+
 	// allInboxes is whether the list of messages shows the inboxes of all
 	// of the accounts together, with showLabel "INBOX", in which case
 	// currentEmail is that of the message being read, which the actions on
@@ -294,6 +300,7 @@ var theApp *App
 
 func (a *App) Init() {
 	theApp = a
+	useBuiltinCredentials() // of signing in to Gmail, unless set otherwise
 	a.Frame.Init()
 	a.tokens = map[string]oauth2.TokenSource{}
 	a.authErrs = map[string]error{}
@@ -384,17 +391,16 @@ func (a *App) Init() {
 				if a.readMessage == nil {
 					return
 				}
-				if n := len(a.selectedRows); n > 1 {
-					tree.Add(p, func(w *core.Text) {
-						w.SetType(core.TextHeadlineSmall)
+				if n := len(a.selectedRows); n > 1 { // the first of them is shown
+					tree.AddAt(p, "selected", func(w *core.Text) {
+						w.SetType(core.TextSupporting)
+						w.Styler(func(s *styles.Style) {
+							s.Color = colors.Scheme.Primary.Base
+						})
 						w.Updater(func() {
-							w.SetText(fmt.Sprintf("%d selected", len(a.selectedRows)))
+							w.SetText(fmt.Sprintf("%d selected: file, tag, star, delete, and mark them all at once. The first is shown.", len(a.selectedRows)))
 						})
 					})
-					tree.Add(p, func(w *core.Text) {
-						w.SetType(core.TextSupporting).SetText("File, tag, delete, and mark them all at once.")
-					})
-					return
 				}
 				add := func(cm *CacheMessage) {
 					tree.AddAt(p, cm.Filename, func(w *DisplayMessageFrame) {
@@ -473,7 +479,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
-		if a.readMessage.isLocal() && len(a.selectedRows) <= 1 {
+		if (a.readMessage.isLocal() || a.isServerDraft(a.readMessage)) && len(a.selectedRows) <= 1 {
 			a.draftButtons(p)
 		} else {
 			a.messageButtons(p, true)
