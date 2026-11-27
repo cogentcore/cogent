@@ -6,10 +6,12 @@ package photos
 
 import (
 	"fmt"
+	"os"
 	"image"
 	"testing"
 	"time"
 
+	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -85,7 +87,7 @@ func TestGridMultiSelect(t *testing.T) {
 		ev := a.grid.SystemEvents()
 		ev.MouseButton(events.MouseDown, events.Left, pt, mods)
 		ev.MouseButton(events.MouseUp, events.Left, pt, mods)
-		time.Sleep(300 * time.Millisecond) // not a double click
+		time.Sleep(800 * time.Millisecond) // not a double click
 	}
 	var cmd key.Modifiers
 	cmd.SetFlag(true, key.Meta)
@@ -143,4 +145,32 @@ func TestGridMultiSelect(t *testing.T) {
 		assert.Equal(t, []int{7}, selected())
 		b.AsyncUnlock()
 	})
+}
+
+// TestGridSelectedShot renders a grid with several photos selected, saved
+// in PHOTOS_SHOT_IMAGE, for looking at how they are shown.
+func TestGridSelectedShot(t *testing.T) {
+	fn := os.Getenv("PHOTOS_SHOT_IMAGE")
+	if fn == "" {
+		t.Skip("PHOTOS_SHOT_IMAGE not set")
+	}
+	lib := smallLibrary(t, 12)
+	b := core.NewBody()
+	a := NewApp(b)
+	a.shown = allKey
+	img := core.RenderImage(b, func() {
+		b.AsyncLock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.grid.CellSize = units.Dp(100)
+		a.refresh()
+		b.AsyncUnlock()
+		time.Sleep(time.Second)
+		b.AsyncLock()
+		a.grid.Selected = map[int]bool{1: true, 2: true, 5: true}
+		a.grid.Current = 5
+		a.grid.NeedsRender()
+		b.AsyncUnlock()
+	})
+	imagex.Save(img, fn)
 }

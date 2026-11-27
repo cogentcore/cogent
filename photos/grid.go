@@ -326,11 +326,8 @@ func (g *Grid) Render() {
 			ix := int(x+gap) + (inner-isz.X)/2
 			iy := int(y+gap) + (inner-isz.Y)/2
 			dst := image.Rect(ix, iy, ix+isz.X, iy+isz.Y)
-			if g.Selected[idx] { // a frame around it
-				pc.Fill.Color = colors.Scheme.Select.Container
-				if idx == g.Current {
-					pc.Fill.Color = colors.Scheme.Primary.Base
-				}
+			if g.Selected[idx] { // a frame around it, the same for all, as in other apps
+				pc.Fill.Color = colors.Scheme.Primary.Base
 				pc.Stroke.Color = nil
 				pc.RoundedRectangle(float32(ix)-gap, float32(iy)-gap, float32(isz.X)+2*gap, float32(isz.Y)+2*gap, gap)
 				pc.Draw()
