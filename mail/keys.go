@@ -323,8 +323,9 @@ func (a *App) focusPanelDelta(delta int) {
 }
 
 // focusPanel moves the keyboard focus into the given panel, returning
-// false if nothing in it can take the focus: onto the mailbox being shown
-// and the list of messages. The focus is quiet, without the highlight of
+// false if nothing in it can take the focus: onto the mailbox being shown,
+// the list of messages, and the panel of the message being read, which
+// then scrolls with the arrow keys, PageUp and PageDown, and Home and End. The focus is quiet, without the highlight of
 // the focus from the keyboard, as the selection shows where it is.
 func (a *App) focusPanel(w core.Widget) bool {
 	if a.mailboxes != nil && a.mailboxes.Parent != nil && a.mailboxes.Parent.AsTree().Parent == w { // the sidebar
@@ -335,6 +336,13 @@ func (a *App) focusPanel(w core.Widget) bool {
 	}
 	if a.list != nil && a.list.Parent == w {
 		a.list.SetFocusQuiet() // a read-only list, with key navigation
+		return true
+	}
+	if w == a.readPanel { // the message, scrolled with the keys
+		if a.readMessage == nil {
+			return false
+		}
+		a.readPanel.SetFocusQuiet()
 		return true
 	}
 	return focusWithin(w)

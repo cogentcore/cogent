@@ -28,6 +28,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
 	"github.com/cogentcore/go-imap/v2"
 	"github.com/cogentcore/go-imap/v2/imapclient"
@@ -160,6 +161,10 @@ type App struct {
 
 	// showLabel is the current label to show messages for.
 	showLabel string
+
+	// messageWindows are the windows of messages open (see
+	// [App.openMessageWindow]), under the lock of the main window.
+	messageWindows []*core.Body
 
 	// allInboxes is whether the list of messages shows the inboxes of all
 	// of the accounts together, with showLabel "INBOX", in which case
@@ -361,6 +366,8 @@ func (a *App) Init() {
 			a.readPanel = w
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
+				// it takes the focus, to scroll the message with the keys
+				s.SetAbilities(true, abilities.Focusable)
 			})
 			w.Updater(func() {
 				if a.readMessage != a.readShown { // a new message: from its top

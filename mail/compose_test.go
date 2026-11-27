@@ -7,6 +7,7 @@ package mail
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/core/core"
@@ -165,4 +166,31 @@ func TestMessagesOnly(t *testing.T) {
 			assert.True(t, a.hasLabel(mr.message), "only those in the mailbox")
 		}
 	}))
+}
+
+// TestSignatureDash tests that a line of the signature that would be a
+// list of one item in markdown, as "- Randy", is plain text in the HTML of
+// the message, while the lists of the message itself are still lists.
+func TestSignatureDash(t *testing.T) {
+	old := Settings.Signatures
+	t.Cleanup(func() { Settings.Signatures = old })
+	Settings.Signatures = []Signature{{Name: "Short", Text: "- Randy\n"}, {Name: "Long", Text: "Randy\n- a\n- b\n"}}
+	html := func(sig SignatureName, body string) string {
+		d := &draft{Signature: sig, Body: body, Date: time.Now(),
+			From: []*gomail.Address{{Address: testEmail}}, To: []*gomail.Address{{Address: "a@example.com"}}}
+		msg, err := buildMessage(d, false)
+		require.NoError(t, err)
+		return string(msg)
+	}
+	sig := signatureNamed("Short")
+	msg := html("Short", "Items:\n\n- one\n- two\n\n"+sig)
+	assert.Contains(t, msg, "<li>one</li>", "the lists of the message")
+	assert.NotContains(t, msg, "<li>Randy</li>")
+	assert.Contains(t, msg, "<p>- Randy</p>", "the signature as written")
+	assert.Contains(t, msg, "\r\n- Randy", "the plain text as written")
+	msg = html("Long", "Hi\n\n"+signatureNamed("Long"))
+	assert.Contains(t, msg, "<li>a</li>", "a list of more than one item in a signature")
+	assert.Equal(t, "Randy  \n\\- x  \nHi", escapeLoneItems("Randy  \n- x  \nHi"))
+	assert.Equal(t, "  \\* x", escapeLoneItems("  * x"))
+	assert.Equal(t, "-- \nMe", escapeLoneItems("-- \nMe"), "the delimiter is not an item")
 }

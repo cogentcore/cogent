@@ -66,6 +66,7 @@ func (a *App) updateMail() {
 	}
 	a.sidebar.Update()
 	a.listPanel.Update()
+	a.updateMessageWindows()
 	if a.toolbar != nil {
 		a.toolbar.Update()
 	}

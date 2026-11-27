@@ -527,6 +527,11 @@ func (a *App) initList(w *core.TreeTable) {
 		}
 		a.updateReading()
 	})
+	w.OnDoubleClick(func(e events.Event) {
+		if mr := a.rowAt(w.SelectedIndex); mr != nil {
+			a.openMessageWindow(mr)
+		}
+	})
 	a.list = w
 }
 

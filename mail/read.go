@@ -96,7 +96,7 @@ func (dmf *DisplayMessageFrame) Init() {
 		w.Updater(func() {
 			if dmf.Message.Filename == "" { // not downloaded yet
 				text := "Downloading the message..."
-				if theApp.imapClient[theApp.currentEmail] == nil {
+				if theApp.imapClient[theApp.accountOf(dmf.Message)] == nil {
 					text = "Not downloaded yet: it will be once connected."
 				}
 				if w.Property("readMessage") != text {
@@ -104,7 +104,7 @@ func (dmf *DisplayMessageFrame) Init() {
 					w.DeleteChildren()
 					core.NewText(w).SetType(core.TextSupporting).SetText(text)
 				}
-				theApp.downloadNow(theApp.currentEmail, dmf.Message)
+				inApp(dmf, func() { theApp.downloadNow(theApp.accountOf(dmf.Message), dmf.Message) })
 				return
 			}
 			if (shownMessage{dmf.Message, dmf.Message.Filename}) != w.Property("readMessage") {
@@ -130,8 +130,12 @@ func messageContext(cm *CacheMessage) *htmlcore.Context {
 	return htmlcore.NewContext().SetDelayedImageLoad(true).SetImageCache(messageImages).SetStyle(fmt.Sprintf(
 		"blockquote { margin: 0.5em 0 0.5em 0.25em; padding-left: 0.75em; border-left: 3px solid %s; color: %s; }", bar, text)).
 		SetOpenURL(func(u string, e events.Event) {
-			if isMailto(u) {
-				theApp.replyMailto(u, cm)
+			if isMailto(u) { // also from a window of messages
+				go func() {
+					theApp.AsyncLock()
+					defer theApp.AsyncUnlock()
+					theApp.replyMailto(u, cm)
+				}()
 				return
 			}
 			core.TheApp.OpenURL(u)
@@ -243,7 +247,7 @@ func (dmf *DisplayMessageFrame) initHeader(w *core.Frame) {
 								w.SetType(core.ButtonTonal).SetText(friendlyLabelName(label)).SetIcon(icons.Label)
 								w.SetTooltip("Show the messages of " + friendlyLabelName(label))
 								w.OnClick(func(e events.Event) {
-									theApp.showMailbox(theApp.currentEmail, label)
+									inApp(w, func() { theApp.showMailbox(theApp.accountOf(dmf.Message), label) })
 								})
 							})
 						}
@@ -288,7 +292,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 	w.SetProperty("readMessage", shownMessage{dmf.Message, dmf.Message.Filename})
 	w.DeleteChildren()
 
-	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.currentEmail), dmf.Message.Filename))
+	f, err := os.Open(filepath.Join(theApp.messagesDir(theApp.accountOf(dmf.Message)), dmf.Message.Filename))
 	if err != nil {
 		return err
 	}

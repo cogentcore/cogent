@@ -434,6 +434,39 @@ func (sm *SendMessage) contents() string {
 	return b.String()
 }
 
+// htmlMarkdown returns the markdown of the body of the given draft for its
+// HTML: the body, with the lines of its signature that would be a list of
+// one item, as "- Randy", as plain text (see [escapeLoneItems]).
+func htmlMarkdown(d *draft) string {
+	sig := signatureNamed(d.Signature)
+	if sig == "" || !strings.Contains(d.Body, sig) {
+		return d.Body
+	}
+	return strings.Replace(d.Body, sig, escapeLoneItems(sig), 1)
+}
+
+// escapeLoneItems returns the given markdown with the lines that would be
+// lists of one item, without another item before or after them, as
+// "- Randy" in a signature, escaped, so that they are plain text.
+func escapeLoneItems(text string) string {
+	lines := strings.Split(text, "\n")
+	item := func(i int) bool {
+		if i < 0 || i >= len(lines) {
+			return false
+		}
+		l := strings.TrimLeft(lines[i], " ")
+		return len(l) >= 2 && strings.IndexByte("-*+", l[0]) >= 0 && (l[1] == ' ' || l[1] == '\t')
+	}
+	escaped := slices.Clone(lines)
+	for i, l := range lines {
+		if item(i) && !item(i-1) && !item(i+1) {
+			j := len(l) - len(strings.TrimLeft(l, " "))
+			escaped[i] = l[:j] + `\` + l[j:]
+		}
+	}
+	return strings.Join(escaped, "\n")
+}
+
 // buildMessage returns the message of the given draft, in MIME, with
 // its text as plain text and HTML (from markdown), and its attachments.
 // Attachments that cannot be read are an error if strict, and else left
@@ -481,7 +514,7 @@ func buildMessage(d *draft, strict bool) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := goldmark.Convert([]byte(d.Body), hw); err != nil {
+	if err := goldmark.Convert([]byte(htmlMarkdown(d)), hw); err != nil {
 		return nil, err
 	}
 	if err := hw.Close(); err != nil {
