@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.27.0
 
 require (
-	cogentcore.org/core v0.5.53
+	cogentcore.org/core v0.5.54
 	cogentcore.org/lab v0.2.28
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
@@ -14,11 +14,13 @@ require (
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/cogentcore/go-imap/v2 v2.0.0-20261125174307-259d719c2d5d
 	github.com/corentings/chess/v2 v2.0.8
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/dop251/goja v0.0.0-20261110190325-844f1a0e4767
 	github.com/emersion/go-message v0.18.2
 	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
 	github.com/emersion/go-smtp v0.21.1
 	github.com/emersion/go-vcard v0.1.0
+	github.com/emersion/go-webdav v0.8.0
 	github.com/evanw/esbuild v0.28.2
 	github.com/go-delve/delve v1.27.2
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904
@@ -32,6 +34,7 @@ require (
 	go.etcd.io/bbolt v1.5.0
 	golang.org/x/net v0.61.0
 	golang.org/x/oauth2 v0.28.0
+	golang.org/x/text v0.43.0
 	gonum.org/v1/gonum v0.17.0
 )
 
@@ -79,12 +82,10 @@ require (
 	github.com/cogentcore/glfw4/v3.4/glfw v0.1.0-pre.2.0.20261121165724-248ae4b326b2 // indirect
 	github.com/cogentcore/mvm v0.0.0-20261120030535-e3f31e8a9ab5 // indirect
 	github.com/cogentcore/typesetting v0.0.0-20261022123550-2cd93a91580e // indirect
-	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2/v2 v2.11.0 // indirect
-	github.com/emersion/go-webdav v0.8.0
 	github.com/faiface/beep v1.1.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -141,7 +142,6 @@ require (
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
 	golang.org/x/term v0.47.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
