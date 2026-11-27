@@ -87,14 +87,30 @@ func (lib *Library) ScanGoPix(dir string, progress ScanProgress) error {
 	if err := lib.Scan(old, progress); err != nil {
 		return err
 	}
-	return lib.ImportGoPixFolders(dir)
+	if err := lib.ImportGoPixFolders(dir, nil); err != nil {
+		return err
+	}
+	return lib.store.setMeta("gopixVideosImported", time.Now().Format(time.RFC3339))
+}
+
+// ImportGoPixVideos imports the folders of GoPix in the given directory as
+// the tags of the videos only, once, as they were not imported at first.
+func (lib *Library) ImportGoPixVideos(dir string) error {
+	if !lib.GoPixImported() || lib.store.meta("gopixVideosImported") != "" {
+		return nil
+	}
+	if err := lib.ImportGoPixFolders(dir, (*Photo).IsVideo); err != nil {
+		return err
+	}
+	return lib.store.setMeta("gopixVideosImported", time.Now().Format(time.RFC3339))
 }
 
 // ImportGoPixFolders adds tags to the photos for the folders of GoPix in
 // the given directory: each folder other than All and Trash is a tag of
 // the photos that it has links to, which are found by their names in
-// GoPix (see [Photo.OrigName]).
-func (lib *Library) ImportGoPixFolders(dir string) error {
+// GoPix (see [Photo.OrigName]), only those for which the filter is true,
+// if it is not nil.
+func (lib *Library) ImportGoPixFolders(dir string, filter func(ph *Photo) bool) error {
 	ents, err := os.ReadDir(dir)
 	if err != nil {
 		return err
@@ -128,13 +144,16 @@ func (lib *Library) ImportGoPixFolders(dir string) error {
 					fn = filepath.Base(target)
 				}
 			}
-			if !isImageFile(fn) {
+			if !isMediaFile(fn) {
 				continue
 			}
 			name, _ := splitExt(fn)
 			ph := byOrig[name]
 			if ph == nil {
 				missing++
+				continue
+			}
+			if filter != nil && !filter(ph) {
 				continue
 			}
 			if ph.AddTag(tag) {

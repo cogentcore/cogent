@@ -193,12 +193,12 @@ func (lib *Library) Search(search string) (map[string]bool, error) {
 	return lib.search.search(search)
 }
 
-// uniqueName returns a name for a photo taken at the given date that no
-// other photo has, other than the given one, starting from the given
-// number, with the number in it. It must be called with the lock.
-func (lib *Library) uniqueName(date time.Time, n int, self *Photo, taken map[string]bool) (string, int) {
+// uniqueName returns a name for the given photo by the date it was taken,
+// that no other photo has, starting from the given number, with the number
+// in it. It must be called with the lock.
+func (lib *Library) uniqueName(self *Photo, n int, taken map[string]bool) (string, int) {
 	for ; ; n++ {
-		name := nameFor(date, n)
+		name := nameFor(self.namePrefix(), self.DateTaken, n)
 		other, has := lib.photos[name]
 		if (!has || other == self) && !taken[name] {
 			return name, n
@@ -257,8 +257,8 @@ func (lib *Library) saveRenamed(old string, ph *Photo) error {
 func (lib *Library) renameByDate(ph *Photo, taken map[string]bool) error {
 	ext := strings.ToLower(ph.Ext)
 	name := ph.Name
-	if date, _, ok := parseName(ph.Name); !ok || !date.Equal(ph.DateTaken) {
-		name, ph.Number = lib.uniqueName(ph.DateTaken, 0, ph, taken)
+	if date, _, ok := parseName(ph.Name); !ok || !date.Equal(ph.DateTaken) || !strings.HasPrefix(ph.Name, ph.namePrefix()+"_") {
+		name, ph.Number = lib.uniqueName(ph, 0, taken)
 	}
 	return lib.renameTo(ph, name, ext)
 }
@@ -285,7 +285,7 @@ func (lib *Library) Scan(old map[string]*Photo, progress ScanProgress) error {
 	var changed []*Photo  // existing, to read again
 	for _, e := range ents {
 		fn := e.Name()
-		if e.IsDir() || strings.HasPrefix(fn, ".") || !isImageFile(fn) {
+		if e.IsDir() || strings.HasPrefix(fn, ".") || !isMediaFile(fn) {
 			continue
 		}
 		name, ext := splitExt(fn)
@@ -376,9 +376,31 @@ func (lib *Library) Scan(old map[string]*Photo, progress ScanProgress) error {
 		step(1)
 	}
 	save = append(save, changed...)
+	// those named with the wrong prefix, as videos named img_ before
+	renamed := map[string]*Photo{}
+	for name, ph := range lib.photos {
+		if _, _, ok := parseName(name); ok && !strings.HasPrefix(name, ph.namePrefix()+"_") {
+			if err := lib.renameByDate(ph, nil); err != nil {
+				slog.Error("photos: renaming by date", "photo", name, "err", err)
+				continue
+			}
+			renamed[name] = ph
+		}
+	}
 	lib.mu.Unlock()
 	if err := lib.store.put(save...); err != nil {
 		return err
+	}
+	if len(renamed) > 0 {
+		if err := lib.store.renameAll(renamed); err != nil {
+			return err
+		}
+		var old []string
+		for name, ph := range renamed {
+			old = append(old, name)
+			save = append(save, ph)
+		}
+		lib.search.remove(old...)
 	}
 	if lib.search.count() < lib.Len()/2 { // a new index: all of them
 		return lib.search.add(lib.Photos(nil)...)
@@ -416,6 +438,9 @@ func (lib *Library) SetDate(ph *Photo, date time.Time) error {
 	if err == nil && isJPEG(ph.Filename()) {
 		err = lib.writeExif(ph)
 	}
+	if ph.IsVideo() { // the thumbnail has the date
+		os.Remove(lib.thumbFile(ph))
+	}
 	lib.mu.Unlock()
 	return errors.Join(err, lib.saveRenamed(old, ph))
 }
@@ -435,6 +460,9 @@ func (lib *Library) writeExif(ph *Photo) error {
 // Rotate rotates the given photo by the given degrees clockwise (a
 // multiple of 90), and saves it. Its thumbnail is made again.
 func (lib *Library) Rotate(ph *Photo, degrees int) error {
+	if ph.IsVideo() { // (playing does not rotate yet)
+		return fmt.Errorf("%s: videos cannot be rotated yet", ph.Filename())
+	}
 	lib.mu.Lock()
 	ph.Rotation = ((ph.Rotation+degrees)%360 + 360) % 360
 	os.Remove(lib.thumbFile(ph)) // made again
@@ -462,6 +490,9 @@ func (lib *Library) WriteMetadata(phs []*Photo, convert bool, progress ScanProgr
 	for i, ph := range phs {
 		if progress != nil {
 			progress(i, len(phs))
+		}
+		if ph.IsVideo() { // no metadata written yet
+			continue
 		}
 		lib.mu.Lock()
 		file := lib.PhotoFile(ph)
@@ -619,15 +650,24 @@ func (lib *Library) purgeTrash() {
 // photos. Files that are not images are skipped.
 func (lib *Library) Import(files []string, move bool, tags []string, progress ScanProgress) ([]*Photo, error) {
 	var errs []error
-	var phs []*Photo
+	var phs, already []*Photo
 	for i, fn := range files {
 		if progress != nil {
 			progress(i, len(files))
 		}
-		if !isImageFile(fn) {
+		if !isMediaFile(fn) {
 			continue
 		}
 		ph, err := lib.importFile(fn, move)
+		if errors.Is(err, errAlready) {
+			if len(tags) > 0 { // tagged as asked, where it is
+				for _, t := range tags {
+					ph.AddTag(t)
+				}
+				already = append(already, ph)
+			}
+			continue
+		}
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -637,12 +677,16 @@ func (lib *Library) Import(files []string, move bool, tags []string, progress Sc
 		}
 		phs = append(phs, ph)
 	}
-	errs = append(errs, lib.Save(phs...))
+	errs = append(errs, lib.Save(append(phs, already...)...))
 	return phs, errors.Join(errs...)
 }
 
+// errAlready is the error of adding a photo that is in the library already.
+var errAlready = errors.New("the photo is in the library already")
+
 // importFile copies (or moves) the given file into the library,
-// renamed by its date.
+// renamed by its date, unless the same photo is in it already, by the
+// date it was taken and its size, which is returned, with [errAlready].
 func (lib *Library) importFile(filename string, move bool) (*Photo, error) {
 	name, ext := splitExt(filename)
 	ph := &Photo{OrigName: name, Ext: strings.ToLower(ext)}
@@ -651,7 +695,15 @@ func (lib *Library) importFile(filename string, move bool) (*Photo, error) {
 	}
 	lib.mu.Lock()
 	defer lib.mu.Unlock()
-	ph.Name, ph.Number = lib.uniqueName(ph.DateTaken, 0, nil, nil)
+	if ph.Size != (image.Point{}) {
+		key := sameKey(ph.DateTaken, ph.Size)
+		for _, other := range lib.photos {
+			if other.Trashed.IsZero() && other.IsVideo() == ph.IsVideo() && other.Size != (image.Point{}) && sameKey(other.DateTaken, other.Size) == key {
+				return other, errAlready
+			}
+		}
+	}
+	ph.Name, ph.Number = lib.uniqueName(ph, 0, nil)
 	to := lib.PhotoFile(ph)
 	var err error
 	if move {

@@ -7,6 +7,7 @@ package photos
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"cogentcore.org/core/core"
 )
@@ -36,7 +37,14 @@ type SettingsData struct { //types:add
 	Sort SortOrders
 
 	// ThumbSize is the size of the thumbnails in the grid, in dp.
-	ThumbSize float32 `default:"136" min:"48" max:"512"`
+	ThumbSize float32 `default:"200" min:"48" max:"512"`
+
+	// GoogleAccount is the Google account whose Google Photos photos are
+	// synced, which is chosen when signing in the first time.
+	GoogleAccount string
+
+	// GoogleSynced is when photos were last synced from Google Photos.
+	GoogleSynced time.Time `display:"-"`
 
 	// Splits are the proportions of the panels.
 	Splits []float32 `display:"-"`
@@ -45,12 +53,16 @@ type SettingsData struct { //types:add
 	// when the app starts again.
 	ShownTag string `display:"-"`
 
+	// Views are where the photos of each tag were viewed last, by the keys
+	// of the tags, for going back there.
+	Views map[string]TagView `display:"-"`
+
 	// ClosedYears are the years closed in the tree of tags.
 	ClosedYears map[string]bool `display:"-"`
 }
 
 func (sd *SettingsData) Defaults() {
-	sd.ThumbSize = 136
+	sd.ThumbSize = 200
 }
 
 // libraryDir returns the directory of the library.

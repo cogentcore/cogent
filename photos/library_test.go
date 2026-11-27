@@ -5,6 +5,7 @@
 package photos
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +17,7 @@ import (
 
 func TestNames(t *testing.T) {
 	d := time.Date(2017, 2, 21, 13, 4, 5, 0, time.UTC)
-	n := nameFor(d, 2)
+	n := nameFor("img", d, 2)
 	assert.Equal(t, "img_2017_02_21_13_04_05_n2", n)
 	pd, pn, ok := parseName(n)
 	assert.True(t, ok)
@@ -170,4 +171,34 @@ func TestPortraitThumb(t *testing.T) {
 	assert.Equal(t, 192, img.Bounds().Dx())
 	assert.Equal(t, 256, img.Bounds().Dy())
 	copyFile(filepath.Join(os.TempDir(), "cogentphotos-portrait.jpg"), tf)
+}
+
+// TestImportAgain tests that adding files adds them renamed by their dates,
+// with the tags, and adding them again does not add them twice, but tags
+// them, and that files are copied, not moved.
+func TestImportAgain(t *testing.T) {
+	lib := smallLibrary(t, 3)
+	src := t.TempDir()
+	var files []string
+	for i, ph := range lib.Photos(nil) {
+		fn := filepath.Join(src, fmt.Sprintf("new%d.jpg", i))
+		require.NoError(t, copyFile(fn, lib.PhotoFile(ph)))
+		files = append(files, fn)
+	}
+	// two the same as photos in the library, and a new one
+	newer := filepath.Join(src, "newer.jpg")
+	require.NoError(t, copyFile(newer, files[0]))
+	d := time.Date(2021, 5, 6, 7, 8, 9, 0, time.Local)
+	os.Chtimes(newer, d, d)
+	phs, err := lib.Import([]string{files[0], files[1], newer}, false, []string{"2021_Dropped"}, nil)
+	require.NoError(t, err)
+	require.Len(t, phs, 1, "only the new one")
+	assert.Equal(t, "img_2021_05_06_07_08_09_n0", phs[0].Name)
+	assert.FileExists(t, newer, "copied, not moved")
+	assert.Equal(t, 4, lib.Len())
+	assert.Equal(t, 3, lib.Tags()["2021_Dropped"], "the ones already there are tagged too")
+	phs, err = lib.Import([]string{newer}, false, nil, nil)
+	require.NoError(t, err)
+	assert.Len(t, phs, 0)
+	assert.Equal(t, 4, lib.Len())
 }

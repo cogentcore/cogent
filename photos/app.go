@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
@@ -68,6 +69,9 @@ type App struct {
 	// windows are the viewers of the windows of photos open, which
 	// follow the current photo in the grid (see [App.OpenWindow]).
 	windows []*Viewer
+
+	// syncCancel stops the sync with Google Photos in progress, if any.
+	syncCancel func()
 
 	// busy is held during long operations on the library, as scans.
 	busy sync.Mutex
@@ -146,7 +150,7 @@ func (a *App) Init() {
 				})
 				tree.AddChild(w, func(w *core.TextField) {
 					a.search = w
-					w.SetPlaceholder("Search: tags, dates, descriptions, as kyoto 2017").SetLeadingIcon(icons.Search)
+					w.SetPlaceholder("Search, as kyoto 2017").SetLeadingIcon(icons.Search)
 					w.SetType(core.TextFieldOutlined)
 					w.Styler(func(s *styles.Style) {
 						s.Min.X.Em(10)
@@ -158,6 +162,28 @@ func (a *App) Init() {
 					})
 					w.OnChange(func(e events.Event) {
 						a.SearchPhotos(w.Text())
+					})
+				})
+				tree.AddChild(w, func(w *core.Icon) {
+					w.SetIcon(icons.PhotoSizeSelectLarge)
+				})
+				tree.AddChild(w, func(w *core.Slider) {
+					w.SetMin(48).SetMax(512).SetStep(8)
+					w.SetTooltip("The size of the photos")
+					w.FinalStyler(func(s *styles.Style) { // after the 20em of sliders
+						s.Min.X.Em(8)
+						s.Max.X.Em(8)
+						s.Grow.Set(0, 0)
+					})
+					w.Updater(func() {
+						w.SetValue(Settings.ThumbSize)
+					})
+					w.OnInput(func(e events.Event) {
+						a.setThumbSize(w.Value)
+					})
+					w.OnChange(func(e events.Event) {
+						a.setThumbSize(w.Value)
+						saveSettings(a)
 					})
 				})
 				tree.AddChild(w, func(w *core.Chooser) {
@@ -191,12 +217,14 @@ func (a *App) Init() {
 						a.OpenWindow()
 					})
 					w.AddContextMenu(a.photoMenu)
+					a.dropFiles(w, a.shownTag)
 				})
 			})
 		})
 		tree.AddChild(w, func(w *Viewer) {
 			a.viewer = w
 			w.app = a
+			a.dropFiles(w, a.shownTag)
 		})
 	})
 }
@@ -214,6 +242,15 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.ImportFolder).SetIcon(icons.Download)
 	})
+	if a.syncCancel != nil {
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.CancelSync).SetIcon(icons.Cancel)
+		})
+	} else {
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.SyncGoogle).SetText("Sync").SetIcon(icons.Sync).SetTooltip("Add photos from Google Photos, picked there")
+		})
+	}
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.RotateLeft).SetIcon(icons.RotateLeft).SetShortcut("Command+L")
@@ -281,11 +318,16 @@ func (a *App) Start() {
 			a.AsyncUnlock()
 			return
 		}
-		core.TheApp.AddQuitCleanFunc(func() { lib.Close() })
+		core.TheApp.AddQuitCleanFunc(func() {
+			a.saveView() // for the next start
+			core.SaveSettings(Settings)
+			lib.Close()
+		})
 		a.AsyncLock()
 		a.lib = lib
 		a.grid.lib = lib
 		a.refresh()
+		a.restoreView()
 		a.AsyncUnlock()
 
 		a.setStatus("Scanning the photos…")
@@ -295,6 +337,9 @@ func (a *App) Start() {
 			err = lib.ScanGoPix(GoPixDir(), progress)
 		} else {
 			err = lib.Scan(nil, progress)
+			if err == nil && GoPixDir() != "" {
+				err = lib.ImportGoPixVideos(GoPixDir())
+			}
 		}
 		a.AsyncLock()
 		if err != nil {
@@ -304,6 +349,9 @@ func (a *App) Start() {
 		a.refresh()
 		a.AsyncUnlock()
 
+		if err := lib.updateVideoThumbs(); err != nil {
+			slog.Error("photos: updating the thumbnails of videos", "err", err)
+		}
 		lib.MakeThumbs(a.progress("Thumbnails"))
 		a.setStatus("")
 	}()
@@ -424,11 +472,71 @@ func (a *App) showTag(key string) {
 	if key == a.shown {
 		return
 	}
+	a.saveView()
 	a.shown = key
 	Settings.ShownTag = key
 	saveSettings(a)
 	a.grid.SetPhotos(nil)
 	a.refresh()
+	a.restoreView()
+}
+
+// TagView is where the photos of a tag were viewed last: the scroll
+// position of the grid, and the current photo, for going back there.
+type TagView struct {
+
+	// Scroll is the scroll position of the grid, in dots.
+	Scroll float32
+
+	// Current is the name of the current photo.
+	Current string
+}
+
+// gridFrame returns the scrolling frame of the grid.
+func (a *App) gridFrame() *core.Frame {
+	fr, _ := a.grid.Parent.(*core.Frame)
+	return fr
+}
+
+// saveView saves where the photos of the tag shown are viewed (see [TagView]).
+func (a *App) saveView() {
+	fr := a.gridFrame()
+	if fr == nil || a.lib == nil {
+		return
+	}
+	if Settings.Views == nil {
+		Settings.Views = map[string]TagView{}
+	}
+	tv := TagView{Scroll: fr.Geom.Scroll.Y}
+	if ph := a.grid.CurrentPhoto(); ph != nil {
+		tv.Current = ph.Name
+	}
+	Settings.Views[a.shown] = tv
+}
+
+// restoreView goes back to where the photos of the tag shown were viewed
+// last, if they were (see [TagView]).
+func (a *App) restoreView() {
+	tv, ok := Settings.Views[a.shown]
+	fr := a.gridFrame()
+	if !ok || fr == nil {
+		return
+	}
+	g := a.grid
+	for i, ph := range g.Photos {
+		if ph.Name == tv.Current {
+			g.Current = i
+			g.Selected = map[int]bool{i: true}
+			a.viewer.SetPhoto(ph)
+			a.updateToolbar()
+			break
+		}
+	}
+	g.Defer(func() { // after the scroll to the current photo in refresh
+		fr.Geom.Scroll.Y = tv.Scroll
+		fr.ScrollUpdateFromGeom(math32.Y)
+		g.NeedsRender()
+	})
 }
 
 // initTags initializes the tree of tags.
@@ -586,13 +694,22 @@ func (a *App) dropOnTags(e events.Event) {
 		return
 	}
 	phs := a.lib.draggedPhotos(md)
-	if len(phs) == 0 {
+	files := a.droppedMedia(de)
+	if len(phs) == 0 && len(files) == 0 {
 		return // something else, for the tree table
 	}
 	e.SetHandled()
 	a.tags.Scene.Events.DropFinalize(de)
 	idx, ok := a.tags.IndexFromEvent(e)
 	r := a.tagRowAt(idx)
+	if len(files) > 0 { // from other apps: added, with the tag, if any
+		tag := ""
+		if ok && r != nil {
+			tag = r.tag
+		}
+		a.addFiles(files, tag)
+		return
+	}
 	if !ok || r == nil {
 		return
 	}
@@ -639,8 +756,15 @@ func (a *App) appKeys(e events.Event) {
 
 // zoomThumbs changes the size of the thumbnails by the given factor.
 func (a *App) zoomThumbs(factor float32) {
-	Settings.ThumbSize = max(48, min(512, Settings.ThumbSize*factor))
+	a.setThumbSize(Settings.ThumbSize * factor)
 	saveSettings(a)
+	a.Update() // the slider
+}
+
+// setThumbSize sets the size of the thumbnails, in dp, keeping the
+// current photo in view.
+func (a *App) setThumbSize(size float32) {
+	Settings.ThumbSize = max(48, min(512, size))
 	a.grid.CellSize = units.Dp(Settings.ThumbSize)
 	a.grid.NeedsLayout()
 	a.grid.Defer(func() { a.grid.scrollToIndex(max(a.grid.Current, 0)) })

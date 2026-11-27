@@ -24,7 +24,7 @@ type Photo struct {
 	// Name is the name of the file of the photo, without its extension,
 	// which is unique among the photos, and is the key of the photo in
 	// the store. It is made from the date the photo was taken (see
-	// [nameFor]), as img_2006_01_02_15_04_05_n0.
+	// [nameFor]), as img_2006_01_02_15_04_05_n0, or vid_ for a video.
 	Name string `edit:"-"`
 
 	// Ext is the extension of the file, in lower case, as .jpg.
@@ -76,6 +76,9 @@ type Photo struct {
 
 	// Exposure is the exposure of the photo.
 	Exposure Exposure `edit:"-"`
+
+	// Duration is the length of a video.
+	Duration time.Duration `edit:"-"`
 
 	// Make and Model are those of the camera.
 	Make, Model string `edit:"-"`
@@ -219,13 +222,23 @@ const DateFileFormat = "2006_01_02_15_04_05"
 
 // nameFor returns the name of the file (without extension) of a photo
 // taken at the given date, with the given number among those taken in
-// the same second.
-func nameFor(date time.Time, n int) string {
-	return fmt.Sprintf("img_%s_n%d", date.Format(DateFileFormat), n)
+// the same second, with the given prefix: img for photos, vid for videos
+// (see [Photo.namePrefix]).
+func nameFor(prefix string, date time.Time, n int) string {
+	return fmt.Sprintf("%s_%s_n%d", prefix, date.Format(DateFileFormat), n)
+}
+
+// namePrefix returns the prefix of the name of the file of the photo by
+// its date: vid for videos, and img for photos.
+func (ph *Photo) namePrefix() string {
+	if ph.IsVideo() {
+		return "vid"
+	}
+	return "img"
 }
 
 // nameRegexp matches the names of files made by [nameFor].
-var nameRegexp = regexp.MustCompile(`^img_(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_n(\d+)$`)
+var nameRegexp = regexp.MustCompile(`^(?:img|vid)_(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_n(\d+)$`)
 
 // parseName returns the date and number in the given name of a file
 // (without extension) made by [nameFor], and whether it is one.

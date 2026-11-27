@@ -80,7 +80,7 @@ func (a *App) ImportFolder(folder core.Filename, move bool, tag string) { //type
 	}
 	var files []string
 	for _, e := range ents {
-		if !e.IsDir() && isImageFile(e.Name()) {
+		if !e.IsDir() && isMediaFile(e.Name()) {
 			files = append(files, filepath.Join(string(folder), e.Name()))
 		}
 	}

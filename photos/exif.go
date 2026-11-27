@@ -74,6 +74,9 @@ func filenameExt(filename string) string {
 // metadata of its file, and its size and modification time. The date is
 // set from the file if it has no date in its metadata, unless set already.
 func (ph *Photo) readExif(filename string) error {
+	if isVideoFile(filename) {
+		return ph.readVideo(filename)
+	}
 	st, err := os.Stat(filename)
 	if err != nil {
 		return err

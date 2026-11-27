@@ -131,6 +131,27 @@ func (st *store) rename(old string, ph *Photo) error {
 	})
 }
 
+// renameAll stores the given photos under their new names, removing them
+// under their old names, by which they are given, in one transaction.
+func (st *store) renameAll(phs map[string]*Photo) error {
+	return st.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(photosBucket)
+		for old, ph := range phs {
+			data, err := json.Marshal(ph)
+			if err != nil {
+				return err
+			}
+			if err := b.Delete([]byte(old)); err != nil {
+				return err
+			}
+			if err := b.Put([]byte(ph.Name), data); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // meta returns the value of the given key of the information about the
 // library, or "" if it has none.
 func (st *store) meta(key string) string {

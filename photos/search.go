@@ -41,6 +41,9 @@ type searchDoc struct {
 	// Camera is the make and model of the camera.
 	Camera string
 
+	// Kind is video for videos, and photo for photos.
+	Kind string
+
 	// Name is the name of the file of the photo, and its name before
 	// it was renamed.
 	Name string
@@ -65,6 +68,10 @@ func newSearchDoc(ph *Photo) *searchDoc {
 		doc.When = ph.DateTaken.Format("2006 January Jan Monday")
 	}
 	doc.Camera = strings.TrimSpace(ph.Make + " " + ph.Model)
+	doc.Kind = "photo"
+	if ph.IsVideo() {
+		doc.Kind = "video"
+	}
 	doc.Name = ph.Name
 	if ph.OrigName != "" && ph.OrigName != ph.Name {
 		doc.Name += " " + ph.OrigName
@@ -100,7 +107,7 @@ func searchMapping() mapping.IndexMapping {
 	words := bleve.NewTextFieldMapping()
 	words.Analyzer = "standard"
 	doc := bleve.NewDocumentMapping()
-	for _, f := range []string{"Tags", "When", "Camera", "Name"} {
+	for _, f := range []string{"Tags", "When", "Camera", "Kind", "Name"} {
 		doc.AddFieldMappingsAt(f, words)
 	}
 	doc.AddFieldMappingsAt("Desc", text)
@@ -193,7 +200,7 @@ func (si *searchIndex) search(search string) (map[string]bool, error) {
 // field:words, by their names in lower case.
 var searchFields = map[string]string{"tag": "Tags", "tags": "Tags", "desc": "Desc",
 	"description": "Desc", "when": "When", "year": "When", "month": "When",
-	"camera": "Camera", "name": "Name", "file": "Name"}
+	"camera": "Camera", "kind": "Kind", "name": "Name", "file": "Name"}
 
 // query returns the query for the given search: all of its terms must
 // match, where a term is a word, a "phrase", or either of them after a

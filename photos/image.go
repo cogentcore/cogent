@@ -113,6 +113,9 @@ func imageSize(filename string) image.Point {
 // The image is scaled down to fit in the given maximum size if that is
 // faster (see [openImageMax]).
 func openPhoto(ph *Photo, filename string, maxSize int) (image.Image, error) {
+	if isVideoFile(filename) {
+		return openVideoFrame(ph, filename, maxSize)
+	}
 	img, err := openImageMax(filename, maxSize)
 	if err != nil {
 		return nil, err
@@ -243,6 +246,9 @@ func halve(im image.Image) *image.RGBA {
 // makeThumb makes the thumbnail of the given photo, in the given file,
 // saving it as a JPEG file in the given file of the thumbnail.
 func makeThumb(ph *Photo, filename, thumbFile string) (image.Image, error) {
+	if isVideoFile(filename) {
+		return makeVideoThumb(ph, filename, thumbFile)
+	}
 	img, err := openImageMax(filename, ThumbSize)
 	if err != nil {
 		return nil, err
@@ -282,7 +288,12 @@ func openThumb(thumbFile string) (image.Image, error) {
 	return jpeg.Decode(bufio.NewReader(f))
 }
 
-// thumbFace is the font face of the dates drawn on the thumbnails.
+// thumbFaceMu is the mutex of using [thumbFace], which is not safe for
+// concurrent use, as the thumbnails are made in parallel.
+var thumbFaceMu sync.Mutex
+
+// thumbFace is the font face of the dates drawn on the thumbnails,
+// used with [thumbFaceMu].
 var thumbFace = sync.OnceValue(func() font.Face {
 	f, err := opentype.Parse(goregular.TTF)
 	if err != nil {
@@ -308,6 +319,8 @@ func drawDate(img image.Image, date time.Time) image.Image {
 	if averageGrey(rgba, image.Rect(b.Min.X+5, b.Min.Y+5, b.Min.X+100, b.Min.Y+25)) < 0.5 {
 		clr = color.White
 	}
+	thumbFaceMu.Lock()
+	defer thumbFaceMu.Unlock()
 	d := &font.Drawer{Dst: rgba, Src: image.NewUniform(clr), Face: face,
 		Dot: fixed.P(b.Min.X+5, b.Min.Y+5+face.Metrics().Ascent.Ceil())}
 	d.DrawString(date.Format("2006:01:02"))
