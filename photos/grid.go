@@ -46,6 +46,10 @@ type Grid struct {
 	// Selected are the indexes of the selected photos.
 	Selected map[int]bool `set:"-"`
 
+	// lastClick is the index of the photo clicked last, for telling
+	// double clicks on it from clicks on two photos.
+	lastClick int
+
 	// CellSize is the size of the cells of the thumbnails.
 	CellSize units.Value
 
@@ -99,7 +103,21 @@ func (g *Grid) Init() {
 		if !ok {
 			return
 		}
+		g.lastClick = idx
 		g.selectEvent(idx, e.SelectMode())
+	})
+	// the grid is one widget, so quick clicks on two photos are a double
+	// click on it, which is a click on the second one
+	g.OnFirst(events.DoubleClick, func(e events.Event) {
+		idx, ok := g.indexAt(e.Pos())
+		if ok && idx == g.lastClick && e.SelectMode() == events.SelectOne {
+			return // a double click on the photo, which opens it
+		}
+		e.SetHandled()
+		if ok {
+			g.lastClick = idx
+			g.selectEvent(idx, e.SelectMode())
+		}
 	})
 	g.On(events.DragStart, g.dragStart)
 	g.On(events.KeyChord, g.keyInput)
@@ -151,8 +169,14 @@ func (g *Grid) selectEvent(idx int, mode events.SelectModes) {
 	}
 	idx = max(0, min(idx, len(g.Photos)-1))
 	switch mode {
-	case events.ExtendContinuous:
+	case events.ExtendContinuous: // from the nearest selected one
 		from := g.Current
+		best := -1
+		for i := range g.Selected {
+			if d := abs(i - idx); best < 0 || d < best {
+				best, from = d, i
+			}
+		}
 		if from < 0 {
 			from = idx
 		}
@@ -525,4 +549,11 @@ func (lib *Library) draggedPhotos(md mimedata.Mimes) []*Photo {
 		}
 	}
 	return res
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

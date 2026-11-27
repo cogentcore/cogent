@@ -12,6 +12,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -52,5 +53,94 @@ func TestGridScrollClick(t *testing.T) {
 			assert.Equal(t, scroll, fr.Geom.Scroll.Y, "frac %v: the click scrolled", frac)
 			t.Log(frac, idx, scroll, g.Geom.Pos.Content.Y, g.cell, g.cols, h)
 		}
+	})
+}
+
+// TestGridMultiSelect tests selecting photos with the mouse: Command
+// selects or unselects one more, and Shift selects the range from the
+// nearest selected one, before or after.
+func TestGridMultiSelect(t *testing.T) {
+	lib := smallLibrary(t, 30)
+	b := core.NewBody()
+	a := NewApp(b)
+	a.Styler(func(s *styles.Style) {
+		s.Min.Set(units.Dp(1200), units.Dp(600))
+	})
+	a.shown = allKey
+	Settings.Sort = OldestFirst
+	defer func() { Settings.Sort = NewestFirst }()
+	selected := func() []int {
+		var res []int
+		for i := range a.grid.Photos {
+			if a.grid.Selected[i] {
+				res = append(res, i)
+			}
+		}
+		return res
+	}
+	click := func(idx int, mods key.Modifiers) {
+		b.AsyncLock()
+		pt := a.grid.cellRect(idx).Min.Add(image.Pt(10, 10))
+		b.AsyncUnlock()
+		ev := a.grid.SystemEvents()
+		ev.MouseButton(events.MouseDown, events.Left, pt, mods)
+		ev.MouseButton(events.MouseUp, events.Left, pt, mods)
+		time.Sleep(300 * time.Millisecond) // not a double click
+	}
+	var cmd key.Modifiers
+	cmd.SetFlag(true, key.Meta)
+	var shift key.Modifiers
+	shift.SetFlag(true, key.Shift)
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.grid.CellSize = units.Dp(80) // all of them in view
+		a.refresh()
+		b.AsyncUnlock()
+	}, func() {
+		click(2, 0)
+		click(5, cmd)
+		b.AsyncLock()
+		assert.Equal(t, []int{2, 5}, selected(), "Command adds one")
+		b.AsyncUnlock()
+		click(9, shift)
+		b.AsyncLock()
+		assert.Equal(t, []int{2, 5, 6, 7, 8, 9}, selected(), "Shift adds the range from the nearest before")
+		b.AsyncUnlock()
+		click(0, shift)
+		b.AsyncLock()
+		assert.Equal(t, []int{0, 1, 2, 5, 6, 7, 8, 9}, selected(), "Shift adds the range from the nearest after")
+		b.AsyncUnlock()
+		click(5, cmd)
+		b.AsyncLock()
+		assert.Equal(t, []int{0, 1, 2, 6, 7, 8, 9}, selected(), "Command removes one")
+		b.AsyncUnlock()
+		click(4, 0)
+		b.AsyncLock()
+		assert.Equal(t, []int{4}, selected(), "a click selects only it")
+		opened := 0
+		a.grid.OnFirst(events.DoubleClick, func(e events.Event) { // before that of the app, a window
+			if !e.IsHandled() {
+				opened++
+				e.SetHandled()
+			}
+		})
+		b.AsyncUnlock()
+		pt := func(idx int) image.Point {
+			b.AsyncLock()
+			defer b.AsyncUnlock()
+			return a.grid.cellRect(idx).Min.Add(image.Pt(10, 10))
+		}
+		ev := a.grid.SystemEvents()
+		for range 2 { // a double click on 7
+			ev.MouseButton(events.MouseDown, events.Left, pt(7), 0)
+			ev.MouseButton(events.MouseUp, events.Left, pt(7), 0)
+		}
+		time.Sleep(200 * time.Millisecond)
+		b.AsyncLock()
+		assert.Equal(t, 1, opened, "a double click on a photo opens it")
+		assert.Equal(t, []int{7}, selected())
+		b.AsyncUnlock()
 	})
 }
