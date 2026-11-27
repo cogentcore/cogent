@@ -35,7 +35,7 @@ type SettingsData struct { //types:add
 
 	// ListViews are the options of the view of the list of messages,
 	// also set in its view menu.
-	ListViews ListViews
+	ListViews ListViews `grow:"1"`
 
 	// FilingAccount is the account whose folders are offered first for
 	// filing messages (Control+O), from any account, as for filing all of

@@ -7,12 +7,18 @@
 package main
 
 import (
+	_ "embed"
+
 	"cogentcore.org/cogent/mail/contacts"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 )
 
+//go:embed icon.svg
+var appIcon string
+
 func main() {
+	core.AppIcon = appIcon
 	b := core.NewBody("Cogent Contacts")
 	br := contacts.NewBrowser(b)
 	s, err := contacts.Open(contacts.DefaultDir())

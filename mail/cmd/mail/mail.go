@@ -9,16 +9,14 @@ import (
 	"flag"
 	"log"
 
+	_ "embed"
+
 	"cogentcore.org/cogent/mail"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	_ "embed"
 )
 
-// appIcon is the icon of the app, which core build also sets, but go
-// install does not, as for an app installed with AppGoSymlink.
-//
 //go:embed icon.svg
 var appIcon string
 
