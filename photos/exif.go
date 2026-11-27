@@ -16,7 +16,6 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"github.com/jdeng/goheif"
 )
 
 // exifSearchSize is how much of the start of a file is searched for its
@@ -32,10 +31,10 @@ func readRawExif(filename string) ([]byte, error) {
 	}
 	defer f.Close()
 	if ext := strings.ToLower(filenameExt(filename)); ext == ".heic" || ext == ".heif" {
-		raw, err := goheif.ExtractExif(f)
-		if err == nil && len(raw) > 0 {
+		if raw := heicExif(f); len(raw) > 0 {
 			return trimExifHeader(raw), nil
 		}
+		f.Seek(0, io.SeekStart)
 		// some have it elsewhere: searched for below
 	}
 	buf := make([]byte, exifSearchSize)

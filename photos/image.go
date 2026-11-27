@@ -23,7 +23,6 @@ import (
 	_ "image/gif"
 	_ "image/png"
 
-	"github.com/jdeng/goheif"
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
@@ -54,21 +53,18 @@ func openImage(filename string) (image.Image, error) {
 // orientation), scaled down to fit in the given maximum size if it is
 // larger and that is faster, as for HEIC on the Mac, or its full size for 0.
 func openImageMax(filename string, maxSize int) (image.Image, error) {
-	if isHEIC(filename) && runtime.GOOS == "darwin" {
-		if img, err := openSips(filename, maxSize); err == nil {
-			return img, nil
+	if isHEIC(filename) {
+		if runtime.GOOS == "darwin" {
+			return openSips(filename, maxSize)
 		}
+		return decodeHEIC(filename)
 	}
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	r := bufio.NewReader(f)
-	if isHEIC(filename) {
-		return goheif.Decode(r)
-	}
-	img, _, err := image.Decode(r)
+	img, _, err := image.Decode(bufio.NewReader(f))
 	return img, err
 }
 
@@ -96,18 +92,16 @@ func openSips(filename string, maxSize int) (image.Image, error) {
 // imageSize returns the size of the image in the given file, from its
 // header, or zero if it cannot be read.
 func imageSize(filename string) image.Point {
+	if isHEIC(filename) {
+		sz, _ := heicSize(filename)
+		return sz
+	}
 	f, err := os.Open(filename)
 	if err != nil {
 		return image.Point{}
 	}
 	defer f.Close()
-	r := bufio.NewReader(f)
-	var cfg image.Config
-	if isHEIC(filename) {
-		cfg, err = goheif.DecodeConfig(r)
-	} else {
-		cfg, _, err = image.DecodeConfig(r)
-	}
+	cfg, _, err := image.DecodeConfig(bufio.NewReader(f))
 	if err != nil {
 		return image.Point{}
 	}
