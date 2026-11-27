@@ -25,6 +25,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
@@ -65,6 +66,9 @@ type App struct {
 
 	// statusText is the text of the status, as of the progress of a scan.
 	statusText string
+
+	// allCount and trashCount are the numbers of photos in All and Trash.
+	allCount, trashCount int
 
 	// windows are the viewers of the windows of photos open, which
 	// follow the current photo in the grid (see [App.OpenWindow]).
@@ -130,6 +134,17 @@ func (a *App) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
+			tree.AddChild(w, func(w *core.Frame) { // All and Trash, always there
+				w.Styler(func(s *styles.Style) {
+					s.Direction = styles.Column
+					s.Gap.Zero()
+					s.Grow.Set(1, 0)
+				})
+				w.Maker(func(p *tree.Plan) {
+					a.fixedButton(p, allKey, "All", icons.PhotoLibrary, func() int { return a.allCount })
+					a.fixedButton(p, trashKey, "Trash", icons.Delete, func() int { return a.trashCount })
+				})
+			})
 			tree.AddChild(w, a.initTags)
 			tree.AddChild(w, func(w *core.Separator) {})
 			tree.AddChild(w, func(w *core.Text) {
@@ -147,6 +162,7 @@ func (a *App) Init() {
 			tree.AddChild(w, func(w *core.Frame) { // the search and sort
 				w.Styler(func(s *styles.Style) {
 					s.Align.Items = styles.Center
+					s.Grow.Set(1, 0) // the search field fills the rest
 				})
 				tree.AddChild(w, func(w *core.TextField) {
 					a.search = w
@@ -556,12 +572,6 @@ func (a *App) initTags(w *core.TreeTable) {
 		if r == nil {
 			return
 		}
-		if r.key == allKey || r.key == trashKey {
-			s.Font.Weight = rich.Bold
-		}
-		if r.key == trashKey && r.Photos == 0 {
-			s.Color = colors.Scheme.OnSurfaceVariant
-		}
 	}
 	w.OnSelect(func(e events.Event) {
 		if r := a.tagRowAt(w.SelectedIndex); r != nil {
@@ -616,10 +626,8 @@ func (a *App) updateTags() {
 			yearCounts[y]++
 		}
 	}
-	rows := []*tagRow{
-		{Name: "All", Photos: all, key: allKey},
-		{Name: "Trash", Photos: trash, key: trashKey},
-	}
+	a.allCount, a.trashCount = all, trash
+	var rows []*tagRow
 	years := map[string]*tagRow{}
 	var other []*tagRow
 	for tag, n := range a.lib.Tags() {
@@ -670,6 +678,9 @@ func (a *App) selectShownTag() {
 	if !ok {
 		return
 	}
+	a.tags.ResetSelectedIndexes() // none for All and Trash
+	a.tags.SelectedIndex = -1
+	a.tags.NeedsRender()
 	for i, r := range *rows {
 		if r.key == a.shown {
 			a.tags.SelectedIndex = i
@@ -682,53 +693,83 @@ func (a *App) selectShownTag() {
 }
 
 // dropOnTags handles a drop of photos onto the tree of tags, which tags
-// them with the tag they are dropped on, moves them to the trash, or out
-// of it onto All.
+// them with the tag they are dropped on (see [App.dropOn]).
 func (a *App) dropOnTags(e events.Event) {
+	idx, ok := a.tags.IndexFromEvent(e)
+	tag := ""
+	if r := a.tagRowAt(idx); ok && r != nil {
+		tag = r.tag
+	}
+	a.dropOn(e, a.tags, "", tag)
+}
+
+// dropOn handles a drop onto the given widget for the given key of All or
+// Trash, or the given tag: photos of the app dropped onto All are moved
+// out of the trash, onto Trash to the trash, and onto a tag are tagged
+// with it; files from other apps are added, with the tag, if any. It does
+// nothing for other drops, as of tags within the tree of tags.
+func (a *App) dropOn(e events.Event, w core.Widget, key, tag string) {
 	de, ok := e.(*events.DragDrop)
 	if !ok || a.lib == nil {
 		return
 	}
-	md, ok := de.Data.(mimedata.Mimes)
-	if !ok {
-		return
+	var phs []*Photo
+	if md, ok := de.Data.(mimedata.Mimes); ok {
+		phs = a.lib.draggedPhotos(md)
 	}
-	phs := a.lib.draggedPhotos(md)
 	files := a.droppedMedia(de)
 	if len(phs) == 0 && len(files) == 0 {
-		return // something else, for the tree table
-	}
-	e.SetHandled()
-	a.tags.Scene.Events.DropFinalize(de)
-	idx, ok := a.tags.IndexFromEvent(e)
-	r := a.tagRowAt(idx)
-	if len(files) > 0 { // from other apps: added, with the tag, if any
-		tag := ""
-		if ok && r != nil {
-			tag = r.tag
-		}
-		a.addFiles(files, tag)
 		return
 	}
-	if !ok || r == nil {
+	e.SetHandled()
+	w.AsWidget().Scene.Events.DropFinalize(de)
+	if len(files) > 0 { // from other apps
+		if key != trashKey {
+			a.addFiles(files, tag)
+		}
 		return
 	}
 	var err error
 	switch {
-	case r.key == trashKey:
+	case key == trashKey:
 		err = a.lib.Trash(phs...)
-	case r.key == allKey:
+	case key == allKey:
 		err = a.lib.Restore(phs...)
-	case r.tag != "":
-		err = a.lib.AddTag(r.tag, phs...)
+	case tag != "":
+		err = a.lib.AddTag(tag, phs...)
+		core.MessageSnackbar(a, fmt.Sprintf("Tagged %d photos %s", len(phs), tag))
 	default:
 		return
 	}
 	core.ErrorSnackbar(a, err)
-	if r.tag != "" {
-		core.MessageSnackbar(a, fmt.Sprintf("Tagged %d photos %s", len(phs), r.tag))
-	}
 	a.refresh()
+}
+
+// fixedButton adds the button of All or Trash, with the given key, above
+// the tree of tags, which stays there when the tree is scrolled.
+func (a *App) fixedButton(p *tree.Plan, key, name string, icon icons.Icon, count func() int) {
+	tree.AddAt(p, key, func(w *core.Button) {
+		w.SetType(core.ButtonAction).SetIcon(icon)
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+			s.Min.X.Pw(100) // the width of the sidebar
+			s.Justify.Content = styles.Start
+			s.SetAbilities(true, abilities.Droppable)
+			if a.shown == key {
+				s.Background = colors.Scheme.Select.Container
+				s.Font.Weight = rich.Bold
+			}
+		})
+		w.Updater(func() {
+			w.SetText(fmt.Sprintf("%s  %d", name, count()))
+		})
+		w.OnClick(func(e events.Event) {
+			a.showTag(key)
+		})
+		w.On(events.Drop, func(e events.Event) {
+			a.dropOn(e, w, key, "")
+		})
+	})
 }
 
 // appKeys handles the keys of the app.

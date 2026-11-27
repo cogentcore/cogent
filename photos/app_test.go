@@ -12,6 +12,7 @@ import (
 	"image/jpeg"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -193,4 +194,50 @@ func waitFor(t *testing.T, b *core.Body, cond func() bool) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+// TestFixedButtons tests that All and Trash are buttons above the tree of
+// tags, which show their photos, and that the tags are in the tree.
+func TestFixedButtons(t *testing.T) {
+	lib := smallLibrary(t, 6)
+	phs := lib.Photos(nil)
+	require.NoError(t, lib.AddTag("2020_First", phs[:3]...))
+	require.NoError(t, lib.Trash(phs[5]))
+	b := core.NewBody()
+	a := NewApp(b)
+	a.shown = "tag:2020_First"
+	var trash *core.Button
+	core.RenderImage(b, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		a.lib = lib
+		a.grid.lib = lib
+		a.refresh()
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		for _, r := range a.tagRows {
+			assert.NotEqual(t, allKey, r.key)
+			assert.NotEqual(t, trashKey, r.key)
+		}
+		assert.Len(t, a.grid.Photos, 3)
+		assert.Equal(t, 5, a.allCount)
+		assert.Equal(t, 1, a.trashCount)
+		a.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			if bt, ok := cw.(*core.Button); ok && strings.HasPrefix(bt.Text, "Trash") {
+				trash = bt
+			}
+			return true
+		})
+		require.NotNil(t, trash)
+		assert.Equal(t, "Trash  1", trash.Text)
+		trash.Send(events.Click)
+	}, func() {
+		b.AsyncLock()
+		defer b.AsyncUnlock()
+		assert.Equal(t, trashKey, a.shown)
+		assert.Len(t, a.grid.Photos, 1)
+		assert.Equal(t, -1, a.tags.SelectedIndex, "no tag selected")
+		assert.Contains(t, trash.Text, "Trash")
+	})
 }
