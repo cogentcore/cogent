@@ -87,6 +87,9 @@ func OpenLibrary(dir string) (*Library, error) {
 		lib.store.Close()
 		return nil, err
 	}
+	if err := lib.migrateTags(); err != nil {
+		slog.Error("photos: tags in groups", "err", err)
+	}
 	return lib, nil
 }
 
@@ -779,6 +782,7 @@ func (lib *Library) RemoveTag(tag string, phs ...*Photo) error {
 // RenameTag renames the given tag on all of the photos with it, or
 // removes it from them if the new tag is "".
 func (lib *Library) RenameTag(old, tag string) error {
+	tag = cleanTag(tag)
 	if old == tag {
 		return nil
 	}
@@ -792,35 +796,38 @@ func (lib *Library) RenameTag(old, tag string) error {
 	return lib.Save(phs...)
 }
 
-// goPixThumb copies the thumbnail of the given photo made by GoPix, if
-// there is one that is not older than the file of the photo, as the file
-// of its thumbnail here, and returns it. Those of photos rotated here are
-// not used, nor those of dates set here, which differ.
-func (lib *Library) goPixThumb(ph *Photo, thumbFile string) (image.Image, bool) {
-	if ph.Rotation != 0 || ph.OrigName == "" {
-		return nil, false
-	}
-	if date, _, ok := parseName(ph.OrigName); ok && !date.Equal(ph.DateTaken) {
-		return nil, false
+// goPixThumbsKey is the key in the meta of the store of whether the
+// thumbnails copied from GoPix were removed (see [Library.removeGoPixThumbs]).
+const goPixThumbsKey = "goPixThumbsRemoved"
+
+// removeGoPixThumbs removes the thumbnails that were copied from those of
+// GoPix, once, for making them again, as GoPix drew the dates on them in
+// other sizes and fonts over time, so that all of the dates are the same.
+// The copies are those with the same size as the GoPix thumbnail of the
+// original file name of the photo.
+func (lib *Library) removeGoPixThumbs() error {
+	if lib.store.meta(goPixThumbsKey) != "" {
+		return nil
 	}
 	cache, err := os.UserCacheDir()
 	if err != nil {
-		return nil, false
+		return err
 	}
-	gt := filepath.Join(cache, "GoPix", "thumbs", ph.OrigName+".jpg")
-	st, err := os.Stat(gt)
-	if err != nil || st.ModTime().Before(ph.FileMod) {
-		return nil, false
+	dir := filepath.Join(cache, "GoPix", "thumbs")
+	for _, ph := range lib.Photos(nil) {
+		if ph.OrigName == "" || ph.IsVideo() {
+			continue
+		}
+		gs, err := os.Stat(filepath.Join(dir, ph.OrigName+".jpg"))
+		if err != nil {
+			continue
+		}
+		tf := lib.thumbFile(ph)
+		if ts, err := os.Stat(tf); err == nil && ts.Size() == gs.Size() {
+			os.Remove(tf)
+		}
 	}
-	img, err := openThumb(gt)
-	if err != nil {
-		return nil, false
-	}
-	os.MkdirAll(filepath.Dir(thumbFile), 0o755)
-	if err := copyFile(thumbFile, gt); err != nil {
-		slog.Error("photos: copying GoPix thumbnail", "err", err)
-	}
-	return img, true
+	return lib.store.setMeta(goPixThumbsKey, time.Now().Format(time.RFC3339))
 }
 
 // Thumb returns the thumbnail of the given photo, making it if needed.
@@ -833,9 +840,6 @@ func (lib *Library) Thumb(ph *Photo) (img image.Image, err error) {
 		if img, err := openThumb(tf); err == nil {
 			return img, nil
 		}
-	}
-	if img, ok := lib.goPixThumb(&cp, tf); ok {
-		return img, nil
 	}
 	img, err = makeThumb(&cp, file, tf)
 	if err != nil {
@@ -851,8 +855,7 @@ func (lib *Library) Thumb(ph *Photo) (img image.Image, err error) {
 }
 
 // MakeThumbs makes the thumbnails of all of the photos that do not have
-// them, newest first, on half of the cores, copying those of GoPix where
-// they can be used.
+// them, newest first, on half of the cores.
 func (lib *Library) MakeThumbs(progress ScanProgress) {
 	phs := lib.Photos(nil)
 	slices.Reverse(phs)

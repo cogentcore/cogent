@@ -26,12 +26,6 @@ func TestNames(t *testing.T) {
 	_, _, ok = parseName("IMG_5563")
 	assert.False(t, ok)
 
-	y, rest := splitYearTag("2017_AlpineVRBOposs")
-	assert.Equal(t, "2017", y)
-	assert.Equal(t, "AlpineVRBOposs", rest)
-	y, rest = splitYearTag("Donations")
-	assert.Equal(t, "", y)
-	assert.Equal(t, "Donations", rest)
 	assert.Equal(t, "Harvard 85 86", splitWords("Harvard85-86"))
 	assert.Equal(t, "Alpine VRBOposs", splitWords("AlpineVRBOposs"))
 }
@@ -100,9 +94,9 @@ func TestScan(t *testing.T) {
 	heic := lib.Photos(func(ph *Photo) bool { return ph.OrigName == "IMG_0073_1" })
 	require.Len(t, heic, 1)
 	assert.Equal(t, ".heic", heic[0].Ext)
-	assert.Equal(t, []string{"2017_Kyoto"}, heic[0].Tags)
+	assert.Equal(t, []string{"2017/Kyoto"}, heic[0].Tags)
 	assert.Equal(t, time.Date(2023, 5, 8, 0, 21, 26, 0, time.UTC), heic[0].DateTaken)
-	assert.Equal(t, 2, lib.Tags()["2017_Kyoto"])
+	assert.Equal(t, 2, lib.Tags()["2017/Kyoto"])
 
 	res, err := lib.Search("kyo")
 	require.NoError(t, err)
@@ -127,7 +121,7 @@ func TestScan(t *testing.T) {
 	assert.Equal(t, len(realPhotos), lib2.Len())
 	ph := lib2.Photo(heic[0].Name)
 	require.NotNil(t, ph)
-	assert.Equal(t, []string{"2017_Kyoto"}, ph.Tags)
+	assert.Equal(t, []string{"2017/Kyoto"}, ph.Tags)
 
 	// trash and restore
 	require.NoError(t, lib2.Trash(ph))
@@ -196,9 +190,39 @@ func TestImportAgain(t *testing.T) {
 	assert.Equal(t, "img_2021_05_06_07_08_09_n0", phs[0].Name)
 	assert.FileExists(t, newer, "copied, not moved")
 	assert.Equal(t, 4, lib.Len())
-	assert.Equal(t, 3, lib.Tags()["2021_Dropped"], "the ones already there are tagged too")
+	assert.Equal(t, 3, lib.Tags()["2021/Dropped"], "the ones already there are tagged too")
 	phs, err = lib.Import([]string{newer}, false, nil, nil)
 	require.NoError(t, err)
 	assert.Len(t, phs, 0)
 	assert.Equal(t, 4, lib.Len())
+}
+
+// TestRemoveGoPixThumbs tests that the thumbnails copied from GoPix are
+// removed once, for making them again, and not the others.
+func TestRemoveGoPixThumbs(t *testing.T) {
+	lib := smallLibrary(t, 2)
+	require.NoError(t, lib.store.setMeta(goPixThumbsKey, "")) // as before
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	cache, err := os.UserCacheDir()
+	require.NoError(t, err)
+	gopix := filepath.Join(cache, "GoPix", "thumbs")
+	require.NoError(t, os.MkdirAll(gopix, 0o755))
+	phs := lib.Photos(nil)
+	for i, ph := range phs {
+		ph.OrigName = fmt.Sprintf("IMG_%d.JPG", i)
+		require.NoError(t, os.WriteFile(filepath.Join(gopix, ph.OrigName+".jpg"), []byte("gopix"), 0o644))
+	}
+	copied, made := lib.thumbFile(phs[0]), lib.thumbFile(phs[1])
+	require.NoError(t, os.MkdirAll(filepath.Dir(copied), 0o755))
+	require.NoError(t, os.WriteFile(copied, []byte("gopix"), 0o644))
+	require.NoError(t, os.WriteFile(made, []byte("made here"), 0o644))
+
+	require.NoError(t, lib.removeGoPixThumbs())
+	assert.NoFileExists(t, copied, "the copy is removed")
+	assert.FileExists(t, made, "the one made here is kept")
+
+	require.NoError(t, os.WriteFile(copied, []byte("gopix"), 0o644))
+	require.NoError(t, lib.removeGoPixThumbs())
+	assert.FileExists(t, copied, "only once")
 }

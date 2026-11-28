@@ -74,7 +74,7 @@ func TestImportDevice(t *testing.T) {
 	require.Len(t, phs, 1)
 	phs = append(first, phs...)
 	assert.Equal(t, 4, lib.Len())
-	assert.Equal(t, 2, lib.Tags()["2026_Phone"])
+	assert.Equal(t, 2, lib.Tags()["2026/Phone"])
 	for _, ph := range phs {
 		assert.FileExists(t, lib.PhotoFile(ph))
 		assert.NotEqual(t, image.Point{}, ph.Size)

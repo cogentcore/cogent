@@ -143,7 +143,7 @@ func TestVideoNames(t *testing.T) {
 	defer lib2.Close()
 	v2 := lib2.Photo(vname)
 	require.NotNil(t, v2, "stored by its new name")
-	assert.Equal(t, []string{"2012_CampingMiscVideo"}, v2.Tags)
+	assert.Equal(t, []string{"2012/CampingMiscVideo"}, v2.Tags)
 	assert.Equal(t, len(realPhotos)+1, lib2.Len())
 	res, err := lib2.Search("kind:video")
 	require.NoError(t, err)

@@ -135,9 +135,10 @@ func (ph *Photo) HasTag(tag string) bool {
 	return false
 }
 
-// AddTag adds the given tag, returning whether it was added (if not
-// already there).
+// AddTag adds the given tag, cleaned up (see [cleanTag]), returning
+// whether it was added (if not already there).
 func (ph *Photo) AddTag(tag string) bool {
+	tag = cleanTag(tag)
 	if tag == "" || ph.HasTag(tag) {
 		return false
 	}
@@ -271,15 +272,4 @@ var imageExts = map[string]bool{".jpg": true, ".jpeg": true, ".png": true,
 // isImageFile returns whether the given file is an image, by its extension.
 func isImageFile(filename string) bool {
 	return imageExts[strings.ToLower(filepath.Ext(filename))]
-}
-
-// splitYearTag returns the year and the rest of the given tag, if it
-// starts with a year and an underscore, as 2017_Kyoto, or "" and the tag.
-func splitYearTag(tag string) (year, name string) {
-	if len(tag) > 5 && tag[4] == '_' {
-		if _, err := strconv.Atoi(tag[:4]); err == nil {
-			return tag[:4], tag[5:]
-		}
-	}
-	return "", tag
 }

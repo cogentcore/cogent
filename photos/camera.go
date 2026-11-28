@@ -209,7 +209,7 @@ func (a *App) importDialog(di *deviceImport) {
 	core.NewText(d).SetText(msg)
 	var tag *core.TextField
 	if len(di.files) > 0 {
-		core.NewText(d).SetType(core.TextSupporting).SetText("A tag for them, if any, as 2026_Trip:")
+		core.NewText(d).SetType(core.TextSupporting).SetText("A tag for them, if any, as 2026/Trip or 2026 Trip:")
 		tag = core.NewTextField(d)
 		tag.Styler(func(s *styles.Style) { s.Min.X.Em(20) })
 	}

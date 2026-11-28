@@ -7,6 +7,7 @@ package photos
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"cogentcore.org/core/core"
@@ -53,16 +54,70 @@ type SettingsData struct { //types:add
 	// when the app starts again.
 	ShownTag string `display:"-"`
 
+	// Keys are the keyboard shortcuts of the actions in the main window,
+	// by their chords, with Command for Meta on the Mac and Control
+	// elsewhere.
+	Keys KeyMap
+
+	// KeysKnown are the actions whose default keyboard shortcuts have been
+	// added to [SettingsData.Keys], so that those of actions added in later
+	// versions are added, but not again those that were removed.
+	KeysKnown []KeyFunctions `display:"-"`
+
+	// LastTag is the tag chosen last in the Tag dialog, which it starts
+	// with the next time, selected, so that typing replaces it.
+	LastTag string `display:"-"`
+
 	// Views are where the photos of each tag were viewed last, by the keys
 	// of the tags, for going back there.
 	Views map[string]TagView `display:"-"`
 
-	// ClosedYears are the years closed in the tree of tags.
+	// ClosedGroups are the groups closed in the tree of tags.
+	ClosedGroups map[string]bool `display:"-"`
+
+	// ClosedYears are the years closed in the tree of tags, before they
+	// were groups (see [SettingsData.migrateTags]).
 	ClosedYears map[string]bool `display:"-"`
+}
+
+// migrateTags changes the keys of tags with years, as tag:2017_Kyoto, and
+// of years, as year:2017, from before tags were in groups, into those of
+// tags in groups, as tag:2017/Kyoto and group:2017.
+func (sd *SettingsData) migrateTags() {
+	key := func(k string) string {
+		if y, ok := strings.CutPrefix(k, "year:"); ok {
+			return groupKey(y)
+		}
+		if t, ok := strings.CutPrefix(k, "tag:"); ok && !strings.Contains(t, tagSep) {
+			if y, n, ok := yearPrefix(t); ok {
+				return tagKey(y + tagSep + n)
+			}
+		}
+		return k
+	}
+	sd.ShownTag = key(sd.ShownTag)
+	for k, v := range sd.Views {
+		if nk := key(k); nk != k {
+			delete(sd.Views, k)
+			sd.Views[nk] = v
+		}
+	}
+	if sd.ClosedGroups == nil && sd.ClosedYears != nil {
+		sd.ClosedGroups = sd.ClosedYears
+	}
+	sd.ClosedYears = nil
 }
 
 func (sd *SettingsData) Defaults() {
 	sd.ThumbSize = 200
+}
+
+// Apply adds the default keyboard shortcuts of actions that are new (see
+// [SettingsData.addDefaultKeys]). They are not set in Defaults, as the
+// saved ones would be merged into them, so that removed ones would come
+// back.
+func (sd *SettingsData) Apply() {
+	sd.addDefaultKeys()
 }
 
 // libraryDir returns the directory of the library.

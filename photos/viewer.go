@@ -191,8 +191,7 @@ func (v *Viewer) infoText() string {
 	if len(ph.Tags) > 0 {
 		var tags []string
 		for _, t := range ph.Tags {
-			y, n := splitYearTag(t)
-			tags = append(tags, strings.TrimSpace(y+" "+n))
+			tags = append(tags, tagLabel(t))
 		}
 		parts = append(parts, strings.Join(tags, ", "))
 	}

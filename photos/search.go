@@ -56,11 +56,9 @@ type searchDoc struct {
 func newSearchDoc(ph *Photo) *searchDoc {
 	doc := &searchDoc{Desc: ph.Desc, Date: ph.DateTaken}
 	var tags []string
-	for _, t := range ph.Tags {
-		year, name := splitYearTag(t)
-		tags = append(tags, name, splitWords(name))
-		if year != "" {
-			tags = append(tags, year)
+	for _, t := range ph.Tags { // the groups and the name
+		for _, p := range strings.Split(t, tagSep) {
+			tags = append(tags, p, splitWords(p))
 		}
 	}
 	doc.Tags = strings.Join(tags, " ")

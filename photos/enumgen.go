@@ -6,6 +6,49 @@ import (
 	"cogentcore.org/core/enums"
 )
 
+var _KeyFunctionsValues = []KeyFunctions{0, 1, 2, 3, 4, 5}
+
+// KeyFunctionsN is the highest valid value for type KeyFunctions, plus one.
+const KeyFunctionsN KeyFunctions = 6
+
+var _KeyFunctionsValueMap = map[string]KeyFunctions{`Tag`: 0, `RotateLeft`: 1, `RotateRight`: 2, `FocusSearch`: 3, `FocusNextPanel`: 4, `FocusPrevPanel`: 5}
+
+var _KeyFunctionsDescMap = map[KeyFunctions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``}
+
+var _KeyFunctionsMap = map[KeyFunctions]string{0: `Tag`, 1: `RotateLeft`, 2: `RotateRight`, 3: `FocusSearch`, 4: `FocusNextPanel`, 5: `FocusPrevPanel`}
+
+// String returns the string representation of this KeyFunctions value.
+func (i KeyFunctions) String() string { return enums.String(i, _KeyFunctionsMap) }
+
+// SetString sets the KeyFunctions value from its string representation,
+// and returns an error if the string is invalid.
+func (i *KeyFunctions) SetString(s string) error {
+	return enums.SetString(i, s, _KeyFunctionsValueMap, "KeyFunctions")
+}
+
+// Int64 returns the KeyFunctions value as an int64.
+func (i KeyFunctions) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the KeyFunctions value from an int64.
+func (i *KeyFunctions) SetInt64(in int64) { *i = KeyFunctions(in) }
+
+// Desc returns the description of the KeyFunctions value.
+func (i KeyFunctions) Desc() string { return enums.Desc(i, _KeyFunctionsDescMap) }
+
+// KeyFunctionsValues returns all possible values for the type KeyFunctions.
+func KeyFunctionsValues() []KeyFunctions { return _KeyFunctionsValues }
+
+// Values returns all possible values for the type KeyFunctions.
+func (i KeyFunctions) Values() []enums.Enum { return enums.Values(_KeyFunctionsValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i KeyFunctions) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *KeyFunctions) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "KeyFunctions")
+}
+
 var _OrientationsValues = []Orientations{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 // OrientationsN is the highest valid value for type Orientations, plus one.

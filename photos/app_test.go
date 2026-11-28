@@ -160,7 +160,7 @@ func TestTagViews(t *testing.T) {
 		a.grid.SelectIndex(80) // scrolls to it
 		allScroll = fr.Geom.Scroll.Y
 		require.Less(t, allScroll, float32(0))
-		a.showTag("tag:2020_First")
+		a.showTag("tag:2020/First")
 	}, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -172,7 +172,7 @@ func TestTagViews(t *testing.T) {
 		defer b.AsyncUnlock()
 		assert.Equal(t, 80, a.grid.Current, "the current photo of All")
 		assert.Equal(t, allScroll, a.gridFrame().Geom.Scroll.Y, "the scroll of All")
-		a.showTag("tag:2020_First")
+		a.showTag("tag:2020/First")
 	}, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
@@ -205,7 +205,7 @@ func TestFixedButtons(t *testing.T) {
 	require.NoError(t, lib.Trash(phs[5]))
 	b := core.NewBody()
 	a := NewApp(b)
-	a.shown = "tag:2020_First"
+	a.shown = "tag:2020/First"
 	var trash *core.Button
 	core.RenderImage(b, func() {
 		b.AsyncLock()
@@ -217,8 +217,8 @@ func TestFixedButtons(t *testing.T) {
 		b.AsyncLock()
 		defer b.AsyncUnlock()
 		for _, r := range a.tagRows {
-			assert.NotEqual(t, allKey, r.key)
-			assert.NotEqual(t, trashKey, r.key)
+			assert.NotEqual(t, allKey, r.Key)
+			assert.NotEqual(t, trashKey, r.Key)
 		}
 		assert.Len(t, a.grid.Photos, 3)
 		assert.Equal(t, 5, a.allCount)
@@ -304,7 +304,7 @@ func TestYearToggle(t *testing.T) {
 	for i, ph := range phs { // many years, as in a real library, more than fit
 		require.NoError(t, lib.AddTag(fmt.Sprintf("%d_Tag%d", 1990+i/2, i%2), ph))
 	}
-	Settings.ClosedYears = nil
+	Settings.ClosedGroups = nil
 	b := core.NewBody()
 	a := NewApp(b)
 	a.Styler(func(s *styles.Style) {
@@ -315,7 +315,7 @@ func TestYearToggle(t *testing.T) {
 		rows := *a.tags.Slice.(*[]*tagRow)
 		nw, _ := a.tags.RowWidgetNs()
 		for i, r := range rows {
-			if r.year == year {
+			if r.group == year {
 				w := i - a.tags.StartIndex
 				cell := a.tags.ListGrid.Child(w * nw).(core.Widget)
 				return cell.AsWidget().Child(0).(core.Widget), i
@@ -380,7 +380,7 @@ func TestShowInAll(t *testing.T) {
 		s.Min.Set(units.Dp(1200), units.Dp(600))
 		s.Max.Set(units.Dp(1200), units.Dp(600))
 	})
-	a.shown = "tag:2020_Some"
+	a.shown = "tag:2020/Some"
 	core.RenderImage(b, func() {
 		b.AsyncLock()
 		defer b.AsyncUnlock()

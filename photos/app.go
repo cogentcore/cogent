@@ -10,6 +10,8 @@ package photos
 
 import (
 	"cmp"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -22,12 +24,11 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
@@ -90,6 +91,10 @@ type App struct {
 	// syncCancel stops the sync with Google Photos in progress, if any.
 	syncCancel func()
 
+	// keySeq1 is the first chord of a key sequence being typed, as
+	// Control+X on the Mac (see [App.appKeys]).
+	keySeq1 key.Chord
+
 	// importCancel stops the import from a camera or phone in progress, if any.
 	importCancel func()
 
@@ -100,27 +105,34 @@ type App struct {
 // tagRow is a row of the tree of tags: All, Trash, a year, or a tag.
 type tagRow struct {
 
-	// Name is the name shown: of a tag, without its year.
+	// Name is the name shown: of a tag or group, without its groups.
 	Name string `edit:"-"`
 
 	// Photos is the number of photos.
 	Photos int `edit:"-"`
 
-	// Children are the tags of a year.
+	// Children are the groups and tags in a group.
 	Children []*tagRow `display:"-"`
 
-	// Closed is whether a year is closed.
+	// Closed is whether a group is closed.
 	Closed bool `display:"-" treetable:"closed"`
 
-	// key is the key of the row: all, trash, year:2017, or tag:2017_Kyoto.
-	key string
+	// Key is the key of the row: all, trash, group:2017, or tag:2017/Kyoto
+	// (see [groupKey] and [tagKey]). It is exported for dragging rows,
+	// whose data is JSON.
+	Key string `display:"-"`
 
 	// tag is the tag of a tag row.
 	tag string
 
-	// year is the year of a year row.
-	year string
+	// group is the group of a group row.
+	group string
 }
+
+// groupKey and tagKey return the keys of the rows of the given group and
+// tag (see [tagRow.Key]).
+func groupKey(group string) string { return "group:" + group }
+func tagKey(tag string) string     { return "tag:" + tag }
 
 // The keys of the special rows of the tree of tags.
 const (
@@ -130,6 +142,7 @@ const (
 
 func (a *App) Init() {
 	a.Frame.Init()
+	Settings.migrateTags()
 	a.shown = cmp.Or(Settings.ShownTag, allKey)
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
@@ -283,13 +296,13 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	}
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(a.RotateLeft).SetIcon(icons.RotateLeft).SetShortcut("Command+L")
+		w.SetFunc(a.RotateLeft).SetIcon(icons.RotateLeft).SetShortcut(shortcutOf("RotateLeft"))
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(a.RotateRight).SetIcon(icons.RotateRight).SetShortcut("Command+R")
+		w.SetFunc(a.RotateRight).SetIcon(icons.RotateRight).SetShortcut(shortcutOf("RotateRight"))
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(a.Tag).SetIcon(icons.Label).SetShortcut("Command+T")
+		w.SetFunc(a.Tag).SetIcon(icons.Label).SetShortcut(shortcutOf("Tag"))
 	})
 	if strings.HasPrefix(a.shown, "tag:") {
 		tree.Add(p, func(w *core.FuncButton) {
@@ -347,6 +360,9 @@ func (a *App) Start() {
 			core.ErrorDialog(a, err, "Error opening the library of photos in "+dir)
 			a.AsyncUnlock()
 			return
+		}
+		if err := lib.removeGoPixThumbs(); err != nil { // before they are shown
+			slog.Error("photos: removing the thumbnails of GoPix", "err", err)
 		}
 		imagecapture.Start() // finding devices takes a moment
 		core.TheApp.AddQuitCleanFunc(func() {
@@ -460,10 +476,9 @@ func (a *App) shownName() string {
 	case a.shown == trashKey:
 		return "Trash"
 	case strings.HasPrefix(a.shown, "tag:"):
-		y, n := splitYearTag(strings.TrimPrefix(a.shown, "tag:"))
-		return strings.TrimSpace(y + " " + n)
-	case strings.HasPrefix(a.shown, "year:"):
-		return strings.TrimPrefix(a.shown, "year:")
+		return tagLabel(strings.TrimPrefix(a.shown, "tag:"))
+	case strings.HasPrefix(a.shown, "group:"):
+		return tagLabel(strings.TrimPrefix(a.shown, "group:"))
 	}
 	return "All"
 }
@@ -518,18 +533,10 @@ func (a *App) shownPhotos() []*Photo {
 	case strings.HasPrefix(key, "tag:"):
 		tag := strings.TrimPrefix(key, "tag:")
 		fun = func(ph *Photo) bool { return ph.Trashed.IsZero() && ph.HasTag(tag) }
-	case strings.HasPrefix(key, "year:"):
-		year := strings.TrimPrefix(key, "year:")
+	case strings.HasPrefix(key, "group:"):
+		group := strings.TrimPrefix(key, "group:")
 		fun = func(ph *Photo) bool {
-			if !ph.Trashed.IsZero() {
-				return false
-			}
-			for _, t := range ph.Tags {
-				if y, _ := splitYearTag(t); y == year {
-					return true
-				}
-			}
-			return false
+			return ph.Trashed.IsZero() && slices.ContainsFunc(ph.Tags, func(t string) bool { return inGroup(t, group) })
 		}
 	default:
 		fun = func(ph *Photo) bool { return ph.Trashed.IsZero() }
@@ -648,6 +655,7 @@ func (a *App) initTags(w *core.TreeTable) {
 	w.ReadOnlyKeyNav = true
 	w.FitWidth = true // the names in the width of the sidebar
 	w.HeaderIcons = map[string]icons.Icon{"Photos": icons.Photo}
+	w.ReadOnlyDrag = true // for moving tags into groups (see App.moveTagRows)
 	w.ContextMenus = nil
 	w.AddContextMenu(a.tagMenu)
 	w.Styler(func(s *styles.Style) {
@@ -661,7 +669,7 @@ func (a *App) initTags(w *core.TreeTable) {
 	}
 	w.OnSelect(func(e events.Event) {
 		if r := a.tagRowAt(w.SelectedIndex); r != nil {
-			a.showTag(r.key)
+			a.showTag(r.Key)
 		}
 	})
 	w.Styler(func(s *styles.Style) { // (not as a read-only tree table)
@@ -683,67 +691,64 @@ func (a *App) tagRowAt(idx int) *tagRow {
 	return (*rows)[idx]
 }
 
-// updateTags makes the rows of the tree of tags: All and Trash, the years
-// with their tags, newest first, and then the tags without years.
+// updateTags makes the rows of the tree of tags: the groups, with the
+// groups and tags in them, and the tags at the top (see [sortTagRows]).
 func (a *App) updateTags() {
 	if a.lib == nil {
 		return
 	}
-	for _, r := range a.tagRows { // the years closed now
-		if r.year != "" {
-			if Settings.ClosedYears == nil {
-				Settings.ClosedYears = map[string]bool{}
-			}
-			Settings.ClosedYears[r.year] = r.Closed
-		}
+	if Settings.ClosedGroups == nil {
+		Settings.ClosedGroups = map[string]bool{}
 	}
+	walkTagRows(a.tagRows, func(r *tagRow) { // the groups closed now
+		if r.group != "" {
+			Settings.ClosedGroups[r.group] = r.Closed
+		}
+	})
 	all, trash := 0, 0
-	yearCounts := map[string]int{}
+	groupCounts := map[string]int{}
 	for _, ph := range a.lib.Photos(nil) {
 		if !ph.Trashed.IsZero() {
 			trash++
 			continue
 		}
 		all++
-		years := map[string]bool{}
+		groups := map[string]bool{}
 		for _, t := range ph.Tags {
-			if y, _ := splitYearTag(t); y != "" {
-				years[y] = true
+			for _, g := range tagGroups(t) {
+				groups[g] = true
 			}
 		}
-		for y := range years {
-			yearCounts[y]++
+		for g := range groups {
+			groupCounts[g]++
 		}
 	}
 	a.allCount, a.trashCount = all, trash
+	groups := map[string]*tagRow{}
 	var rows []*tagRow
-	years := map[string]*tagRow{}
-	var other []*tagRow
+	add := func(r *tagRow, group string) {
+		if group == "" {
+			rows = append(rows, r)
+			return
+		}
+		g := groups[group]
+		g.Children = append(g.Children, r)
+	}
+	gs := a.lib.Groups() // sorted, so groups are before those in them
+	for _, g := range gs {
+		_, name := splitTag(g)
+		closed, ok := Settings.ClosedGroups[g]
+		groups[g] = &tagRow{Name: name, Photos: groupCounts[g], Key: groupKey(g), group: g, Closed: !ok || closed}
+	}
+	for _, g := range gs {
+		parent, _ := splitTag(g)
+		add(groups[g], parent)
+	}
 	for tag, n := range a.lib.Tags() {
-		year, name := splitYearTag(tag)
-		r := &tagRow{Name: name, Photos: n, key: "tag:" + tag, tag: tag}
-		if year == "" {
-			other = append(other, r)
-			continue
-		}
-		yr := years[year]
-		if yr == nil {
-			closed, ok := Settings.ClosedYears[year]
-			yr = &tagRow{Name: year, Photos: yearCounts[year], key: "year:" + year, year: year, Closed: !ok || closed}
-			years[year] = yr
-		}
-		yr.Children = append(yr.Children, r)
+		group, name := splitTag(tag)
+		add(&tagRow{Name: name, Photos: n, Key: tagKey(tag), tag: tag}, group)
 	}
-	byName := func(a, b *tagRow) int { return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)) }
-	var yrs []*tagRow
-	for _, yr := range years {
-		slices.SortFunc(yr.Children, byName)
-		yrs = append(yrs, yr)
-	}
-	slices.SortFunc(yrs, func(a, b *tagRow) int { return strings.Compare(b.Name, a.Name) })
-	slices.SortFunc(other, byName)
-	rows = append(rows, yrs...)
-	rows = append(rows, other...)
+	sortTagRows(rows)
 	a.tagRows = rows
 	if a.tags != nil {
 		a.tags.SetItems(&a.tagRows)
@@ -752,16 +757,61 @@ func (a *App) updateTags() {
 	}
 }
 
-// selectShownTag selects the row of the tag shown in the tree of tags,
-// opening its year if needed.
-func (a *App) selectShownTag() {
-	for _, yr := range a.tagRows {
-		for _, r := range yr.Children {
-			if r.key == a.shown && yr.Closed {
-				yr.Closed = false
-				a.tags.Update()
-			}
+// sortTagRows sorts the given rows, and those in them: the groups of years
+// first, the newest first, then the other groups, and then the tags, by
+// their names.
+func sortTagRows(rows []*tagRow) {
+	rank := func(r *tagRow) int {
+		switch {
+		case r.group != "" && isYear(r.Name):
+			return 0
+		case r.group != "":
+			return 1
 		}
+		return 2
+	}
+	slices.SortFunc(rows, func(a, b *tagRow) int {
+		ra, rb := rank(a), rank(b)
+		switch {
+		case ra != rb:
+			return ra - rb
+		case ra == 0:
+			return strings.Compare(b.Name, a.Name)
+		}
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
+	for _, r := range rows {
+		sortTagRows(r.Children)
+	}
+}
+
+// walkTagRows calls the given function on the given rows, and on those
+// in them.
+func walkTagRows(rows []*tagRow, fun func(r *tagRow)) {
+	for _, r := range rows {
+		fun(r)
+		walkTagRows(r.Children, fun)
+	}
+}
+
+// selectShownTag selects the row of the tag shown in the tree of tags,
+// opening the groups it is in if needed.
+func (a *App) selectShownTag() {
+	var in []string
+	if tag, ok := strings.CutPrefix(a.shown, "tag:"); ok {
+		in = tagGroups(tag)
+	} else if group, ok := strings.CutPrefix(a.shown, "group:"); ok {
+		in = tagGroups(group)
+	}
+	opened := false
+	walkTagRows(a.tagRows, func(r *tagRow) {
+		if r.Closed && slices.Contains(in, r.group) {
+			r.Closed = false
+			opened = true
+		}
+	})
+	if opened {
+		a.tags.Update()
 	}
 	rows, ok := a.tags.Slice.(*[]*tagRow)
 	if !ok {
@@ -771,7 +821,7 @@ func (a *App) selectShownTag() {
 	a.tags.SelectedIndex = -1
 	a.tags.NeedsRender()
 	for i, r := range *rows {
-		if r.key == a.shown {
+		if r.Key == a.shown {
 			a.tags.SelectedIndex = i
 			a.tags.ResetSelectedIndexes()
 			a.tags.SelectedIndexes[i] = struct{}{}
@@ -785,11 +835,79 @@ func (a *App) selectShownTag() {
 // them with the tag they are dropped on (see [App.dropOn]).
 func (a *App) dropOnTags(e events.Event) {
 	idx, ok := a.tags.IndexFromEvent(e)
+	var r *tagRow
+	if ok {
+		r = a.tagRowAt(idx)
+	}
+	if a.moveTagRows(e, r) {
+		return
+	}
 	tag := ""
-	if r := a.tagRowAt(idx); ok && r != nil {
+	if r != nil {
 		tag = r.tag
 	}
 	a.dropOn(e, a.tags, "", tag)
+}
+
+// moveTagRows handles a drop of tags or groups dragged in the tree of tags
+// onto the given row, if any, returning whether it was one: they are
+// moved into the group dropped on, or the group of the tag dropped on,
+// or to the top, when dropped below the rows.
+func (a *App) moveTagRows(e events.Event, onto *tagRow) bool {
+	de, ok := e.(*events.DragDrop)
+	if !ok || a.lib == nil {
+		return false
+	}
+	src, ok := de.Source.(tree.Node)
+	for ok && src != nil && src != tree.Node(a.tags) {
+		src = src.AsTree().Parent
+	}
+	md, isMimes := de.Data.(mimedata.Mimes)
+	if src == nil || !isMimes {
+		return false
+	}
+	e.SetHandled()
+	a.tags.Scene.Events.DropFinalize(de)
+	group := ""
+	switch {
+	case onto == nil:
+	case onto.group != "":
+		group = onto.group
+	default:
+		group, _ = splitTag(onto.tag)
+	}
+	var errs []error
+	for _, d := range md {
+		var r tagRow
+		if json.Unmarshal(d.Data, &r) != nil {
+			continue
+		}
+		if t, ok := strings.CutPrefix(r.Key, "tag:"); ok {
+			if g, _ := splitTag(t); g == group {
+				continue
+			}
+			nt, err := a.lib.MoveTag(t, group)
+			errs = append(errs, err)
+			a.movedKeys(r.Key, tagKey(nt), false)
+		} else if g, ok := strings.CutPrefix(r.Key, "group:"); ok {
+			if p, _ := splitTag(g); p == group || g == group || inGroup(group, g) {
+				continue // where it is, or into itself
+			}
+			_, name := splitTag(g)
+			ng := name
+			if group != "" {
+				ng = group + tagSep + name
+			}
+			errs = append(errs, a.lib.RenameGroup(g, ng))
+			a.movedKeys(r.Key, groupKey(ng), false)
+		}
+	}
+	if group != "" {
+		Settings.ClosedGroups[group] = false
+	}
+	core.ErrorSnackbar(a, errors.Join(errs...))
+	a.refresh()
+	return true
 }
 
 // dropOn handles a drop onto the given widget for the given key of All or
@@ -859,29 +977,6 @@ func (a *App) fixedButton(p *tree.Plan, key, name string, icon icons.Icon, count
 			a.dropOn(e, w, key, "")
 		})
 	})
-}
-
-// appKeys handles the keys of the app.
-func (a *App) appKeys(e events.Event) {
-	switch keymap.Of(e.KeyChord()) {
-	case keymap.Find, keymap.Search:
-		e.SetHandled()
-		a.search.SetFocus()
-	case keymap.Delete, keymap.Backspace:
-		if a.grid.StateIs(states.Focused) || a.viewer.StateIs(states.Focused) {
-			e.SetHandled()
-			if a.shown == trashKey {
-				return
-			}
-			a.Trash()
-		}
-	case keymap.ZoomIn:
-		e.SetHandled()
-		a.zoomThumbs(1.25)
-	case keymap.ZoomOut:
-		e.SetHandled()
-		a.zoomThumbs(0.8)
-	}
 }
 
 // zoomThumbs changes the size of the thumbnails by the given factor.

@@ -68,7 +68,7 @@ func (a *App) Rescan() { //types:add
 
 // ImportFolder imports the photos in the given folder into the library,
 // copying them, or moving them if move, renamed by their dates, and with
-// the given tag, if any, as 2026_Trip.
+// the given tag, if any, as 2026/Trip.
 func (a *App) ImportFolder(folder core.Filename, move bool, tag string) { //types:add
 	if a.lib == nil {
 		return
@@ -143,48 +143,135 @@ func (a *App) rotate(degrees int) {
 }
 
 // Tag adds a tag to the selected photos, chosen from the tags, or a new
-// one. A tag that starts with a year and an underscore, as 2026_Trip,
-// is shown in that year.
+// one, in a group, as 2026 or People, or none. A new tag that starts with
+// a year, as 2026 Trip, is in the group of that year when it is in none.
 func (a *App) Tag() { //types:add
 	phs := a.selected()
 	if len(phs) == 0 {
 		return
 	}
-	d := core.NewBody("Tag")
-	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Tag %d photos with a tag, or a new one (as 2026_Trip, in 2026):", len(phs)))
-	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
-	for _, t := range a.sortedTags() {
-		ch.Items = append(ch.Items, core.ChooserItem{Value: t})
+	group, name := splitTag(Settings.LastTag) // the one chosen last, at first
+	if Settings.LastTag == "" {
+		if g, ok := strings.CutPrefix(a.shown, "group:"); ok {
+			group = g
+		} else if t, ok := strings.CutPrefix(a.shown, "tag:"); ok {
+			group, _ = splitTag(t)
+		}
 	}
-	ch.Styler(func(s *styles.Style) {
-		s.Min.X.Em(20)
+	d := core.NewBody("Tag")
+	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Tag %d photos with a tag, or a new one, in a group, or none:", len(phs)))
+	var tag func() string
+	tag = a.tagFields(d, group, name, func() { // Return
+		if t := tag(); t != "" {
+			d.Close()
+			a.tagWith(t, phs)
+		}
 	})
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Tag").OnClick(func(e events.Event) {
-			tag := strings.TrimSpace(fmt.Sprint(ch.CurrentItem.Value))
-			if ch.CurrentItem.Value == nil || tag == "" {
-				return
+			if t := tag(); t != "" {
+				a.tagWith(t, phs)
 			}
-			core.ErrorSnackbar(a, a.lib.AddTag(tag, phs...))
-			a.refresh()
 		})
 	})
 	d.RunDialog(a)
 }
 
-// sortedTags returns all of the tags, the newest years first.
-func (a *App) sortedTags() []string {
-	var tags []string
-	for _, r := range a.tagRows {
-		if r.tag != "" {
-			tags = append(tags, r.tag)
-		}
-		for _, c := range r.Children {
-			tags = append(tags, c.tag)
-		}
+// tagWith tags the given photos with the given tag, saving it as the tag
+// chosen last (see [SettingsData.LastTag]).
+func (a *App) tagWith(tag string, phs []*Photo) {
+	Settings.LastTag = tag
+	saveSettings(a)
+	core.ErrorSnackbar(a, a.lib.AddTag(tag, phs...))
+	a.refresh()
+}
+
+// tagFields adds the fields for choosing a tag to the given dialog: a
+// group, from those there are, or a new one, or none, and the name of the
+// tag, from those in the group, or a new one, starting with the given
+// group and name, with the name selected, so that typing replaces it,
+// and Return in it calling accept. It returns a function that returns
+// the tag chosen.
+func (a *App) tagFields(d *core.Body, group, name string, accept func()) func() string {
+	row := core.NewFrame(d)
+	row.Styler(func(s *styles.Style) {
+		s.Align.Items = styles.Center
+	})
+	// new ones are typed without completion popups, which would take
+	// Return, and those there are are in the menu
+	gc := core.NewChooser(row).SetEditable(true).SetDefaultNew(true)
+	gc.SetPlaceholder("Group (none)")
+	gc.SetTooltip("The group of the tag, as 2026 or People/Family, or none, for the top")
+	for _, g := range a.lib.Groups() {
+		gc.Items = append(gc.Items, core.ChooserItem{Value: g})
 	}
-	return tags
+	if group != "" {
+		gc.SetCurrentValue(group)
+	}
+	gc.Styler(func(s *styles.Style) { s.Min.X.Em(12) })
+	core.NewText(row).SetText(tagSep)
+	tc := core.NewChooser(row).SetEditable(true).SetDefaultNew(true)
+	tc.SetPlaceholder("Tag")
+	tc.Styler(func(s *styles.Style) { s.Min.X.Em(16) })
+	groupText := func() string {
+		if tf := gc.TextField(); tf != nil {
+			return cleanTag(tf.Text())
+		}
+		return group
+	}
+	setNames := func() { // those in the group
+		g := groupText()
+		tc.Items = nil
+		for t := range a.lib.Tags() {
+			if tg, n := splitTag(t); tg == g {
+				tc.Items = append(tc.Items, core.ChooserItem{Value: n})
+			}
+		}
+		slices.SortFunc(tc.Items, func(a, b core.ChooserItem) int {
+			return strings.Compare(strings.ToLower(fmt.Sprint(a.Value)), strings.ToLower(fmt.Sprint(b.Value)))
+		})
+	}
+	setNames()
+	if name != "" {
+		tc.SetCurrentValue(name)
+	}
+	gc.OnChange(func(e events.Event) { setNames() })
+	hooked := false
+	tc.OnShow(func(e events.Event) {
+		tf := tc.TextField()
+		if tf == nil {
+			return
+		}
+		d.Scene.Events.SetStartFocus(tf) // rather than the group
+		if !hooked {
+			hooked = true
+			selected := false
+			tf.On(events.Focus, func(e events.Event) { // selected when focused, at first
+				if !selected {
+					selected = true
+					tf.Defer(tf.SelectAll)
+				}
+			})
+			// Return accepts the tag as it is
+			tf.OnFirst(events.KeyChord, func(e events.Event) {
+				if keymap.Of(e.KeyChord()) == keymap.Enter {
+					e.SetHandled()
+					accept()
+				}
+			})
+		}
+	})
+	return func() string {
+		n := ""
+		if tf := tc.TextField(); tf != nil {
+			n = tf.Text()
+		}
+		if strings.TrimSpace(n) == "" {
+			return ""
+		}
+		return joinTag(groupText(), n)
+	}
 }
 
 // Untag removes the tag shown from the selected photos.
@@ -332,7 +419,43 @@ func (a *App) photoMenu(m *core.Scene, pos image.Point) {
 // tagMenu is the context menu of the tree of tags.
 func (a *App) tagMenu(m *core.Scene, pos image.Point) {
 	r := a.tagRowAt(a.tags.SelectedIndex)
-	if r == nil || r.tag == "" {
+	in := "" // the group of a new group
+	switch {
+	case r != nil && r.group != "":
+		in = r.group
+	case r != nil && r.tag != "":
+		in, _ = splitTag(r.tag)
+	}
+	text := "New group"
+	if in != "" {
+		text = "New group in " + tagLabel(in)
+	}
+	core.NewButton(m).SetText(text).SetIcon(icons.CreateNewFolder).OnClick(func(e events.Event) {
+		a.newGroupDialog(in)
+	})
+	if in != "" {
+		core.NewButton(m).SetText("New group at the top").SetIcon(icons.CreateNewFolder).OnClick(func(e events.Event) {
+			a.newGroupDialog("")
+		})
+	}
+	if r == nil {
+		return
+	}
+	core.NewSeparator(m)
+	if r.group != "" {
+		core.NewButton(m).SetText("Rename group").SetIcon(icons.Edit).OnClick(func(e events.Event) {
+			a.renameGroupDialog(r.group)
+		})
+		core.NewButton(m).SetText("Delete group").SetIcon(icons.Delete).
+			SetTooltip("Deletes the group, moving the tags and groups in it up a level").OnClick(func(e events.Event) {
+			parent, _ := splitTag(r.group)
+			core.ErrorSnackbar(a, a.lib.DeleteGroup(r.group))
+			a.movedKeys(groupKey(r.group), groupKey(parent), true)
+			a.refresh()
+		})
+		return
+	}
+	if r.tag == "" {
 		return
 	}
 	core.NewButton(m).SetText("Rename tag").SetIcon(icons.Edit).OnClick(func(e events.Event) {
@@ -345,24 +468,129 @@ func (a *App) tagMenu(m *core.Scene, pos image.Point) {
 	})
 }
 
-// renameTagDialog opens a dialog for renaming the given tag.
-func (a *App) renameTagDialog(tag string) {
-	d := core.NewBody("Rename tag")
-	tf := core.NewTextField(d).SetText(tag)
+// newGroupDialog opens a dialog for making a new group in the given one,
+// or at the top.
+func (a *App) newGroupDialog(in string) {
+	title := "New group"
+	if in != "" {
+		title += " in " + tagLabel(in)
+	}
+	d := core.NewBody(title)
+	tf := core.NewTextField(d).SetPlaceholder("Name, as People or 2026")
 	tf.Styler(func(s *styles.Style) { s.Min.X.Em(20) })
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
-		d.AddOK(bar).SetText("Rename").OnClick(func(e events.Event) {
-			nt := strings.TrimSpace(tf.Text())
-			if nt == "" || nt == tag {
+		d.AddOK(bar).SetText("Make").OnClick(func(e events.Event) {
+			name := strings.ReplaceAll(strings.TrimSpace(tf.Text()), tagSep, " ")
+			if name == "" {
 				return
 			}
-			core.ErrorSnackbar(a, a.lib.RenameTag(tag, nt))
-			a.shown = "tag:" + nt
+			g := joinTag(in, name)
+			if in == "" {
+				g = name // not split as a tag of a year
+			}
+			core.ErrorSnackbar(a, a.lib.AddGroup(g))
+			Settings.ClosedGroups[g] = false
 			a.refresh()
 		})
 	})
 	d.RunDialog(a)
+}
+
+// renameGroupDialog opens a dialog for renaming the given group, in the
+// group it is in.
+func (a *App) renameGroupDialog(group string) {
+	parent, name := splitTag(group)
+	d := core.NewBody("Rename group")
+	tf := core.NewTextField(d).SetText(name)
+	tf.Styler(func(s *styles.Style) { s.Min.X.Em(20) })
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Rename").OnClick(func(e events.Event) {
+			nn := strings.ReplaceAll(strings.TrimSpace(tf.Text()), tagSep, " ")
+			if nn == "" || nn == name {
+				return
+			}
+			ng := joinTag(parent, nn)
+			if parent == "" {
+				ng = nn
+			}
+			core.ErrorSnackbar(a, a.lib.RenameGroup(group, ng))
+			a.movedKeys(groupKey(group), groupKey(ng), false)
+			a.refresh()
+		})
+	})
+	d.RunDialog(a)
+}
+
+// renameTagDialog opens a dialog for renaming the given tag, which can
+// also move it into another group.
+func (a *App) renameTagDialog(tag string) {
+	group, name := splitTag(tag)
+	d := core.NewBody("Rename tag")
+	var nt func() string
+	rename := func() {
+		t := nt()
+		if t == "" || t == tag {
+			return
+		}
+		core.ErrorSnackbar(a, a.lib.RenameTag(tag, t))
+		a.movedKeys(tagKey(tag), tagKey(t), false)
+		a.refresh()
+	}
+	nt = a.tagFields(d, group, name, func() {
+		d.Close()
+		rename()
+	})
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Rename").OnClick(func(e events.Event) { rename() })
+	})
+	d.RunDialog(a)
+}
+
+// movedKeys changes the given key of a tag or group that was renamed or
+// moved into the new one, as the key shown and the key of its view, and
+// those of the tags and groups in a group. If gone, a group is gone,
+// with those in it moved into the new one.
+func (a *App) movedKeys(old, key string, gone bool) {
+	oldGroup, isGroup := strings.CutPrefix(old, "group:")
+	newGroup := strings.TrimPrefix(key, "group:")
+	move := func(k string) string {
+		if k == old {
+			return key
+		}
+		if !isGroup {
+			return k
+		}
+		for _, p := range []string{"tag:", "group:"} {
+			if t, ok := strings.CutPrefix(k, p); ok && inGroup(t, oldGroup) {
+				rest := strings.TrimPrefix(t, oldGroup+tagSep)
+				if gone {
+					return p + joinTag(newGroup, rest)
+				}
+				return p + newGroup + tagSep + rest
+			}
+		}
+		return k
+	}
+	if gone && a.shown == old {
+		a.shown = allKey
+	}
+	a.shown = move(a.shown)
+	Settings.ShownTag = a.shown
+	for k, v := range Settings.Views {
+		if nk := move(k); nk != k {
+			delete(Settings.Views, k)
+			Settings.Views[nk] = v
+		}
+	}
+	if isGroup && !gone {
+		if c, ok := Settings.ClosedGroups[oldGroup]; ok {
+			Settings.ClosedGroups[newGroup] = c
+		}
+	}
+	saveSettings(a)
 }
 
 // OpenWindow opens the current photo in its own window, as large as the
